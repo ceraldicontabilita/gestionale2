@@ -428,8 +428,8 @@ function Anagrafica({ dips, setDips, loading, reload }) {
               </tr>
             </thead>
             <tbody>
-              {filtered.map(d => (
-                <tr key={d.id} style={{ borderTop: "1px solid #e5e7eb" }}>
+              {filtered.map((d, idx) => (
+                <tr key={d.id || `filtered-${idx}`} style={{ borderTop: "1px solid #e5e7eb" }}>
                   <td style={{ padding: "12px 16px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <Avatar nome={d.nome} cognome={d.cognome} id={d.id} />
