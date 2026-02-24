@@ -28,7 +28,6 @@ const TAB_CONFIGS = {
     { to: '/tfr', label: 'TFR' },
   ],
   '/contabilita': [
-    { to: '/contabilita-hub', label: 'Hub' },
     { to: '/piano-dei-conti', label: 'Piano Conti' },
     { to: '/bilancio', label: 'Bilancio' },
     { to: '/cespiti', label: 'Cespiti' },
