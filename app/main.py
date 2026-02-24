@@ -136,7 +136,7 @@ except ImportError:
 # Add global authentication middleware (safety net for all /api/ endpoints)
 # Richiede token JWT valido per tutti gli endpoint /api/ eccetto /api/auth/* e /api/public/*
 from app.middleware.authentication import AuthenticationMiddleware
-app.add_middleware(AuthenticationMiddleware)
+# app.add_middleware(AuthenticationMiddleware)  # DISABILITATO - Login rimandato al deploy
 
 # Add exception handlers
 add_exception_handlers(app)
