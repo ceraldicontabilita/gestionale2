@@ -1576,6 +1576,26 @@ function ScadenzeWidget({ scadenze }) {
         )}
       </div>
       
+      {/* Intestazioni colonne */}
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: 8, 
+        padding: '4px 10px',
+        fontSize: 10,
+        fontWeight: 600,
+        color: '#94a3b8',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5
+      }}>
+        <span style={{ minWidth: 50, textAlign: 'center' }}>Tipo</span>
+        <span style={{ minWidth: 65, textAlign: 'right' }}>Importo</span>
+        <span style={{ minWidth: 50 }}>Data</span>
+        <span style={{ minWidth: 35 }}>Giorni</span>
+        <span style={{ flex: 1 }}>Descrizione</span>
+        <span style={{ minWidth: 40 }}>Azioni</span>
+      </div>
+      
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         {scadenze.scadenze.slice(0, 6).map((s, idx) => {
           const colors = getPriorityColor(s.priorita, s.urgente);
