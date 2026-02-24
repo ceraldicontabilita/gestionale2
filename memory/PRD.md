@@ -135,4 +135,11 @@ Based on `layout-A-topnav.html`:
 - **2026-02-24**: TopNav refactoring: link diretti (no dropdown tranne Altro)
 - **2026-02-24**: Anno selector con etichetta "ANNO"
 - **2026-02-24**: Rimosse cornici blu duplicate da: RiconciliazioneUnificata, ArchivioBonifici, Fornitori
-- **2026-02-24**: Test E2E iteration_3: 100% - tutte le pagine senza header duplicati
+- **2026-02-24**: PageLayout semplificato - solo contenuto senza header
+- **2026-02-24**: Learning Machine spostato in sezione "Altro"
+- **2026-02-24**: **NUOVO: Learning Machine Universale** - Apprende pattern da tutti i dati:
+  - Fornitori (321 analizzati, 20 pattern, metodi pagamento)
+  - Pagamenti (tempi medi)
+  - Movimenti (categorizzazione automatica)
+  - Stagionalità (1,051 corrispettivi, trend crescita, picco Aprile)
+  - Assegni (99.5% tasso associazione)
