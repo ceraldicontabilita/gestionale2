@@ -77,6 +77,7 @@ const GestioneRiservata = lazy(() => import("./pages/GestioneRiservata.jsx"));
 const DettaglioVerbale = lazy(() => import("./pages/DettaglioVerbale.jsx"));
 const ImpostazioniF24Email = lazy(() => import("./pages/ImpostazioniF24Email.jsx"));
 const Mutui = lazy(() => import("./pages/Mutui.jsx"));
+const VerificaCoerenza = lazy(() => import("./pages/VerificaCoerenza.jsx"));
 
 const LazyPage = ({ children }) => (
   <Suspense fallback={<PageLoader />}>{children}</Suspense>
