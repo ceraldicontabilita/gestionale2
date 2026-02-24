@@ -1280,7 +1280,7 @@ export default function Fornitori() {
           alignItems: 'center', 
           marginBottom: 32,
           padding: '32px 40px',
-          background: 'linear-gradient(135deg, #2563eb 0%, #1e40af 100%)',
+          background: 'linear-gradient(135deg, #1535a8 0%, #2050e8 100%)',
           borderRadius: 0,
           color: 'white',
           flexWrap: 'wrap',
