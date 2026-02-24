@@ -827,7 +827,6 @@ export default function RiconciliazioneUnificata() {
         </div>
       )}
     </div>
-    </PageLayout>
   );
 }
 
