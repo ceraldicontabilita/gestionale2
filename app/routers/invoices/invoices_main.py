@@ -22,7 +22,7 @@ from app.repositories import (
 from app.repositories.accounting_entries_repository import AccountingEntriesRepository
 
 from app.services import (
-    InvoiceService, WarehouseService,
+    InvoiceServiceV2, WarehouseService,
     AccountingEntriesService, CashService
 )
 from app.models import (
