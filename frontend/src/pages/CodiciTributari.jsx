@@ -98,7 +98,7 @@ export default function CodiciTributari() {
   return (
     <PageLayout 
       title="Gestione Codici Tributari" 
-      icon="💰" 
+      icon="📋" 
       subtitle={`Traccia e verifica i pagamenti F24 – Anno ${anno}`}
     >
       {err && (

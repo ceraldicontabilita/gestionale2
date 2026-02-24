@@ -522,7 +522,7 @@ export default function ControlloMensile() {
           maxHeight: '80vh', overflowY: 'auto'
         }} onClick={e => e.stopPropagation()}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
-            <h2 style={{ margin: 0 }}>💰 Dettaglio Versamenti - {monthNames[meseSelezionato - 1]} {anno}</h2>
+            <h2 style={{ margin: 0 }}>Dettaglio Versamenti - {monthNames[meseSelezionato - 1]} {anno}</h2>
             <button onClick={() => setShowVersamentiModal(false)} style={{ fontSize: 20, background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
           </div>
           

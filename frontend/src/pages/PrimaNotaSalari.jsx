@@ -9,7 +9,7 @@ import { PageLayout } from '../components/PageLayout';
  */
 export default function PrimaNotaSalari() {
   return (
-    <PageLayout title="Prima Nota Salari" icon="💰" subtitle="Registro dei pagamenti stipendi e contributi">
+    <PageLayout title="Prima Nota Salari" icon="📄" subtitle="Registro dei pagamenti stipendi e contributi">
       <PrimaNotaSalariTab />
     </PageLayout>
   );
