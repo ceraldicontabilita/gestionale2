@@ -58,8 +58,8 @@ const styles = {
     alignItems: 'center',
     gap: 6,
     transition: 'all 0.2s',
-    ...(variant === 'primary' ? { background: '#3b82f6', color: 'white' } 
-      : variant === 'success' ? { background: '#10b981', color: 'white' }
+    ...(variant === 'primary' ? { background: '#1535a8', color: 'white' } 
+      : variant === 'success' ? { background: '#15803d', color: 'white' }
       : variant === 'danger' ? { background: '#ef4444', color: 'white' }
       : { background: '#f1f5f9', color: '#475569', border: '1px solid #e2e8f0' })
   }),
