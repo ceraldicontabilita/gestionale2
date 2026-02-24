@@ -7,7 +7,7 @@ import { PageLayout } from '../components/PageLayout';
 const CATEGORY_COLORS = {
   f24: { bg: '#dbeafe', text: '#1e40af', icon: '📋', label: 'F24' },
   fattura: { bg: '#dcfce7', text: '#166534', icon: '🧾', label: 'Fatture' },
-  busta_paga: { bg: '#fef3c7', text: '#92400e', icon: '💰', label: 'Buste Paga' },
+  busta_paga: { bg: '#fef3c7', text: '#92400e', icon: '📄', label: 'Buste Paga' },
   estratto_conto: { bg: '#f3e8ff', text: '#7c3aed', icon: '🏦', label: 'Estratti Conto' },
   quietanza: { bg: '#cffafe', text: '#0891b2', icon: '✅', label: 'Quietanze' },
   bonifico: { bg: '#fce7f3', text: '#be185d', icon: '💸', label: 'Bonifici' },
@@ -1196,7 +1196,7 @@ export default function Documenti() {
                 }}
               >
                 <option value="">Tutti i tipi</option>
-                <option value="busta_paga">💰 Busta Paga</option>
+                <option value="busta_paga">Busta Paga</option>
                 <option value="f24">📋 F24</option>
                 <option value="bonifico">💸 Bonifico</option>
                 <option value="estratto_conto">🏦 Estratto Conto</option>

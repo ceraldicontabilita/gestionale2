@@ -260,7 +260,7 @@ export default function GestioneInvoiceTronic() {
             padding: '10px 12px', 
             color: 'white'
           }}>
-            <div style={{ fontSize: 11, opacity: 0.9, marginBottom: 4 }}>💰 Totale Imponibile</div>
+            <div style={{ fontSize: 11, opacity: 0.9, marginBottom: 4 }}>Totale Imponibile</div>
             <div style={{ fontSize: 18, fontWeight: 'bold' }}>
               {formatEuro(fatture.reduce((sum, f) => sum + (f.importo_totale || 0), 0))}
             </div>

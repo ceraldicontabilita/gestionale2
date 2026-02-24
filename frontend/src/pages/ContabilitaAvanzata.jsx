@@ -167,7 +167,7 @@ export default function ContabilitaAvanzata() {
         <div style={styles.tabs}>
           {['imposte', 'statistiche', 'bilancio'].map((tab) => (
             <button key={tab} onClick={() => setActiveTab(tab)} style={styles.tab(activeTab === tab)} data-testid={`tab-${tab}`}>
-              {tab === 'imposte' ? '💰 Calcolo Imposte' : tab === 'statistiche' ? '📊 Statistiche' : '📋 Bilancio Dettagliato'}
+              {tab === 'imposte' ? 'Calcolo Imposte' : tab === 'statistiche' ? 'Statistiche' : 'Bilancio Dettagliato'}
             </button>
           ))}
         </div>

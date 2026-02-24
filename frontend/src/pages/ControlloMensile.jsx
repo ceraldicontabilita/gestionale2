@@ -681,7 +681,7 @@ export default function ControlloMensile() {
               }}
               data-testid="show-versamenti-btn"
             >
-              💰 Versamenti
+              Versamenti
             </button>
           </>
         )}
@@ -746,7 +746,7 @@ export default function ControlloMensile() {
         </div>
         {/* Card Pagato Non Riscosso */}
         <div style={{ background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)', borderRadius: 12, padding: 14, color: 'white' }}>
-          <div style={{ fontSize: 11, opacity: 0.9 }}>💰 Pagato Non Riscosso</div>
+          <div style={{ fontSize: 11, opacity: 0.9 }}>Pagato Non Riscosso</div>
           <div style={{ fontSize: 18, fontWeight: 'bold' }}>{formatEuro(yearTotals.pagatoNonRiscosso || 0)}</div>
           <div style={{ fontSize: 10, opacity: 0.8, marginTop: 2 }}>
             {yearTotals.pagatoNonRiscossoCount || 0} occorrenze
@@ -781,7 +781,7 @@ export default function ControlloMensile() {
           • <strong>🏦 POS Banca</strong> = Accrediti PDV 3757283 dall&apos;estratto conto bancario<br/>
           • <strong>Diff. POS</strong> = POS RT - POS Reale (discrepanze giornaliere)<br/>
           • <strong>Diff. Banca</strong> = POS Banca - POS Reale (riconciliazione bancaria)<br/>
-          • <strong>💰 Pagato Non Riscosso</strong> = (Ammontare + ImportoParziale) - (Contanti + Elettronico)<br/>
+          • <strong>Pagato Non Riscosso</strong> = (Ammontare + ImportoParziale) - (Contanti + Elettronico)<br/>
           • <strong>🗑️ Ammontare Annulli</strong> = TotaleAmmontareAnnulli da XML corrispettivi
         </div>
       </div>

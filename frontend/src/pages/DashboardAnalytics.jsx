@@ -445,7 +445,7 @@ export default function DashboardAnalytics() {
           title="Fatturato Totale" 
           value={formatEuro(stats?.kpi?.fatturato || 0)} 
           subtitle={`${stats?.kpi?.numFatture || 0} fatture emesse`}
-          icon="💰"
+          icon="📊"
           color="#3b82f6"
           isLive={wsConnected}
         />
