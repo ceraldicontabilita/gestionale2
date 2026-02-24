@@ -1416,7 +1416,7 @@ export default function Fornitori() {
         }}>
           <StatCard icon={Users} label="Totale Fornitori" value={stats.total} color="#1535a8" bgColor="#eef2ff" />
           <StatCard icon={FileText} label="Con Fatture" value={stats.withInvoices} color="#15803d" bgColor="#dcfce7" />
-          <StatCard icon={AlertCircle} label="Dati Incompleti" value={stats.incomplete} color="#f59e0b" bgColor="#fef3c7" />
+          <StatCard icon={AlertCircle} label="Dati Incompleti" value={stats.incomplete} color="#d97706" bgColor="#fef3c7" />
           <StatCard icon={CreditCard} label="Pagamento Contanti" value={stats.cash} color="#8b5cf6" bgColor="#ede9fe" />
         </div>
 
