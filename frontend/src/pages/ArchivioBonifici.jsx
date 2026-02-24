@@ -1025,6 +1025,5 @@ export default function ArchivioBonifici() {
         )}
       </div>
     </div>
-    </PageLayout>
   );
 }
