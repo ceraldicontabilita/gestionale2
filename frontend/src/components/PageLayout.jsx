@@ -1,94 +1,26 @@
 /**
- * PageLayout - Componente wrapper per layout uniforme delle pagine
- * 
- * USO:
- * <PageLayout title="Titolo Pagina" subtitle="Descrizione opzionale">
- *   {contenuto della pagina}
- * </PageLayout>
- * 
- * oppure con azioni nell'header:
- * <PageLayout 
- *   title="Titolo" 
- *   actions={<button>Azione</button>}
- *   tabs={[{id: 'tab1', label: 'Tab 1'}, {id: 'tab2', label: 'Tab 2'}]}
- *   activeTab="tab1"
- *   onTabChange={(tabId) => ...}
- * >
- *   {contenuto}
- * </PageLayout>
+ * PageLayout - Componente wrapper SEMPLIFICATO
+ * Renderizza solo il contenuto senza titoli/header duplicati
+ * I titoli sono già gestiti dalla TopNav e SecondaryTabs
  */
 
 import React from 'react';
-import {
-  PAGE_WRAPPER,
-  PAGE_CONTAINER,
-  PAGE_HEADER,
-  PAGE_CONTENT,
-  PAGE_TITLE,
-  PAGE_SUBTITLE,
-  HEADER_ACTIONS,
-  TABS_CONTAINER,
-  TAB_STYLE,
-} from '../design/pageLayoutStyle';
 
 export function PageLayout({ 
-  title,
-  subtitle,
-  icon,
   children, 
-  actions, 
-  tabs, 
-  activeTab, 
-  onTabChange,
   noPadding = false,
-  fullHeight = true,
   className = '',
 }) {
   return (
-    <div style={{
-      ...PAGE_WRAPPER,
-      ...(fullHeight ? {} : { minHeight: 'auto' })
-    }} className={className}>
-      <div style={PAGE_CONTAINER}>
-        {/* Header con titolo e azioni */}
-        {(title || actions) && (
-          <div style={PAGE_HEADER}>
-            <div>
-              <h1 style={PAGE_TITLE}>
-                {icon && <span style={{ marginRight: 8 }}>{icon}</span>}
-                {title}
-              </h1>
-              {subtitle && <p style={PAGE_SUBTITLE}>{subtitle}</p>}
-            </div>
-            {actions && <div style={HEADER_ACTIONS}>{actions}</div>}
-          </div>
-        )}
-        
-        {/* Tabs opzionali */}
-        {tabs && tabs.length > 0 && (
-          <div style={{ ...TABS_CONTAINER, padding: '0 24px' }}>
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                style={TAB_STYLE(activeTab === tab.id)}
-                onClick={() => onTabChange && onTabChange(tab.id)}
-                data-testid={`tab-${tab.id}`}
-              >
-                {tab.icon && <span style={{ marginRight: 6 }}>{tab.icon}</span>}
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        )}
-        
-        {/* Contenuto principale */}
-        <div style={{
-          ...PAGE_CONTENT,
-          ...(noPadding ? { padding: 0 } : {})
-        }}>
-          {children}
-        </div>
-      </div>
+    <div 
+      style={{
+        minHeight: '100vh',
+        background: '#f8fafc',
+        padding: noPadding ? 0 : '16px 24px',
+      }} 
+      className={className}
+    >
+      {children}
     </div>
   );
 }
@@ -155,7 +87,14 @@ export function PageLoading({ message = 'Caricamento...' }) {
       padding: '60px 20px',
       color: '#64748b'
     }}>
-      <div style={{ fontSize: 32, marginBottom: 16, animation: 'spin 1s linear infinite' }}>⏳</div>
+      <div style={{ 
+        width: 32, height: 32,
+        border: '3px solid #e2e8f0',
+        borderTop: '3px solid #2563eb',
+        borderRadius: '50%',
+        animation: 'spin 1s linear infinite',
+        margin: '0 auto 16px'
+      }} />
       <p style={{ margin: 0, fontSize: 14 }}>{message}</p>
     </div>
   );
