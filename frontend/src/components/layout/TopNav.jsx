@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Calendar, ChevronDown } from 'lucide-react';
 import { AnnoSelector } from '../../contexts/AnnoContext';
@@ -34,12 +34,28 @@ const ALTRO_ITEMS = [
 
 export default function TopNav() {
   const location = useLocation();
-  const [showAltro, setShowAltro] = React.useState(false);
+  const [showAltro, setShowAltro] = useState(false);
+  const closeTimeoutRef = useRef(null);
   
   // Check if current path is in "Altro" section
   const isAltroActive = ALTRO_ITEMS.some(item => 
     location.pathname === item.to || location.pathname.startsWith(item.to)
   );
+
+  // Apre immediatamente, chiude con ritardo di 200ms
+  const handleMouseEnter = useCallback(() => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+    setShowAltro(true);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    closeTimeoutRef.current = setTimeout(() => {
+      setShowAltro(false);
+    }, 200); // 200ms di ritardo prima di chiudere
+  }, []);
 
   return (
     <nav className="topnav-primary" data-testid="topnav-primary">
@@ -66,11 +82,11 @@ export default function TopNav() {
           </NavLink>
         ))}
         
-        {/* Solo "Altro" ha dropdown */}
+        {/* Solo "Altro" ha dropdown con ritardo sul close */}
         <div 
           className={`topnav-dropdown ${isAltroActive ? 'active' : ''}`}
-          onMouseEnter={() => setShowAltro(true)}
-          onMouseLeave={() => setShowAltro(false)}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
         >
           <button className={`topnav-item ${isAltroActive ? 'active' : ''}`}>
             <span className="topnav-icon">⋯</span>
