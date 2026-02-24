@@ -689,17 +689,6 @@ function PrimaNotaDesktop() {
       {/* ========== SEZIONE BANCA ========== */}
       {activeSection === 'banca' && (
         <section>
-          <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
-            <div>
-              <h1 style={{ margin: 0, fontSize: 24, fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span>🏦</span> Prima Nota Banca - Estratto Conto
-              </h1>
-              <p style={{ margin: '4px 0 0 0', color: '#6b7280', fontSize: 14 }}>
-                Visualizzazione movimenti dall'estratto conto bancario importato
-              </p>
-            </div>
-          </div>
-
           {/* Summary Cards Banca */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 20 }}>
             <SummaryCard title="Totale Entrate" value={formatEuro(bancaData.totale_entrate)} color="#4caf50" icon="📈" subtitle="Accrediti sul conto" />
