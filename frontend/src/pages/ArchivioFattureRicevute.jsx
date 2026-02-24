@@ -338,8 +338,7 @@ export default function ArchivioFatture() {
   // ==================== RENDER ====================
 
   return (
-    <PageLayout title="Fatture Ricevute" subtitle={`Anno ${anno}`}>
-    <div style={{ maxWidth: 1600, margin: '0 auto', position: 'relative' }} data-testid="ciclo-passivo-unificato">
+    <div style={{ maxWidth: 1600, margin: '0 auto', position: 'relative', padding: '16px 0' }} data-testid="ciclo-passivo-unificato">
       {/* Tabs */}
       <div style={{ marginBottom: 24 }}>
         <div style={{ display: 'flex', gap: 4, borderBottom: '2px solid #e5e7eb', overflowX: 'auto', paddingBottom: 2 }}>
