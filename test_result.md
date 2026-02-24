@@ -202,6 +202,161 @@ backend:
           comment: "✅ PASSED - Health check (/api/health), ping (/api/ping), and system status (/api/system/lock-status) all working correctly. Backend is stable and healthy."
 
 frontend:
+  - task: "Homepage/Dashboard - Load without errors"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/hub/DashboardHub.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "testing"
+          comment: "Ready for testing - verify homepage loads at / route"
+          
+  - task: "Dashboard - Year Selector (2026)"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/contexts/AnnoContext.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "testing"
+          comment: "Ready for testing - verify year selector shows 2026"
+          
+  - task: "Dashboard - Sidebar Navigation"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/App.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "testing"
+          comment: "Ready for testing - verify sidebar with all menu items is visible"
+          
+  - task: "Fornitori Page - Display 316 Suppliers"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/Fornitori.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "testing"
+          comment: "Ready for testing - verify /fornitori shows 316 total suppliers"
+          
+  - task: "Fornitori Page - Stats Cards (4 cards)"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/Fornitori.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "testing"
+          comment: "Ready for testing - verify 4 stat cards are visible (Total, With Invoices, Incomplete, Cash)"
+          
+  - task: "Fornitori Page - Supplier List (min 10 visible)"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/Fornitori.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "testing"
+          comment: "Ready for testing - verify supplier list loads with min 10 suppliers visible, each showing name, P.IVA, invoices count, payment days"
+          
+  - task: "Fornitori Page - Aggiorna Button"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/Fornitori.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "testing"
+          comment: "Ready for testing - verify Aggiorna (refresh) button is clickable"
+          
+  - task: "Fornitori Page - Search/Filter"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/Fornitori.jsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "testing"
+          comment: "Ready for testing - verify search input and filter dropdowns work"
+          
+  - task: "Navigation - Dipendenti Page"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/App.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "testing"
+          comment: "Ready for testing - verify clicking Dipendenti in menu navigates to /dipendenti"
+          
+  - task: "Navigation - Return to Dashboard"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/App.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "testing"
+          comment: "Ready for testing - verify clicking Dashboard returns to /"
+          
+  - task: "Performance - Page Load Time <3s"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "testing"
+          comment: "Ready for testing - verify all pages load within 3 seconds"
+          
+  - task: "UI - Console Errors Check"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "testing"
+          comment: "Ready for testing - verify no critical console errors"
+          
+  - task: "UI - Compact Layout"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/App.jsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "testing"
+          comment: "Ready for testing - verify compact layout with small header, 3-4 suppliers visible without scroll"
 
 metadata:
   created_by: "testing_agent"
