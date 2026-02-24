@@ -512,28 +512,29 @@ function StatCard({ icon: Icon, label, value, color, bgColor }) {
   return (
     <div style={{
       backgroundColor: 'white',
-      borderRadius: '12px',
-      padding: '20px',
+      borderRadius: '8px',
+      padding: '12px 16px',
       display: 'flex',
       alignItems: 'center',
-      gap: '16px',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+      gap: '12px',
+      boxShadow: '0 1px 2px rgba(0,0,0,0.08)',
       border: '1px solid #f0f0f0'
     }}>
       <div style={{
-        width: '48px',
-        height: '48px',
-        borderRadius: '12px',
+        width: '36px',
+        height: '36px',
+        borderRadius: '8px',
         backgroundColor: bgColor,
         display: 'flex',
         alignItems: 'center',
-        justifyContent: 'center'
+        justifyContent: 'center',
+        flexShrink: 0
       }}>
-        <Icon size={24} color={color} />
+        <Icon size={20} color={color} />
       </div>
       <div>
-        <div style={{ fontSize: '28px', fontWeight: 700, color: color }}>{value}</div>
-        <div style={{ fontSize: '13px', color: '#6b7280' }}>{label}</div>
+        <div style={{ fontSize: '22px', fontWeight: 700, color: color, lineHeight: 1 }}>{value}</div>
+        <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>{label}</div>
       </div>
     </div>
   );
