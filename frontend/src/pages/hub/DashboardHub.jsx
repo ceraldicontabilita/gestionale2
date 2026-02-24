@@ -1,27 +1,27 @@
-import React, { lazy } from 'react';
-import { SectionPage } from '../../components/SectionPage';
-import { BarChart3, TrendingUp } from 'lucide-react';
+import React, { lazy, Suspense } from 'react';
 
 const DashboardContent = lazy(() => import('../Dashboard.jsx'));
-const AnalyticsContent = lazy(() => import('../DashboardAnalytics.jsx'));
+
+const Loading = () => (
+  <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>
+    <div style={{
+      width: 32, height: 32,
+      border: '3px solid #e2e8f0',
+      borderTop: '3px solid #2563eb',
+      borderRadius: '50%',
+      animation: 'spin 1s linear infinite',
+      margin: '0 auto 12px'
+    }} />
+    Caricamento...
+  </div>
+);
 
 export default function DashboardHub() {
-  const sections = [
-    {
-      id: 'operativa',
-      label: 'Dashboard Operativa',
-      icon: <BarChart3 size={16} />,
-      desc: 'Panoramica generale, statistiche, scadenze',
-      component: <DashboardContent />
-    },
-    {
-      id: 'analytics',
-      label: 'Analytics Avanzate',
-      icon: <TrendingUp size={16} />,
-      desc: 'Analisi dettagliata, trend, confronti periodi',
-      component: <AnalyticsContent />
-    }
-  ];
-
-  return <SectionPage title="Dashboard" icon={<BarChart3 size={22} />} sections={sections} defaultOpen="operativa" />;
+  return (
+    <div style={{ padding: '16px 24px', minHeight: '100vh', background: '#f8fafc' }}>
+      <Suspense fallback={<Loading />}>
+        <DashboardContent />
+      </Suspense>
+    </div>
+  );
 }
