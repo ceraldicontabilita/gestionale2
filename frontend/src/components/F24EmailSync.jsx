@@ -71,7 +71,7 @@ export default function F24EmailSync({ onClose }) {
       {/* Header */}
       <div style={{
         padding: '16px 20px',
-        background: status === 'loading' ? '#3b82f6' : 
+        background: status === 'loading' ? '#1535a8' : 
                    status === 'success' ? '#16a34a' : 
                    status === 'empty' ? '#64748b' : '#dc2626',
         color: 'white',
@@ -155,10 +155,10 @@ export default function F24EmailSync({ onClose }) {
                   borderRadius: 8, 
                   textAlign: 'center' 
                 }}>
-                  <div style={{ fontSize: 24, fontWeight: 'bold', color: '#1e40af' }}>
+                  <div style={{ fontSize: 24, fontWeight: 'bold', color: '#1535a8' }}>
                     {result.quietanze_trovate}
                   </div>
-                  <div style={{ fontSize: 12, color: '#1e40af' }}>Quietanze</div>
+                  <div style={{ fontSize: 12, color: '#1535a8' }}>Quietanze</div>
                 </div>
               )}
             </div>
@@ -221,7 +221,7 @@ export default function F24EmailSync({ onClose }) {
                 display: 'block',
                 marginTop: 16,
                 padding: 12,
-                background: '#1e40af',
+                background: '#1535a8',
                 color: 'white',
                 textAlign: 'center',
                 borderRadius: 8,

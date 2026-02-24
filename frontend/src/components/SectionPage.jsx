@@ -6,7 +6,7 @@ const SectionLoading = () => (
     <div style={{
       width: 32, height: 32,
       border: '3px solid #e2e8f0',
-      borderTop: '3px solid #2563eb',
+      borderTop: '3px solid #1535a8',
       borderRadius: '50%',
       animation: 'spin 1s linear infinite',
       margin: '0 auto 12px'
@@ -48,7 +48,7 @@ export function SectionPage({ title, subtitle, icon, sections, defaultOpen, acti
             gap: 10,
             margin: 0
           }}>
-            {icon && <span style={{ color: '#3b82f6' }}>{icon}</span>}
+            {icon && <span style={{ color: '#1535a8' }}>{icon}</span>}
             {title}
           </h1>
           {subtitle && (
@@ -133,7 +133,7 @@ export function SectionPage({ title, subtitle, icon, sections, defaultOpen, acti
               }}
             >
               {openSections[s.id]
-                ? <ChevronDown size={18} style={{ color: '#3b82f6', flexShrink: 0 }} />
+                ? <ChevronDown size={18} style={{ color: '#1535a8', flexShrink: 0 }} />
                 : <ChevronRight size={18} style={{ color: '#94a3b8', flexShrink: 0 }} />
               }
               {s.icon && <span style={{ fontSize: 18, flexShrink: 0 }}>{s.icon}</span>}
@@ -147,7 +147,7 @@ export function SectionPage({ title, subtitle, icon, sections, defaultOpen, acti
                   fontSize: 11,
                   fontWeight: 600,
                   background: '#dbeafe',
-                  color: '#2563eb',
+                  color: '#1535a8',
                   borderRadius: 12
                 }}>{s.badge}</span>
               )}

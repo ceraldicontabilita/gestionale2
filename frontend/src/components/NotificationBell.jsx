@@ -64,19 +64,19 @@ export default function NotificationBell() {
   const getAlertIcon = (tipo) => {
     switch (tipo) {
       case "fornitore_senza_metodo_pagamento":
-        return <AlertTriangle size={16} style={{ color: '#f59e0b' }} />;
+        return <AlertTriangle size={16} style={{ color: '#d97706' }} />;
       case "scadenza":
         return <Bell size={16} style={{ color: '#ef4444' }} />;
       default:
-        return <Info size={16} style={{ color: '#3b82f6' }} />;
+        return <Info size={16} style={{ color: '#1535a8' }} />;
     }
   };
 
   const getPriorityBorder = (priorita) => {
     switch (priorita) {
       case "alta": return '#ef4444';
-      case "media": return '#f59e0b';
-      default: return '#3b82f6';
+      case "media": return '#d97706';
+      default: return '#1535a8';
     }
   };
 
@@ -314,7 +314,7 @@ export default function NotificationBell() {
                 style={{
                   background: 'transparent',
                   border: 'none',
-                  color: '#2563eb',
+                  color: '#1535a8',
                   fontSize: '13px',
                   fontWeight: 500,
                   cursor: 'pointer',

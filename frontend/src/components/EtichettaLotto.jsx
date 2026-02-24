@@ -164,7 +164,7 @@ const styles = {
     marginTop: '2mm',
     padding: '2mm',
     background: '#fef3c7',
-    border: '1px solid #f59e0b',
+    border: '1px solid #d97706',
     borderRadius: '2mm'
   },
   allergeniLabel: {
@@ -214,10 +214,10 @@ const styles = {
     gap: '8px',
     transition: 'all 0.2s',
     ...(variant === 'primary' ? {
-      background: '#3b82f6',
+      background: '#1535a8',
       color: 'white'
     } : variant === 'success' ? {
-      background: '#10b981',
+      background: '#15803d',
       color: 'white'
     } : {
       background: 'white',
@@ -240,7 +240,7 @@ const styles = {
     borderRadius: '8px',
     marginBottom: '8px',
     cursor: 'pointer',
-    border: selected ? '2px solid #3b82f6' : '1px solid #e2e8f0',
+    border: selected ? '2px solid #1535a8' : '1px solid #e2e8f0',
     background: selected ? '#eff6ff' : 'white'
   }),
   checkbox: {

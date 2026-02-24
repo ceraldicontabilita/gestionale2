@@ -77,7 +77,7 @@ export default function WidgetVerificaCoerenza({ anno, mostraDettaglio = false }
 
   // Se ci sono discrepanze, mostra alert
   if (verifica.has_discrepanze) {
-    const severityColor = verifica.critical_count > 0 ? '#dc2626' : '#f59e0b';
+    const severityColor = verifica.critical_count > 0 ? '#dc2626' : '#d97706';
     const severityBg = verifica.critical_count > 0 ? '#fef2f2' : '#fffbeb';
     const severityBorder = verifica.critical_count > 0 ? '#fecaca' : '#fde68a';
 
@@ -103,7 +103,7 @@ export default function WidgetVerificaCoerenza({ anno, mostraDettaglio = false }
             {verifica.critical_count > 0 ? (
               <XCircle size={20} color="#dc2626" />
             ) : (
-              <AlertTriangle size={20} color="#f59e0b" />
+              <AlertTriangle size={20} color="#d97706" />
             )}
             <div>
               <div style={{ fontWeight: 'bold', color: severityColor, fontSize: 14 }}>
@@ -175,7 +175,7 @@ export default function WidgetVerificaCoerenza({ anno, mostraDettaglio = false }
                     <div style={{ 
                       fontSize: 13, 
                       fontWeight: 'bold',
-                      color: d.differenza > 0 ? '#dc2626' : '#2563eb',
+                      color: d.differenza > 0 ? '#dc2626' : '#1535a8',
                       marginTop: 4,
                       padding: '2px 8px',
                       background: d.differenza > 0 ? '#fef2f2' : '#eff6ff',
@@ -213,7 +213,7 @@ export default function WidgetVerificaCoerenza({ anno, mostraDettaglio = false }
                 E altre {verifica.totale_discrepanze - 5} discrepanze...
                 <a 
                   href="/verifica-coerenza" 
-                  style={{ marginLeft: 8, color: '#2563eb', textDecoration: 'none' }}
+                  style={{ marginLeft: 8, color: '#1535a8', textDecoration: 'none' }}
                 >
                   Vedi tutte →
                 </a>
@@ -261,7 +261,7 @@ export function BadgeVerificaCoerenza({ anno }) {
         borderRadius: 12,
         fontSize: 11,
         fontWeight: 'bold',
-        background: critical > 0 ? '#dc2626' : '#f59e0b',
+        background: critical > 0 ? '#dc2626' : '#d97706',
         color: 'white'
       }}
       title={`${count} discrepanze nei dati${critical > 0 ? ` (${critical} critiche)` : ''}`}

@@ -71,7 +71,7 @@ export default function Breadcrumb({ pageTitle = '', customItems = null }) {
                   alignItems: 'center',
                   transition: 'color 0.2s'
                 }}
-                onMouseEnter={(e) => e.target.style.color = '#3b82f6'}
+                onMouseEnter={(e) => e.target.style.color = '#1535a8'}
                 onMouseLeave={(e) => e.target.style.color = '#6b7280'}
               >
                 {index === 0 ? <Home style={{ width: 14, height: 14 }} /> : item.label}
