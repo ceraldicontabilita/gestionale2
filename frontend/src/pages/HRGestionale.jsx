@@ -681,7 +681,7 @@ function Ferie({ dips }) {
             <FormField label="Dipendente">
               <select style={inputStyle} value={form.dipendente_id} onChange={e => setForm(f => ({ ...f, dipendente_id: e.target.value }))}>
                 <option value="">-- Seleziona --</option>
-                {dips.filter(d => d.in_carico !== false).map(d => <option key={d.id} value={d.id}>{d.nome} {d.cognome}</option>)}
+                {dips.filter(d => d.in_carico !== false).map((d, idx) => <option key={d.id || `dip-${idx}`} value={d.id}>{d.nome} {d.cognome}</option>)}
               </select>
             </FormField>
           </div>
