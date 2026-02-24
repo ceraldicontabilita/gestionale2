@@ -1378,7 +1378,7 @@ export default function Fornitori() {
               onClick={() => setShowModal(true)}
               style={{ 
                 padding: '14px 28px',
-                background: '#22c55e',
+                background: '#15803d',
                 color: 'white',
                 border: 'none',
                 borderRadius: 10,
