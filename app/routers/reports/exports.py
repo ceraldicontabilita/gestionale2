@@ -16,7 +16,7 @@ from app.repositories import (
     WarehouseRepository,
     EmployeeRepository
 )
-from app.services import InvoiceService, WarehouseService, EmployeeService
+from app.services import InvoiceServiceV2, WarehouseService, EmployeeService
 from app.utils.dependencies import get_current_user
 from app.utils.excel_exporter import excel_exporter
 
@@ -30,7 +30,7 @@ async def get_invoice_service() -> InvoiceService:
     invoice_repo = InvoiceRepository(db[Collections.INVOICES])
     supplier_repo = SupplierRepository(db[Collections.SUPPLIERS])
     # Pass None for other services as export doesn't need them
-    return InvoiceService(invoice_repo, supplier_repo)
+    return InvoiceServiceV2(invoice_repo, supplier_repo)
 
 
 async def get_warehouse_service() -> WarehouseService:
