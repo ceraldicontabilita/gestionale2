@@ -394,8 +394,8 @@ export default function ArchivioFatture() {
             <div style={{ fontSize: 24, fontWeight: 'bold', color: '#15803d' }}>{stats.num_scadenze_saldate || 0}</div>
             <div style={{ fontSize: 12, color: '#64748b' }}>Scadenze Saldate</div>
           </div>
-          <div style={{ background: 'linear-gradient(135deg, #3b82f615, #3b82f608)', borderRadius: 12, padding: 16, border: '1px solid #3b82f630' }}>
-            <div style={{ fontSize: 18, fontWeight: 'bold', color: '#3b82f6' }}>{formatEuro(stats.totale_pagato || 0)}</div>
+          <div style={{ background: 'linear-gradient(135deg, #1535a815, #1535a808)', borderRadius: 12, padding: 16, border: '1px solid #1535a830' }}>
+            <div style={{ fontSize: 18, fontWeight: 'bold', color: '#1535a8' }}>{formatEuro(stats.totale_pagato || 0)}</div>
             <div style={{ fontSize: 12, color: '#64748b' }}>Totale Pagato</div>
           </div>
         </div>
