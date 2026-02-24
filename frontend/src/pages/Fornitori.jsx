@@ -1355,7 +1355,6 @@ export default function Fornitori() {
             >
               <Plus size={18} /> Nuovo Fornitore
             </button>
-          </div>
         </div>
 
         {/* Stats */}
