@@ -26,6 +26,7 @@ const ALTRO_ITEMS = [
   { to: '/todo', label: 'To-Do' },
   { to: '/import-documenti', label: 'Import Documenti' },
   { to: '/documenti', label: 'Documenti' },
+  { to: '/learning-machine', label: 'Learning Machine' },
   { to: '/strumenti', label: 'Strumenti' },
   { to: '/integrazioni', label: 'Integrazioni' },
   { to: '/admin', label: 'Admin' },
