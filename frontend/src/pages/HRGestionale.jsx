@@ -235,8 +235,8 @@ function DashboardHR({ dips, loading }) {
               </tr>
             </thead>
             <tbody>
-              {dips.filter(d => d.in_carico !== false).slice(0, 10).map(d => (
-                <tr key={d.id} style={{ borderTop: "1px solid #e5e7eb" }}>
+              {dips.filter(d => d.in_carico !== false).slice(0, 10).map((d, idx) => (
+                <tr key={d.id || `dip-row-${idx}`} style={{ borderTop: "1px solid #e5e7eb" }}>
                   <td style={{ padding: "12px 16px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <Avatar nome={d.nome} cognome={d.cognome} id={d.id} />
