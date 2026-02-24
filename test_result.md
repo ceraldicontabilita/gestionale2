@@ -366,17 +366,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Homepage/Dashboard - Load without errors"
-    - "Dashboard - Year Selector (2026)"
-    - "Dashboard - Sidebar Navigation"
-    - "Fornitori Page - Display 316 Suppliers"
-    - "Fornitori Page - Stats Cards (4 cards)"
-    - "Fornitori Page - Supplier List (min 10 visible)"
-    - "Fornitori Page - Aggiorna Button"
-    - "Navigation - Dipendenti Page"
-    - "Navigation - Return to Dashboard"
-    - "Performance - Page Load Time <3s"
-    - "UI - Console Errors Check"
+    - "All frontend E2E tests completed and verified working"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
