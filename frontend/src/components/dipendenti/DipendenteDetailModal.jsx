@@ -80,13 +80,13 @@ export function DipendenteDetailModal({
   };
 
   const tabs = [
-    { id: 'anagrafica', label: '📋 Anagrafica', color: '#2196f3' },
-    { id: 'retribuzione', label: '💰 Retribuzione', color: '#4caf50' },
-    { id: 'progressivi', label: '📊 Progressivi', color: '#ff9800' },
-    { id: 'bonifici', label: '🏦 Bonifici', color: '#3f51b5' },
-    { id: 'acconti', label: '💵 Acconti', color: '#ef4444' },
-    { id: 'agevolazioni', label: '🎁 Agevolazioni', color: '#9c27b0' },
-    { id: 'contratti', label: '📄 Contratti', color: '#607d8b' }
+    { id: 'anagrafica', label: 'Anagrafica', color: '#2196f3' },
+    { id: 'retribuzione', label: 'Retribuzione', color: '#4caf50' },
+    { id: 'progressivi', label: 'Progressivi', color: '#ff9800' },
+    { id: 'bonifici', label: 'Bonifici', color: '#3f51b5' },
+    { id: 'acconti', label: 'Acconti', color: '#ef4444' },
+    { id: 'agevolazioni', label: 'Agevolazioni', color: '#9c27b0' },
+    { id: 'contratti', label: 'Contratti', color: '#607d8b' }
   ];
 
   return (
@@ -445,7 +445,7 @@ function DipendenteFormProgressivi({ dipendente, editData, setEditData, editMode
     <div>
       {/* TFR */}
       <div style={{ background: '#e3f2fd', padding: 12, borderRadius: 8, marginBottom: 12 }}>
-        <h4 style={{ margin: '0 0 8px 0', fontSize: 12, color: '#1565c0' }}>💰 TFR</h4>
+        <h4 style={{ margin: '0 0 8px 0', fontSize: 12, color: '#1565c0' }}>TFR</h4>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
           <div>
             <label style={labelStyle}>TFR Accantonato €</label>
