@@ -1269,75 +1269,59 @@ export default function Fornitori() {
   };
 
   return (
-    <PageLayout title="Gestione Fornitori" subtitle="Anagrafica e gestione fornitori">
-    <div style={{ minHeight: '100vh', backgroundColor: '#f3f4f6', position: 'relative' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#f3f4f6', padding: '16px', position: 'relative' }}>
       
       <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
         
-        {/* Header con Gradiente */}
+        {/* Action Bar - senza cornice blu */}
         <div style={{ 
           display: 'flex', 
-          justifyContent: 'space-between', 
+          justifyContent: 'flex-end', 
           alignItems: 'center', 
           marginBottom: 16,
-          padding: '12px 16px',
-          background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
-          borderRadius: 8,
-          color: 'white',
-          flexWrap: 'wrap',
-          gap: 8
+          gap: 8,
+          flexWrap: 'wrap'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div>
-              <h1 style={{ margin: 0, fontSize: 18, fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <Building2 size={20} /> Gestione Fornitori
-              </h1>
-              <p style={{ margin: '2px 0 0 0', fontSize: 12, opacity: 0.9 }}>
-                Anagrafica completa • Metodi di pagamento
-              </p>
-            </div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button 
-              onClick={reloadData}
-              disabled={loading}
-              style={{ 
-                padding: '8px 16px',
-                background: 'rgba(255,255,255,0.9)',
-                color: '#1e3a5f',
-                border: 'none',
-                borderRadius: 6,
-                cursor: loading ? 'wait' : 'pointer',
-                fontWeight: '600',
-                fontSize: '13px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 5
-              }}
-            >
-              🔄 {loading ? 'Caricamento...' : 'Aggiorna'}
-            </button>
-            <button 
-              onClick={async () => {
-                if (!window.confirm('Vuoi aggiornare tutti i fornitori con i dati della Camera di Commercio?')) return;
-                try {
-                  const res = await api.get('/api/openapi-imprese/fornitori-da-aggiornare?limit=50');
-                  if (res.data.count === 0) {
-                    alert('Tutti i fornitori sono già aggiornati!');
-                    return;
-                  }
-                  const partiteIva = (res.data?.fornitori || []).map(f => f.partita_iva).filter(Boolean);
-                  if (partiteIva.length === 0) {
-                    alert('Nessun fornitore con P.IVA valida da aggiornare');
-                    return;
-                  }
-                  const bulkRes = await api.post('/api/openapi-imprese/aggiorna-bulk', { partite_iva: partiteIva });
-                  alert(`Aggiornati: ${bulkRes.data.aggiornati}\nCreati: ${bulkRes.data.creati}\nErrori: ${bulkRes.data.errori}`);
-                  reloadData();
-                } catch (err) {
-                  alert('Errore: ' + (err.response?.data?.detail || err.message));
+          <button 
+            onClick={reloadData}
+            disabled={loading}
+            style={{ 
+              padding: '8px 14px',
+              background: '#f1f5f9',
+              color: '#1e3a5f',
+              border: '1px solid #e2e8f0',
+              borderRadius: 6,
+              cursor: loading ? 'wait' : 'pointer',
+              fontWeight: '600',
+              fontSize: '13px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 5
+            }}
+          >
+            🔄 {loading ? 'Caricamento...' : 'Aggiorna'}
+          </button>
+          <button 
+            onClick={async () => {
+              if (!window.confirm('Vuoi aggiornare tutti i fornitori con i dati della Camera di Commercio?')) return;
+              try {
+                const res = await api.get('/api/openapi-imprese/fornitori-da-aggiornare?limit=50');
+                if (res.data.count === 0) {
+                  alert('Tutti i fornitori sono già aggiornati!');
+                  return;
                 }
-              }}
+                const partiteIva = (res.data?.fornitori || []).map(f => f.partita_iva).filter(Boolean);
+                if (partiteIva.length === 0) {
+                  alert('Nessun fornitore con P.IVA valida da aggiornare');
+                  return;
+                }
+                const bulkRes = await api.post('/api/openapi-imprese/aggiorna-bulk', { partite_iva: partiteIva });
+                alert(`Aggiornati: ${bulkRes.data.aggiornati}\nCreati: ${bulkRes.data.creati}\nErrori: ${bulkRes.data.errori}`);
+                reloadData();
+              } catch (err) {
+                alert('Errore: ' + (err.response?.data?.detail || err.message));
+              }
+            }}
               style={{ 
                 padding: '10px 20px',
                 background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
