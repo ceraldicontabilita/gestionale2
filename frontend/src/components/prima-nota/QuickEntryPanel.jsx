@@ -463,7 +463,7 @@ export function QuickEntryPanel({ onDataSaved }) {
           padding: 20,
           color: 'white'
         }}>
-          <h3 style={{ margin: '0 0 15px 0', fontSize: 16 }}>💰 Finanziamento Soci</h3>
+          <h3 style={{ margin: '0 0 15px 0', fontSize: 16 }}>Finanziamento Soci</h3>
           <div style={{ display: 'grid', gap: 10 }}>
             <input
               type="date"
