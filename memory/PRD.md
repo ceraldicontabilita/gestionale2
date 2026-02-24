@@ -76,8 +76,8 @@ L'utente ha richiesto di ricreare un sistema ERP con:
 ### 📋 Backlog
 
 #### P2 - Future
-- Re-implementazione autenticazione (richiesta al deployment)
 - Ottimizzazione performance query MongoDB
+- Fix statistiche fatture ricevute (mostra 0 invece dei totali reali)
 - Fix warning React key in HRGestionale (minore)
 
 ### ✅ Testing E2E Completo (Feb 24, 2026)
