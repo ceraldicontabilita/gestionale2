@@ -359,6 +359,8 @@ app.include_router(dizionario_articoli.router, prefix="/api/dizionario-articoli"
 # --- Invoices Module ---
 app.include_router(invoices_emesse.router, prefix="/api/invoices/emesse", tags=["Invoices Emesse"])
 app.include_router(invoices_main.router, prefix="/api/invoices", tags=["Invoices"])
+# Alias italiano per compatibilità frontend
+app.include_router(invoices_main.router, prefix="/api/fatture", tags=["Fatture"])
 app.include_router(invoices_export.router, prefix="/api/invoices", tags=["Invoices Export"])
 app.include_router(fatture_upload.router, prefix="/api/fatture", tags=["Fatture Upload"])
 app.include_router(fatture_ricevute_router, prefix="/api/fatture-ricevute", tags=["Fatture Ricevute"])
