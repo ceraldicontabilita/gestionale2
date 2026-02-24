@@ -1674,26 +1674,6 @@ function ScadenzeWidget({ scadenze }) {
           })}
         </tbody>
       </table>
-                <button
-                  onClick={() => setPagaModal(s)}
-                  style={{
-                    padding: '3px 6px',
-                    background: '#10b981',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: 4,
-                    fontSize: 10,
-                    cursor: 'pointer'
-                  }}
-                  title="Paga"
-                >
-                  ✓
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
       
       {scadenze.totale > 6 && (
         <div style={{ textAlign: 'center', marginTop: 12 }}>
