@@ -34,10 +34,7 @@ export default function FiscoHub() {
     if (path.includes('/iva')) {
       return <LiquidazioneIVAContent />;
     }
-    if (path.includes('/fisco')) {
-      return <IVAContent />;
-    }
-    // Default
+    // /fisco = Calcolo IVA (pagina principale)
     return <IVAContent />;
   };
 
