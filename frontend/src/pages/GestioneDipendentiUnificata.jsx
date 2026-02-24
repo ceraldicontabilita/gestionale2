@@ -25,19 +25,19 @@ import { Wallet, RefreshCw, CheckCircle, Clock, AlertCircle, FileText, Users, Ca
  */
 
 const TABS = [
-  { id: 'anagrafica', label: '👤 Anagrafica', icon: '👤' },
-  { id: 'giustificativi', label: '📋 Giustificativi', icon: '📋' },
-  { id: 'contratti', label: '📄 Contratti', icon: '📄' },
-  { id: 'retribuzione', label: '💰 Retribuzione', icon: '💰' },
-  { id: 'bonifici', label: '🏦 Bonifici', icon: '🏦' },
-  { id: 'acconti', label: '💵 Acconti', icon: '💵' },
-  { id: 'presenze-batch', label: '📅 Presenze', icon: '📅', global: true },
-  { id: 'turni', label: '👥 Gestione Turni', icon: '👥', global: true },
-  { id: 'richieste', label: '📋 Richieste', icon: '📋', global: true, badge: true },
-  { id: 'storico-ore', label: '⏱️ Storico Ore', icon: '⏱️', global: true },
-  { id: 'saldo-ferie', label: '🏖️ Saldo Ferie', icon: '🏖️', global: true },
-  { id: 'paghe', label: '💼 Paghe', icon: '💼', global: true },
-  { id: 'veicoli', label: '🚗 Veicoli', icon: '🚗', global: true },
+  { id: 'anagrafica', label: 'Anagrafica', icon: '👤' },
+  { id: 'giustificativi', label: 'Giustificativi', icon: '📋' },
+  { id: 'contratti', label: 'Contratti', icon: '📄' },
+  { id: 'retribuzione', label: 'Retribuzione', icon: '📋' },
+  { id: 'bonifici', label: 'Bonifici', icon: '🏦' },
+  { id: 'acconti', label: 'Acconti', icon: '📋' },
+  { id: 'presenze-batch', label: 'Presenze', icon: '📅', global: true },
+  { id: 'turni', label: 'Gestione Turni', icon: '👥', global: true },
+  { id: 'richieste', label: 'Richieste', icon: '📋', global: true, badge: true },
+  { id: 'storico-ore', label: 'Storico Ore', icon: '⏱️', global: true },
+  { id: 'saldo-ferie', label: 'Saldo Ferie', icon: '📅', global: true },
+  { id: 'paghe', label: 'Paghe', icon: '📋', global: true },
+  { id: 'veicoli', label: 'Veicoli', icon: '🚗', global: true },
 ];
 
 export default function GestioneDipendentiUnificata() {
