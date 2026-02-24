@@ -96,31 +96,32 @@ export default function TopNav() {
 
       {/* Right Side - Utilities */}
       <div className="topnav-right">
-        {/* Anno Selector - BEN VISIBILE */}
+        {/* Anno Selector - MOLTO VISIBILE */}
         <div className="topnav-anno" data-testid="anno-selector" style={{
           display: 'flex',
           alignItems: 'center',
-          background: '#1a40b5',
+          background: '#dc2626',
           borderRadius: 8,
-          padding: '4px 12px',
-          gap: 6
+          padding: '6px 14px',
+          gap: 8,
+          boxShadow: '0 2px 8px rgba(220, 38, 38, 0.3)'
         }}>
           <span style={{ 
-            fontSize: 11, 
-            fontWeight: 700, 
+            fontSize: 12, 
+            fontWeight: 800, 
             color: 'white',
             textTransform: 'uppercase',
             letterSpacing: 0.5
-          }}>📅 ANNO</span>
+          }}>📅</span>
           <AnnoSelector style={{ 
             background: 'white',
             border: 'none',
             borderRadius: 6,
-            padding: '4px 10px',
-            fontSize: 15,
+            padding: '5px 12px',
+            fontSize: 16,
             fontWeight: 800,
-            color: '#1a40b5',
-            minWidth: 70,
+            color: '#dc2626',
+            minWidth: 75,
             cursor: 'pointer',
             textAlign: 'center'
           }} />
