@@ -1,6 +1,5 @@
-import React, { lazy } from 'react';
-import { SectionPage } from '../../components/SectionPage';
-import { Receipt, FileText, Hash, Calculator } from 'lucide-react';
+import React, { lazy, Suspense } from 'react';
+import { useLocation } from 'react-router-dom';
 
 const IVAContent = lazy(() => import('../IVA.jsx'));
 const LiquidazioneIVAContent = lazy(() => import('../LiquidazioneIVA.jsx'));
@@ -9,51 +8,44 @@ const RiconciliazioneF24Content = lazy(() => import('../RiconciliazioneF24.jsx')
 const CodiciContent = lazy(() => import('../CodiciTributari.jsx'));
 const IRESContent = lazy(() => import('../ContabilitaAvanzata.jsx'));
 
-export default function FiscoHub() {
-  const sections = [
-    {
-      id: 'iva',
-      label: 'Calcolo IVA',
-      icon: <Receipt size={16} />,
-      desc: 'Debito/credito IVA mensile, trimestrale, annuale',
-      component: <IVAContent />
-    },
-    {
-      id: 'liquidazione',
-      label: 'Liquidazione IVA',
-      icon: <Calculator size={16} />,
-      desc: 'Calcolo preciso liquidazione per commercialista',
-      component: <LiquidazioneIVAContent />
-    },
-    {
-      id: 'f24',
-      label: 'F24 / Tributi',
-      icon: <FileText size={16} />,
-      desc: 'Modelli F24, scadenze e dashboard pagamenti',
-      component: <F24Content />
-    },
-    {
-      id: 'f24-riconciliazione',
-      label: 'Riconciliazione F24',
-      icon: <Receipt size={16} />,
-      desc: 'Commercialista, quietanze, verifica pagamenti',
-      component: <RiconciliazioneF24Content />
-    },
-    {
-      id: 'codici',
-      label: 'Codici Tributari',
-      icon: <Hash size={16} />,
-      desc: 'Gestione codici tributo F24',
-      component: <CodiciContent />
-    },
-    {
-      id: 'ires-irap',
-      label: 'IRES / IRAP',
-      icon: <Calculator size={16} />,
-      desc: 'Imposte sul reddito e attività produttive',
-      component: <IRESContent />
-    }
-  ];
+const Loading = () => (
+  <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>
+    <div style={{
+      width: 32, height: 32,
+      border: '3px solid #e2e8f0',
+      borderTop: '3px solid #2563eb',
+      borderRadius: '50%',
+      animation: 'spin 1s linear infinite',
+      margin: '0 auto 12px'
+    }} />
+    Caricamento...
+  </div>
+);
 
-  return <SectionPage title="Fisco & Tributi" icon={<Receipt size={22} />} sections={sections} defaultOpen="iva" />;
+export default function FiscoHub() {
+  const location = useLocation();
+  const path = location.pathname;
+
+  // Determina quale contenuto mostrare basandosi sulla route
+  const getContent = () => {
+    if (path.includes('/f24') && !path.includes('riconciliazione')) {
+      return <F24Content />;
+    }
+    if (path.includes('/iva')) {
+      return <LiquidazioneIVAContent />;
+    }
+    if (path.includes('/fisco')) {
+      return <IVAContent />;
+    }
+    // Default
+    return <IVAContent />;
+  };
+
+  return (
+    <div style={{ padding: '16px 24px', minHeight: '100vh', background: '#f8fafc' }}>
+      <Suspense fallback={<Loading />}>
+        {getContent()}
+      </Suspense>
+    </div>
+  );
 }
