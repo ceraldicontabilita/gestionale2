@@ -528,17 +528,6 @@ function PrimaNotaDesktop() {
       {/* ========== SEZIONE CASSA ========== */}
       {activeSection === 'cassa' && (
         <section>
-          <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 16 }}>
-            <div>
-              <h1 style={{ margin: 0, fontSize: 24, fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span>💵</span> Prima Nota Cassa
-              </h1>
-              <p style={{ margin: '4px 0 0 0', color: '#6b7280', fontSize: 14 }}>
-                Registro movimenti di cassa • DARE: Corrispettivi, Finanziamenti • AVERE: POS, Versamenti, Fatture
-              </p>
-            </div>
-          </div>
-
           {/* Summary Cards Cassa - Compatti */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10, marginBottom: 16 }}>
             <MiniCard title="Entrate (DARE)" value={formatEuro(cassaData.totale_entrate)} color="#4caf50" />
