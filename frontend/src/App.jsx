@@ -389,12 +389,16 @@ export default function App() {
             background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
             color: white;
             width: 220px;
+            min-width: 220px;
+            max-width: 220px;
             height: 100vh;
-            position: sticky;
+            position: fixed;
+            left: 0;
             top: 0;
             padding: 12px 8px;
             overflow-y: auto;
-            overflow-x: visible;
+            overflow-x: hidden;
+            z-index: 1000;
           }
           
           .desktop-sidebar .brand {
