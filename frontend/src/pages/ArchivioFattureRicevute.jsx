@@ -1072,6 +1072,5 @@ export default function ArchivioFatture() {
         </div>
       )}
     </div>
-    </PageLayout>
   );
 }
