@@ -56,9 +56,15 @@ L'utente ha richiesto di ricreare un sistema ERP con:
 - **Ridotto padding** tra navbar e contenuto (da 24px a 8px)
 - Rimossi emoji da: Scadenze, Dashboard, RiconciliazioneUnificata, PrimaNota, GestioneDipendenti, Documenti, ecc.
 
-#### Anno Selector Esteso
+#### Anno Selector Migliorato
 - Ora include anni dal **2018 al 2027**
+- **ROSSO e molto visibile** in alto a destra
 - Permette di vedere i dati storici dell'estratto conto bancario (es. 2020: 27 movimenti)
+
+#### Tab e Pulsanti Rimossi (Feb 24, 2026)
+- **Rimosso "📥 CSV 50"** da Riconciliazione
+- **Rimosso "Carica F24"** da Riconciliazione (già presente in Import Documenti)
+- **Rimosso tab "Hub"** da Contabilità (duplicato di "Piano Conti")
 
 #### Prima Nota - Verificato Funzionante
 - La pagina Prima Nota funziona correttamente
