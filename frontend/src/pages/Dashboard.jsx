@@ -1581,10 +1581,10 @@ function ScadenzeWidget({ scadenze }) {
         <thead>
           <tr style={{ borderBottom: '2px solid #e2e8f0', background: '#f8fafc' }}>
             <th style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 600, fontSize: 10, color: '#64748b', textTransform: 'uppercase', width: 60 }}>Tipo</th>
-            <th style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 600, fontSize: 10, color: '#64748b', textTransform: 'uppercase', width: 70 }}>Importo</th>
-            <th style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 600, fontSize: 10, color: '#64748b', textTransform: 'uppercase', width: 55 }}>Data</th>
-            <th style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 600, fontSize: 10, color: '#64748b', textTransform: 'uppercase', width: 45 }}>Giorni</th>
-            <th style={{ padding: '6px 8px', textAlign: 'left', fontWeight: 600, fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Descrizione</th>
+            <th style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 600, fontSize: 10, color: '#64748b', textTransform: 'uppercase', width: 80 }}>Importo</th>
+            <th style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 600, fontSize: 10, color: '#64748b', textTransform: 'uppercase', width: 60 }}>Data</th>
+            <th style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 600, fontSize: 10, color: '#64748b', textTransform: 'uppercase', width: 50 }}>Giorni</th>
+            <th style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 600, fontSize: 10, color: '#64748b', textTransform: 'uppercase' }}>Descrizione</th>
             <th style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 600, fontSize: 10, color: '#64748b', textTransform: 'uppercase', width: 50 }}>Azioni</th>
           </tr>
         </thead>
@@ -1612,7 +1612,7 @@ function ScadenzeWidget({ scadenze }) {
                     {s.tipo}
                   </span>
                 </td>
-                <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 'bold', color: colors.text }}>
+                <td style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 'bold', color: colors.text }}>
                   {s.importo > 0 ? formatEuro(s.importo) : '-'}
                 </td>
                 <td style={{ padding: '6px 8px', textAlign: 'center', color: '#6b7280' }}>
@@ -1629,7 +1629,7 @@ function ScadenzeWidget({ scadenze }) {
                    s.giorni_mancanti < 0 ? `${s.giorni_mancanti}g` :
                    `${s.giorni_mancanti}g`}
                 </td>
-                <td style={{ padding: '6px 8px', color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 150 }}>
+                <td style={{ padding: '6px 8px', textAlign: 'center', color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 180 }}>
                   {s.fornitore || s.descrizione || s.numero_fattura || ''}
                 </td>
                 <td style={{ padding: '6px 8px', textAlign: 'center' }}>
