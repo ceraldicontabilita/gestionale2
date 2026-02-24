@@ -207,7 +207,7 @@ export default function Dashboard() {
                 alignItems: 'center',
                 gap: 6,
                 padding: '6px 12px',
-                background: autoRepairStatus === 'running' ? '#9ca3af' : 'linear-gradient(135deg, #1535a8 0%, #2050e8 100%)',
+                background: autoRepairStatus === 'running' ? '#9ca3af' : 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
                 color: 'white',
                 border: 'none',
                 borderRadius: 6,
@@ -286,7 +286,7 @@ export default function Dashboard() {
               alignItems: 'center',
               gap: 3,
               padding: '3px 8px',
-              background: showVolumeReale ? 'rgba(255,255,255,0.2)' : '#1535a8',
+              background: showVolumeReale ? 'rgba(255,255,255,0.2)' : '#1e3a5f',
               color: 'white',
               border: 'none',
               borderRadius: 4,
@@ -364,7 +364,7 @@ export default function Dashboard() {
       {/* Widget Bilancio Istantaneo - COMPATTO */}
       {bilancioIstantaneo && (
         <div style={{
-          background: 'linear-gradient(135deg, #1535a8 0%, #2050e8 100%)',
+          background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
           borderRadius: 10,
           padding: 14,
           marginTop: 12,
@@ -388,7 +388,7 @@ export default function Dashboard() {
               <div style={{ fontSize: 10, opacity: 0.8 }}>COSTI</div>
               <div style={{ fontSize: 16, fontWeight: 700 }}>{formatEuro(bilancioIstantaneo.costi?.totale || 0)}</div>
             </div>
-            <div style={{ background: 'rgba(59,130,246,0.2)', borderRadius: 6, padding: 10, borderLeft: '3px solid #1535a8' }}>
+            <div style={{ background: 'rgba(59,130,246,0.2)', borderRadius: 6, padding: 10, borderLeft: '3px solid #3b82f6' }}>
               <div style={{ fontSize: 10, opacity: 0.8 }}>SALDO IVA</div>
               <div style={{ fontSize: 16, fontWeight: 700, color: (bilancioIstantaneo.iva?.saldo || 0) >= 0 ? '#f87171' : '#34d399' }}>
                 {formatEuro(bilancioIstantaneo.iva?.saldo || 0)}
@@ -410,7 +410,7 @@ export default function Dashboard() {
 
       {/* Widget IRES/IRAP - COMPATTO */}
       {imposteData && (
-        <div style={{ borderRadius: 10, padding: 14, boxShadow: '0 1px 4px rgba(0,0,0,0.06)', marginTop: 12, background: 'linear-gradient(135deg, #1535a8 0%, #2050e8 100%)', color: 'white' }} data-testid="widget-calcolo-imposte">
+        <div style={{ borderRadius: 10, padding: 14, boxShadow: '0 1px 4px rgba(0,0,0,0.06)', marginTop: 12, background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)', color: 'white' }} data-testid="widget-calcolo-imposte">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
             <div style={{ fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
               🧮 Imposte {anno} <span style={{ fontSize: 10, opacity: 0.7, fontWeight: 400 }}>IRAP {imposteData.irap?.aliquota}%</span>
@@ -462,13 +462,13 @@ export default function Dashboard() {
           borderRadius: 10, 
           padding: 14, 
           marginTop: 12,
-          border: '1px solid #dce8f4',
+          border: '1px solid #e5e7eb',
           boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
         }} data-testid="widget-scadenze-f24">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: 16 }}>📋</span>
-              <span style={{ fontWeight: 600, fontSize: 14, color: '#1535a8' }}>Scadenze F24</span>
+              <span style={{ fontWeight: 600, fontSize: 14, color: '#1e3a5f' }}>Scadenze F24</span>
               <span style={{ 
                 background: '#fee2e2', 
                 color: '#dc2626', 
@@ -480,7 +480,7 @@ export default function Dashboard() {
                 {scadenzeF24.totale || scadenzeF24.scadenze.length}
               </span>
             </div>
-            <Link to="/f24" style={{ fontSize: 11, color: '#1535a8', textDecoration: 'none' }}>
+            <Link to="/f24" style={{ fontSize: 11, color: '#3b82f6', textDecoration: 'none' }}>
               Vedi tutti →
             </Link>
           </div>
@@ -499,7 +499,7 @@ export default function Dashboard() {
                     padding: '8px 10px',
                     background: isScaduto ? '#fef2f2' : isUrgente ? '#fef3c7' : '#f8fafc',
                     borderRadius: 6,
-                    borderLeft: `3px solid ${isScaduto ? '#dc2626' : isUrgente ? '#f59e0b' : '#1535a8'}`
+                    borderLeft: `3px solid ${isScaduto ? '#dc2626' : isUrgente ? '#f59e0b' : '#3b82f6'}`
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
@@ -530,7 +530,7 @@ export default function Dashboard() {
             <div style={{ 
               marginTop: 10, 
               paddingTop: 10, 
-              borderTop: '1px solid #dce8f4',
+              borderTop: '1px solid #e5e7eb',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center'
@@ -549,8 +549,8 @@ export default function Dashboard() {
         <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', marginTop: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
             <div>
-              <h2 style={{ fontSize: 18, margin: 0, fontWeight: 'bold', color: '#1535a8' }}>📈 Trend Mensile {anno}</h2>
-              <span style={{ fontSize: 13, color: '#6080a0' }}>Entrate vs Uscite</span>
+              <h2 style={{ fontSize: 18, margin: 0, fontWeight: 'bold', color: '#1e3a5f' }}>📈 Trend Mensile {anno}</h2>
+              <span style={{ fontSize: 13, color: '#6b7280' }}>Entrate vs Uscite</span>
             </div>
             <div style={{ display: 'flex', gap: 20, fontSize: 14 }}>
               <div>
@@ -573,13 +573,13 @@ export default function Dashboard() {
           <div style={{ height: 300, width: '100%', minHeight: 300 }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={trendData.trend_mensile} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#dce8f4" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis dataKey="mese_nome" tick={{ fontSize: 12 }} />
                 <YAxis tickFormatter={(v) => `€${(v/1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
                 <Tooltip 
                   formatter={(value) => formatEuro(value)}
                   labelStyle={{ fontWeight: 'bold' }}
-                  contentStyle={{ borderRadius: 8, border: '1px solid #dce8f4' }}
+                  contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb' }}
                 />
                 <Legend />
                 <Bar dataKey="entrate" fill="#10b981" name="Entrate" radius={[4, 4, 0, 0]} />
@@ -599,23 +599,23 @@ export default function Dashboard() {
             borderRadius: 8
           }}>
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 12, color: '#6080a0' }}>Media Entrate</div>
+              <div style={{ fontSize: 12, color: '#6b7280' }}>Media Entrate</div>
               <div style={{ fontSize: 18, fontWeight: 'bold', color: '#10b981' }}>
                 {formatEuro(trendData.statistiche?.media_entrate_mensile)}
               </div>
             </div>
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 12, color: '#6080a0' }}>Media Uscite</div>
+              <div style={{ fontSize: 12, color: '#6b7280' }}>Media Uscite</div>
               <div style={{ fontSize: 18, fontWeight: 'bold', color: '#ef4444' }}>
                 {formatEuro(trendData.statistiche?.media_uscite_mensile)}
               </div>
             </div>
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 12, color: '#6080a0' }}>Picco Entrate</div>
+              <div style={{ fontSize: 12, color: '#6b7280' }}>Picco Entrate</div>
               <div style={{ fontSize: 18, fontWeight: 'bold' }}>{trendData.statistiche?.mese_picco_entrate}</div>
             </div>
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 12, color: '#6080a0' }}>Picco Uscite</div>
+              <div style={{ fontSize: 12, color: '#6b7280' }}>Picco Uscite</div>
               <div style={{ fontSize: 18, fontWeight: 'bold' }}>{trendData.statistiche?.mese_picco_uscite}</div>
             </div>
           </div>
@@ -625,11 +625,11 @@ export default function Dashboard() {
       {/* IVA Trend Chart */}
       {trendData && (
         <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', marginTop: 20 }}>
-          <h2 style={{ fontSize: 18, margin: '0 0 15px 0', fontWeight: 'bold', color: '#1535a8' }}>📊 Trend IVA {anno}</h2>
+          <h2 style={{ fontSize: 18, margin: '0 0 15px 0', fontWeight: 'bold', color: '#1e3a5f' }}>📊 Trend IVA {anno}</h2>
           <div style={{ height: 200, width: '100%', minHeight: 200 }}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={trendData.trend_mensile} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#dce8f4" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis dataKey="mese_nome" tick={{ fontSize: 12 }} />
                 <YAxis tickFormatter={(v) => `€${(v/1000).toFixed(0)}k`} tick={{ fontSize: 11 }} />
                 <Tooltip 
@@ -638,7 +638,7 @@ export default function Dashboard() {
                 />
                 <Legend />
                 <Line type="monotone" dataKey="iva_debito" stroke="#f59e0b" strokeWidth={2} name="IVA Debito" dot={{ r: 3 }} />
-                <Line type="monotone" dataKey="iva_credito" stroke="#1535a8" strokeWidth={2} name="IVA Credito" dot={{ r: 3 }} />
+                <Line type="monotone" dataKey="iva_credito" stroke="#3b82f6" strokeWidth={2} name="IVA Credito" dot={{ r: 3 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -653,7 +653,7 @@ export default function Dashboard() {
               IVA Debito Totale: <strong style={{ color: '#f59e0b' }}>{formatEuro(trendData.totali?.iva_debito)}</strong>
             </div>
             <div>
-              IVA Credito Totale: <strong style={{ color: '#1535a8' }}>{formatEuro(trendData.totali?.iva_credito)}</strong>
+              IVA Credito Totale: <strong style={{ color: '#3b82f6' }}>{formatEuro(trendData.totali?.iva_credito)}</strong>
             </div>
             <div>
               Saldo IVA: <strong style={{ color: trendData.totali?.saldo_iva >= 0 ? '#ef4444' : '#10b981' }}>
@@ -669,12 +669,12 @@ export default function Dashboard() {
         <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', marginTop: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
             <div>
-              <h2 style={{ fontSize: 18, margin: 0, fontWeight: 'bold', color: '#1535a8' }}>💳 Calendario POS - Sfasamento Accrediti</h2>
-              <span style={{ fontSize: 13, color: '#6080a0' }}>Mese corrente - Giorni con sfasamento lungo evidenziati</span>
+              <h2 style={{ fontSize: 18, margin: 0, fontWeight: 'bold', color: '#1e3a5f' }}>💳 Calendario POS - Sfasamento Accrediti</h2>
+              <span style={{ fontSize: 13, color: '#6b7280' }}>Mese corrente - Giorni con sfasamento lungo evidenziati</span>
             </div>
             <Link to="/riconciliazione" style={{
               padding: '6px 12px',
-              background: '#1535a8',
+              background: '#3b82f6',
               color: 'white',
               borderRadius: 6,
               textDecoration: 'none',
@@ -713,7 +713,7 @@ export default function Dashboard() {
         {/* Grafico a Torta - Spese per Categoria */}
         {speseCategoria && speseCategoria.categorie && speseCategoria.categorie.length > 0 && (
           <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-            <h2 style={{ fontSize: 18, margin: '0 0 15px 0', fontWeight: 'bold', color: '#1535a8' }}>🥧 Distribuzione Spese {anno}</h2>
+            <h2 style={{ fontSize: 18, margin: '0 0 15px 0', fontWeight: 'bold', color: '#1e3a5f' }}>🥧 Distribuzione Spese {anno}</h2>
             <div style={{ height: 280, display: 'flex', alignItems: 'center', minHeight: 280 }}>
               <ResponsiveContainer width="60%" height="100%">
                 <PieChart>
@@ -756,7 +756,7 @@ export default function Dashboard() {
                       <div style={{ fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {cat.nome}
                       </div>
-                      <div style={{ color: '#6080a0' }}>{formatEuro(cat.valore)}</div>
+                      <div style={{ color: '#6b7280' }}>{formatEuro(cat.valore)}</div>
                     </div>
                   </div>
                 ))}
@@ -769,7 +769,7 @@ export default function Dashboard() {
               background: '#f0fdf4', 
               borderRadius: 8 
             }}>
-              <span style={{ color: '#6080a0' }}>Totale Spese: </span>
+              <span style={{ color: '#6b7280' }}>Totale Spese: </span>
               <strong style={{ color: '#dc2626' }}>{formatEuro(speseCategoria.totale_spese)}</strong>
             </div>
           </div>
@@ -778,17 +778,17 @@ export default function Dashboard() {
         {/* Widget Stato Riconciliazione */}
         {statoRiconciliazione && (
           <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-            <h2 style={{ fontSize: 18, margin: '0 0 15px 0', fontWeight: 'bold', color: '#1535a8' }}>✅ Stato Riconciliazione {anno}</h2>
+            <h2 style={{ fontSize: 18, margin: '0 0 15px 0', fontWeight: 'bold', color: '#1e3a5f' }}>✅ Stato Riconciliazione {anno}</h2>
             
             {/* Barra progresso globale */}
             <div style={{ marginBottom: 20 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                <span style={{ fontSize: 13, color: '#6080a0' }}>Progresso Globale</span>
+                <span style={{ fontSize: 13, color: '#6b7280' }}>Progresso Globale</span>
                 <span style={{ fontWeight: 'bold', color: statoRiconciliazione.riepilogo.percentuale_globale >= 80 ? '#16a34a' : '#f59e0b' }}>
                   {statoRiconciliazione.riepilogo.percentuale_globale}%
                 </span>
               </div>
-              <div style={{ height: 12, background: '#dce8f4', borderRadius: 6, overflow: 'hidden' }}>
+              <div style={{ height: 12, background: '#e5e7eb', borderRadius: 6, overflow: 'hidden' }}>
                 <div style={{ 
                   height: '100%', 
                   width: `${statoRiconciliazione.riepilogo.percentuale_globale}%`,
@@ -817,13 +817,13 @@ export default function Dashboard() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, fontSize: 13 }}>
                 <div>
-                  <div style={{ color: '#6080a0' }}>Pagate</div>
+                  <div style={{ color: '#6b7280' }}>Pagate</div>
                   <div style={{ fontWeight: 'bold', color: '#16a34a' }}>
                     {statoRiconciliazione.fatture.pagate} / {statoRiconciliazione.fatture.totali}
                   </div>
                 </div>
                 <div>
-                  <div style={{ color: '#6080a0' }}>Da pagare</div>
+                  <div style={{ color: '#6b7280' }}>Da pagare</div>
                   <div style={{ fontWeight: 'bold', color: '#dc2626' }}>
                     {formatEuro(statoRiconciliazione.fatture.importo_da_pagare)}
                   </div>
@@ -847,13 +847,13 @@ export default function Dashboard() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, fontSize: 13 }}>
                 <div>
-                  <div style={{ color: '#6080a0' }}>Riconciliati</div>
+                  <div style={{ color: '#6b7280' }}>Riconciliati</div>
                   <div style={{ fontWeight: 'bold', color: '#16a34a' }}>
                     {statoRiconciliazione.salari.riconciliati} / {statoRiconciliazione.salari.totali}
                   </div>
                 </div>
                 <div>
-                  <div style={{ color: '#6080a0' }}>Da verificare</div>
+                  <div style={{ color: '#6b7280' }}>Da verificare</div>
                   <div style={{ fontWeight: 'bold', color: '#f59e0b' }}>
                     {statoRiconciliazione.salari.da_riconciliare}
                   </div>
@@ -865,7 +865,7 @@ export default function Dashboard() {
               display: 'block',
               marginTop: 15,
               padding: '10px 16px',
-              background: '#1535a8',
+              background: '#3b82f6',
               color: 'white',
               borderRadius: 8,
               textAlign: 'center',
@@ -906,7 +906,7 @@ export default function Dashboard() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
               {/* Fornitori */}
               <div style={{ background: 'white', borderRadius: 10, padding: 12, textAlign: 'center' }}>
-                <div style={{ fontSize: 11, color: '#6080a0', marginBottom: 4 }}>Fornitori</div>
+                <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>Fornitori</div>
                 <div style={{ fontSize: 22, fontWeight: 'bold', color: '#166534' }}>
                   {learningStats.fornitori_con_keywords || 0}
                 </div>
@@ -917,7 +917,7 @@ export default function Dashboard() {
               
               {/* Fatture */}
               <div style={{ background: 'white', borderRadius: 10, padding: 12, textAlign: 'center' }}>
-                <div style={{ fontSize: 11, color: '#6080a0', marginBottom: 4 }}>Fatture</div>
+                <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>Fatture</div>
                 <div style={{ fontSize: 22, fontWeight: 'bold', color: '#166534' }}>
                   {learningStats.percentuale_fatture || 0}%
                 </div>
@@ -928,7 +928,7 @@ export default function Dashboard() {
               
               {/* F24 */}
               <div style={{ background: 'white', borderRadius: 10, padding: 12, textAlign: 'center' }}>
-                <div style={{ fontSize: 11, color: '#6080a0', marginBottom: 4 }}>F24</div>
+                <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>F24</div>
                 <div style={{ fontSize: 22, fontWeight: 'bold', color: '#166534' }}>
                   {learningStats.percentuale_f24 || 0}%
                 </div>
@@ -959,7 +959,7 @@ export default function Dashboard() {
       {/* Confronto Anno Precedente */}
       {confrontoAnnuale && (
         <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', marginTop: 20 }}>
-          <h2 style={{ fontSize: 18, margin: '0 0 15px 0', fontWeight: 'bold', color: '#1535a8' }}>
+          <h2 style={{ fontSize: 18, margin: '0 0 15px 0', fontWeight: 'bold', color: '#1e3a5f' }}>
             📊 Confronto {anno} vs {anno - 1}
           </h2>
           <div style={{ 
@@ -969,7 +969,7 @@ export default function Dashboard() {
           }}>
             {/* Entrate */}
             <div style={{ background: '#f0fdf4', borderRadius: 12, padding: 15 }}>
-              <div style={{ fontSize: 12, color: '#6080a0', marginBottom: 5 }}>Entrate</div>
+              <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 5 }}>Entrate</div>
               <div style={{ fontSize: 24, fontWeight: 'bold', color: '#16a34a' }}>
                 {formatEuro(confrontoAnnuale.anno_corrente.entrate)}
               </div>
@@ -987,13 +987,13 @@ export default function Dashboard() {
                   {confrontoAnnuale.variazioni_percentuali.entrate >= 0 ? '↑' : '↓'} 
                   {Math.abs(confrontoAnnuale.variazioni_percentuali.entrate)}%
                 </span>
-                <span style={{ color: '#6080a0' }}>vs {anno - 1}</span>
+                <span style={{ color: '#6b7280' }}>vs {anno - 1}</span>
               </div>
             </div>
 
             {/* Uscite */}
             <div style={{ background: '#fef2f2', borderRadius: 12, padding: 15 }}>
-              <div style={{ fontSize: 12, color: '#6080a0', marginBottom: 5 }}>Uscite</div>
+              <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 5 }}>Uscite</div>
               <div style={{ fontSize: 24, fontWeight: 'bold', color: '#dc2626' }}>
                 {formatEuro(confrontoAnnuale.anno_corrente.uscite)}
               </div>
@@ -1011,7 +1011,7 @@ export default function Dashboard() {
                   {confrontoAnnuale.variazioni_percentuali.uscite >= 0 ? '↑' : '↓'} 
                   {Math.abs(confrontoAnnuale.variazioni_percentuali.uscite)}%
                 </span>
-                <span style={{ color: '#6080a0' }}>vs {anno - 1}</span>
+                <span style={{ color: '#6b7280' }}>vs {anno - 1}</span>
               </div>
             </div>
 
@@ -1021,7 +1021,7 @@ export default function Dashboard() {
               borderRadius: 12, 
               padding: 15 
             }}>
-              <div style={{ fontSize: 12, color: '#6080a0', marginBottom: 5 }}>Saldo</div>
+              <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 5 }}>Saldo</div>
               <div style={{ 
                 fontSize: 24, 
                 fontWeight: 'bold', 
@@ -1043,13 +1043,13 @@ export default function Dashboard() {
                   {confrontoAnnuale.variazioni_percentuali.saldo >= 0 ? '↑' : '↓'} 
                   {Math.abs(confrontoAnnuale.variazioni_percentuali.saldo)}%
                 </span>
-                <span style={{ color: '#6080a0' }}>vs {anno - 1}</span>
+                <span style={{ color: '#6b7280' }}>vs {anno - 1}</span>
               </div>
             </div>
 
             {/* Numero Fatture */}
             <div style={{ background: '#f0f9ff', borderRadius: 12, padding: 15 }}>
-              <div style={{ fontSize: 12, color: '#6080a0', marginBottom: 5 }}>N. Fatture</div>
+              <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 5 }}>N. Fatture</div>
               <div style={{ fontSize: 24, fontWeight: 'bold', color: '#0284c7' }}>
                 {confrontoAnnuale.anno_corrente.num_fatture}
               </div>
@@ -1061,13 +1061,13 @@ export default function Dashboard() {
                 fontSize: 13
               }}>
                 <span style={{ 
-                  color: '#6080a0',
+                  color: '#6b7280',
                   fontWeight: 'bold'
                 }}>
                   {confrontoAnnuale.variazioni_percentuali.num_fatture >= 0 ? '↑' : '↓'} 
                   {Math.abs(confrontoAnnuale.variazioni_percentuali.num_fatture)}%
                 </span>
-                <span style={{ color: '#6080a0' }}>vs {anno - 1}</span>
+                <span style={{ color: '#6b7280' }}>vs {anno - 1}</span>
               </div>
             </div>
           </div>
@@ -1076,7 +1076,7 @@ export default function Dashboard() {
 
       {/* Quick Actions */}
       <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', marginTop: 20 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 'bold', color: '#1535a8' }}>🚀 Azioni Rapide</h2>
+        <h2 style={{ fontSize: 18, fontWeight: 'bold', color: '#1e3a5f' }}>🚀 Azioni Rapide</h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 15, marginTop: 15 }}>
           <Link to="/contabilita" style={quickActionStyle('#e0f2fe', '#0369a1')}>
             <span style={{ fontSize: 20 }}>🧮</span>
@@ -1138,7 +1138,7 @@ export default function Dashboard() {
               rel="noopener noreferrer"
               style={{
                 padding: '8px 14px',
-                background: '#1535a8',
+                background: '#3b82f6',
                 color: 'white',
                 borderRadius: 6,
                 textDecoration: 'none',
@@ -1261,7 +1261,7 @@ function POSCalendarWidget({ data }) {
     if (sfasamento === 1) return '#dcfce7';
     if (sfasamento === 2) return '#fef3c7';
     if (sfasamento >= 3) return '#fee2e2';
-    return '#f2f6fd';
+    return '#f9fafb';
   };
   
   return (
@@ -1304,7 +1304,7 @@ function POSCalendarWidget({ data }) {
             {g && (
               <>
                 <div style={{ fontWeight: '500' }}>{g.giorno}</div>
-                <div style={{ fontSize: 9, color: '#6080a0' }}>+{g.sfasamento}g</div>
+                <div style={{ fontSize: 9, color: '#6b7280' }}>+{g.sfasamento}g</div>
               </>
             )}
           </div>
@@ -1335,7 +1335,7 @@ function AlertGiustificativiWidget({ data }) {
   return (
     <div style={{ 
       background: 'white',
-      border: '1px solid #dce8f4',
+      border: '1px solid #e5e7eb',
       borderRadius: 10, 
       padding: 16, 
       marginBottom: 12,
@@ -1359,7 +1359,7 @@ function AlertGiustificativiWidget({ data }) {
             <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: '#1f2937' }}>
               Alert Ferie e Permessi
             </h3>
-            <span style={{ fontSize: 11, color: '#6080a0' }}>
+            <span style={{ fontSize: 11, color: '#6b7280' }}>
               {data.dipendenti_coinvolti} dipendenti vicini al limite
             </span>
           </div>
@@ -1416,7 +1416,7 @@ function AlertGiustificativiWidget({ data }) {
                   <div style={{ fontWeight: 500, fontSize: 13, color: '#1f2937' }}>
                     {alert.employee_nome}
                   </div>
-                  <div style={{ fontSize: 11, color: '#6080a0' }}>
+                  <div style={{ fontSize: 11, color: '#6b7280' }}>
                     {alert.descrizione} ({alert.codice})
                   </div>
                 </div>
@@ -1430,7 +1430,7 @@ function AlertGiustificativiWidget({ data }) {
                 }}>
                   {alert.percentuale}%
                 </div>
-                <div style={{ fontSize: 10, color: '#6080a0' }}>
+                <div style={{ fontSize: 10, color: '#6b7280' }}>
                   {alert.ore_usate}h / {alert.limite}h
                 </div>
               </div>
@@ -1446,7 +1446,7 @@ function AlertGiustificativiWidget({ data }) {
             to="/dipendenti/giustificativi"
             style={{ 
               fontSize: 12, 
-              color: '#1535a8', 
+              color: '#3b82f6', 
               textDecoration: 'none',
               fontWeight: 500
             }}
@@ -1536,7 +1536,7 @@ function ScadenzeWidget({ scadenze }) {
       borderRadius: 12, 
       padding: 20,
       marginBottom: 20,
-      border: urgenti.length > 0 ? '2px solid #fecaca' : '1px solid #dce8f4',
+      border: urgenti.length > 0 ? '2px solid #fecaca' : '1px solid #e5e7eb',
       boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
     }}>
       <div style={{ 
@@ -1549,7 +1549,7 @@ function ScadenzeWidget({ scadenze }) {
           <span style={{ fontSize: 24 }}>📅</span>
           <div>
             <div style={{ fontWeight: 'bold', fontSize: 16 }}>Prossime Scadenze</div>
-            <div style={{ fontSize: 12, color: '#6080a0' }}>
+            <div style={{ fontSize: 12, color: '#6b7280' }}>
               {scadenze.totale} scadenze nei prossimi 30 giorni
               {urgenti.length > 0 && (
                 <span style={{ color: '#dc2626', fontWeight: 'bold', marginLeft: 8 }}>
@@ -1566,7 +1566,7 @@ function ScadenzeWidget({ scadenze }) {
             padding: '8px 12px',
             borderRadius: 8
           }}>
-            <div style={{ fontSize: 11, color: '#6080a0' }}>Prossima</div>
+            <div style={{ fontSize: 11, color: '#6b7280' }}>Prossima</div>
             <div style={{ fontWeight: 'bold', color: getPriorityColor(scadenze.prossima_scadenza.priorita, scadenze.prossima_scadenza.urgente).text }}>
               {scadenze.prossima_scadenza.giorni_mancanti === 0 ? 'OGGI' : 
                scadenze.prossima_scadenza.giorni_mancanti === 1 ? 'DOMANI' :
@@ -1604,7 +1604,7 @@ function ScadenzeWidget({ scadenze }) {
                   gap: 6
                 }}>
                   <span>{s.tipo}</span>
-                  {s.numero_fattura && <span style={{ color: '#1535a8' }}>#{s.numero_fattura}</span>}
+                  {s.numero_fattura && <span style={{ color: '#3b82f6' }}>#{s.numero_fattura}</span>}
                 </div>
                 {/* Nome fornitore */}
                 {s.fornitore && (
@@ -1631,7 +1631,7 @@ function ScadenzeWidget({ scadenze }) {
                 <div style={{ fontSize: 12, fontWeight: 'bold', color: colors.text }}>
                   {formatDate(s.data)}
                 </div>
-                <div style={{ fontSize: 10, color: '#6080a0' }}>
+                <div style={{ fontSize: 10, color: '#6b7280' }}>
                   {s.giorni_mancanti === 0 ? 'Oggi' :
                    s.giorni_mancanti === 1 ? 'Domani' :
                    s.giorni_mancanti < 0 ? 'Scaduta' :
@@ -1648,7 +1648,7 @@ function ScadenzeWidget({ scadenze }) {
                     rel="noopener noreferrer"
                     style={{
                       padding: '4px 8px',
-                      background: '#1535a8',
+                      background: '#3b82f6',
                       color: 'white',
                       borderRadius: 4,
                       fontSize: 11,
@@ -1695,7 +1695,7 @@ function ScadenzeWidget({ scadenze }) {
             to="/scadenze" 
             style={{ 
               fontSize: 13, 
-              color: '#1535a8',
+              color: '#3b82f6',
               textDecoration: 'none'
             }}
           >
@@ -1786,7 +1786,7 @@ function ScadenzeWidget({ scadenze }) {
                 disabled={processing}
                 style={{
                   padding: '14px 24px',
-                  background: processing ? '#94a3b8' : '#1535a8',
+                  background: processing ? '#94a3b8' : '#3b82f6',
                   color: 'white',
                   border: 'none',
                   borderRadius: 10,

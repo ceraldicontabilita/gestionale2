@@ -10,31 +10,19 @@ export function cn(...inputs) {
    INLINE STYLE ONLY (NO TAILWIND)
    ================================ */
 
-/* ---------- COLORI (allineati con design/tokens.js) ---------- */
+/* ---------- COLORI ---------- */
 export const COLORS = {
-  primary:      '#1535a8',   // ✅ colore brand unificato
-  primaryLight: '#2050e8',
-  primaryDark:  '#0f2785',
-  primaryBg:    '#eef3ff',
-  success:      '#15803d',   // ✅ corretto (era #15803d)
-  successBg:    '#dcfce7',
-  warning:      '#92400e',   // ✅ corretto (era #ff9800)
-  warningBg:    '#fef3c7',
-  danger:       '#991b1b',
-  dangerBg:     '#fee2e2',
-  info:         '#1535a8',
-  purple:       '#7c3aed',
-  gray:         '#6080a0',
-  grayLight:    '#dce8f4',
-  grayBg:       '#f2f6fd',
-  white:        '#ffffff',
-  // aliases navigazione
-  ink:    '#09152a',
-  ink2:   '#2d4466',
-  ink3:   '#6080a0',
-  ink4:   '#98b0c8',
-  border: '#dce8f4',
-  bg:     '#f2f6fd',
+  primary: '#1e3a5f',
+  primaryLight: '#2d5a87',
+  success: '#4caf50',
+  warning: '#ff9800',
+  danger: '#ef4444',
+  info: '#2196f3',
+  purple: '#9c27b0',
+  gray: '#6b7280',
+  grayLight: '#e5e7eb',
+  grayBg: '#f9fafb',
+  white: '#ffffff'
 };
 
 /* ---------- SPAZIATURE ---------- */
@@ -312,8 +300,8 @@ export const MESI = [
    ================================ */
 
 export const THEME = {
-  primary: '#1535a8',
-  primaryLight: '#2050e8',
+  primary: '#1e3a5f',
+  primaryLight: '#2d5a87',
   primaryDark: '#152a47',
   success: '#16a34a',
   successLight: '#dcfce7',

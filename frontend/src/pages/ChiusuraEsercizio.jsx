@@ -109,7 +109,7 @@ export default function ChiusuraEsercizio() {
         width: 36,
         height: 36,
         borderRadius: '50%',
-        background: completed ? '#22c55e' : active ? '#1535a8' : '#e2e8f0',
+        background: completed ? '#22c55e' : active ? '#2563eb' : '#e2e8f0',
         color: completed || active ? 'white' : '#64748b',
         display: 'flex',
         alignItems: 'center',
@@ -169,7 +169,7 @@ export default function ChiusuraEsercizio() {
         flexDirection: 'column',
         gap: 16
       }}>
-        <RefreshCw size={32} style={{ animation: 'spin 1s linear infinite' }} color="#1535a8" />
+        <RefreshCw size={32} style={{ animation: 'spin 1s linear infinite' }} color="#2563eb" />
         <span style={{ color: '#64748b' }}>Caricamento...</span>
       </div>
     );
@@ -185,7 +185,7 @@ export default function ChiusuraEsercizio() {
           <span style={{
             padding: '10px 16px',
             borderRadius: 8,
-            background: '#1535a8',
+            background: '#1e3a5f',
             color: 'white',
             fontSize: 16,
             fontWeight: 600
@@ -263,13 +263,13 @@ export default function ChiusuraEsercizio() {
             {stato?.stato === 'chiuso' ? (
               <Lock size={32} color="#16a34a" />
             ) : (
-              <Unlock size={32} color="#1535a8" />
+              <Unlock size={32} color="#2563eb" />
             )}
             <div>
-              <div style={{ fontSize: 20, fontWeight: 700, color: stato?.stato === 'chiuso' ? '#166534' : '#1535a8' }}>
+              <div style={{ fontSize: 20, fontWeight: 700, color: stato?.stato === 'chiuso' ? '#166534' : '#1e40af' }}>
                 Esercizio {anno}
               </div>
-              <div style={{ color: stato?.stato === 'chiuso' ? '#15803d' : '#1535a8', marginTop: 4 }}>
+              <div style={{ color: stato?.stato === 'chiuso' ? '#15803d' : '#3b82f6', marginTop: 4 }}>
                 {stato?.stato === 'chiuso' ? 'Chiuso' : 'Aperto'}
                 {stato?.data_chiusura && ` il ${formatDateIT(stato.data_chiusura)}`}
               </div>
@@ -573,7 +573,7 @@ export default function ChiusuraEsercizio() {
                   padding: '14px 24px',
                   borderRadius: 8,
                   border: 'none',
-                  background: verifica?.pronto_per_chiusura ? '#1535a8' : '#94a3b8',
+                  background: verifica?.pronto_per_chiusura ? '#2563eb' : '#94a3b8',
                   color: 'white',
                   fontWeight: 600,
                   fontSize: 16,

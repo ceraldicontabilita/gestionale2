@@ -90,7 +90,7 @@ export default function PartitarioCliFor() {
     const map = {
       aperto: { bg: '#fef3c7', color: '#b45309', label: 'Aperto' },
       saldato: { bg: '#dcfce7', color: '#16a34a', label: 'Saldato' },
-      a_credito: { bg: '#dbeafe', color: '#1535a8', label: 'A credito' }
+      a_credito: { bg: '#dbeafe', color: '#2563eb', label: 'A credito' }
     };
     const s = map[stato] || { bg: '#f1f5f9', color: '#64748b', label: stato };
     return (
@@ -171,7 +171,7 @@ export default function PartitarioCliFor() {
           <option value="credito">A credito</option>
         </select>
         <button onClick={exportCSV}
-          style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#1535a8', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600 }}>
+          style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#1e3a5f', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600 }}>
           <Download size={14} /> CSV
         </button>
       </div>
@@ -205,7 +205,7 @@ export default function PartitarioCliFor() {
                     <td style={{ padding: '10px 8px', fontFamily: 'monospace', fontSize: 12, color: '#64748b' }}>{f.partita_iva}</td>
                     <td style={{ padding: '10px 8px', textAlign: 'right', color: '#059669', fontWeight: 500 }}>{formatEuro(f.totale_dare)}</td>
                     <td style={{ padding: '10px 8px', textAlign: 'right', color: '#dc2626', fontWeight: 500 }}>{formatEuro(f.totale_avere)}</td>
-                    <td style={{ padding: '10px 8px', textAlign: 'right', fontWeight: 700, color: f.saldo > 0 ? '#b45309' : (f.saldo < 0 ? '#1535a8' : '#16a34a') }}>
+                    <td style={{ padding: '10px 8px', textAlign: 'right', fontWeight: 700, color: f.saldo > 0 ? '#b45309' : (f.saldo < 0 ? '#2563eb' : '#16a34a') }}>
                       {formatEuro(f.saldo)}
                     </td>
                     <td style={{ padding: '10px 8px', textAlign: 'center' }}>{getStatoBadge(f.stato)}</td>
@@ -230,12 +230,12 @@ export default function PartitarioCliFor() {
                           <tbody>
                             {f.movimenti.map((m, mi) => (
                               <tr key={mi} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                <td style={{ padding: '6px 8px', color: '#6080a0' }}>{m.data}</td>
+                                <td style={{ padding: '6px 8px', color: '#6b7280' }}>{m.data}</td>
                                 <td style={{ padding: '6px 8px' }}>
                                   <span style={{ 
                                     padding: '1px 6px', borderRadius: 4, fontSize: 10, fontWeight: 600,
                                     background: m.tipo === 'nota_credito' ? '#dbeafe' : '#f1f5f9',
-                                    color: m.tipo === 'nota_credito' ? '#1535a8' : '#475569'
+                                    color: m.tipo === 'nota_credito' ? '#2563eb' : '#475569'
                                   }}>
                                     {m.tipo === 'nota_credito' ? 'NC' : 'FATT'}
                                   </span>
@@ -310,8 +310,8 @@ export default function PartitarioCliFor() {
             <div style={{ fontSize: 20, fontWeight: 700, color: '#059669', marginTop: 4 }}>{formatEuro(totali.totale_corrispettivi)}</div>
           </div>
           <div style={{ background: '#eff6ff', padding: 16, borderRadius: 12, textAlign: 'center' }}>
-            <div style={{ fontSize: 12, color: '#1535a8', fontWeight: 600 }}>FATTURE EMESSE</div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: '#1535a8', marginTop: 4 }}>{formatEuro(totali.totale_fatture_emesse)}</div>
+            <div style={{ fontSize: 12, color: '#2563eb', fontWeight: 600 }}>FATTURE EMESSE</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: '#2563eb', marginTop: 4 }}>{formatEuro(totali.totale_fatture_emesse)}</div>
           </div>
           <div style={{ background: '#fdf4ff', padding: 16, borderRadius: 12, textAlign: 'center' }}>
             <div style={{ fontSize: 12, color: '#9333ea', fontWeight: 600 }}>GIORNI VENDITA</div>
@@ -413,7 +413,7 @@ export default function PartitarioCliFor() {
 
         {/* Nota HORECA */}
         <div style={{ marginTop: 24, padding: 16, background: '#eff6ff', borderRadius: 8, border: '1px solid #bfdbfe' }}>
-          <p style={{ margin: 0, fontSize: 12, color: '#1535a8' }}>
+          <p style={{ margin: 0, fontSize: 12, color: '#1e40af' }}>
             <strong>Nota HORECA:</strong> Per le attività al dettaglio (ristoranti, bar) i clienti sono prevalentemente anonimi. 
             I corrispettivi rappresentano vendite con incasso contestuale, quindi Dare = Avere (saldo zero). 
             Le eventuali fatture emesse a clienti sono già incluse nei corrispettivi e servono solo per la detrazione IVA del cliente.

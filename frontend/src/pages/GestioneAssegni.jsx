@@ -8,10 +8,10 @@ import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/
 import { PageLayout } from '../components/PageLayout';
 
 const STATI_ASSEGNO = {
-  vuoto: { label: "Valido", color: "#15803d" },
-  compilato: { label: "Compilato", color: "#1535a8" },
-  emesso: { label: "Emesso", color: "#d97706" },
-  incassato: { label: "Incassato", color: "#7c3aed" },
+  vuoto: { label: "Valido", color: "#4caf50" },
+  compilato: { label: "Compilato", color: "#2196f3" },
+  emesso: { label: "Emesso", color: "#ff9800" },
+  incassato: { label: "Incassato", color: "#9c27b0" },
   annullato: { label: "Annullato", color: "#f44336" },
 };
 
@@ -828,7 +828,7 @@ export default function GestioneAssegni() {
   return (
     <PageLayout title="Gestione Assegni" subtitle="Genera, collega e controlla i tuoi assegni in un'unica schermata">
     <div style={{ maxWidth: 1400, margin: '0 auto' }}>
-      <h1 style={{ marginBottom: 5, color: '#1535a8', fontSize: 'clamp(1.5rem, 4vw, 2rem)' }}>Gestione Assegni</h1>
+      <h1 style={{ marginBottom: 5, color: '#1e3a5f', fontSize: 'clamp(1.5rem, 4vw, 2rem)' }}>Gestione Assegni</h1>
       <p style={{ color: '#666', marginBottom: 20, fontSize: 14 }}>
         Genera, collega e controlla i tuoi assegni in un'unica schermata
       </p>
@@ -840,7 +840,7 @@ export default function GestioneAssegni() {
           data-testid="genera-assegni-btn"
           style={{
             padding: '10px 16px',
-            background: '#15803d',
+            background: '#4caf50',
             color: 'white',
             border: 'none',
             borderRadius: 8,
@@ -858,7 +858,7 @@ export default function GestioneAssegni() {
           data-testid="auto-associa-btn"
           style={{
             padding: '10px 16px',
-            background: autoAssociating ? '#ccc' : '#1535a8',
+            background: autoAssociating ? '#ccc' : '#2196f3',
             color: 'white',
             border: 'none',
             borderRadius: 8,
@@ -877,7 +877,7 @@ export default function GestioneAssegni() {
           data-testid="associa-combinazioni-btn"
           style={{
             padding: '10px 16px',
-            background: combinazioneLoading ? '#ccc' : 'linear-gradient(135deg, #1535a8 0%, #2050e8 100%)',
+            background: combinazioneLoading ? '#ccc' : 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
             color: 'white',
             border: 'none',
             borderRadius: 8,
@@ -904,7 +904,7 @@ export default function GestioneAssegni() {
           data-testid="sync-ec-btn"
           style={{
             padding: '10px 16px',
-            background: '#d97706',
+            background: '#ff9800',
             color: 'white',
             border: 'none',
             borderRadius: 8,
@@ -923,7 +923,7 @@ export default function GestioneAssegni() {
             data-testid="stampa-selezionati-btn"
             style={{
               padding: '10px 16px',
-              background: '#7c3aed',
+              background: '#9c27b0',
               color: 'white',
               border: 'none',
               borderRadius: 8,
@@ -944,9 +944,9 @@ export default function GestioneAssegni() {
           data-testid="toggle-filters-btn"
           style={{
             padding: '10px 16px',
-            background: showFilters ? '#1535a8' : 'transparent',
-            color: showFilters ? 'white' : '#1535a8',
-            border: '1px solid #1535a8',
+            background: showFilters ? '#1e3a5f' : 'transparent',
+            color: showFilters ? 'white' : '#1e3a5f',
+            border: '1px solid #1e3a5f',
             borderRadius: 8,
             cursor: 'pointer',
             fontWeight: 'bold',
@@ -965,11 +965,11 @@ export default function GestioneAssegni() {
             data-testid="select-anno"
             style={{
               padding: '10px 16px',
-              border: '2px solid #1535a8',
+              border: '2px solid #1e3a5f',
               borderRadius: 8,
               fontSize: 14,
               fontWeight: 'bold',
-              color: '#1535a8',
+              color: '#1e3a5f',
               background: 'white',
               cursor: 'pointer'
             }}
@@ -1002,7 +1002,7 @@ export default function GestioneAssegni() {
           gap: 6, 
           marginLeft: 'auto', 
           padding: '4px 8px', 
-          background: 'linear-gradient(135deg, #1535a8 0%, #1535a8 100%)',
+          background: 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)',
           borderRadius: 8
         }}>
           <button
@@ -1364,7 +1364,7 @@ export default function GestioneAssegni() {
           
           {/* Riepilogo filtri attivi */}
           {(filterFornitore || filterImportoMin || filterImportoMax || filterNumeroAssegno || filterNumeroFattura) && (
-            <div style={{ marginTop: 12, fontSize: 13, color: '#1535a8' }}>
+            <div style={{ marginTop: 12, fontSize: 13, color: '#1e3a5f' }}>
               <strong>Risultati:</strong> {filteredAssegni.length} assegni trovati su {assegni.length} totali
             </div>
           )}
@@ -1392,7 +1392,7 @@ export default function GestioneAssegni() {
                     {autoAssocResult.dettagli.slice(0, 10).map((d, i) => (
                       <li key={i}>
                         Assegno {d.assegno_numero} → Fattura {d.fattura_numero} ({d.fornitore?.substring(0, 30)})
-                        {d.tipo === 'multiplo' && <span style={{ color: '#7c3aed' }}> [MULTIPLO]</span>}
+                        {d.tipo === 'multiplo' && <span style={{ color: '#9c27b0' }}> [MULTIPLO]</span>}
                       </li>
                     ))}
                     {autoAssocResult.dettagli.length > 10 && (
@@ -1574,7 +1574,7 @@ export default function GestioneAssegni() {
                                 }}
                                 style={{
                                   padding: '6px 14px',
-                                  background: '#1535a8',
+                                  background: '#3b82f6',
                                   color: 'white',
                                   border: 'none',
                                   borderRadius: 6,
@@ -1653,7 +1653,7 @@ export default function GestioneAssegni() {
                         ({carnetAssegni.length} assegni)
                       </span>
                     </div>
-                    <div style={{ fontWeight: 'bold', color: '#1535a8', fontSize: 14 }}>
+                    <div style={{ fontWeight: 'bold', color: '#1e3a5f', fontSize: 14 }}>
                       {formatEuro(carnetAssegni.reduce((s, a) => s + (parseFloat(a.importo) || 0), 0))}
                     </div>
                   </div>
@@ -1680,7 +1680,7 @@ export default function GestioneAssegni() {
                             onChange={() => toggleSelectAssegno(assegno.id)}
                             style={{ width: 18, height: 18, cursor: 'pointer' }}
                           />
-                          <span style={{ fontFamily: 'monospace', fontWeight: 'bold', color: '#1535a8', fontSize: 13 }}>
+                          <span style={{ fontFamily: 'monospace', fontWeight: 'bold', color: '#1e3a5f', fontSize: 13 }}>
                             {assegno.numero?.split('-')[1] || assegno.numero}
                           </span>
                           <span style={{
@@ -1694,7 +1694,7 @@ export default function GestioneAssegni() {
                             {STATI_ASSEGNO[assegno.stato]?.label || assegno.stato}
                           </span>
                         </div>
-                        <span style={{ fontWeight: 'bold', fontSize: 15, color: '#1535a8' }}>
+                        <span style={{ fontWeight: 'bold', fontSize: 15, color: '#1e3a5f' }}>
                           {formatEuro(assegno.importo)}
                         </span>
                       </div>
@@ -1708,7 +1708,7 @@ export default function GestioneAssegni() {
                       
                       {/* Row 3: Fattura (se presente) */}
                       {assegno.numero_fattura && (
-                        <div style={{ fontSize: 12, color: '#1535a8', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <div style={{ fontSize: 12, color: '#2196f3', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
                           <span>📄 Fatt. {assegno.numero_fattura}</span>
                           {assegno.data_fattura && (
                             <span style={{ color: '#666' }}>({formatDateIT(assegno.data_fattura)})</span>
@@ -1721,7 +1721,7 @@ export default function GestioneAssegni() {
                               rel="noopener noreferrer"
                               style={{
                                 padding: '2px 8px',
-                                background: '#15803d',
+                                background: '#4caf50',
                                 color: 'white',
                                 borderRadius: 4,
                                 fontSize: 11,
@@ -1776,7 +1776,7 @@ export default function GestioneAssegni() {
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
                 <thead>
-                  <tr style={{ background: '#f8fafc', borderBottom: '2px solid #dce8f4' }}>
+                  <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e5e7eb' }}>
                     <th style={{ padding: '10px 8px', textAlign: 'center', fontWeight: 600, fontSize: 12, width: 40 }}>
                       <input
                         type="checkbox"
@@ -1819,7 +1819,7 @@ export default function GestioneAssegni() {
 
                         {/* Numero Assegno */}
                         <td style={{ padding: '8px 12px' }}>
-                          <span style={{ fontFamily: 'monospace', fontWeight: 'bold', color: '#1535a8', fontSize: 13 }}>
+                          <span style={{ fontFamily: 'monospace', fontWeight: 'bold', color: '#1e3a5f', fontSize: 13 }}>
                             {assegno.numero}
                           </span>
                         </td>
@@ -1904,7 +1904,7 @@ export default function GestioneAssegni() {
                                   onClick={(e) => e.stopPropagation()}
                                   style={{
                                     padding: '3px 8px',
-                                    background: '#15803d',
+                                    background: '#4caf50',
                                     color: 'white',
                                     border: 'none',
                                     borderRadius: 4,
@@ -1924,7 +1924,7 @@ export default function GestioneAssegni() {
                               )}
                               {/* Info fattura */}
                               <div>
-                                {assegno.numero_fattura && <div style={{ color: '#1535a8' }}>Fatt. {assegno.numero_fattura}</div>}
+                                {assegno.numero_fattura && <div style={{ color: '#2196f3' }}>Fatt. {assegno.numero_fattura}</div>}
                                 {assegno.data_fattura && <div style={{ color: '#666', fontSize: 11 }}>{formatDateIT(assegno.data_fattura)}</div>}
                               </div>
                             </div>
@@ -1936,7 +1936,7 @@ export default function GestioneAssegni() {
                           <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
                             {editingId === assegno.id ? (
                               <>
-                                <button onClick={handleSaveEdit} style={{ padding: '4px 8px', cursor: 'pointer', background: '#15803d', color: 'white', border: 'none', borderRadius: 4, fontSize: 11 }}>✓</button>
+                                <button onClick={handleSaveEdit} style={{ padding: '4px 8px', cursor: 'pointer', background: '#4caf50', color: 'white', border: 'none', borderRadius: 4, fontSize: 11 }}>✓</button>
                                 <button onClick={cancelEdit} style={{ padding: '4px 8px', cursor: 'pointer', background: '#f44336', color: 'white', border: 'none', borderRadius: 4, fontSize: 11 }}>✕</button>
                               </>
                             ) : (
@@ -1950,7 +1950,7 @@ export default function GestioneAssegni() {
                                     doc.save(`Assegno_${assegno.numero}.pdf`);
                                   }} 
                                   data-testid={`print-${assegno.id}`} 
-                                  style={{ padding: '4px 6px', cursor: 'pointer', background: '#1535a8', color: 'white', border: 'none', borderRadius: 4 }} 
+                                  style={{ padding: '4px 6px', cursor: 'pointer', background: '#2196f3', color: 'white', border: 'none', borderRadius: 4 }} 
                                   title="Stampa"
                                 >🖨️</button>
                                 {/* ELIMINA */}
@@ -2008,7 +2008,7 @@ export default function GestioneAssegni() {
                 onClick={handleGenerate}
                 disabled={generating}
                 data-testid="genera-salva-btn"
-                style={{ padding: '10px 20px', background: '#15803d', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}
+                style={{ padding: '10px 20px', background: '#4caf50', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}
               >
                 {generating ? 'Generazione...' : 'Genera e Salva'}
               </button>
@@ -2045,7 +2045,7 @@ export default function GestioneAssegni() {
             <div 
               style={{
                 padding: '16px 24px',
-                background: 'linear-gradient(135deg, #1535a8 0%, #2050e8 100%)',
+                background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
                 color: 'white',
                 cursor: 'grab',
                 userSelect: 'none',
@@ -2098,12 +2098,12 @@ export default function GestioneAssegni() {
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: 12, color: '#64748b', marginBottom: 4 }}>Importo Assegno</div>
-                    <div style={{ fontSize: 22, fontWeight: 'bold', color: '#1535a8' }}>
+                    <div style={{ fontSize: 22, fontWeight: 'bold', color: '#1e3a5f' }}>
                       {formatEuro(editingAssegnoForFatture?.importo || 0)}
                     </div>
                   </div>
                 </div>
-                <p style={{ color: '#1535a8', fontSize: 12, margin: '12px 0 0', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <p style={{ color: '#3b82f6', fontSize: 12, margin: '12px 0 0', display: 'flex', alignItems: 'center', gap: 6 }}>
                   ℹ️ Puoi collegare fino a <strong>4 fatture</strong> a un singolo assegno
                 </p>
               </div>
@@ -2198,7 +2198,7 @@ export default function GestioneAssegni() {
                           }}
                         >
                           <div>
-                            <div style={{ fontWeight: 600, color: isSelected ? '#1535a8' : '#1e293b' }}>
+                            <div style={{ fontWeight: 600, color: isSelected ? '#1e40af' : '#1e293b' }}>
                               {isSelected ? '✓ ' : '○ '}
                               {f.invoice_number || f.numero_fattura || 'N/A'}
                             </div>
@@ -2206,7 +2206,7 @@ export default function GestioneAssegni() {
                               {fornitore} • {formatDateIT(f.invoice_date || f.data_fattura)}
                             </div>
                           </div>
-                          <div style={{ fontWeight: 'bold', color: '#1535a8', fontSize: 15 }}>
+                          <div style={{ fontWeight: 'bold', color: '#1e3a5f', fontSize: 15 }}>
                             {formatEuro(parseFloat(f.total_amount || f.importo_totale || 0))}
                           </div>
                         </div>

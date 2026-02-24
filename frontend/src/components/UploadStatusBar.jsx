@@ -34,7 +34,7 @@ export function UploadStatusBar() {
           width: 56,
           height: 56,
           borderRadius: '50%',
-          background: hasActiveUploads ? '#1535a8' : completedUploads.length > 0 ? '#10b981' : '#ef4444',
+          background: hasActiveUploads ? '#3b82f6' : completedUploads.length > 0 ? '#10b981' : '#ef4444',
           border: 'none',
           boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
           cursor: 'pointer',
@@ -96,7 +96,7 @@ export function UploadStatusBar() {
       {/* Header */}
       <div style={{
         padding: '12px 16px',
-        background: hasActiveUploads ? '#1535a8' : '#1e293b',
+        background: hasActiveUploads ? '#3b82f6' : '#1e293b',
         color: 'white',
         display: 'flex',
         justifyContent: 'space-between',
@@ -200,14 +200,14 @@ export function UploadStatusBar() {
             {(upload.status === 'uploading' || upload.status === 'pending') && (
               <div style={{
                 height: 6,
-                background: '#dce8f4',
+                background: '#e5e7eb',
                 borderRadius: 3,
                 overflow: 'hidden'
               }}>
                 <div style={{
                   height: '100%',
                   width: `${upload.progress}%`,
-                  background: 'linear-gradient(45deg, #1535a8 25%, #60a5fa 25%, #60a5fa 50%, #1535a8 50%, #1535a8 75%, #60a5fa 75%)',
+                  background: 'linear-gradient(45deg, #3b82f6 25%, #60a5fa 25%, #60a5fa 50%, #3b82f6 50%, #3b82f6 75%, #60a5fa 75%)',
                   backgroundSize: '40px 40px',
                   animation: 'progress-stripe 1s linear infinite',
                   transition: 'width 0.3s'
@@ -251,7 +251,7 @@ export function UploadStatusBar() {
         <div style={{
           padding: '8px 16px',
           background: '#f8fafc',
-          borderTop: '1px solid #dce8f4',
+          borderTop: '1px solid #e5e7eb',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center'
@@ -264,7 +264,7 @@ export function UploadStatusBar() {
             style={{
               background: 'none',
               border: 'none',
-              color: '#1535a8',
+              color: '#3b82f6',
               fontSize: 12,
               cursor: 'pointer',
               fontWeight: 600

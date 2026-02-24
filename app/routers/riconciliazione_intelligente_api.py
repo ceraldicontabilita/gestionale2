@@ -34,31 +34,6 @@ router = APIRouter()
 # DASHBOARD
 # =============================================================================
 
-
-@router.get("/stats")
-async def get_stats_riconciliazione() -> Dict[str, Any]:
-    """Statistiche rapide riconciliazione intelligente."""
-    db = Database.get_db()
-    
-    # Conta fatture per stato riconciliazione
-    pipeline = [
-        {"$group": {"_id": "$stato_riconciliazione", "count": {"$sum": 1}}},
-        {"$sort": {"count": -1}}
-    ]
-    stati = await db["invoices"].aggregate(pipeline).to_list(20)
-    
-    totale = await db["invoices"].count_documents({})
-    da_confermare = await db["invoices"].count_documents(
-        {"stato_riconciliazione": {"$in": ["attesa_conferma", "incerto", "sospeso"]}}
-    )
-    
-    return {
-        "totale_fatture": totale,
-        "da_confermare": da_confermare,
-        "stati": {s["_id"] or "non_classificato": s["count"] for s in stati},
-        "aggiornato_al": __import__("datetime").datetime.now().isoformat()
-    }
-
 @router.get("/dashboard")
 async def get_dashboard_riconciliazione() -> Dict[str, Any]:
     """

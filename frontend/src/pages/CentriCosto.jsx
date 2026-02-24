@@ -7,7 +7,7 @@ import { Building2, TrendingUp, Percent, RefreshCw } from 'lucide-react';
 
 const TIPO_COLORS = {
   operativo: { bg: '#dcfce7', color: '#16a34a', label: 'Operativo' },
-  supporto: { bg: '#dbeafe', color: '#1535a8', label: 'Supporto' },
+  supporto: { bg: '#dbeafe', color: '#2563eb', label: 'Supporto' },
   struttura: { bg: '#fef3c7', color: '#d97706', label: 'Struttura' }
 };
 
@@ -93,7 +93,7 @@ export default function CentriCosto() {
           data-testid="assign-cdc-btn"
           style={{
             padding: '10px 20px',
-            background: 'linear-gradient(135deg, #1535a8 0%, #2050e8 100%)',
+            background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
             color: 'white',
             border: 'none',
             borderRadius: 8,
@@ -123,7 +123,7 @@ export default function CentriCosto() {
         <KPICard 
           label="Centri Supporto" 
           value={stats.supporto} 
-          color="#1535a8" 
+          color="#1d4ed8" 
           bgColor="#eff6ff" 
           borderColor="#93c5fd" 
         />
@@ -163,7 +163,7 @@ export default function CentriCosto() {
           {/* Centri Supporto */}
           <PageSection 
             title="Centri di Supporto (costi da ribaltare)" 
-            icon={<Percent size={20} color="#1535a8" />} 
+            icon={<Percent size={20} color="#2563eb" />} 
             style={{ marginTop: 24 }}
           >
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
@@ -229,7 +229,7 @@ function CDCCard({ centro }) {
           {centro.nome}
         </h3>
         
-        <p style={{ fontSize: 13, color: '#6080a0', margin: '0 0 16px 0' }}>
+        <p style={{ fontSize: 13, color: '#6b7280', margin: '0 0 16px 0' }}>
           {centro.descrizione}
         </p>
         

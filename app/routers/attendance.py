@@ -928,6 +928,75 @@ async def set_presenza(data: Dict[str, Any]) -> Dict[str, Any]:
 
 
 # =============================================================================
+# BATCH INSERT PRESENZE
+# =============================================================================
+
+@router.post("/batch-insert")
+@handle_errors
+async def batch_insert_presenze(body: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Inserisce presenze in batch per un dipendente su un range di date.
+    
+    Body:
+        employee_id: ID del dipendente
+        giorni: Lista di date (YYYY-MM-DD)
+        stato: Stato da applicare (P, A, F, PE, M, R, ecc.)
+    """
+    db = Database.get_db()
+    
+    employee_id = body.get("employee_id")
+    giorni = body.get("giorni", [])
+    stato = body.get("stato", "A")
+    
+    if not employee_id or not giorni:
+        raise HTTPException(status_code=400, detail="employee_id e giorni sono obbligatori")
+    
+    # Verifica dipendente esiste
+    dipendente = await db["employees"].find_one({"id": employee_id}, {"_id": 0, "nome": 1, "cognome": 1})
+    if not dipendente:
+        raise HTTPException(status_code=404, detail=f"Dipendente {employee_id} non trovato")
+    
+    inserted_count = 0
+    updated_count = 0
+    
+    for giorno in giorni:
+        key = f"{employee_id}_{giorno}"
+        
+        # Verifica se esiste già
+        existing = await db["presenze"].find_one({"key": key}, {"_id": 0})
+        
+        if existing:
+            # Aggiorna
+            await db["presenze"].update_one(
+                {"key": key},
+                {"$set": {
+                    "stato": stato,
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }}
+            )
+            updated_count += 1
+        else:
+            # Inserisce nuovo
+            await db["presenze"].insert_one({
+                "key": key,
+                "employee_id": employee_id,
+                "data": giorno,
+                "stato": stato,
+                "created_at": datetime.now(timezone.utc).isoformat()
+            })
+            inserted_count += 1
+    
+    return {
+        "success": True,
+        "message": f"Inserite {inserted_count} e aggiornate {updated_count} presenze",
+        "employee": f"{dipendente.get('nome', '')} {dipendente.get('cognome', '')}",
+        "giorni_processati": len(giorni),
+        "inserted": inserted_count,
+        "updated": updated_count
+    }
+
+
+# =============================================================================
 # GESTIONE FLAG IN_CARICO
 # =============================================================================
 

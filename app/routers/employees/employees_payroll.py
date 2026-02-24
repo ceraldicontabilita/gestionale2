@@ -105,20 +105,70 @@ async def list_employees(skip: int = 0, limit: int = 10000) -> List[Dict[str, An
 async def create_employee(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """Crea dipendente."""
     db = Database.get_db()
+    
+    # Parse nome/cognome se presenti
+    nome = data.get("nome", "")
+    cognome = data.get("cognome", "")
+    nome_completo = data.get("nome_completo", data.get("name", ""))
+    if not nome_completo and (nome or cognome):
+        nome_completo = f"{nome} {cognome}".strip()
+    
     employee = {
         "id": str(uuid.uuid4()),
-        "name": data.get("name", ""),
-        "nome_completo": data.get("nome_completo", data.get("name", "")),
+        "name": data.get("name", nome_completo),
+        "nome": nome,
+        "cognome": cognome,
+        "nome_completo": nome_completo,
         "codice_fiscale": data.get("codice_fiscale", ""),
+        "email": data.get("email", ""),
+        "telefono": data.get("telefono", ""),
         "role": data.get("role", ""),
+        "mansione": data.get("mansione", data.get("role", "")),
         "salary": data.get("salary", 0),
-        "contract_type": data.get("contract_type", ""),
+        "contract_type": data.get("contract_type", "dipendente"),
+        "iban": data.get("iban", ""),
+        "giorni_lavoro": data.get("giorni_lavoro", ["lun", "mar", "mer", "gio", "ven", "sab"]),  # Default Lun-Sab
+        "in_carico": data.get("in_carico", True),
+        "status": "attivo" if data.get("in_carico", True) else "cessato",
         "hire_date": data.get("hire_date", datetime.now(timezone.utc).isoformat()),
-        "created_at": datetime.now(timezone.utc).isoformat()
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat()
     }
+    
+    # Check for duplicate CF
+    if employee["codice_fiscale"]:
+        existing = await db[Collections.EMPLOYEES].find_one({"codice_fiscale": employee["codice_fiscale"]})
+        if existing:
+            raise HTTPException(status_code=409, detail="Dipendente con questo codice fiscale già esistente")
+    
     await db[Collections.EMPLOYEES].insert_one(employee.copy())
     employee.pop("_id", None)
     return employee
+
+
+
+@router.put("/{employee_id}")
+async def update_employee(employee_id: str, data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+    """Aggiorna dipendente."""
+    db = Database.get_db()
+    
+    # Remove immutable fields
+    data.pop("id", None)
+    data.pop("created_at", None)
+    data.pop("_id", None)
+    
+    data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    result = await db[Collections.EMPLOYEES].update_one(
+        {"$or": [{"id": employee_id}, {"codice_fiscale": employee_id}]},
+        {"$set": data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Dipendente non trovato")
+    
+    return {"success": True, "message": "Dipendente aggiornato"}
+
 
 
 @router.delete("/{employee_id}")

@@ -50,13 +50,13 @@ PUBLIC_PREFIXES = [
 class AuthenticationMiddleware(BaseHTTPMiddleware):
     """
     Global authentication middleware.
+    
+    Checks for valid JWT token on all API requests except whitelisted paths.
+    This is a SAFETY NET - individual routers should still use Depends(get_current_user)
+    for getting user context, but this prevents accidentally unprotected endpoints.
     """
     
     async def dispatch(self, request: Request, call_next):
-        # Check if auth is disabled
-        if getattr(settings, 'AUTH_DISABLED', False) or settings.ENVIRONMENT == "development":
-            return await call_next(request)
-            
         path = request.url.path
         method = request.method
         

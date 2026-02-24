@@ -359,8 +359,6 @@ app.include_router(dizionario_articoli.router, prefix="/api/dizionario-articoli"
 # --- Invoices Module ---
 app.include_router(invoices_emesse.router, prefix="/api/invoices/emesse", tags=["Invoices Emesse"])
 app.include_router(invoices_main.router, prefix="/api/invoices", tags=["Invoices"])
-# Alias italiano per compatibilità frontend
-app.include_router(invoices_main.router, prefix="/api/fatture", tags=["Fatture"])
 app.include_router(invoices_export.router, prefix="/api/invoices", tags=["Invoices Export"])
 app.include_router(fatture_upload.router, prefix="/api/fatture", tags=["Fatture Upload"])
 app.include_router(fatture_ricevute_router, prefix="/api/fatture-ricevute", tags=["Fatture Ricevute"])
@@ -389,8 +387,6 @@ app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"]
 
 # --- Core Routers ---
 app.include_router(suppliers_router, prefix="/api/suppliers", tags=["Suppliers"])
-# Alias italiano per compatibilità frontend
-app.include_router(suppliers_router, prefix="/api/fornitori", tags=["Fornitori"])
 app.include_router(cash.router, prefix="/api/cash", tags=["Cash Register"])
 app.include_router(chart_of_accounts.router, prefix="/api/chart-of-accounts", tags=["Chart of Accounts"])
 app.include_router(notifications.router, prefix="/api/notifications", tags=["Notifications"])
@@ -607,9 +603,11 @@ app.include_router(pos_corrispettivi_check.router, prefix="/api", tags=["POS Cor
 from app.routers import distinte_bpm
 app.include_router(distinte_bpm.router, prefix="/api/paghe", tags=["Distinte BPM"])
 
-# --- DIPENDENTI IN CLOUD (Nuovo modulo HR completo) ---
-from app.routers.dipendenti_cloud import router as dipendenti_cloud_router
-app.include_router(dipendenti_cloud_router, prefix="/api", tags=["Dipendenti Cloud"])
+# --- Veicoli Noleggio ---
+from app.routers import veicoli
+app.include_router(veicoli.router, tags=["Veicoli Noleggio"])
+
+
 
 
 # =============================================================================

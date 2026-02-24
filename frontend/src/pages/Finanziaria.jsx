@@ -66,7 +66,7 @@ export default function Finanziaria() {
           background: '#dbeafe', 
           padding: '10px 20px', 
           borderRadius: 8, 
-          color: '#1535a8', 
+          color: '#1e40af', 
           fontWeight: 600,
           fontSize: 14
         }}>
@@ -120,7 +120,7 @@ export default function Finanziaria() {
           icon={Wallet}
           label="Saldo"
           value={formatEuro(summary?.balance)}
-          color={summary?.balance >= 0 ? '#1535a8' : '#ea580c'}
+          color={summary?.balance >= 0 ? '#2563eb' : '#ea580c'}
           bgColor={summary?.balance >= 0 ? '#eff6ff' : '#fff7ed'}
         />
       </PageGrid>

@@ -650,7 +650,7 @@ export default function Commercialista() {
   return (
     <PageLayout title="Area Commercialista" subtitle="Genera e invia documenti PDF al commercialista">
     <div style={{ maxWidth: 1400, margin: '0 auto' }}>
-      <h1 style={{ marginBottom: 5, color: '#1535a8' }}>👩‍💼 Area Commercialista</h1>
+      <h1 style={{ marginBottom: 5, color: '#1e3a5f' }}>👩‍💼 Area Commercialista</h1>
       <p style={{ color: '#666', marginBottom: 25 }}>
         Genera e invia documenti PDF al commercialista via email
       </p>
@@ -658,7 +658,7 @@ export default function Commercialista() {
       {/* Alert Banner */}
       {alertStatus?.show_alert && (
         <div style={{
-          background: 'linear-gradient(135deg, #d97706 0%, #f57c00 100%)',
+          background: 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)',
           color: 'white',
           padding: 20,
           borderRadius: 12,
@@ -717,7 +717,7 @@ export default function Commercialista() {
         marginBottom: 25,
         boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
       }}>
-        <h3 style={{ margin: '0 0 15px 0', color: '#1535a8' }}>📧 Configurazione Email</h3>
+        <h3 style={{ margin: '0 0 15px 0', color: '#1e3a5f' }}>📧 Configurazione Email</h3>
         <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', alignItems: 'center' }}>
           <div>
             <label style={{ display: 'block', fontSize: 12, color: '#666', marginBottom: 4 }}>
@@ -773,7 +773,7 @@ export default function Commercialista() {
         marginBottom: 25,
         boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
       }}>
-        <h3 style={{ margin: '0 0 15px 0', color: '#1535a8' }}>📅 Seleziona Periodo</h3>
+        <h3 style={{ margin: '0 0 15px 0', color: '#1e3a5f' }}>📅 Seleziona Periodo</h3>
         <div style={{ display: 'flex', gap: 15, flexWrap: 'wrap', alignItems: 'center' }}>
           <select
             value={selectedMonth}
@@ -841,7 +841,7 @@ export default function Commercialista() {
             boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
           }}>
             <div style={{
-              background: 'linear-gradient(135deg, #1535a8 0%, #1535a8 100%)',
+              background: 'linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%)',
               color: 'white',
               padding: 20
             }}>
@@ -854,7 +854,7 @@ export default function Commercialista() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 15, marginBottom: 20 }}>
                 <div style={{ background: '#e8f5e9', padding: 15, borderRadius: 8, textAlign: 'center' }}>
                   <div style={{ fontSize: 12, color: '#666' }}>Entrate</div>
-                  <div style={{ fontSize: 18, fontWeight: 'bold', color: '#15803d' }}>
+                  <div style={{ fontSize: 18, fontWeight: 'bold', color: '#4caf50' }}>
                     {formatEuro(primaNotaData?.totale_entrate)}
                   </div>
                 </div>
@@ -876,7 +876,7 @@ export default function Commercialista() {
                 <div style={{ 
                   fontSize: 24, 
                   fontWeight: 'bold', 
-                  color: (primaNotaData?.saldo || 0) >= 0 ? '#15803d' : '#f44336'
+                  color: (primaNotaData?.saldo || 0) >= 0 ? '#4caf50' : '#f44336'
                 }}>
                   {formatEuro(primaNotaData?.saldo)}
                 </div>
@@ -912,7 +912,7 @@ export default function Commercialista() {
                   style={{
                     flex: 1,
                     padding: '12px',
-                    background: sending === 'prima_nota' ? '#ccc' : '#1535a8',
+                    background: sending === 'prima_nota' ? '#ccc' : '#2563eb',
                     color: 'white',
                     border: 'none',
                     borderRadius: 8,
@@ -938,7 +938,7 @@ export default function Commercialista() {
             boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
           }}>
             <div style={{
-              background: 'linear-gradient(135deg, #d97706 0%, #f57c00 100%)',
+              background: 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)',
               color: 'white',
               padding: 20
             }}>
@@ -1018,7 +1018,7 @@ export default function Commercialista() {
             gridColumn: 'span 1'
           }}>
             <div style={{
-              background: 'linear-gradient(135deg, #15803d 0%, #2e7d32 100%)',
+              background: 'linear-gradient(135deg, #4caf50 0%, #2e7d32 100%)',
               color: 'white',
               padding: 20
             }}>
@@ -1054,7 +1054,7 @@ export default function Commercialista() {
                   <div style={{ 
                     maxHeight: 250, 
                     overflowY: 'auto', 
-                    border: '1px solid #dce8f4', 
+                    border: '1px solid #e5e7eb', 
                     borderRadius: 8,
                     marginBottom: 15
                   }}>
@@ -1155,7 +1155,7 @@ export default function Commercialista() {
                       style={{
                         flex: 1,
                         padding: '12px',
-                        background: selectedCarnets.length === 0 ? '#dce8f4' : '#f5f5f5',
+                        background: selectedCarnets.length === 0 ? '#e5e7eb' : '#f5f5f5',
                         color: selectedCarnets.length === 0 ? '#9ca3af' : '#333',
                         border: 'none',
                         borderRadius: 8,
@@ -1204,11 +1204,11 @@ export default function Commercialista() {
           marginTop: 25,
           boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
         }}>
-          <h3 style={{ margin: '0 0 15px 0', color: '#1535a8' }}>📋 Storico Invii</h3>
+          <h3 style={{ margin: '0 0 15px 0', color: '#1e3a5f' }}>📋 Storico Invii</h3>
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ background: '#f8fafc', borderBottom: '2px solid #dce8f4' }}>
+                <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e5e7eb' }}>
                   <th style={{ padding: 12, textAlign: 'left' }}>Data Invio</th>
                   <th style={{ padding: 12, textAlign: 'left' }}>Tipo</th>
                   <th style={{ padding: 12, textAlign: 'left' }}>Periodo/ID</th>

@@ -118,7 +118,7 @@ export default function CalendarioFiscale() {
   
   const getTipoColor = (tipo) => {
     const colors = {
-      'iva': '#1535a8',
+      'iva': '#3b82f6',
       'f24': '#ef4444',
       'dichiarazione': '#8b5cf6',
       'imu': '#f59e0b',

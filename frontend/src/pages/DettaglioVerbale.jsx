@@ -87,7 +87,7 @@ export default function DettaglioVerbale() {
     <div style={{ maxWidth: 1200, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ 
-        background: 'linear-gradient(135deg, #1535a8 0%, #2050e8 100%)',
+        background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
         borderRadius: 16,
         padding: 24,
         color: 'white',
@@ -146,30 +146,30 @@ export default function DettaglioVerbale() {
             boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
             marginBottom: 24
           }}>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: 16, color: '#1535a8' }}>📋 Dettagli Verbale</h3>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: 16, color: '#1e3a5f' }}>📋 Dettagli Verbale</h3>
             
             <div style={{ fontSize: 13, lineHeight: 2 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f3f4f6', paddingBottom: 8 }}>
-                <span style={{ color: '#6080a0' }}>Numero Verbale:</span>
+                <span style={{ color: '#6b7280' }}>Numero Verbale:</span>
                 <strong style={{ fontFamily: 'monospace' }}>{verbale?.numero_verbale}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f3f4f6', paddingBottom: 8 }}>
-                <span style={{ color: '#6080a0' }}>Data Verbale:</span>
+                <span style={{ color: '#6b7280' }}>Data Verbale:</span>
                 <strong>{formatDateIT(verbale?.data_verbale) || '-'}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f3f4f6', paddingBottom: 8 }}>
-                <span style={{ color: '#6080a0' }}>Importo:</span>
+                <span style={{ color: '#6b7280' }}>Importo:</span>
                 <strong style={{ color: '#dc2626' }}>{formatEuro(verbale?.importo)}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f3f4f6', paddingBottom: 8 }}>
-                <span style={{ color: '#6080a0' }}>Fornitore:</span>
+                <span style={{ color: '#6b7280' }}>Fornitore:</span>
                 <strong>{verbale?.fornitore}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#6080a0' }}>Descrizione:</span>
+                <span style={{ color: '#6b7280' }}>Descrizione:</span>
               </div>
               <div style={{ 
-                background: '#f2f6fd', 
+                background: '#f9fafb', 
                 padding: 12, 
                 borderRadius: 8, 
                 fontSize: 12, 
@@ -189,19 +189,19 @@ export default function DettaglioVerbale() {
             padding: 20, 
             boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
           }}>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: 16, color: '#1535a8' }}>📄 Fattura Associata</h3>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: 16, color: '#1e3a5f' }}>📄 Fattura Associata</h3>
             
             <div style={{ fontSize: 13, lineHeight: 2 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f3f4f6', paddingBottom: 8 }}>
-                <span style={{ color: '#6080a0' }}>N° Fattura:</span>
+                <span style={{ color: '#6b7280' }}>N° Fattura:</span>
                 <strong style={{ fontFamily: 'monospace' }}>{verbale?.numero_fattura || '-'}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f3f4f6', paddingBottom: 8 }}>
-                <span style={{ color: '#6080a0' }}>Data Fattura:</span>
+                <span style={{ color: '#6b7280' }}>Data Fattura:</span>
                 <strong>{formatDateIT(verbale?.data_fattura)}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#6080a0' }}>Fornitore:</span>
+                <span style={{ color: '#6b7280' }}>Fornitore:</span>
                 <strong>{verbale?.fornitore}</strong>
               </div>
             </div>
@@ -216,7 +216,7 @@ export default function DettaglioVerbale() {
                   marginTop: 16,
                   padding: '10px 20px', 
                   background: '#dbeafe', 
-                  color: '#1535a8', 
+                  color: '#2563eb', 
                   borderRadius: 8, 
                   textDecoration: 'none',
                   fontWeight: '600'
@@ -238,7 +238,7 @@ export default function DettaglioVerbale() {
             boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
             marginBottom: 24
           }}>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: 16, color: '#1535a8' }}>📎 Documenti PDF</h3>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: 16, color: '#1e3a5f' }}>📎 Documenti PDF</h3>
             
             {verbale?.pdf_disponibili && verbale.pdf_disponibili.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -336,7 +336,7 @@ export default function DettaglioVerbale() {
             boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
             marginBottom: 24
           }}>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: 16, color: '#1535a8' }}>💳 Stato Pagamento</h3>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: 16, color: '#1e3a5f' }}>💳 Stato Pagamento</h3>
             
             {verbale?.stato_pagamento === 'pagato' ? (
               <div style={{ 
@@ -374,7 +374,7 @@ export default function DettaglioVerbale() {
               <div style={{ marginTop: 16, fontSize: 13 }}>
                 <div style={{ fontWeight: 'bold', marginBottom: 8 }}>Movimento bancario associato:</div>
                 <div style={{ 
-                  background: '#f2f6fd', 
+                  background: '#f9fafb', 
                   padding: 12, 
                   borderRadius: 8,
                   fontSize: 12
@@ -395,27 +395,27 @@ export default function DettaglioVerbale() {
               padding: 20, 
               boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
             }}>
-              <h3 style={{ margin: '0 0 16px 0', fontSize: 16, color: '#1535a8' }}>🚗 Veicolo</h3>
+              <h3 style={{ margin: '0 0 16px 0', fontSize: 16, color: '#1e3a5f' }}>🚗 Veicolo</h3>
               
               <div style={{ fontSize: 13, lineHeight: 2 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f3f4f6', paddingBottom: 8 }}>
-                  <span style={{ color: '#6080a0' }}>Targa:</span>
+                  <span style={{ color: '#6b7280' }}>Targa:</span>
                   <strong style={{ fontFamily: 'monospace' }}>{verbale.veicolo_info.targa}</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f3f4f6', paddingBottom: 8 }}>
-                  <span style={{ color: '#6080a0' }}>Driver:</span>
+                  <span style={{ color: '#6b7280' }}>Driver:</span>
                   <strong>{verbale.veicolo_info.driver || '-'}</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f3f4f6', paddingBottom: 8 }}>
-                  <span style={{ color: '#6080a0' }}>Fornitore:</span>
+                  <span style={{ color: '#6b7280' }}>Fornitore:</span>
                   <strong>{verbale.veicolo_info.fornitore_noleggio}</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #f3f4f6', paddingBottom: 8 }}>
-                  <span style={{ color: '#6080a0' }}>Contratto:</span>
+                  <span style={{ color: '#6b7280' }}>Contratto:</span>
                   <strong style={{ fontFamily: 'monospace' }}>{verbale.veicolo_info.contratto || '-'}</strong>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: '#6080a0' }}>Periodo:</span>
+                  <span style={{ color: '#6b7280' }}>Periodo:</span>
                   <strong>{formatDateIT(verbale.veicolo_info.data_inizio)} - {formatDateIT(verbale.veicolo_info.data_fine)}</strong>
                 </div>
               </div>

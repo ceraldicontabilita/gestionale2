@@ -141,7 +141,7 @@ export function NotificheScadenze({ showBanner = true }) {
         bottom: 20,
         right: 20,
         maxWidth: 360,
-        background: 'linear-gradient(135deg, #1535a8, #8b5cf6)',
+        background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
         color: 'white',
         padding: '14px 18px',
         borderRadius: 12,
@@ -161,7 +161,7 @@ export function NotificheScadenze({ showBanner = true }) {
             style={{
               padding: '8px 16px',
               background: 'white',
-              color: '#1535a8',
+              color: '#3b82f6',
               border: 'none',
               borderRadius: 6,
               fontWeight: 600,

@@ -21,7 +21,7 @@ const pageStyle = {
     flexWrap: 'wrap',
     gap: '16px',
     padding: '15px 20px',
-    background: 'linear-gradient(135deg, #1535a8 0%, #2050e8 100%)',
+    background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
     borderRadius: '12px',
     color: 'white'
   },
@@ -124,7 +124,7 @@ const pageStyle = {
     gap: '6px',
     transition: 'all 0.2s',
     ...(variant === 'primary' ? {
-      background: '#1535a8',
+      background: '#3b82f6',
       color: 'white'
     } : variant === 'success' ? {
       background: '#10b981',
@@ -134,7 +134,7 @@ const pageStyle = {
       color: 'white'
     } : {
       background: 'rgba(255,255,255,0.9)',
-      color: '#1535a8'
+      color: '#1e3a5f'
     })
   }),
   tabs: {
@@ -344,8 +344,8 @@ export default function Riconciliazione() {
       {/* Stats Cards */}
       {stats && (
         <div style={pageStyle.statsGrid}>
-          <div style={pageStyle.statCard('#1535a8')}>
-            <p style={pageStyle.statValue('#1535a8')}>{stats.estratto_conto?.totali || 0}</p>
+          <div style={pageStyle.statCard('#3b82f6')}>
+            <p style={pageStyle.statValue('#3b82f6')}>{stats.estratto_conto?.totali || 0}</p>
             <p style={pageStyle.statLabel}>Movimenti Totali EC</p>
           </div>
           <div style={pageStyle.statCard('#10b981')}>
@@ -472,7 +472,7 @@ export default function Riconciliazione() {
                 {selectedMovimento ? 'Fatture Compatibili' : 'Seleziona un movimento'}
               </h2>
               {selectedMovimento && (
-                <span style={pageStyle.badge('#1535a8')}>
+                <span style={pageStyle.badge('#3b82f6')}>
                   {formatEuro(Math.abs(selectedMovimento.importo))}
                 </span>
               )}

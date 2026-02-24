@@ -21,7 +21,7 @@ export default function RegoleContabili() {
       id: 'ciclo-passivo',
       titolo: '📥 Ciclo Passivo (Fatture Fornitori)',
       icona: '📥',
-      colore: '#1535a8',
+      colore: '#3b82f6',
       sottosezioni: [
         {
           titolo: 'Determinazione Metodo Pagamento Effettivo',
@@ -534,7 +534,7 @@ export default function RegoleContabili() {
     <div style={{ maxWidth: 1000, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ marginBottom: 32 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, color: '#1535a8', marginBottom: 8 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 700, color: '#1e3a5f', marginBottom: 8 }}>
           📚 Dizionario Regole Contabili
         </h1>
         <p style={{ color: '#64748b', fontSize: 14, lineHeight: 1.6 }}>

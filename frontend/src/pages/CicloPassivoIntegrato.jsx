@@ -159,7 +159,7 @@ const styles = {
     gap: '8px',
     transition: 'all 0.2s',
     ...(variant === 'primary' ? {
-      background: '#1535a8',
+      background: '#3b82f6',
       color: 'white'
     } : variant === 'success' ? {
       background: '#10b981',
@@ -186,7 +186,7 @@ const styles = {
     background: '#f8fafc'
   },
   uploadZoneActive: {
-    borderColor: '#1535a8',
+    borderColor: '#3b82f6',
     background: '#eff6ff'
   },
   input: {
@@ -489,8 +489,8 @@ export default function CicloPassivoIntegrato() {
           <p style={styles.statValue('#10b981')}>{stats.num_scadenze_saldate || 0}</p>
           <p style={styles.statLabel}>Scadenze Saldate</p>
         </div>
-        <div style={styles.statCard('#1535a8')}>
-          <p style={styles.statValue('#1535a8')}>{formatEuro(stats.totale_pagato || 0)}</p>
+        <div style={styles.statCard('#3b82f6')}>
+          <p style={styles.statValue('#3b82f6')}>{formatEuro(stats.totale_pagato || 0)}</p>
           <p style={styles.statLabel}>Totale Pagato</p>
         </div>
         <div style={styles.statCard('#8b5cf6')}>
@@ -551,8 +551,8 @@ export default function CicloPassivoIntegrato() {
                 </p>
               </div>
               <div style={{ padding: '16px', background: '#eff6ff', borderRadius: '8px', border: '1px solid #bfdbfe' }}>
-                <strong style={{ color: '#1535a8' }}>2. Prima Nota</strong>
-                <p style={{ margin: '8px 0 0 0', fontSize: '13px', color: '#1535a8' }}>
+                <strong style={{ color: '#1e40af' }}>2. Prima Nota</strong>
+                <p style={{ margin: '8px 0 0 0', fontSize: '13px', color: '#1d4ed8' }}>
                   Scritture contabili Dare/Avere
                 </p>
               </div>
@@ -594,7 +594,7 @@ export default function CicloPassivoIntegrato() {
               {uploading ? (
                 <div>
                   <div style={{ fontSize: '48px', marginBottom: '16px' }}>⏳</div>
-                  <p style={{ fontSize: '18px', color: '#1535a8', fontWeight: '500' }}>
+                  <p style={{ fontSize: '18px', color: '#3b82f6', fontWeight: '500' }}>
                     Elaborazione in corso...
                   </p>
                 </div>
@@ -721,7 +721,7 @@ export default function CicloPassivoIntegrato() {
                         <strong style={{ color: '#dc2626' }}>{formatEuro(s.importo_totale)}</strong>
                       </td>
                       <td style={styles.td}>
-                        <span style={styles.badge('#1535a8')}>{s.metodo_descrizione || s.metodo_pagamento}</span>
+                        <span style={styles.badge('#3b82f6')}>{s.metodo_descrizione || s.metodo_pagamento}</span>
                       </td>
                       <td style={styles.td}>
                         <span style={styles.badge('#f59e0b')}>Da pagare</span>
@@ -939,7 +939,7 @@ export default function CicloPassivoIntegrato() {
                         <strong style={{ color: '#10b981' }}>{formatEuro(s.importo_totale)}</strong>
                       </td>
                       <td style={styles.td}>
-                        <span style={styles.badge('#1535a8')}>{s.metodo_descrizione || s.metodo_pagamento}</span>
+                        <span style={styles.badge('#3b82f6')}>{s.metodo_descrizione || s.metodo_pagamento}</span>
                       </td>
                       <td style={styles.td}>
                         {s.riconciliato ? (

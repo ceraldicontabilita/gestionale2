@@ -19,7 +19,7 @@ const CATEGORIE_HACCP_COLORS = {
   salumi_insaccati: { bg: '#f9a8d4', text: '#9d174d', label: 'Salumi' },
   dolciumi_snack: { bg: '#c4b5fd', text: '#5b21b6', label: 'Dolciumi/Snack' },
   additivi_ingredienti: { bg: '#99f6e4', text: '#0f766e', label: 'Additivi' },
-  non_alimentare: { bg: '#dce8f4', text: '#374151', label: 'Non Alimentare' }
+  non_alimentare: { bg: '#e5e7eb', text: '#374151', label: 'Non Alimentare' }
 };
 
 const CONTI_PIANO = {
@@ -220,7 +220,7 @@ export default function DizionarioArticoli() {
     <div>
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, color: '#1535a8', marginBottom: 8 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 700, color: '#1e3a5f', marginBottom: 8 }}>
           📦 Dizionario Articoli
         </h1>
         <p style={{ color: '#64748b' }}>
@@ -250,7 +250,7 @@ export default function DizionarioArticoli() {
           gap: 12, 
           marginBottom: 24 
         }}>
-          <StatCard label="Totale Articoli" value={stats.totale_articoli} color="#1535a8" />
+          <StatCard label="Totale Articoli" value={stats.totale_articoli} color="#3b82f6" />
           <StatCard label="Mappati Manualmente" value={stats.mappature_manuali} color="#10b981" />
           <StatCard label="Alta Confidenza" value={stats.confidenza?.alta || 0} color="#22c55e" />
           <StatCard label="Media Confidenza" value={stats.confidenza?.media || 0} color="#f59e0b" />
@@ -273,7 +273,7 @@ export default function DizionarioArticoli() {
           disabled={generating}
           style={{
             padding: '10px 20px',
-            background: generating ? '#9ca3af' : 'linear-gradient(135deg, #1535a8, #1535a8)',
+            background: generating ? '#9ca3af' : 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
             color: 'white',
             border: 'none',
             borderRadius: 8,
@@ -342,7 +342,7 @@ export default function DizionarioArticoli() {
           onClick={handleSearch}
           style={{
             padding: '10px 16px',
-            background: '#1535a8',
+            background: '#3b82f6',
             color: 'white',
             border: 'none',
             borderRadius: 8,
@@ -396,7 +396,7 @@ export default function DizionarioArticoli() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
               <thead>
-                <tr style={{ background: '#1535a8', color: 'white' }}>
+                <tr style={{ background: '#1e3a5f', color: 'white' }}>
                   <th style={{ padding: 12, textAlign: 'left', width: '35%' }}>Descrizione</th>
                   <th style={{ padding: 12, textAlign: 'center' }}>Occorrenze</th>
                   <th style={{ padding: 12, textAlign: 'left' }}>Categoria HACCP</th>
@@ -564,7 +564,7 @@ export default function DizionarioArticoli() {
             maxHeight: '90vh',
             overflow: 'auto'
           }}>
-            <h3 style={{ margin: '0 0 20px 0', color: '#1535a8' }}>
+            <h3 style={{ margin: '0 0 20px 0', color: '#1e3a5f' }}>
               ✏️ Modifica Mappatura Articolo
             </h3>
             
@@ -659,7 +659,7 @@ export default function DizionarioArticoli() {
                   padding: '10px 20px',
                   borderRadius: 8,
                   border: 'none',
-                  background: 'linear-gradient(135deg, #1535a8, #1535a8)',
+                  background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
                   color: 'white',
                   cursor: 'pointer',
                   fontWeight: 600

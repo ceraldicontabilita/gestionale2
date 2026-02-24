@@ -67,9 +67,9 @@ class ErrorBoundary extends React.Component {
               padding: '12px',
               backgroundColor: '#fff',
               borderRadius: '8px',
-              border: '1px solid #dce8f4',
+              border: '1px solid #e5e7eb',
               fontSize: '12px',
-              color: '#6080a0'
+              color: '#6b7280'
             }}>
               <summary style={{ cursor: 'pointer', fontWeight: 'bold', color: '#374151' }}>
                 Dettagli errore (dev)

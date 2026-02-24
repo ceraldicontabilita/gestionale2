@@ -86,7 +86,7 @@ export default function CoerenzaPOSCorrispettivi() {
   if (loading) {
     return (
       <div style={{ padding: 40, textAlign: 'center' }}>
-        <RefreshCw size={32} style={{ animation: 'spin 1s linear infinite', color: '#1535a8' }} />
+        <RefreshCw size={32} style={{ animation: 'spin 1s linear infinite', color: '#3b82f6' }} />
         <p style={{ marginTop: 12, color: '#64748b' }}>Analisi coerenza POS/Corrispettivi...</p>
       </div>
     );
@@ -118,8 +118,8 @@ export default function CoerenzaPOSCorrispettivi() {
             </div>
           </div>
           <div style={{ background: '#eff6ff', padding: 16, borderRadius: 10, border: '1px solid #bfdbfe' }}>
-            <div style={{ fontSize: 11, color: '#1535a8', marginBottom: 4 }}>POS da XML</div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: '#1535a8' }}>
+            <div style={{ fontSize: 11, color: '#1e40af', marginBottom: 4 }}>POS da XML</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: '#1e40af' }}>
               {formatEuro(dati.riepilogo.totale_elettronico_xml)}
             </div>
           </div>
@@ -236,7 +236,7 @@ export default function CoerenzaPOSCorrispettivi() {
                     <span style={{ fontWeight: 600 }}>{formatDateIT(g.data)}</span>
                     <span style={{ marginLeft: 8, fontSize: 11, color: '#94a3b8' }}>{g.giorno_settimana}</span>
                   </td>
-                  <td style={{ padding: '10px 14px', textAlign: 'right', color: '#1535a8' }}>
+                  <td style={{ padding: '10px 14px', textAlign: 'right', color: '#2563eb' }}>
                     {formatEuro(g.elettronico_xml)}
                   </td>
                   <td style={{ padding: '10px 14px', textAlign: 'right', color: '#7c3aed' }}>
@@ -246,7 +246,7 @@ export default function CoerenzaPOSCorrispettivi() {
                     padding: '10px 14px', 
                     textAlign: 'right', 
                     fontWeight: 600,
-                    color: g.differenza > 10 ? '#dc2626' : g.differenza < -10 ? '#1535a8' : '#16a34a'
+                    color: g.differenza > 10 ? '#dc2626' : g.differenza < -10 ? '#2563eb' : '#16a34a'
                   }}>
                     {g.differenza > 0 ? '+' : ''}{formatEuro(g.differenza)}
                   </td>
@@ -283,7 +283,7 @@ export default function CoerenzaPOSCorrispettivi() {
                   <td style={{ padding: '10px 14px', fontWeight: 600 }}>{m.nome} {anno}</td>
                   <td style={{ padding: '10px 14px', textAlign: 'right' }}>{formatEuro(m.totale_corrispettivi)}</td>
                   <td style={{ padding: '10px 14px', textAlign: 'right', color: '#16a34a' }}>{formatEuro(m.contanti)}</td>
-                  <td style={{ padding: '10px 14px', textAlign: 'right', color: '#1535a8' }}>{formatEuro(m.elettronico_xml)}</td>
+                  <td style={{ padding: '10px 14px', textAlign: 'right', color: '#2563eb' }}>{formatEuro(m.elettronico_xml)}</td>
                   <td style={{ padding: '10px 14px', textAlign: 'right', color: '#7c3aed' }}>{formatEuro(m.pos_accreditato)}</td>
                   <td style={{ 
                     padding: '10px 14px', 
@@ -303,7 +303,7 @@ export default function CoerenzaPOSCorrispettivi() {
                 <td style={{ padding: '12px 14px' }}>TOTALE {anno}</td>
                 <td style={{ padding: '12px 14px', textAlign: 'right' }}>-</td>
                 <td style={{ padding: '12px 14px', textAlign: 'right' }}>-</td>
-                <td style={{ padding: '12px 14px', textAlign: 'right', color: '#1535a8' }}>
+                <td style={{ padding: '12px 14px', textAlign: 'right', color: '#2563eb' }}>
                   {formatEuro(riepilogoMensile.totali.elettronico_xml)}
                 </td>
                 <td style={{ padding: '12px 14px', textAlign: 'right', color: '#7c3aed' }}>
@@ -361,7 +361,7 @@ export default function CoerenzaPOSCorrispettivi() {
                     </div>
                     <div style={{ fontSize: 13, color: '#64748b' }}>{a.messaggio}</div>
                     <div style={{ fontSize: 12, marginTop: 4 }}>
-                      <span style={{ color: '#1535a8' }}>XML: {formatEuro(a.elettronico_xml)}</span>
+                      <span style={{ color: '#2563eb' }}>XML: {formatEuro(a.elettronico_xml)}</span>
                       <span style={{ margin: '0 8px', color: '#94a3b8' }}>|</span>
                       <span style={{ color: '#7c3aed' }}>POS: {formatEuro(a.pos_accreditato)}</span>
                     </div>
@@ -379,7 +379,7 @@ export default function CoerenzaPOSCorrispettivi() {
                       onClick={() => handleRiconcilia(a.data)}
                       style={{
                         padding: '6px 12px',
-                        background: '#1535a8',
+                        background: '#3b82f6',
                         color: 'white',
                         border: 'none',
                         borderRadius: 6,

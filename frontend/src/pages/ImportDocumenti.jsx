@@ -177,13 +177,13 @@ export default function ImportDocumenti() {
       cedolino: '#8b5cf6',
       fattura: '#ec4899',
       estratto_conto: '#059669',
-      estratto_conto_pdf: '#15803d',
+      estratto_conto_pdf: '#4caf50',
       bonifici: '#06b6d4',
-      quietanza_f24: '#d97706',
+      quietanza_f24: '#ff9800',
       corrispettivi: '#84cc16',
       pos: '#a855f7',
     };
-    return colors[tipo] || '#6080a0';
+    return colors[tipo] || '#6b7280';
   };
 
   const getTipoLabel = (tipo) => {
@@ -221,8 +221,8 @@ export default function ImportDocumenti() {
           alignItems: 'flex-start',
           gap: 12
         }}>
-          <Sparkles size={20} color="#1535a8" style={{ flexShrink: 0, marginTop: 2 }} />
-          <div style={{ fontSize: 13, color: '#1535a8' }}>
+          <Sparkles size={20} color="#3b82f6" style={{ flexShrink: 0, marginTop: 2 }} />
+          <div style={{ fontSize: 13, color: '#1e40af' }}>
             <strong>Riconoscimento Automatico</strong><br/>
             Carica qualsiasi documento: F24, Libro Unico, Fatture XML, Estratti Conto, Bonifici, ecc.<br/>
             Il sistema riconosce il tipo e lo elabora con il workflow completo.
@@ -238,7 +238,7 @@ export default function ImportDocumenti() {
           data-testid="drop-zone"
           style={{
             background: dragOver ? '#dbeafe' : 'white',
-            border: dragOver ? '3px dashed #1535a8' : '3px dashed #d1d5db',
+            border: dragOver ? '3px dashed #3b82f6' : '3px dashed #d1d5db',
             borderRadius: 16, 
             padding: 50, 
             textAlign: 'center', 
@@ -256,11 +256,11 @@ export default function ImportDocumenti() {
             style={{ display: 'none' }} 
             data-testid="file-input" 
           />
-          <FolderUp size={56} style={{ marginBottom: 12, opacity: 0.5, color: dragOver ? '#1535a8' : '#6080a0' }} />
+          <FolderUp size={56} style={{ marginBottom: 12, opacity: 0.5, color: dragOver ? '#3b82f6' : '#6b7280' }} />
           <div style={{ fontSize: 17, fontWeight: 600, color: '#374151', marginBottom: 6 }}>
             {dragOver ? 'Rilascia qui i file' : 'Trascina i file o clicca per selezionare'}
           </div>
-          <div style={{ fontSize: 13, color: '#6080a0' }}>
+          <div style={{ fontSize: 13, color: '#6b7280' }}>
             PDF, Excel, XML, CSV, ZIP • Singoli o multipli
           </div>
         </div>
@@ -293,7 +293,7 @@ export default function ImportDocumenti() {
           >
             Carica ZIP
           </button>
-          <span style={{ marginLeft: 12, fontSize: 12, color: '#6080a0' }}>
+          <span style={{ marginLeft: 12, fontSize: 12, color: '#6b7280' }}>
             Supporta ZIP annidati con estrazione automatica
           </span>
         </div>
@@ -306,12 +306,12 @@ export default function ImportDocumenti() {
             overflow: 'hidden', 
             marginBottom: 20, 
             boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-            border: '1px solid #dce8f4'
+            border: '1px solid #e5e7eb'
           }}>
             <div style={{ 
               padding: 14, 
-              borderBottom: '1px solid #dce8f4', 
-              background: '#f2f6fd', 
+              borderBottom: '1px solid #e5e7eb', 
+              background: '#f9fafb', 
               display: 'flex', 
               justifyContent: 'space-between', 
               alignItems: 'center' 
@@ -342,7 +342,7 @@ export default function ImportDocumenti() {
                   data-testid="upload-btn"
                   style={{ 
                     padding: '8px 20px', 
-                    background: uploading ? '#9ca3af' : '#1535a8', 
+                    background: uploading ? '#9ca3af' : '#3b82f6', 
                     color: 'white', 
                     border: 'none', 
                     borderRadius: 6, 
@@ -365,16 +365,16 @@ export default function ImportDocumenti() {
 
             {/* Progress bar */}
             {uploading && uploadProgress.total > 0 && (
-              <div style={{ padding: '10px 14px', borderBottom: '1px solid #dce8f4', background: '#eff6ff' }}>
+              <div style={{ padding: '10px 14px', borderBottom: '1px solid #e5e7eb', background: '#eff6ff' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: '#1535a8' }}>{uploadProgress.filename}</span>
-                  <span style={{ fontSize: 11, color: '#6080a0' }}>{uploadProgress.current}/{uploadProgress.total}</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: '#1d4ed8' }}>{uploadProgress.filename}</span>
+                  <span style={{ fontSize: 11, color: '#6b7280' }}>{uploadProgress.current}/{uploadProgress.total}</span>
                 </div>
                 <div style={{ height: 6, background: '#dbeafe', borderRadius: 3, overflow: 'hidden' }}>
                   <div style={{ 
                     height: '100%', 
                     width: `${(uploadProgress.current / uploadProgress.total) * 100}%`, 
-                    background: 'linear-gradient(90deg, #1535a8, #1535a8)', 
+                    background: 'linear-gradient(90deg, #3b82f6, #1d4ed8)', 
                     borderRadius: 3, 
                     transition: 'width 0.3s ease' 
                   }} />
@@ -412,7 +412,7 @@ export default function ImportDocumenti() {
                     flexShrink: 0 
                   }}>
                     {f.status === 'uploading' ? (
-                      <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} color="#1535a8" />
+                      <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} color="#3b82f6" />
                     ) : f.status === 'success' ? (
                       <CheckCircle size={16} color="#16a34a" />
                     ) : f.status === 'duplicate' ? (
@@ -420,14 +420,14 @@ export default function ImportDocumenti() {
                     ) : f.status === 'error' ? (
                       <AlertCircle size={16} color="#dc2626" />
                     ) : (
-                      <FileText size={16} color="#6080a0" />
+                      <FileText size={16} color="#6b7280" />
                     )}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 600, fontSize: 13, color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {f.name}
                     </div>
-                    <div style={{ fontSize: 11, color: '#6080a0' }}>
+                    <div style={{ fontSize: 11, color: '#6b7280' }}>
                       {(f.size / 1024).toFixed(1)} KB
                       {f.error && <span style={{ color: '#dc2626' }}> • {f.error}</span>}
                     </div>
@@ -477,13 +477,13 @@ export default function ImportDocumenti() {
             borderRadius: 12, 
             overflow: 'hidden', 
             boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-            border: '1px solid #dce8f4'
+            border: '1px solid #e5e7eb'
           }}>
             <div style={{ 
               padding: 14, 
               background: successCount === results.length ? '#dcfce7' : 
                          errorCount === results.length ? '#fee2e2' : '#fef3c7', 
-              borderBottom: '1px solid #dce8f4', 
+              borderBottom: '1px solid #e5e7eb', 
               display: 'flex', 
               justifyContent: 'space-between', 
               alignItems: 'center' 
@@ -538,7 +538,7 @@ export default function ImportDocumenti() {
                         <span style={{ 
                           padding: '2px 8px', 
                           background: '#dbeafe', 
-                          color: '#1535a8', 
+                          color: '#1d4ed8', 
                           borderRadius: 4, 
                           fontSize: 10, 
                           fontWeight: 700 
@@ -558,12 +558,12 @@ export default function ImportDocumenti() {
                 </div>
               ))}
             </div>
-            <div style={{ padding: '10px 14px', borderTop: '1px solid #dce8f4', background: '#f2f6fd' }}>
+            <div style={{ padding: '10px 14px', borderTop: '1px solid #e5e7eb', background: '#f9fafb' }}>
               <button 
                 onClick={() => setResults([])} 
                 style={{ 
                   padding: '6px 14px', 
-                  background: '#dce8f4', 
+                  background: '#e5e7eb', 
                   border: 'none', 
                   borderRadius: 6, 
                   cursor: 'pointer', 
@@ -581,11 +581,11 @@ export default function ImportDocumenti() {
         <div style={{ 
           marginTop: 24, 
           padding: 16, 
-          background: '#f2f6fd', 
+          background: '#f9fafb', 
           borderRadius: 10, 
-          border: '1px solid #dce8f4',
+          border: '1px solid #e5e7eb',
           fontSize: 12,
-          color: '#6080a0'
+          color: '#6b7280'
         }}>
           <div style={{ fontWeight: 600, color: '#374151', marginBottom: 8 }}>Tipi di documento supportati:</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
@@ -594,7 +594,7 @@ export default function ImportDocumenti() {
               { label: 'Libro Unico (LUL)', color: '#8b5cf6' },
               { label: 'Fatture XML', color: '#ec4899' },
               { label: 'Estratti Conto', color: '#059669' },
-              { label: 'Quietanze F24', color: '#d97706' },
+              { label: 'Quietanze F24', color: '#ff9800' },
               { label: 'Bonifici', color: '#06b6d4' },
               { label: 'Corrispettivi', color: '#84cc16' },
               { label: 'POS', color: '#a855f7' },

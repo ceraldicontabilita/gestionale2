@@ -11,7 +11,7 @@ import {
 const TIPO_COLORS = {
   attivo:  { bg: '#ecfdf5', color: '#059669', label: 'Attivo' },
   passivo: { bg: '#fef2f2', color: '#dc2626', label: 'Passivo' },
-  ricavo:  { bg: '#eff6ff', color: '#1535a8', label: 'Ricavo' },
+  ricavo:  { bg: '#eff6ff', color: '#2563eb', label: 'Ricavo' },
   costo:   { bg: '#fffbeb', color: '#d97706', label: 'Costo' }
 };
 
@@ -126,8 +126,8 @@ export default function BilancioVerifica() {
           <div style={{ fontSize: 20, fontWeight: 700, color: '#dc2626', marginTop: 4 }}>{formatEuro(totali.avere)}</div>
         </div>
         <div style={{ background: '#eff6ff', padding: 16, borderRadius: 12, textAlign: 'center' }}>
-          <div style={{ fontSize: 12, color: '#1535a8', fontWeight: 600 }}>SALDO DARE</div>
-          <div style={{ fontSize: 20, fontWeight: 700, color: '#1535a8', marginTop: 4 }}>{formatEuro(totali.saldo_dare)}</div>
+          <div style={{ fontSize: 12, color: '#2563eb', fontWeight: 600 }}>SALDO DARE</div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: '#2563eb', marginTop: 4 }}>{formatEuro(totali.saldo_dare)}</div>
         </div>
         <div style={{ background: '#fdf4ff', padding: 16, borderRadius: 12, textAlign: 'center' }}>
           <div style={{ fontSize: 12, color: '#9333ea', fontWeight: 600 }}>SALDO AVERE</div>
@@ -143,7 +143,7 @@ export default function BilancioVerifica() {
             {quadratura ? <CheckCircle size={20} /> : <AlertTriangle size={20} />}
             {quadratura ? 'OK' : formatEuro(totali.sbilancio)}
           </div>
-          <div style={{ fontSize: 11, color: '#6080a0', marginTop: 4 }}>
+          <div style={{ fontSize: 11, color: '#6b7280', marginTop: 4 }}>
             {riepilogo.n_conti} conti • {riepilogo.n_conti_attivo}A {riepilogo.n_conti_passivo}P {riepilogo.n_conti_ricavo}R {riepilogo.n_conti_costo}C
           </div>
         </div>
@@ -163,7 +163,7 @@ export default function BilancioVerifica() {
             <RefreshCw size={14} /> Aggiorna
           </button>
           <button onClick={handleExportCSV} disabled={!data}
-            style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#1535a8', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600 }}>
+            style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#1e3a5f', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600 }}>
             <Download size={14} /> CSV
           </button>
           <button onClick={handlePrint}
@@ -277,7 +277,7 @@ export default function BilancioVerifica() {
 
                       {/* Righe conti (se espanso) */}
                       {isExpanded && gruppo.conti.map((conto, idx) => {
-                        const tc = TIPO_COLORS[conto.tipo] || { bg: '#f2f6fd', color: '#6080a0', label: conto.tipo };
+                        const tc = TIPO_COLORS[conto.tipo] || { bg: '#f9fafb', color: '#6b7280', label: conto.tipo };
                         return (
                           <React.Fragment key={conto.codice}>
                             <tr style={{ background: idx % 2 === 0 ? 'white' : '#fafafa', borderBottom: '1px solid #f1f5f9' }}>
@@ -329,7 +329,7 @@ export default function BilancioVerifica() {
                                     <tbody>
                                       {conto.movimenti.map((m, mi) => (
                                         <tr key={mi} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                          <td style={{ padding: '3px 8px', color: '#6080a0' }}>{m.data}</td>
+                                          <td style={{ padding: '3px 8px', color: '#6b7280' }}>{m.data}</td>
                                           <td style={{ padding: '3px 8px', color: '#374151' }}>{m.descrizione}</td>
                                           <td style={{ padding: '3px 8px', textAlign: 'right', color: '#059669' }}>
                                             {m.dare > 0 ? formatEuro(m.dare) : ''}

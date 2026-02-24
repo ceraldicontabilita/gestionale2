@@ -66,32 +66,6 @@ def estrai_fornitore_pulito(descrizione: str) -> Optional[str]:
     return None
 
 
-
-@router.get("/lista")
-async def get_lista_movimenti(
-    limit: int = Query(20),
-    skip: int = Query(0),
-    anno: Optional[int] = Query(None),
-    data_da: Optional[str] = Query(None),
-    data_a: Optional[str] = Query(None),
-) -> Dict[str, Any]:
-    """Lista movimenti estratto conto con paginazione."""
-    db = Database.get_db()
-    query = {}
-    if anno:
-        query["anno"] = anno
-    if data_da:
-        query["data"] = {"$gte": data_da}
-    if data_a:
-        query.setdefault("data", {})["$lte"] = data_a
-    
-    movimenti = await db["estratto_conto_movimenti"].find(
-        query, {"_id": 0}
-    ).sort("data", -1).skip(skip).limit(limit).to_list(limit)
-    
-    totale = await db["estratto_conto_movimenti"].count_documents(query)
-    return {"movimenti": movimenti, "totale": totale, "limit": limit, "skip": skip}
-
 @router.post("/import")
 @handle_errors
 async def import_estratto_conto(file: UploadFile = File(...)) -> Dict[str, Any]:

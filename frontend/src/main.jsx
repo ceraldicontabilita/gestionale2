@@ -2,8 +2,8 @@ import React, { Suspense, lazy, Component } from "react";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
-import "./index.css";
 import App from "./App.jsx";
+import "./styles.css";
 import { AnnoProvider } from "./contexts/AnnoContext.jsx";
 import { AuthProvider, RequireAuth } from "./contexts/AuthContext.jsx";
 import { queryClient } from "./lib/queryClient.js";
@@ -53,6 +53,8 @@ const CicloPassivoHub = lazy(() => import("./pages/hub/CicloPassivoHub.jsx"));
 const FornitoriHub = lazy(() => import("./pages/hub/FornitoriHub.jsx"));
 const PrimaNotaHub = lazy(() => import("./pages/hub/PrimaNotaHub.jsx"));
 const RiconciliazioneHub = lazy(() => import("./pages/hub/RiconciliazioneHub.jsx"));
+const DipendentiHub = lazy(() => import("./pages/hub/DipendentiHub.jsx"));
+const HRGestionale = lazy(() => import("./pages/HRGestionale.jsx"));
 const PagheHub = lazy(() => import("./pages/hub/PagheHub.jsx"));
 const VeicoliHub = lazy(() => import("./pages/hub/VeicoliHub.jsx"));
 const FiscoHub = lazy(() => import("./pages/hub/FiscoHub.jsx"));
@@ -75,30 +77,18 @@ const DettaglioVerbale = lazy(() => import("./pages/DettaglioVerbale.jsx"));
 const ImpostazioniF24Email = lazy(() => import("./pages/ImpostazioniF24Email.jsx"));
 const Mutui = lazy(() => import("./pages/Mutui.jsx"));
 
-// DIPENDENTI IN CLOUD - MODULO HR SEPARATO CON LAYOUT DEDICATO
-const DipendentiCloudApp = lazy(() => import("./pages/dipendenti-cloud/DipendentiCloudApp.jsx"));
-
 const LazyPage = ({ children }) => (
   <Suspense fallback={<PageLoader />}>{children}</Suspense>
 );
 
-// AUTH DISABLED FOR DEVELOPMENT
-const AUTH_DISABLED = true;
-
 const router = createBrowserRouter([
   { path: "/auth/callback", element: <AuthCallback /> },
-  { path: "/login", element: AUTH_DISABLED ? <Navigate to="/" replace /> : <Login /> },
-  { path: "/register", element: AUTH_DISABLED ? <Navigate to="/" replace /> : <Register /> },
+  { path: "/login", element: <Login /> },
+  { path: "/register", element: <Register /> },
   { path: "/gestione-riservata", element: <LazyPage><GestioneRiservata /></LazyPage> },
-  
-  // DIPENDENTI IN CLOUD - ROUTE SEPARATA CON LAYOUT DEDICATO
-  // Questo modulo ha la sua sidebar blu scuro indipendente dall'ERP
-  { path: "/dipendenti", element: <LazyPage><DipendentiCloudApp /></LazyPage> },
-  { path: "/dipendenti/:page", element: <LazyPage><DipendentiCloudApp /></LazyPage> },
-  
   {
     path: "/",
-    element: AUTH_DISABLED ? <App /> : <RequireAuth><App /></RequireAuth>,
+    element: <RequireAuth><App /></RequireAuth>,
     children: [
       // === DASHBOARD ===
       { index: true, element: <LazyPage><DashboardHub /></LazyPage> },
@@ -146,8 +136,18 @@ const router = createBrowserRouter([
       { path: "archivio-bonifici/:tab", element: <LazyPage><RiconciliazioneHub /></LazyPage> },
       { path: "archivio-bonifici/:anno/:mese", element: <LazyPage><RiconciliazioneHub /></LazyPage> },
       
-      // === PAGHE & RETRIBUZIONI ===
-      { path: "paghe", element: <LazyPage><PagheHub /></LazyPage> },
+      // === DIPENDENTI ===
+      { path: "dipendenti", element: <LazyPage><HRGestionale /></LazyPage> },
+      { path: "dipendenti/:tab", element: <LazyPage><HRGestionale /></LazyPage> },
+      { path: "dipendenti/:tab/:subtab", element: <LazyPage><HRGestionale /></LazyPage> },
+      { path: "dipendenti/:nome/:tab", element: <LazyPage><HRGestionale /></LazyPage> },
+      { path: "attendance", element: <LazyPage><DipendentiHub /></LazyPage> },
+      { path: "attendance/:dipendente", element: <LazyPage><DipendentiHub /></LazyPage> },
+      { path: "attendance/:dipendente/:mese", element: <LazyPage><DipendentiHub /></LazyPage> },
+      { path: "saldi-ferie-permessi", element: <LazyPage><DipendentiHub /></LazyPage> },
+      
+      // === PAGHE & RETRIBUZIONI → ora in /dipendenti/paghe ===
+      { path: "paghe", element: <Navigate to="/dipendenti/paghe" replace /> },
       { path: "cedolini", element: <LazyPage><PagheHub /></LazyPage> },
       { path: "cedolini/:anno", element: <LazyPage><PagheHub /></LazyPage> },
       { path: "cedolini/:anno/:mese", element: <LazyPage><PagheHub /></LazyPage> },
@@ -160,9 +160,9 @@ const router = createBrowserRouter([
       { path: "tfr/:tab", element: <LazyPage><PagheHub /></LazyPage> },
       { path: "tfr/:dipendente", element: <LazyPage><PagheHub /></LazyPage> },
       
-      // === VEICOLI ===
-      { path: "veicoli", element: <LazyPage><VeicoliHub /></LazyPage> },
-      { path: "noleggio-auto", element: <LazyPage><VeicoliHub /></LazyPage> },
+      // === VEICOLI → ora in /dipendenti/veicoli ===
+      { path: "veicoli", element: <Navigate to="/dipendenti/veicoli" replace /> },
+      { path: "noleggio-auto", element: <Navigate to="/dipendenti/veicoli" replace /> },
       { path: "noleggio-auto/:targa", element: <LazyPage><VeicoliHub /></LazyPage> },
       { path: "verbali-noleggio/:numeroVerbale", element: <LazyPage><DettaglioVerbale /></LazyPage> },
       { path: "verbali-noleggio/:prefisso/:numero", element: <LazyPage><DettaglioVerbale /></LazyPage> },

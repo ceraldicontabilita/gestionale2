@@ -16,14 +16,14 @@ const styles = {
   headerRight: { display: 'flex', alignItems: 'center', gap: 12 },
   badge: { background: 'rgba(30, 64, 175, 0.5)', color: '#93c5fd', padding: '4px 12px', borderRadius: 8, fontSize: 14 },
   btnPrimary: { display: 'flex', alignItems: 'center', gap: 8, padding: '8px 16px', background: '#dc2626', color: 'white', borderRadius: 8, border: 'none', cursor: 'pointer', fontWeight: '500' },
-  btnBlue: { padding: '8px 16px', background: '#1535a8', color: 'white', borderRadius: 8, border: 'none', cursor: 'pointer', fontWeight: '500' },
+  btnBlue: { padding: '8px 16px', background: '#2563eb', color: 'white', borderRadius: 8, border: 'none', cursor: 'pointer', fontWeight: '500' },
   btnPurple: { padding: '8px 16px', background: '#9333ea', color: 'white', borderRadius: 8, border: 'none', cursor: 'pointer', fontWeight: '500' },
   messageSuccess: { marginBottom: 16, padding: 16, borderRadius: 8, background: 'rgba(22, 101, 52, 0.5)', color: '#86efac' },
   messageError: { marginBottom: 16, padding: 16, borderRadius: 8, background: 'rgba(153, 27, 27, 0.5)', color: '#fca5a5' },
   tabs: { display: 'flex', gap: 8, marginBottom: 24 },
   tab: (active) => ({
     padding: '8px 16px', borderRadius: 8, fontWeight: '500', border: 'none', cursor: 'pointer',
-    background: active ? '#1535a8' : '#1e293b', color: active ? 'white' : '#cbd5e1'
+    background: active ? '#2563eb' : '#1e293b', color: active ? 'white' : '#cbd5e1'
   }),
   card: { background: '#1e293b', borderRadius: 12, padding: 20, marginBottom: 16 },
   cardDark: { background: 'rgba(30, 41, 59, 0.5)', borderRadius: 12, padding: 16, marginBottom: 16 },
@@ -190,7 +190,7 @@ export default function ContabilitaAvanzata() {
 
             {/* Cards Riepilogo */}
             <div style={styles.grid4}>
-              <div style={styles.cardGradient('#1535a8', '#1535a8')}><p style={styles.statLabel('#bfdbfe')}>Utile Civilistico</p><p style={styles.statValue} data-testid="utile-civilistico">{formatEuro(imposte.utile_civilistico)}</p></div>
+              <div style={styles.cardGradient('#2563eb', '#1e40af')}><p style={styles.statLabel('#bfdbfe')}>Utile Civilistico</p><p style={styles.statValue} data-testid="utile-civilistico">{formatEuro(imposte.utile_civilistico)}</p></div>
               <div style={styles.cardGradient('#ea580c', '#c2410c')}><p style={styles.statLabel('#fed7aa')}>IRES (24%)</p><p style={styles.statValue} data-testid="ires-dovuta">{formatEuro(imposte.ires.imposta_dovuta)}</p></div>
               <div style={styles.cardGradient('#9333ea', '#7c3aed')}><p style={styles.statLabel('#e9d5ff')}>IRAP ({imposte.irap.aliquota}%)</p><p style={styles.statValue} data-testid="irap-dovuta">{formatEuro(imposte.irap.imposta_dovuta)}</p></div>
               <div style={styles.cardGradient('#dc2626', '#b91c1c')}><p style={styles.statLabel('#fecaca')}>Totale Imposte</p><p style={styles.statValue} data-testid="totale-imposte">{formatEuro(imposte.totale_imposte)}</p><p style={{ color: '#fecaca', fontSize: 12, marginTop: 4 }}>Aliquota effettiva: {imposte.aliquota_effettiva}%</p></div>

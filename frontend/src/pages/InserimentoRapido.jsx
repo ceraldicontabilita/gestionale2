@@ -19,7 +19,7 @@ const styles = {
     paddingBottom: '80px'
   },
   header: {
-    background: 'linear-gradient(135deg, #1535a8 0%, #2050e8 100%)',
+    background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
     borderRadius: '12px',
     padding: '16px',
     marginBottom: '16px',
@@ -56,7 +56,7 @@ const styles = {
     minHeight: '100px'
   },
   cardActive: {
-    borderColor: '#1535a8',
+    borderColor: '#2563eb',
     background: '#eff6ff'
   },
   cardIcon: {
@@ -107,7 +107,7 @@ const styles = {
     transition: 'border-color 0.2s'
   },
   inputFocus: {
-    borderColor: '#1535a8'
+    borderColor: '#2563eb'
   },
   btnRow: {
     display: 'flex',
@@ -129,7 +129,7 @@ const styles = {
     transition: 'all 0.2s'
   },
   btnPrimary: {
-    background: '#1535a8',
+    background: '#2563eb',
     color: 'white'
   },
   btnSuccess: {
@@ -143,8 +143,8 @@ const styles = {
   },
   btnOutlineActive: {
     background: '#eff6ff',
-    color: '#1535a8',
-    border: '2px solid #1535a8'
+    color: '#2563eb',
+    border: '2px solid #2563eb'
   },
   message: {
     padding: '12px',
@@ -195,7 +195,7 @@ const styles = {
 // Menu principale
 const MENU_ITEMS = [
   { id: 'corrispettivi', label: 'Corrispettivi', icon: Banknote, color: '#22c55e', bg: '#dcfce7' },
-  { id: 'versamenti', label: 'Versamenti Banca', icon: Building2, color: '#1535a8', bg: '#dbeafe' },
+  { id: 'versamenti', label: 'Versamenti Banca', icon: Building2, color: '#2563eb', bg: '#dbeafe' },
   { id: 'apporto', label: 'Apporto Soci', icon: Users, color: '#8b5cf6', bg: '#ede9fe' },
   { id: 'fatture', label: 'Fatture Ricevute', icon: FileText, color: '#f59e0b', bg: '#fef3c7' },
   { id: 'acconti', label: 'Acconti Dipendenti', icon: Wallet, color: '#ec4899', bg: '#fce7f3' },
@@ -461,7 +461,7 @@ export default function InserimentoRapido() {
   const renderVersamentiForm = () => (
     <div style={styles.form}>
       <h3 style={styles.formTitle}>
-        <Building2 size={20} color="#1535a8" />
+        <Building2 size={20} color="#2563eb" />
         Versamento in Banca
       </h3>
       
@@ -844,7 +844,7 @@ export default function InserimentoRapido() {
                     borderRadius: '8px',
                     borderLeft: `3px solid ${
                       ins.tipo === 'corrispettivo' ? '#22c55e' :
-                      ins.tipo === 'versamento' ? '#1535a8' :
+                      ins.tipo === 'versamento' ? '#2563eb' :
                       ins.tipo === 'acconto' ? '#ec4899' :
                       ins.tipo === 'presenza' ? '#06b6d4' : '#64748b'
                     }`

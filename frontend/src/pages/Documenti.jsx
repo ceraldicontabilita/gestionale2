@@ -5,7 +5,7 @@ import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { PageLayout } from '../components/PageLayout';
 
 const CATEGORY_COLORS = {
-  f24: { bg: '#dbeafe', text: '#1535a8', icon: '📋', label: 'F24' },
+  f24: { bg: '#dbeafe', text: '#1e40af', icon: '📋', label: 'F24' },
   fattura: { bg: '#dcfce7', text: '#166534', icon: '🧾', label: 'Fatture' },
   busta_paga: { bg: '#fef3c7', text: '#92400e', icon: '💰', label: 'Buste Paga' },
   estratto_conto: { bg: '#f3e8ff', text: '#7c3aed', icon: '🏦', label: 'Estratti Conto' },
@@ -16,7 +16,7 @@ const CATEGORY_COLORS = {
 };
 
 const STATUS_LABELS = {
-  nuovo: { label: 'Nuovo', color: '#1535a8', bg: '#dbeafe' },
+  nuovo: { label: 'Nuovo', color: '#1e3a5f', bg: '#dbeafe' },
   processato: { label: 'Processato', color: '#16a34a', bg: '#dcfce7' },
   errore: { label: 'Errore', color: '#dc2626', bg: '#fef2f2' }
 };
@@ -438,7 +438,7 @@ export default function Documenti() {
       icon="📨" 
       subtitle="Gestisci documenti email e documenti estratti con AI"
       actions={
-        <button onClick={activeTab === 'email' ? loadData : loadAiDocuments} disabled={loading || aiLoading} style={buttonStyle('#dce8f4', '#374151')}>
+        <button onClick={activeTab === 'email' ? loadData : loadAiDocuments} disabled={loading || aiLoading} style={buttonStyle('#e5e7eb', '#374151')}>
           {loading || aiLoading ? '⏳' : '🔄'} Aggiorna
         </button>
       }
@@ -462,7 +462,7 @@ export default function Documenti() {
             borderRadius: 8,
             cursor: 'pointer',
             fontWeight: activeTab === 'email' ? 600 : 400,
-            color: activeTab === 'email' ? '#1535a8' : '#6080a0',
+            color: activeTab === 'email' ? '#1e40af' : '#6b7280',
             boxShadow: activeTab === 'email' ? '0 2px 4px rgba(0,0,0,0.1)' : 'none',
             display: 'flex',
             alignItems: 'center',
@@ -480,7 +480,7 @@ export default function Documenti() {
             borderRadius: 8,
             cursor: 'pointer',
             fontWeight: activeTab === 'ai' ? 600 : 400,
-            color: activeTab === 'ai' ? '#7c3aed' : '#6080a0',
+            color: activeTab === 'ai' ? '#7c3aed' : '#6b7280',
             boxShadow: activeTab === 'ai' ? '0 2px 4px rgba(0,0,0,0.1)' : 'none',
             display: 'flex',
             alignItems: 'center',
@@ -499,11 +499,11 @@ export default function Documenti() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 12, marginBottom: 20 }}>
           <div style={{ ...cardStyle, padding: '10px 12px' }}>
             <div style={{ fontSize: 20, fontWeight: 'bold', color: '#1e293b' }}>{stats.totale}</div>
-            <div style={{ fontSize: 11, color: '#6080a0' }}>Documenti Totali</div>
+            <div style={{ fontSize: 11, color: '#6b7280' }}>Documenti Totali</div>
           </div>
           <div style={{ ...cardStyle, background: '#dbeafe', padding: '10px 12px' }}>
-            <div style={{ fontSize: 20, fontWeight: 'bold', color: '#1535a8' }}>{stats.nuovi}</div>
-            <div style={{ fontSize: 11, color: '#1535a8' }}>Da Processare</div>
+            <div style={{ fontSize: 20, fontWeight: 'bold', color: '#1e40af' }}>{stats.nuovi}</div>
+            <div style={{ fontSize: 11, color: '#1e40af' }}>Da Processare</div>
           </div>
           <div style={{ ...cardStyle, background: '#dcfce7', padding: '10px 12px' }}>
             <div style={{ fontSize: 20, fontWeight: 'bold', color: '#166534' }}>{stats.processati}</div>
@@ -511,13 +511,13 @@ export default function Documenti() {
           </div>
           <div style={{ ...cardStyle, padding: '10px 12px' }}>
             <div style={{ fontSize: 20, fontWeight: 'bold', color: '#7c3aed' }}>{stats.spazio_disco_mb} MB</div>
-            <div style={{ fontSize: 11, color: '#6080a0' }}>Spazio Usato</div>
+            <div style={{ fontSize: 11, color: '#6b7280' }}>Spazio Usato</div>
           </div>
         </div>
       )}
 
       {/* Azione Download Email */}
-      <div style={{ ...cardStyle, marginBottom: 24, background: 'linear-gradient(135deg, #1535a8, #7c3aed)' }}>
+      <div style={{ ...cardStyle, marginBottom: 24, background: 'linear-gradient(135deg, #1e40af, #7c3aed)' }}>
         <div style={{ padding: 24 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'white', flexWrap: 'wrap', gap: 16 }}>
             <div>
@@ -542,7 +542,7 @@ export default function Documenti() {
                 onClick={handleDownloadFromEmail}
                 disabled={downloading}
                 style={{
-                  ...buttonStyle('white', '#1535a8'),
+                  ...buttonStyle('white', '#1e40af'),
                   padding: '12px 24px'
                 }}
                 data-testid="btn-download-email"
@@ -605,9 +605,9 @@ export default function Documenti() {
                       style={{
                         padding: '6px 12px',
                         borderRadius: 20,
-                        border: paroleChiaveSelezionate.includes(kw.id) ? '2px solid #1535a8' : '1px solid #e2e8f0',
+                        border: paroleChiaveSelezionate.includes(kw.id) ? '2px solid #1e3a5f' : '1px solid #e2e8f0',
                         background: paroleChiaveSelezionate.includes(kw.id) ? '#dbeafe' : 'white',
-                        color: paroleChiaveSelezionate.includes(kw.id) ? '#1535a8' : '#6080a0',
+                        color: paroleChiaveSelezionate.includes(kw.id) ? '#1e40af' : '#6b7280',
                         cursor: 'pointer',
                         fontSize: 13,
                         fontWeight: paroleChiaveSelezionate.includes(kw.id) ? 'bold' : 'normal'
@@ -664,7 +664,7 @@ export default function Documenti() {
                             padding: 8,
                             background: paroleChiaveSelezionate.includes(kw.id) ? '#dcfce7' : '#f0fdf4',
                             borderRadius: 8,
-                            border: paroleChiaveSelezionate.includes(kw.id) ? '2px solid #15803d' : '1px solid #e2e8f0'
+                            border: paroleChiaveSelezionate.includes(kw.id) ? '2px solid #4caf50' : '1px solid #e2e8f0'
                           }}
                         >
                           <button
@@ -673,9 +673,9 @@ export default function Documenti() {
                               width: 24,
                               height: 24,
                               borderRadius: 4,
-                              border: '1px solid #15803d',
-                              background: paroleChiaveSelezionate.includes(kw.id) ? '#15803d' : 'white',
-                              color: paroleChiaveSelezionate.includes(kw.id) ? 'white' : '#15803d',
+                              border: '1px solid #4caf50',
+                              background: paroleChiaveSelezionate.includes(kw.id) ? '#4caf50' : 'white',
+                              color: paroleChiaveSelezionate.includes(kw.id) ? 'white' : '#4caf50',
                               cursor: 'pointer',
                               fontSize: 12,
                               display: 'flex',
@@ -687,7 +687,7 @@ export default function Documenti() {
                           </button>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontWeight: 'bold', fontSize: 13, color: '#166534' }}>{kw.label}</div>
-                            <div style={{ fontSize: 11, color: '#6080a0' }}>
+                            <div style={{ fontSize: 11, color: '#6b7280' }}>
                               Varianti: {kw.keywords}
                             </div>
                           </div>
@@ -710,7 +710,7 @@ export default function Documenti() {
                     </div>
                   </div>
                 )}
-                <p style={{ fontSize: 12, color: '#6080a0', marginTop: 8 }}>
+                <p style={{ fontSize: 12, color: '#6b7280', marginTop: 8 }}>
                   💡 Crea parole chiave personalizzate per categorizzare automaticamente i documenti.
                   Es: &quot;cartella esattoriale&quot; creerà una cartella &quot;Cartelle Esattoriali&quot;.
                 </p>
@@ -737,7 +737,7 @@ export default function Documenti() {
         <div style={{ 
           ...cardStyle,
           marginBottom: 24, 
-          border: '2px solid #1535a8',
+          border: '2px solid #1e3a5f',
           background: 'linear-gradient(135deg, #eff6ff, #dbeafe)'
         }}>
           <div style={{ padding: 16 }}>
@@ -746,7 +746,7 @@ export default function Documenti() {
                 width: 48, 
                 height: 48, 
                 borderRadius: '50%', 
-                background: '#1535a8',
+                background: '#1e3a5f',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -755,14 +755,14 @@ export default function Documenti() {
                 ⏳
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 'bold', fontSize: 16, color: '#1535a8', marginBottom: 4 }}>
+                <div style={{ fontWeight: 'bold', fontSize: 16, color: '#1e40af', marginBottom: 4 }}>
                   📧 Download Email in corso...
                 </div>
-                <div style={{ fontSize: 13, color: '#1535a8' }}>
+                <div style={{ fontSize: 13, color: '#1e3a5f' }}>
                   {taskStatus.message || 'Elaborazione...'}
                 </div>
                 {taskStatus.status === 'in_progress' && (
-                  <div style={{ fontSize: 12, color: '#6080a0', marginTop: 4 }}>
+                  <div style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>
                     Puoi continuare a navigare, ti avviseremo al completamento.
                   </div>
                 )}
@@ -773,7 +773,7 @@ export default function Documenti() {
                 borderRadius: 20,
                 fontSize: 12,
                 fontWeight: 'bold',
-                color: '#1535a8'
+                color: '#1e40af'
               }}>
                 {taskStatus.status === 'pending' ? '⏳ In attesa' : 
                  taskStatus.status === 'in_progress' ? '🔄 In esecuzione' : 
@@ -788,7 +788,7 @@ export default function Documenti() {
       {/* Filtri */}
       <div style={{ display: 'flex', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 14, color: '#6080a0' }}>🔍</span>
+          <span style={{ fontSize: 14, color: '#6b7280' }}>🔍</span>
           <select
             value={filtroCategoria}
             onChange={(e) => setFiltroCategoria(e.target.value)}
@@ -837,24 +837,24 @@ export default function Documenti() {
             onClick={() => setFiltroCategoria(cat.category === filtroCategoria ? '' : cat.category)}
           >
             {CATEGORY_COLORS[cat.category]?.icon} {cat.category_label}: {cat.count}
-            {cat.nuovi > 0 && <span style={{ marginLeft: 4, color: '#1535a8' }}>({cat.nuovi} nuovi)</span>}
+            {cat.nuovi > 0 && <span style={{ marginLeft: 4, color: '#1e3a5f' }}>({cat.nuovi} nuovi)</span>}
           </div>
         ))}
       </div>
 
       {/* Lista Documenti */}
       <div style={cardStyle}>
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid #dce8f4', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 18 }}>📄</span>
           <h2 style={{ margin: 0, fontSize: 16 }}>Documenti ({documents.length})</h2>
         </div>
         <div style={{ padding: 16 }}>
           {loading ? (
-            <div style={{ textAlign: 'center', padding: 40, color: '#6080a0' }}>
+            <div style={{ textAlign: 'center', padding: 40, color: '#6b7280' }}>
               ⏳ Caricamento...
             </div>
           ) : documents.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 40, color: '#6080a0' }}>
+            <div style={{ textAlign: 'center', padding: 40, color: '#6b7280' }}>
               <div style={{ fontSize: 48, marginBottom: 16, opacity: 0.3 }}>📧</div>
               <p>Nessun documento trovato</p>
               <p style={{ fontSize: 14 }}>Clicca &quot;Scarica da Email&quot; per iniziare</p>
@@ -909,12 +909,12 @@ export default function Documenti() {
                             overflow: 'hidden', 
                             textOverflow: 'ellipsis',
                             fontSize: 12,
-                            color: '#6080a0'
+                            color: '#6b7280'
                           }} title={doc.email_subject}>
                             {doc.email_subject || '-'}
                           </div>
                         </td>
-                        <td style={{ padding: 12, fontSize: 12, color: '#6080a0' }}>
+                        <td style={{ padding: 12, fontSize: 12, color: '#6b7280' }}>
                           {doc.email_from?.split('<')[0]?.trim() || '-'}
                         </td>
                         <td style={{ padding: 12, textAlign: 'center', fontSize: 12 }}>
@@ -950,7 +950,7 @@ export default function Documenti() {
                                 borderRadius: 4,
                                 padding: '5px 10px',
                                 cursor: 'pointer',
-                                color: '#1535a8',
+                                color: '#1e40af',
                                 fontSize: 11,
                                 fontWeight: 500
                               }}
@@ -1055,7 +1055,7 @@ export default function Documenti() {
         background: '#f8fafc', 
         borderRadius: 8,
         fontSize: 13,
-        color: '#6080a0'
+        color: '#6b7280'
       }}>
         💡 <strong>Configurazione Email:</strong> Le credenziali email sono configurate nel file .env del backend 
         (EMAIL_USER e EMAIL_APP_PASSWORD). Il sistema supporta Gmail con App Password.
@@ -1169,7 +1169,7 @@ export default function Documenti() {
                 <div style={{ fontWeight: 600, color: '#1e293b', marginBottom: 4 }}>
                   Clicca per caricare un documento
                 </div>
-                <div style={{ fontSize: 12, color: '#6080a0' }}>
+                <div style={{ fontSize: 12, color: '#6b7280' }}>
                   PDF, PNG, JPG (max 20MB) - Il sistema estrarrà automaticamente i dati
                 </div>
               </label>
@@ -1206,11 +1206,11 @@ export default function Documenti() {
             </div>
             
             {aiLoading ? (
-              <div style={{ padding: 40, textAlign: 'center', color: '#6080a0' }}>
+              <div style={{ padding: 40, textAlign: 'center', color: '#6b7280' }}>
                 ⏳ Caricamento...
               </div>
             ) : aiDocuments.filter(d => !aiFilterTipo || d.document_type === aiFilterTipo).length === 0 ? (
-              <div style={{ padding: 40, textAlign: 'center', color: '#6080a0' }}>
+              <div style={{ padding: 40, textAlign: 'center', color: '#6b7280' }}>
                 <div style={{ fontSize: 48, marginBottom: 16 }}>🤖</div>
                 <div style={{ fontWeight: 600, marginBottom: 8 }}>Nessun documento estratto</div>
                 <div style={{ fontSize: 13 }}>Carica un documento PDF per estrarre i dati automaticamente</div>
@@ -1328,12 +1328,12 @@ export default function Documenti() {
                         </td>
                         <td style={{ padding: 12, textAlign: 'center' }}>
                           {doc.ocr_used ? (
-                            <span style={{ color: '#d97706' }}>📷 Sì</span>
+                            <span style={{ color: '#ff9800' }}>📷 Sì</span>
                           ) : (
                             <span style={{ color: '#16a34a' }}>✓ No</span>
                           )}
                         </td>
-                        <td style={{ padding: 12, fontSize: 12, color: '#6080a0' }}>
+                        <td style={{ padding: 12, fontSize: 12, color: '#6b7280' }}>
                           {doc.created_at ? new Date(doc.created_at).toLocaleDateString('it-IT') : '-'}
                         </td>
                         <td style={{ padding: 12, textAlign: 'center' }}>
@@ -1362,7 +1362,7 @@ export default function Documenti() {
                                   cursor: 'pointer',
                                   fontSize: 11,
                                   fontWeight: 500,
-                                  color: '#1535a8'
+                                  color: '#1e40af'
                                 }}
                                 title="Visualizza PDF"
                               >
@@ -1447,7 +1447,7 @@ export default function Documenti() {
                 <span style={{ fontSize: 20 }}>📄</span>
                 <div>
                   <div style={{ fontWeight: 600, color: '#1e293b' }}>{selectedPdfDoc.filename}</div>
-                  <div style={{ fontSize: 12, color: '#6080a0' }}>
+                  <div style={{ fontSize: 12, color: '#6b7280' }}>
                     {CATEGORY_COLORS[selectedPdfDoc.category]?.label || selectedPdfDoc.category}
                     {selectedPdfDoc.file_size && ` • ${formatBytes(selectedPdfDoc.file_size)}`}
                   </div>
@@ -1457,7 +1457,7 @@ export default function Documenti() {
                 <button
                   onClick={() => handleDownloadFile(selectedPdfDoc)}
                   style={{
-                    background: '#1535a8',
+                    background: '#1e3a5f',
                     color: 'white',
                     border: 'none',
                     borderRadius: 6,
@@ -1473,7 +1473,7 @@ export default function Documenti() {
                   onClick={closePdfViewer}
                   style={{
                     background: '#f1f5f9',
-                    color: '#6080a0',
+                    color: '#6b7280',
                     border: 'none',
                     borderRadius: 6,
                     padding: '8px 16px',

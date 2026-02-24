@@ -247,10 +247,9 @@ async def get_stato_riconciliazione():
     db = Database.get_db()
     
     # Conta F24 per stato
-    # Usa campo "status" (valori: "pagato", "eliminato", altri=non classificati)
-    f24_pagati = await db[COLL_F24_COMMERCIALISTA].count_documents({"status": "pagato"})
-    f24_totali = await db[COLL_F24_COMMERCIALISTA].count_documents({"status": {"$ne": "eliminato"}})
-    f24_da_pagare = f24_totali - f24_pagati
+    f24_pagati = await db[COLL_F24_COMMERCIALISTA].count_documents({"stato_pagamento": "PAGATO"})
+    f24_da_pagare = await db[COLL_F24_COMMERCIALISTA].count_documents({"stato_pagamento": "DA_PAGARE"})
+    f24_totali = await db[COLL_F24_COMMERCIALISTA].count_documents({})
     
     # Conta movimenti F24 in banca
     movimenti_f24 = await db[COLL_ESTRATTO_CONTO].count_documents(QUERY_F24_PATTERN)
@@ -258,7 +257,7 @@ async def get_stato_riconciliazione():
     # Somma importi
     pipeline_f24 = [
         {"$group": {
-            "_id": "$status",
+            "_id": "$stato_pagamento",
             "totale": {"$sum": "$totali.saldo_netto"}
         }}
     ]
@@ -284,8 +283,8 @@ async def get_stato_riconciliazione():
             "non_classificati": f24_totali - f24_pagati - f24_da_pagare
         },
         "importi": {
-            "totale_f24_pagati": round(totali_per_stato.get("pagato", 0), 2),
-            "totale_f24_da_pagare": round(sum(v for k, v in totali_per_stato.items() if k not in ("pagato", "eliminato", None)), 2),
+            "totale_f24_pagati": round(totali_per_stato.get("PAGATO", 0), 2),
+            "totale_f24_da_pagare": round(totali_per_stato.get("DA_PAGARE", 0), 2),
             "totale_movimenti_banca": round(totale_banca, 2)
         },
         "movimenti_f24_banca": movimenti_f24,

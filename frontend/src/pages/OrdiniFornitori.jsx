@@ -27,7 +27,7 @@ const styles = {
     padding: 12,
     marginBottom: 12,
     boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-    border: '1px solid #dce8f4'
+    border: '1px solid #e5e7eb'
   },
   cardOrange: {
     background: '#fff7ed',
@@ -65,7 +65,7 @@ const styles = {
   },
   btnPrimary: {
     padding: '6px 12px',
-    background: '#1535a8',
+    background: '#3b82f6',
     color: 'white',
     border: 'none',
     borderRadius: 6,
@@ -161,7 +161,7 @@ const styles = {
   modalHeader: {
     padding: 14,
     borderBottom: '1px solid #eee',
-    background: '#1535a8',
+    background: '#1e3a5f',
     color: 'white',
     borderRadius: '10px 10px 0 0'
   },
@@ -278,16 +278,16 @@ export default function OrdiniFornitori() {
         <style>
           body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
           .header { border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
-          .company { font-size: 22px; font-weight: bold; color: #1535a8; }
+          .company { font-size: 22px; font-weight: bold; color: #1e3a5f; }
           .info { color: #666; font-size: 12px; margin-top: 5px; }
           .order-info { display: flex; justify-content: space-between; margin-bottom: 30px; }
           .order-box { background: #f5f5f5; padding: 15px; border-radius: 8px; }
           table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-          th { background: #1535a8; color: white; padding: 12px; text-align: left; }
+          th { background: #1e3a5f; color: white; padding: 12px; text-align: left; }
           td { padding: 10px; border-bottom: 1px solid #ddd; }
           .totals { text-align: right; margin-top: 20px; }
           .totals div { margin: 5px 0; }
-          .total-row { font-size: 18px; font-weight: bold; color: #1535a8; }
+          .total-row { font-size: 18px; font-weight: bold; color: #1e3a5f; }
           .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 11px; color: #999; }
           @media print { body { padding: 20px; } }
         </style>
@@ -299,11 +299,11 @@ export default function OrdiniFornitori() {
           <div class="info">P.IVA: ${AZIENDA.piva} | Tel: ${AZIENDA.tel} | Email: ${AZIENDA.email}</div>
         </div>
         <div class="order-info">
-          <div class="order-box"><strong>ORDINE N°</strong><br/><span style="font-size: 24px; color: #1535a8;">#${order.order_number}</span></div>
+          <div class="order-box"><strong>ORDINE N°</strong><br/><span style="font-size: 24px; color: #1e3a5f;">#${order.order_number}</span></div>
           <div class="order-box"><strong>DATA</strong><br/>${new Date(order.created_at).toLocaleDateString('it-IT', { day: '2-digit', month: 'long', year: 'numeric' })}</div>
           <div class="order-box"><strong>FORNITORE</strong><br/>${order.supplier_name}</div>
         </div>
-        <h3 style="color: #1535a8;">DETTAGLIO PRODOTTI</h3>
+        <h3 style="color: #1e3a5f;">DETTAGLIO PRODOTTI</h3>
         <table>
           <thead><tr><th>Prodotto</th><th>Quantità</th><th style="text-align: right;">Prezzo Unit.</th><th style="text-align: right;">Totale</th></tr></thead>
           <tbody>
@@ -375,7 +375,7 @@ export default function OrdiniFornitori() {
   const getStatusStyle = (status) => {
     const map = {
       "bozza": { bg: "#f1f5f9", color: "#64748b" },
-      "inviato": { bg: "#dbeafe", color: "#1535a8" },
+      "inviato": { bg: "#dbeafe", color: "#1e40af" },
       "confermato": { bg: "#fef3c7", color: "#92400e" },
       "consegnato": { bg: "#dcfce7", color: "#166534" },
       "annullato": { bg: "#fef2f2", color: "#dc2626" }
@@ -561,7 +561,7 @@ export default function OrdiniFornitori() {
             <div style={{ fontSize: 13, color: '#64748b' }}>In Bozza</div>
           </div>
           <div style={styles.statCard}>
-            <div style={{ fontSize: 28, fontWeight: 'bold', color: '#1535a8' }}>{orders.filter(o => o.status === "inviato").length}</div>
+            <div style={{ fontSize: 28, fontWeight: 'bold', color: '#1e40af' }}>{orders.filter(o => o.status === "inviato").length}</div>
             <div style={{ fontSize: 13, color: '#64748b' }}>Inviati</div>
           </div>
           <div style={styles.statCard}>
@@ -604,17 +604,17 @@ export default function OrdiniFornitori() {
                 </tbody>
               </table>
               
-              <div style={{ marginTop: 20, textAlign: 'right', borderTop: '2px solid #1535a8', paddingTop: 15 }}>
+              <div style={{ marginTop: 20, textAlign: 'right', borderTop: '2px solid #1e3a5f', paddingTop: 15 }}>
                 <div>Imponibile: € {(selectedOrder.subtotal || 0).toFixed(2)}</div>
                 <div>IVA (22%): € {((selectedOrder.subtotal || 0) * 0.22).toFixed(2)}</div>
-                <div style={{ fontSize: 20, fontWeight: 'bold', color: '#1535a8', marginTop: 10 }}>
+                <div style={{ fontSize: 20, fontWeight: 'bold', color: '#1e3a5f', marginTop: 10 }}>
                   TOTALE: € {((selectedOrder.subtotal || 0) * 1.22).toFixed(2)}
                 </div>
               </div>
             </div>
             
             <div style={{ padding: 15, borderTop: '1px solid #eee', display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-              <button onClick={() => handleDownloadPDF(selectedOrder)} style={{ ...styles.btnSecondary, background: '#dbeafe', color: '#1535a8' }} data-testid="modal-download-pdf">📄 Scarica PDF</button>
+              <button onClick={() => handleDownloadPDF(selectedOrder)} style={{ ...styles.btnSecondary, background: '#dbeafe', color: '#1e40af' }} data-testid="modal-download-pdf">📄 Scarica PDF</button>
               <button onClick={() => handlePrintOrder(selectedOrder)} style={{ ...styles.btnSecondary, background: '#f3e8ff', color: '#7c3aed' }}>🖨️ Stampa</button>
               <button onClick={() => handleSendEmail(selectedOrder)} disabled={sendingEmail === selectedOrder.id} style={{ ...styles.btnSecondary, background: '#dcfce7', color: '#166534' }} data-testid="modal-send-email">
                 {sendingEmail === selectedOrder.id ? "Invio..." : "📧 Invia Email"}

@@ -135,7 +135,7 @@ export default function Corrispettivi() {
                 icon={Receipt}
                 label="Totale Corrispettivi"
                 value={formatEuro(totaleGiornaliero)}
-                color="#1535a8"
+                color="#1e3a5f"
               />
               <KPICard 
                 icon={Banknote}
@@ -252,7 +252,7 @@ export default function Corrispettivi() {
                   message="Nessun corrispettivo registrato per questo anno" 
                 />
                 <div style={{ textAlign: 'center', marginTop: 16 }}>
-                  <a href="/import-documenti" style={{ color: '#1535a8', fontSize: 14 }}>
+                  <a href="/import-documenti" style={{ color: '#2563eb', fontSize: 14 }}>
                     Vai a Import Documenti per caricare i corrispettivi
                   </a>
                 </div>
@@ -306,7 +306,7 @@ export default function Corrispettivi() {
                             style={{ 
                               padding: '6px 10px', 
                               background: '#eff6ff', 
-                              color: '#1535a8', 
+                              color: '#2563eb', 
                               border: 'none', 
                               borderRadius: 6, 
                               cursor: 'pointer', 

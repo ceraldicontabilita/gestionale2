@@ -1,12 +1,4 @@
 """
-DEPRECATO — Usare invoice_service_v2.py
-
-Questo file è mantenuto per retrocompatibilità con i router che lo importano ancora.
-Non aggiungere nuove funzionalità qui.
-
-Per nuove implementazioni: from app.services.invoice_service_v2 import InvoiceServiceV2
-"""
-"""
 Invoice service.
 Handles invoice import, management, and business logic.
 """

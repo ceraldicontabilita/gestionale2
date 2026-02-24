@@ -28,8 +28,8 @@ export default function NotificationBell() {
 
   useEffect(() => {
     fetchAlerts();
-    const interval = setInterval(fetchAlerts, 60000);
-    return () => clearInterval(interval);
+    // Rimosso auto-refresh ogni 60 secondi per evitare re-render della pagina
+    // Le notifiche si aggiornano solo al caricamento iniziale o cliccando sulla campanella
   }, []);
 
   useEffect(() => {
@@ -68,7 +68,7 @@ export default function NotificationBell() {
       case "scadenza":
         return <Bell size={16} style={{ color: '#ef4444' }} />;
       default:
-        return <Info size={16} style={{ color: '#1535a8' }} />;
+        return <Info size={16} style={{ color: '#3b82f6' }} />;
     }
   };
 
@@ -76,7 +76,7 @@ export default function NotificationBell() {
     switch (priorita) {
       case "alta": return '#ef4444';
       case "media": return '#f59e0b';
-      default: return '#1535a8';
+      default: return '#3b82f6';
     }
   };
 
@@ -141,7 +141,7 @@ export default function NotificationBell() {
           backgroundColor: 'white',
           borderRadius: '12px',
           boxShadow: '0 10px 40px rgba(0,0,0,0.25)',
-          border: '1px solid #dce8f4',
+          border: '1px solid #e5e7eb',
           zIndex: 99999,
           maxHeight: '70vh',
           overflow: 'hidden',
@@ -151,7 +151,7 @@ export default function NotificationBell() {
           {/* Header */}
           <div style={{
             padding: '14px 16px',
-            borderBottom: '1px solid #dce8f4',
+            borderBottom: '1px solid #e5e7eb',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -192,14 +192,14 @@ export default function NotificationBell() {
                 display: 'flex'
               }}
             >
-              <X size={18} style={{ color: '#6080a0' }} />
+              <X size={18} style={{ color: '#6b7280' }} />
             </button>
           </div>
 
           {/* Alerts List */}
           <div style={{ overflowY: 'auto', flex: 1 }}>
             {loading ? (
-              <div style={{ padding: '24px', textAlign: 'center', color: '#6080a0' }}>
+              <div style={{ padding: '24px', textAlign: 'center', color: '#6b7280' }}>
                 Caricamento...
               </div>
             ) : alerts.length === 0 ? (
@@ -243,7 +243,7 @@ export default function NotificationBell() {
                         <p style={{ 
                           margin: '4px 0 0', 
                           fontSize: '12px', 
-                          color: '#6080a0',
+                          color: '#6b7280',
                           display: '-webkit-box',
                           WebkitLineClamp: 2,
                           WebkitBoxOrient: 'vertical',
@@ -303,7 +303,7 @@ export default function NotificationBell() {
           {alerts.length > 0 && (
             <div style={{
               padding: '10px 16px',
-              borderTop: '1px solid #dce8f4',
+              borderTop: '1px solid #e5e7eb',
               background: '#f8fafc'
             }}>
               <button
@@ -314,7 +314,7 @@ export default function NotificationBell() {
                 style={{
                   background: 'transparent',
                   border: 'none',
-                  color: '#1535a8',
+                  color: '#2563eb',
                   fontSize: '13px',
                   fontWeight: 500,
                   cursor: 'pointer',

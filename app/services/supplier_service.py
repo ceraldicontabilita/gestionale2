@@ -1,10 +1,4 @@
 """
-DEPRECATO — Usare supplier_service_v2.py
-
-Mantenuto per retrocompatibilità. Non aggiungere nuove funzionalità qui.
-Per nuove implementazioni: from app.services.supplier_service_v2 import SupplierServiceV2
-"""
-"""
 Supplier service.
 Handles supplier management and business logic.
 """

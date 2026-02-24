@@ -103,74 +103,31 @@ async def get_mutui(
 @router.get("/statistiche/dashboard", summary="Statistiche per dashboard")
 async def get_statistiche_mutui():
     """
-    Restituisce statistiche aggregate per la dashboard.
-    Calcola debito residuo on-the-fly dalle rate (campo stato = 'Da pagare').
+    Restituisce statistiche aggregate per la dashboard
     """
     try:
         db = get_db()
         
-        # Carica tutti i mutui con le rate
-        tutti_mutui = await db.mutui.find({}).to_list(length=None)
-        
-        if not tutti_mutui:
-            return {
-                "success": True,
-                "data": {
-                    "numero_mutui": 0,
-                    "importo_totale_accordato": 0,
-                    "debito_residuo_totale": 0,
-                    "totale_pagato": 0,
-                    "percentuale_completamento": 0,
-                    "percentuale_riconciliazione": 0,
-                    "prossime_scadenze": []
+        # Aggrega dati da tutti i mutui
+        pipeline = [
+            {
+                "$group": {
+                    "_id": None,
+                    "numero_mutui": {"$sum": 1},
+                    "importo_totale_accordato": {"$sum": "$importo_accordato"},
+                    "debito_residuo_totale": {"$sum": "$debito_residuo_totale"},
+                    "totale_pagato_capitale": {"$sum": "$totale_pagato_capitale"},
+                    "totale_pagato_interessi": {"$sum": "$totale_pagato_interessi"},
+                    "totale_pagato": {"$sum": "$totale_pagato"},
+                    "rate_totali": {"$sum": "$totale_rate"},
+                    "rate_pagate": {"$sum": "$rate_pagate"},
+                    "rate_da_pagare": {"$sum": "$rate_da_pagare"},
+                    "rate_riconciliate": {"$sum": "$rate_riconciliate"},
                 }
             }
+        ]
         
-        # Calcola statistiche on-the-fly dalle rate
-        importo_totale = 0
-        debito_residuo = 0
-        totale_pagato_capitale = 0
-        totale_pagato_interessi = 0
-        rate_totali = 0
-        rate_pagate = 0
-        rate_da_pagare = 0
-        rate_riconciliate = 0
-        
-        for m in tutti_mutui:
-            importo_totale += float(m.get("importo_accordato") or 0)
-            for r in m.get("rate", []):
-                stato = (r.get("stato") or "").strip()
-                quota_cap = float(r.get("quota_capitale") or 0)
-                quota_int = float(r.get("quota_interessi") or 0)
-                importo_tot = float(r.get("importo_totale") or 0)
-                rate_totali += 1
-                if stato in ("Pagata", "pagata", "PAGATA"):
-                    rate_pagate += 1
-                    totale_pagato_capitale += quota_cap
-                    totale_pagato_interessi += quota_int
-                    if r.get("riconciliata"):
-                        rate_riconciliate += 1
-                elif stato in ("Da pagare", "da_pagare", "DA_PAGARE", ""):
-                    rate_da_pagare += 1
-                    debito_residuo += quota_cap
-        
-        totale_pagato = totale_pagato_capitale + totale_pagato_interessi
-        
-        stats = {
-            "numero_mutui": len(tutti_mutui),
-            "importo_totale_accordato": round(importo_totale, 2),
-            "debito_residuo_totale": round(debito_residuo, 2),
-            "totale_pagato_capitale": round(totale_pagato_capitale, 2),
-            "totale_pagato_interessi": round(totale_pagato_interessi, 2),
-            "totale_pagato": round(totale_pagato, 2),
-            "rate_totali": rate_totali,
-            "rate_pagate": rate_pagate,
-            "rate_da_pagare": rate_da_pagare,
-            "rate_riconciliate": rate_riconciliate,
-        }
-        
-        # Placeholder per compatibilità con il vecchio aggregate result
-        result = [stats]
+        result = await db.mutui.aggregate(pipeline).to_list(length=1)
         
         if not result:
             return {

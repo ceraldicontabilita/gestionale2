@@ -39,7 +39,7 @@ const MOBILE_NAV = [
   { to: "/", label: "Home", icon: "🏠" },
   { to: "/fatture-ricevute", label: "Fatture", icon: "📄" },
   { to: "/riconciliazione", label: "Banca", icon: "🏦" },
-  // DIPENDENTI RIMOSSO
+  { to: "/dipendenti", label: "Dipend.", icon: "👥" },
   { to: "/more", label: "Menu", icon: "☰", isMenu: true },
 ];
 
@@ -92,13 +92,13 @@ export default function App() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'var(--ink)',
-        color: 'var(--surface)',
+        background: '#0f172a',
+        color: '#f8fafc',
       }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{
             width: 48, height: 48,
-            border: '3px solid var(--primary)',
+            border: '3px solid #3b82f6',
             borderTopColor: 'transparent',
             borderRadius: '50%',
             animation: 'spin 1s linear infinite',
@@ -160,10 +160,10 @@ export default function App() {
             alignItems: 'center', 
             gap: 6,
             padding: '6px 10px',
-            background: 'var(--bg)',
+            background: '#f1f5f9',
             borderRadius: 6
           }}>
-            <span style={{ fontSize: 10, color: 'var(--ink3)' }}>Anno:</span>
+            <span style={{ fontSize: 10, color: '#64748b' }}>Anno:</span>
             <AnnoSelector style={{ flex: 1, border: 'none', background: 'white', fontSize: 11, padding: '4px 8px', minHeight: 26 }} />
           </div>
         </div>
@@ -197,7 +197,7 @@ export default function App() {
         </nav>
         <div style={{
           padding: '12px',
-          borderTop: '1px solid var(--nav-border)',
+          borderTop: '1px solid rgba(148,163,184,0.1)',
           marginTop: 'auto',
         }}>
           <button
@@ -208,10 +208,10 @@ export default function App() {
             style={{
               width: '100%',
               padding: '8px',
-              background: 'var(--danger-bg)',
-              border: '1px solid var(--danger-border)',
+              background: 'rgba(239,68,68,0.1)',
+              border: '1px solid rgba(239,68,68,0.2)',
               borderRadius: 6,
-              color: 'var(--danger)',
+              color: '#fca5a5',
               fontSize: 13,
               cursor: 'pointer',
               display: 'flex',
@@ -284,7 +284,7 @@ export default function App() {
               gap: 10,
               background: '#f8fafc'
             }}>
-              <span style={{ fontSize: 13, color: 'var(--ink3)' }}>📅 Anno:</span>
+              <span style={{ fontSize: 13, color: '#64748b' }}>📅 Anno:</span>
               <AnnoSelector style={{ 
                 flex: 1, 
                 border: '1px solid #e2e8f0', 
@@ -389,16 +389,12 @@ export default function App() {
             background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
             color: white;
             width: 220px;
-            min-width: 220px;
-            max-width: 220px;
             height: 100vh;
-            position: fixed;
-            left: 0;
+            position: sticky;
             top: 0;
             padding: 12px 8px;
             overflow-y: auto;
-            overflow-x: hidden;
-            z-index: 1000;
+            overflow-x: visible;
           }
           
           .desktop-sidebar .brand {
@@ -684,7 +680,6 @@ export default function App() {
         @media (min-width: 768px) {
           .content {
             padding-bottom: 24px;
-            margin-left: 220px;
           }
         }
       `}</style>

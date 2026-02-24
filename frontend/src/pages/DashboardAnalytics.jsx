@@ -19,7 +19,7 @@ import { PageLayout } from '../components/PageLayout';
 const MESI = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
 
 // Semplice componente grafico a barre
-function BarChart({ data, maxValue, color = '#1535a8', label = '' }) {
+function BarChart({ data, maxValue, color = '#3b82f6', label = '' }) {
   if (!data || data.length === 0) return <div style={{ color: '#94a3b8', padding: 20 }}>Nessun dato</div>;
   
   const max = maxValue || Math.max(...data.map(d => d.value), 1);
@@ -86,7 +86,7 @@ function PieChart({ data }) {
 }
 
 // KPI Card con indicatore real-time
-function KPICard({ title, value, subtitle, trend, color = '#1535a8', icon = '📊', isLive = false }) {
+function KPICard({ title, value, subtitle, trend, color = '#3b82f6', icon = '📊', isLive = false }) {
   const trendColor = trend > 0 ? '#10b981' : trend < 0 ? '#ef4444' : '#94a3b8';
   const trendIcon = trend > 0 ? '↑' : trend < 0 ? '↓' : '→';
   
@@ -274,7 +274,7 @@ export default function DashboardAnalytics() {
         return {
           label: mese,
           value: totCorr,
-          color: '#1535a8'
+          color: '#3b82f6'
         };
       });
 
@@ -291,7 +291,7 @@ export default function DashboardAnalytics() {
         f24: '#ef4444',
         utenze: '#10b981',
         altro: '#94a3b8',
-        cassa: '#1535a8',
+        cassa: '#3b82f6',
         banca: '#06b6d4'
       };
 
@@ -446,7 +446,7 @@ export default function DashboardAnalytics() {
           value={formatEuro(stats?.kpi?.fatturato || 0)} 
           subtitle={`${stats?.kpi?.numFatture || 0} fatture emesse`}
           icon="💰"
-          color="#1535a8"
+          color="#3b82f6"
           isLive={wsConnected}
         />
         <KPICard 
@@ -478,7 +478,7 @@ export default function DashboardAnalytics() {
         {/* Fatturato Mensile */}
         <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
           <h3 style={{ margin: '0 0 16px', fontSize: 16, color: '#1e293b' }}>📈 Fatturato Mensile</h3>
-          <BarChart data={stats?.fatturatoMensile || []} color="#1535a8" />
+          <BarChart data={stats?.fatturatoMensile || []} color="#3b82f6" />
         </div>
 
         {/* Distribuzione Spese */}
@@ -502,7 +502,7 @@ export default function DashboardAnalytics() {
         gap: 12 
       }}>
         <div style={{ background: '#f8fafc', borderRadius: 8, padding: 16, textAlign: 'center' }}>
-          <div style={{ fontSize: 24, fontWeight: 700, color: '#1535a8' }}>{stats?.kpi?.numDipendenti || 0}</div>
+          <div style={{ fontSize: 24, fontWeight: 700, color: '#3b82f6' }}>{stats?.kpi?.numDipendenti || 0}</div>
           <div style={{ fontSize: 12, color: '#64748b' }}>Dipendenti</div>
         </div>
         <div style={{ background: '#f8fafc', borderRadius: 8, padding: 16, textAlign: 'center' }}>

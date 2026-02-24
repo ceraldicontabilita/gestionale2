@@ -18,7 +18,7 @@ import { PageLayout } from '../components/PageLayout';
  */
 
 const TABS = [
-  { id: 'dashboard', label: '📊 Dashboard', color: '#1535a8' },
+  { id: 'dashboard', label: '📊 Dashboard', color: '#3b82f6' },
   { id: 'banca', label: '🏦 Banca', color: '#10b981' },
   { id: 'assegni', label: '📝 Assegni', color: '#f59e0b' },
   { id: 'f24', label: '📄 F24', color: '#ef4444' },
@@ -459,7 +459,7 @@ export default function RiconciliazioneUnificata() {
           justifyContent: 'space-between', 
           alignItems: 'center', 
           padding: '15px 20px',
-          background: 'linear-gradient(135deg, #1535a8 0%, #2050e8 100%)',
+          background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
           borderRadius: 12,
           color: 'white'
         }}>
@@ -493,7 +493,7 @@ export default function RiconciliazioneUnificata() {
         flexWrap: 'wrap', 
         gap: 12,
         padding: '15px 20px',
-        background: 'linear-gradient(135deg, #1535a8 0%, #2050e8 100%)',
+        background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
         borderRadius: 12,
         color: 'white'
       }}>
@@ -513,7 +513,7 @@ export default function RiconciliazioneUnificata() {
             data-testid="btn-auto-repair"
             style={{
               padding: '10px 16px',
-              background: autoRepairRunning ? '#9ca3af' : 'linear-gradient(135deg, #1535a8 0%, #2050e8 100%)',
+              background: autoRepairRunning ? '#9ca3af' : 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
               color: 'white',
               border: 'none',
               borderRadius: 8,
@@ -589,7 +589,7 @@ export default function RiconciliazioneUnificata() {
             style={{
               padding: '10px 16px',
               background: 'rgba(255,255,255,0.9)',
-              color: '#1535a8',
+              color: '#1e3a5f',
               border: 'none',
               borderRadius: 8,
               cursor: 'pointer',
@@ -604,7 +604,7 @@ export default function RiconciliazioneUnificata() {
             onClick={() => setShowFilters(!showFilters)}
             style={{
               padding: '10px 16px',
-              background: showFilters ? '#1535a8' : '#f1f5f9',
+              background: showFilters ? '#3b82f6' : '#f1f5f9',
               color: showFilters ? 'white' : '#374151',
               border: 'none',
               borderRadius: 8,
@@ -649,7 +649,7 @@ export default function RiconciliazioneUnificata() {
               type="date"
               value={filters.dataFrom}
               onChange={(e) => setFilters({...filters, dataFrom: e.target.value})}
-              style={{ width: '100%', padding: 8, border: '1px solid #dce8f4', borderRadius: 6, fontSize: 13 }}
+              style={{ width: '100%', padding: 8, border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13 }}
             />
           </div>
           <div>
@@ -658,7 +658,7 @@ export default function RiconciliazioneUnificata() {
               type="date"
               value={filters.dataTo}
               onChange={(e) => setFilters({...filters, dataTo: e.target.value})}
-              style={{ width: '100%', padding: 8, border: '1px solid #dce8f4', borderRadius: 6, fontSize: 13 }}
+              style={{ width: '100%', padding: 8, border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13 }}
             />
           </div>
           <div>
@@ -668,7 +668,7 @@ export default function RiconciliazioneUnificata() {
               placeholder="0"
               value={filters.importoMin}
               onChange={(e) => setFilters({...filters, importoMin: e.target.value})}
-              style={{ width: '100%', padding: 8, border: '1px solid #dce8f4', borderRadius: 6, fontSize: 13 }}
+              style={{ width: '100%', padding: 8, border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13 }}
             />
           </div>
           <div>
@@ -678,7 +678,7 @@ export default function RiconciliazioneUnificata() {
               placeholder="999999"
               value={filters.importoMax}
               onChange={(e) => setFilters({...filters, importoMax: e.target.value})}
-              style={{ width: '100%', padding: 8, border: '1px solid #dce8f4', borderRadius: 6, fontSize: 13 }}
+              style={{ width: '100%', padding: 8, border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13 }}
             />
           </div>
           <div>
@@ -688,7 +688,7 @@ export default function RiconciliazioneUnificata() {
               placeholder="Descrizione, tipo..."
               value={filters.search}
               onChange={(e) => setFilters({...filters, search: e.target.value})}
-              style={{ width: '100%', padding: 8, border: '1px solid #dce8f4', borderRadius: 6, fontSize: 13 }}
+              style={{ width: '100%', padding: 8, border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13 }}
             />
           </div>
           <div style={{ display: 'flex', alignItems: 'flex-end' }}>
@@ -829,7 +829,7 @@ export default function RiconciliazioneUnificata() {
             disabled={loadingMore}
             style={{
               padding: '12px 28px',
-              background: loadingMore ? '#94a3b8' : '#1535a8',
+              background: loadingMore ? '#94a3b8' : '#3b82f6',
               color: 'white',
               border: 'none',
               borderRadius: 8,
@@ -857,7 +857,7 @@ function DashboardTab({ stats, autoMatchStats }) {
     <div style={{ padding: 24, textAlign: 'center' }}>
       <div style={{ 
         padding: 40, 
-        background: 'linear-gradient(135deg, #1535a8, #8b5cf6)', 
+        background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', 
         borderRadius: 16, 
         color: 'white',
         maxWidth: 500,
@@ -897,7 +897,7 @@ function MovimentiTab({ movimenti, onConferma, onIgnora, onElimina, processing, 
 
   return (
     <div>
-      <div style={{ padding: 16, background: '#f8fafc', borderBottom: '1px solid #dce8f4' }}>
+      <div style={{ padding: 16, background: '#f8fafc', borderBottom: '1px solid #e5e7eb' }}>
         <h3 style={{ margin: 0, fontSize: 16 }}>{title} ({movimenti.length})</h3>
       </div>
       <div style={{ maxHeight: 800, overflow: 'auto' }}>
@@ -1012,10 +1012,10 @@ function MovimentoCard({ movimento, onConferma, onIgnora, onElimina, processing,
               <span>📝 Assegno N. {movimento.numero_assegno}</span>
               <span>• Stato: {movimento.stato || 'N/D'}</span>
               {movimento.beneficiario && (
-                <span style={{ color: '#1535a8', fontWeight: 600 }}>• 👤 {movimento.beneficiario}</span>
+                <span style={{ color: '#3b82f6', fontWeight: 600 }}>• 👤 {movimento.beneficiario}</span>
               )}
               {movimento.fornitore && !movimento.beneficiario && (
-                <span style={{ color: '#1535a8', fontWeight: 600 }}>• 👤 {movimento.fornitore}</span>
+                <span style={{ color: '#3b82f6', fontWeight: 600 }}>• 👤 {movimento.fornitore}</span>
               )}
             </div>
           )}
@@ -1056,7 +1056,7 @@ function MovimentoCard({ movimento, onConferma, onIgnora, onElimina, processing,
                   padding: '4px 8px',
                   background: '#dbeafe',
                   borderRadius: 4,
-                  color: '#1535a8'
+                  color: '#1e40af'
                 }}>
                   📊 <b>Pagamento in {movimento.info_rate.numero_rate} rate</b>: 
                   Totale rate {formatEuro(movimento.info_rate.totale_rate)} 
@@ -1260,7 +1260,7 @@ function F24Tab({ f24, onConfermaF24, processing }) {
         <div style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <button 
             onClick={toggleTutti}
-            style={{ padding: '8px 12px', background: '#dce8f4', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}
+            style={{ padding: '8px 12px', background: '#e5e7eb', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}
           >
             {selezionati.size === f24Validi.length ? '☐ Deseleziona' : '☑ Seleziona tutti'}
           </button>
@@ -1522,7 +1522,7 @@ function ArubaTab({ fatture, onConferma, processing, fornitori = [], onRefresh, 
           <select 
             value={filtroFornitore}
             onChange={e => setFiltroFornitore(e.target.value)}
-            style={{ padding: '8px 12px', border: '1px solid #dce8f4', borderRadius: 6, fontSize: 13 }}
+            style={{ padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13 }}
           >
             <option value="">Tutti i fornitori ({fatture.length})</option>
             {fornitori.map(f => (
@@ -1533,7 +1533,7 @@ function ArubaTab({ fatture, onConferma, processing, fornitori = [], onRefresh, 
           {/* Azioni batch */}
           <button 
             onClick={toggleTutte}
-            style={{ padding: '8px 12px', background: '#dce8f4', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}
+            style={{ padding: '8px 12px', background: '#e5e7eb', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}
           >
             {selezionate.size === fattureFiltrate.length ? '☐ Deseleziona' : '☑ Seleziona tutte'}
           </button>
@@ -1610,7 +1610,7 @@ function ArubaTab({ fatture, onConferma, processing, fornitori = [], onRefresh, 
                       marginTop: 8,
                       padding: '4px 10px',
                       background: preferenze[op.fornitore] ? '#dcfce7' : '#dbeafe',
-                      color: preferenze[op.fornitore] ? '#166534' : '#1535a8',
+                      color: preferenze[op.fornitore] ? '#166534' : '#1e40af',
                       borderRadius: 4,
                       fontSize: 11,
                       fontWeight: 600
@@ -1644,7 +1644,7 @@ function ArubaTab({ fatture, onConferma, processing, fornitori = [], onRefresh, 
                   disabled={processing === op.id}
                   style={metodoBtn(
                     metodoPreferito === 'bonifico' ? '#dcfce7' : '#dbeafe', 
-                    metodoPreferito === 'bonifico' ? '#166534' : '#1535a8',
+                    metodoPreferito === 'bonifico' ? '#166534' : '#1e40af',
                     metodoPreferito === 'bonifico'
                   )}
                 >
@@ -1778,7 +1778,7 @@ function DocumentiTab({ documenti, stats, onRefresh, processing }) {
   
   const getCategoryColor = (category) => {
     const colors = {
-      'fattura': '#1535a8',
+      'fattura': '#3b82f6',
       'f24': '#ef4444',
       'busta_paga': '#22c55e',
       'verbale': '#f97316',
@@ -1830,7 +1830,7 @@ function DocumentiTab({ documenti, stats, onRefresh, processing }) {
       {/* Layout a due colonne */}
       <div style={{ display: 'grid', gridTemplateColumns: selectedDoc ? '1fr 1fr' : '1fr', gap: 0 }}>
         {/* Lista documenti */}
-        <div style={{ maxHeight: 600, overflow: 'auto', borderRight: selectedDoc ? '1px solid #dce8f4' : 'none' }}>
+        <div style={{ maxHeight: 600, overflow: 'auto', borderRight: selectedDoc ? '1px solid #e5e7eb' : 'none' }}>
           {documenti.map((doc) => (
             <div
               key={doc.id}
@@ -1868,7 +1868,7 @@ function DocumentiTab({ documenti, stats, onRefresh, processing }) {
                   {doc.category || 'altro'}
                 </span>
                 {doc.proposta?.anno_suggerito && (
-                  <span style={{ padding: '2px 8px', fontSize: 11, borderRadius: 4, background: '#dbeafe', color: '#1535a8' }}>
+                  <span style={{ padding: '2px 8px', fontSize: 11, borderRadius: 4, background: '#dbeafe', color: '#1d4ed8' }}>
                     {doc.proposta.anno_suggerito}
                   </span>
                 )}
@@ -1929,7 +1929,7 @@ function DocumentiTab({ documenti, stats, onRefresh, processing }) {
                 padding: 12, 
                 marginBottom: 16 
               }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#1535a8', marginBottom: 8 }}>💡 Proposta Intelligente</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#1d4ed8', marginBottom: 8 }}>💡 Proposta Intelligente</div>
                 {selectedDoc.proposta.tipo_suggerito && (
                   <div style={{ fontSize: 12, color: '#475569', marginBottom: 4 }}>Tipo: <strong>{selectedDoc.proposta.tipo_suggerito}</strong></div>
                 )}

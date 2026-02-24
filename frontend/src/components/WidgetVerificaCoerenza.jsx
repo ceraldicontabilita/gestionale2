@@ -175,7 +175,7 @@ export default function WidgetVerificaCoerenza({ anno, mostraDettaglio = false }
                     <div style={{ 
                       fontSize: 13, 
                       fontWeight: 'bold',
-                      color: d.differenza > 0 ? '#dc2626' : '#1535a8',
+                      color: d.differenza > 0 ? '#dc2626' : '#2563eb',
                       marginTop: 4,
                       padding: '2px 8px',
                       background: d.differenza > 0 ? '#fef2f2' : '#eff6ff',
@@ -213,7 +213,7 @@ export default function WidgetVerificaCoerenza({ anno, mostraDettaglio = false }
                 E altre {verifica.totale_discrepanze - 5} discrepanze...
                 <a 
                   href="/verifica-coerenza" 
-                  style={{ marginLeft: 8, color: '#1535a8', textDecoration: 'none' }}
+                  style={{ marginLeft: 8, color: '#2563eb', textDecoration: 'none' }}
                 >
                   Vedi tutte →
                 </a>

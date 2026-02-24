@@ -115,7 +115,7 @@ export default function IntegrazioniOpenAPI() {
 
   const tabStyle = (isActive) => ({
     padding: '12px 24px',
-    background: isActive ? '#1535a8' : 'transparent',
+    background: isActive ? '#1e3a5f' : 'transparent',
     color: isActive ? '#fff' : '#64748b',
     border: 'none',
     borderRadius: '8px 8px 0 0',
@@ -145,7 +145,7 @@ export default function IntegrazioniOpenAPI() {
               SDI (Fatturazione Elettronica) & XBRL (Bilanci)
             </p>
           </div>
-          <button onClick={loadStatus} style={button('#1535a8')}>
+          <button onClick={loadStatus} style={button('#3b82f6')}>
             🔄 Aggiorna Stato
           </button>
         </div>
@@ -228,7 +228,7 @@ export default function IntegrazioniOpenAPI() {
                   </p>
                   <button 
                     onClick={() => alert('Vai su Fatture Emesse per inviare singole fatture')}
-                    style={{ ...button('#1535a8'), width: '100%' }}
+                    style={{ ...button('#3b82f6'), width: '100%' }}
                   >
                     📤 Gestione Invii
                   </button>
@@ -387,7 +387,7 @@ export default function IntegrazioniOpenAPI() {
                           <td style={{ padding: 10, textAlign: 'center' }}>
                             <button 
                               onClick={() => checkXbrlStatus(r.id)}
-                              style={{ ...button('#1535a8'), padding: '4px 10px', fontSize: 11 }}
+                              style={{ ...button('#3b82f6'), padding: '4px 10px', fontSize: 11 }}
                             >
                               Verifica
                             </button>
@@ -524,7 +524,7 @@ export default function IntegrazioniOpenAPI() {
                               <button
                                 onClick={() => checkXbrlStatus(req.id)}
                                 style={{
-                                  ...button('#1535a8'),
+                                  ...button('#3b82f6'),
                                   fontSize: 11,
                                   padding: '4px 8px'
                                 }}

@@ -374,7 +374,7 @@ export default function ArchivioBonifici() {
     <div style={{ maxWidth: 1400, margin: '0 auto' }} ref={dropdownRef}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontSize: 28, fontWeight: 'bold', color: '#1535a8', marginBottom: 8 }}>
+          <h1 style={{ fontSize: 28, fontWeight: 'bold', color: '#1e3a5f', marginBottom: 8 }}>
             📂 Archivio Bonifici Bancari
           </h1>
           <p style={{ color: '#64748b', margin: 0 }}>
@@ -386,7 +386,7 @@ export default function ArchivioBonifici() {
             href="/import-export"
             style={{ 
               padding: "10px 20px",
-              background: "#1535a8",
+              background: "#3b82f6",
               color: "white",
               fontWeight: "bold",
               borderRadius: 8,
@@ -459,7 +459,7 @@ export default function ArchivioBonifici() {
 
       {/* Pulsante Riconciliazione */}
       <div style={{ 
-        background: 'linear-gradient(135deg, #1535a8, #0369a1)', 
+        background: 'linear-gradient(135deg, #0ea5e9, #0369a1)', 
         padding: 16, 
         borderRadius: 12, 
         marginBottom: 24,
@@ -510,18 +510,18 @@ export default function ArchivioBonifici() {
                   transition: 'all 0.2s'
                 }}
                 onClick={() => handleDownloadZip(year)}
-                onMouseOver={(e) => e.currentTarget.style.borderColor = '#1535a8'}
+                onMouseOver={(e) => e.currentTarget.style.borderColor = '#3b82f6'}
                 onMouseOut={(e) => e.currentTarget.style.borderColor = '#e2e8f0'}
               >
-                <div style={{ fontWeight: 'bold', color: '#1535a8', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ fontWeight: 'bold', color: '#1e3a5f', display: 'flex', alignItems: 'center', gap: 8 }}>
                   {year}
-                  <span style={{ fontSize: 12, color: '#1535a8' }}>📥</span>
+                  <span style={{ fontSize: 12, color: '#3b82f6' }}>📥</span>
                 </div>
                 <div style={{ fontSize: 12, color: '#64748b' }}>{data.count} bonifici • {formatEuro(data.total)}</div>
               </div>
             ))}
           </div>
-          {downloadingZip && <div style={{ marginTop: 8, fontSize: 12, color: '#1535a8' }}>⏳ Preparazione ZIP in corso...</div>}
+          {downloadingZip && <div style={{ marginTop: 8, fontSize: 12, color: '#3b82f6' }}>⏳ Preparazione ZIP in corso...</div>}
         </div>
       )}
 
@@ -551,7 +551,7 @@ export default function ArchivioBonifici() {
           style={{
             padding: '8px 16px',
             borderRadius: 8,
-            background: '#1535a8',
+            background: '#3b82f6',
             color: 'white',
             border: 'none',
             cursor: 'pointer',
@@ -644,7 +644,7 @@ export default function ArchivioBonifici() {
           onClick={() => handleTabChange('da_associare')}
           style={{
             padding: '12px 24px',
-            background: activeTab === 'da_associare' ? '#1535a8' : '#f1f5f9',
+            background: activeTab === 'da_associare' ? '#1e3a5f' : '#f1f5f9',
             color: activeTab === 'da_associare' ? 'white' : '#475569',
             border: 'none',
             borderRadius: '8px 8px 0 0',
@@ -717,7 +717,7 @@ export default function ArchivioBonifici() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1400, fontSize: 12 }}>
               <thead>
-                <tr style={{ background: activeTab === 'associati' ? '#16a34a' : '#1535a8', color: 'white' }}>
+                <tr style={{ background: activeTab === 'associati' ? '#16a34a' : '#1e3a5f', color: 'white' }}>
                   <th style={{ padding: 8, textAlign: 'center', width: 40 }}>✓</th>
                   <th style={{ padding: 8, textAlign: 'left' }}>Data</th>
                   <th style={{ padding: 8, textAlign: 'right' }}>Importo</th>
@@ -777,7 +777,7 @@ export default function ArchivioBonifici() {
                             onClick={() => toggleAssociaDropdown(t.id)}
                             style={{
                               padding: '4px 10px',
-                              background: associaDropdown === t.id ? '#1535a8' : '#f1f5f9',
+                              background: associaDropdown === t.id ? '#3b82f6' : '#f1f5f9',
                               color: associaDropdown === t.id ? 'white' : '#475569',
                               border: 'none',
                               borderRadius: 6,
@@ -821,9 +821,9 @@ export default function ArchivioBonifici() {
                                 </div>
                               )}
                               {loadingOperazioni ? (
-                                <div style={{ padding: 16, textAlign: 'center', color: '#6080a0' }}>⏳ Caricamento...</div>
+                                <div style={{ padding: 16, textAlign: 'center', color: '#6b7280' }}>⏳ Caricamento...</div>
                               ) : operazioniCompatibili.length === 0 ? (
-                                <div style={{ padding: 16, textAlign: 'center', color: '#6080a0', fontSize: 11 }}>
+                                <div style={{ padding: 16, textAlign: 'center', color: '#6b7280', fontSize: 11 }}>
                                   {dipendenteIbanMatch 
                                     ? `Nessuna operazione in Prima Nota Salari per ${dipendenteIbanMatch.nome_display}` 
                                     : 'Nessuna operazione salari compatibile trovata'}
@@ -873,7 +873,7 @@ export default function ArchivioBonifici() {
                                         </span>
                                       </div>
                                     </div>
-                                    <div style={{ fontSize: 10, color: '#6080a0', marginTop: 4, display: 'flex', justifyContent: 'space-between' }}>
+                                    <div style={{ fontSize: 10, color: '#6b7280', marginTop: 4, display: 'flex', justifyContent: 'space-between' }}>
                                       <span>{op.anno && op.mese ? `${op.mese}/${op.anno}` : formatDate(op.data)}</span>
                                       <span style={{ fontWeight: 600 }}>{formatEuro(op.importo_display)}</span>
                                     </div>
@@ -891,7 +891,7 @@ export default function ArchivioBonifici() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                           <span style={{ 
                             background: '#dbeafe', 
-                            color: '#1535a8', 
+                            color: '#1d4ed8', 
                             padding: '4px 8px', 
                             borderRadius: 6, 
                             fontSize: 10,
@@ -913,7 +913,7 @@ export default function ArchivioBonifici() {
                             onClick={() => toggleAssociaFatturaDropdown(t.id)}
                             style={{
                               padding: '4px 10px',
-                              background: associaFatturaDropdown === t.id ? '#1535a8' : '#f1f5f9',
+                              background: associaFatturaDropdown === t.id ? '#1d4ed8' : '#f1f5f9',
                               color: associaFatturaDropdown === t.id ? 'white' : '#475569',
                               border: 'none',
                               borderRadius: 6,
@@ -941,9 +941,9 @@ export default function ArchivioBonifici() {
                               overflowY: 'auto'
                             }}>
                               {loadingFatture ? (
-                                <div style={{ padding: 16, textAlign: 'center', color: '#6080a0' }}>⏳ Caricamento...</div>
+                                <div style={{ padding: 16, textAlign: 'center', color: '#6b7280' }}>⏳ Caricamento...</div>
                               ) : fattureCompatibili.length === 0 ? (
-                                <div style={{ padding: 16, textAlign: 'center', color: '#6080a0', fontSize: 11 }}>
+                                <div style={{ padding: 16, textAlign: 'center', color: '#6b7280', fontSize: 11 }}>
                                   Nessuna fattura compatibile trovata
                                 </div>
                               ) : (
@@ -975,7 +975,7 @@ export default function ArchivioBonifici() {
                                         {f.compatibilita_score}%
                                       </span>
                                     </div>
-                                    <div style={{ fontSize: 10, color: '#6080a0', marginTop: 4 }}>
+                                    <div style={{ fontSize: 10, color: '#6b7280', marginTop: 4 }}>
                                       {formatDate(f.data_fattura)} • {formatEuro(f.importo)}
                                     </div>
                                   </div>
@@ -1002,7 +1002,7 @@ export default function ArchivioBonifici() {
                       ) : (
                         <div 
                           onClick={() => { setEditingNote(t.id); setNoteText(t.note || ''); }}
-                          style={{ cursor: 'pointer', color: t.note ? '#1535a8' : '#94a3b8', fontSize: 11 }}
+                          style={{ cursor: 'pointer', color: t.note ? '#1e3a5f' : '#94a3b8', fontSize: 11 }}
                           title="Clicca per modificare"
                         >
                           {t.note || '+ Nota'}

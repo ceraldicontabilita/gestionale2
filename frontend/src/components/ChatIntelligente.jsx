@@ -279,7 +279,7 @@ export default function ChatIntelligente() {
       {messages.length === 1 && (
         <div style={{ 
           padding: '8px 16px',
-          borderTop: '1px solid #dce8f4',
+          borderTop: '1px solid #e5e7eb',
           background: '#f1f5f9'
         }}>
           <div style={{ fontSize: 11, color: '#64748b', marginBottom: 8 }}>💡 Suggerimenti:</div>
@@ -292,7 +292,7 @@ export default function ChatIntelligente() {
                   padding: '6px 10px',
                   fontSize: 11,
                   background: 'white',
-                  border: '1px solid #dce8f4',
+                  border: '1px solid #e5e7eb',
                   borderRadius: 16,
                   cursor: 'pointer',
                   color: '#475569'
@@ -308,7 +308,7 @@ export default function ChatIntelligente() {
       {/* Input */}
       <div style={{
         padding: 16,
-        borderTop: '1px solid #dce8f4',
+        borderTop: '1px solid #e5e7eb',
         display: 'flex',
         gap: 8
       }}>
@@ -323,14 +323,14 @@ export default function ChatIntelligente() {
           style={{
             flex: 1,
             padding: '12px 16px',
-            border: '1px solid #dce8f4',
+            border: '1px solid #e5e7eb',
             borderRadius: 24,
             fontSize: 14,
             outline: 'none',
             transition: 'border-color 0.2s'
           }}
           onFocus={(e) => e.target.style.borderColor = '#6366f1'}
-          onBlur={(e) => e.target.style.borderColor = '#dce8f4'}
+          onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
         />
         <button
           onClick={handleSend}

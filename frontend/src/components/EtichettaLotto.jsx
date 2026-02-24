@@ -214,7 +214,7 @@ const styles = {
     gap: '8px',
     transition: 'all 0.2s',
     ...(variant === 'primary' ? {
-      background: '#1535a8',
+      background: '#3b82f6',
       color: 'white'
     } : variant === 'success' ? {
       background: '#10b981',
@@ -240,7 +240,7 @@ const styles = {
     borderRadius: '8px',
     marginBottom: '8px',
     cursor: 'pointer',
-    border: selected ? '2px solid #1535a8' : '1px solid #e2e8f0',
+    border: selected ? '2px solid #3b82f6' : '1px solid #e2e8f0',
     background: selected ? '#eff6ff' : 'white'
   }),
   checkbox: {

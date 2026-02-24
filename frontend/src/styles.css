@@ -6,82 +6,67 @@
 
 /* CSS Variables */
 :root {
-  /* ── Brand / Accent (allineato con design/tokens.js) ── */
-  --primary:        #1535a8;
-  --primary-light:  #2050e8;
-  --primary-dark:   #0f2785;
-  --primary-bg:     #eef3ff;
-  --primary-border: #cfe2ff;
-  --primary-mid:    #4a7cf5;
-
-  /* ── Stato ── */
-  --success:         #15803d;
-  --success-bg:      #dcfce7;
-  --success-border:  #86efac;
-  --warning:         #92400e;
-  --warning-bg:      #fef3c7;
-  --warning-border:  #fcd34d;
-  --danger:          #991b1b;
-  --danger-bg:       #fee2e2;
-  --danger-border:   #fca5a5;
-
-  /* ── Neutrals ── */
-  --ink:      #09152a;
-  --ink2:     #2d4466;
-  --ink3:     #6080a0;
-  --ink4:     #98b0c8;
-  --border:   #dce8f4;
-  --bg:       #f2f6fd;
-  --surface:  #ffffff;
-
-  /* ── Nav ── */
-  --nav-bg:     #d9e8f8;
-  --nav-border: #b5cff0;
-
-  /* ── Legacy aliases (non rimuovere: usati da pagine vecchie) ── */
-  --secondary:    #6080a0;
-  --info:         #1535a8;
-  --bg-primary:   #f2f6fd;
+  /* Colors */
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
+  --primary-light: #3b82f6;
+  --secondary: #64748b;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #0ea5e9;
+  
+  /* Neutrals */
+  --bg-primary: #f8fafc;
   --bg-secondary: #ffffff;
-  --bg-tertiary:  #eef3ff;
-  --text-primary:    #09152a;
-  --text-secondary:  #2d4466;
-  --text-muted:      #98b0c8;
-  --border-color:    #dce8f4;
-  --border-light:    #eef3ff;
-
-  /* ── Shadows ── */
-  --shadow-sm: 0 1px 4px rgba(8,24,80,.07);
-  --shadow-md: 0 5px 20px rgba(8,24,80,.11);
-  --shadow-lg: 0 12px 44px rgba(8,24,80,.16);
-  --shadow-xl: 0 20px 50px rgba(8,24,80,.20);
-
-  /* ── Spacing ── */
-  --space-xs:  4px;
-  --space-sm:  8px;
-  --space-md:  12px;
-  --space-lg:  16px;
-  --space-xl:  20px;
-  --space-2xl: 24px;
-  --space-3xl: 32px;
-
-  /* ── Border Radius ── */
-  --radius-sm:  6px;
-  --radius-md:  10px;
-  --radius-lg:  14px;
+  --bg-tertiary: #f1f5f9;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --border-color: #e2e8f0;
+  --border-light: #f1f5f9;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  
+  /* Spacing - COMPATTO */
+  --space-xs: 2px;
+  --space-sm: 4px;
+  --space-md: 10px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+  
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
   --radius-full: 9999px;
-
-  /* ── Typography ── */
-  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-mono: 'JetBrains Mono', 'SF Mono', Monaco, Consolas, monospace;
-  --font-xs:   10px;
-  --font-sm:   11px;
-  --font-base: 12px;
-  --font-md:   13px;
-  --font-lg:   14px;
-  --font-xl:   16px;
-  --font-2xl:  18px;
-  --font-3xl:  22px;
+  
+  /* Typography - COMPATTA */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  --font-mono: 'SF Mono', Monaco, Consolas, monospace;
+  --font-size-xs: 10px;
+  --font-size-sm: 11px;
+  --font-size-base: 12px;
+  --font-size-md: 13px;
+  --font-size-lg: 14px;
+  --font-size-xl: 16px;
+  --font-size-2xl: 18px;
+  --font-size-3xl: 22px;
+  
+  /* Sidebar */
+  --sidebar-width: 220px;
+  --sidebar-collapsed: 60px;
+  
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
+  --transition-slow: 350ms ease;
 }
 
 /* Reset & Base */
@@ -810,7 +795,7 @@ code {
 .badge-success { background: #dcfce7; color: #16a34a; }
 .badge-warning { background: #fef3c7; color: #d97706; }
 .badge-danger { background: #fee2e2; color: #dc2626; }
-.badge-info { background: #dbeafe; color: var(--primary); }
+.badge-info { background: #dbeafe; color: #2563eb; }
 .badge-neutral { background: #f1f5f9; color: #64748b; }
 
 /* Compact Flex Utils */
@@ -926,61 +911,3 @@ code {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
-/* ══════════════════════════════════════════════════════
-   UTILITY CLASSES — Design System Ceraldi ERP
-   Aggiunte per coerenza con tokens.js
-   ══════════════════════════════════════════════════════ */
-
-/* Numero monospaziato (per importi, codici, date) */
-.num {
-  font-family: var(--font-mono);
-  font-size: var(--font-base);
-  letter-spacing: -0.3px;
-}
-
-/* Badge / Pill */
-.pill { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: var(--radius-full); font-size: var(--font-sm); font-weight: 700; }
-.pill-green  { background: var(--success-bg);  color: var(--success); }
-.pill-amber  { background: var(--warning-bg);  color: var(--warning); }
-.pill-red    { background: var(--danger-bg);   color: var(--danger); }
-.pill-blue   { background: var(--primary-bg);  color: var(--primary); }
-.pill-gray   { background: var(--bg);          color: var(--ink3); }
-
-/* Bottoni standard */
-.btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: var(--radius-md); font-family: var(--font-sans); font-size: var(--font-md); font-weight: 700; cursor: pointer; border: none; transition: all .15s; }
-.btn-primary   { background: var(--primary); color: #fff; }
-.btn-primary:hover   { background: var(--primary-light); transform: translateY(-1px); box-shadow: var(--shadow-md); }
-.btn-secondary { background: var(--primary-bg); color: var(--primary); border: 1.5px solid var(--primary-border); }
-.btn-secondary:hover { background: #dce8ff; }
-.btn-danger    { background: var(--danger-bg); color: var(--danger); border: 1.5px solid var(--danger-border); }
-.btn-danger:hover    { background: #fecaca; }
-.btn-sm { padding: 5px 10px; font-size: var(--font-sm); }
-.btn-lg { padding: 10px 20px; font-size: var(--font-lg); }
-
-/* Card standard */
-.card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); }
-.card-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; border-bottom: 1px solid var(--border); }
-.card-title { font-size: var(--font-md); font-weight: 800; color: var(--ink); }
-.card-body { padding: 16px 18px; }
-
-/* Tabelle */
-.tbl { width: 100%; border-collapse: collapse; font-size: var(--font-md); }
-.tbl th { padding: 0 14px 10px; text-align: left; font-size: var(--font-xs); font-weight: 800; text-transform: uppercase; letter-spacing: .7px; color: var(--ink4); }
-.tbl td { padding: 10px 14px; border-top: 1px solid var(--border); vertical-align: middle; }
-.tbl tbody tr:hover td { background: var(--primary-bg); cursor: pointer; }
-
-/* KPI card */
-.kpi-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 18px 20px; }
-.kpi-label { font-size: var(--font-xs); font-weight: 700; text-transform: uppercase; letter-spacing: .7px; color: var(--ink4); margin-bottom: 8px; }
-.kpi-value { font-family: var(--font-mono); font-size: 26px; font-weight: 800; color: var(--ink); letter-spacing: -1.5px; }
-.kpi-delta { font-size: var(--font-sm); font-weight: 700; margin-top: 5px; }
-.kpi-up   { color: var(--success); }
-.kpi-down { color: var(--danger); }
-.kpi-neutral { color: var(--ink4); }
-
-/* Alert bar */
-.alert { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 9px; font-size: var(--font-sm); }
-.alert-red    { background: var(--danger-bg);  border: 1.5px solid var(--danger-border);  color: var(--danger); }
-.alert-amber  { background: var(--warning-bg); border: 1.5px solid var(--warning-border); color: var(--warning); }
-.alert-blue   { background: var(--primary-bg); border: 1.5px solid var(--primary-border); color: var(--primary); }

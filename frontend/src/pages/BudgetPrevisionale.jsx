@@ -213,7 +213,7 @@ export default function BudgetPrevisionale() {
                   <Copy size={14} /> Duplica Anno
                 </button>
                 <button onClick={exportCSV}
-                  style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#1535a8', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600 }}>
+                  style={{ padding: '8px 16px', borderRadius: 8, border: 'none', background: '#1e3a5f', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600 }}>
                   <Download size={14} /> CSV
                 </button>
               </div>
@@ -338,7 +338,7 @@ export default function BudgetPrevisionale() {
                             ))}
                             <td style={{ padding: '8px 4px', textAlign: 'center' }}>
                               <button onClick={() => startEdit(v)} style={{ background: 'none', border: 'none', cursor: 'pointer', marginRight: 4 }} title="Modifica">
-                                <Edit2 size={14} color="#6080a0" />
+                                <Edit2 size={14} color="#6b7280" />
                               </button>
                               <button onClick={() => handleDelete(v.voce)} style={{ background: 'none', border: 'none', cursor: 'pointer' }} title="Elimina">
                                 <Trash2 size={14} color="#ef4444" />

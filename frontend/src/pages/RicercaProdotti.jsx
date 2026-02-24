@@ -193,12 +193,12 @@ export default function RicercaProdotti() {
     }
   }
 
-  const cardStyle = { background: 'white', borderRadius: 12, padding: 20, marginBottom: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', border: '1px solid #dce8f4' };
+  const cardStyle = { background: 'white', borderRadius: 12, padding: 20, marginBottom: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', border: '1px solid #e5e7eb' };
   const h1Style = { fontSize: 24, fontWeight: 'bold', color: '#1e293b', marginBottom: 12 };
   const smallStyle = { fontSize: 13, color: '#64748b' };
   const rowStyle = { display: 'flex', alignItems: 'center' };
   const gridStyle = { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 16 };
-  const btnPrimary = { padding: '10px 18px', background: '#1535a8', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: '600' };
+  const btnPrimary = { padding: '10px 18px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: '600' };
 
   return (
     <PageLayout title="Ordini Fornitori" subtitle="Cerca prodotti, confronta prezzi per fornitore e crea ordini raggruppati">
@@ -352,7 +352,7 @@ export default function RicercaProdotti() {
               data-testid="send-order-btn"
               style={{ 
                 flex: 2, 
-                background: sendingOrder ? '#ccc' : 'linear-gradient(135deg, #15803d 0%, #2e7d32 100%)', 
+                background: sendingOrder ? '#ccc' : 'linear-gradient(135deg, #4caf50 0%, #2e7d32 100%)', 
                 color: 'white',
                 fontWeight: 'bold',
                 fontSize: 16,
@@ -432,7 +432,7 @@ export default function RicercaProdotti() {
                   
                   <button
                     onClick={(e) => { e.stopPropagation(); addToCart(p); }}
-                    style={{ marginLeft: 10, background: "#15803d", color: "white" }}
+                    style={{ marginLeft: 10, background: "#4caf50", color: "white" }}
                   >
                     + Carrello
                   </button>

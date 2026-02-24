@@ -187,7 +187,7 @@ export default function F24() {
     if (f.tributi_erario?.length > 0) {
       sections.push(
         <div key="erario" style={{ marginBottom: 15 }}>
-          <h4 style={{ margin: '0 0 8px 0', color: '#1535a8', fontSize: 13 }}>📋 ERARIO</h4>
+          <h4 style={{ margin: '0 0 8px 0', color: '#1e40af', fontSize: 13 }}>📋 ERARIO</h4>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
             <thead>
               <tr style={{ background: '#dbeafe' }}>
@@ -199,7 +199,7 @@ export default function F24() {
             </thead>
             <tbody>
               {f.tributi_erario.map((t, i) => (
-                <tr key={i} style={{ borderBottom: '1px solid #dce8f4' }}>
+                <tr key={i} style={{ borderBottom: '1px solid #e5e7eb' }}>
                   <td style={{ padding: 6 }}>{t.codice_tributo}</td>
                   <td style={{ padding: 6 }}>{t.riferimento || t.anno_riferimento || '-'}</td>
                   <td style={{ padding: 6, textAlign: 'right' }}>{formatEuro(t.importo_debito || t.importo || 0)}</td>
@@ -228,7 +228,7 @@ export default function F24() {
             </thead>
             <tbody>
               {f.tributi_inps.map((t, i) => (
-                <tr key={i} style={{ borderBottom: '1px solid #dce8f4' }}>
+                <tr key={i} style={{ borderBottom: '1px solid #e5e7eb' }}>
                   <td style={{ padding: 6 }}>{t.codice_sede}/{t.causale_contributo}</td>
                   <td style={{ padding: 6 }}>{t.matricola || '-'}</td>
                   <td style={{ padding: 6 }}>{t.periodo_da || '-'} - {t.periodo_a || '-'}</td>
@@ -257,7 +257,7 @@ export default function F24() {
             </thead>
             <tbody>
               {f.tributi_regioni.map((t, i) => (
-                <tr key={i} style={{ borderBottom: '1px solid #dce8f4' }}>
+                <tr key={i} style={{ borderBottom: '1px solid #e5e7eb' }}>
                   <td style={{ padding: 6 }}>{t.codice_tributo || t.codice}</td>
                   <td style={{ padding: 6 }}>{t.codice_ente || '-'}</td>
                   <td style={{ padding: 6, textAlign: 'right' }}>{formatEuro(t.importo_debito || t.importo || 0)}</td>
@@ -286,7 +286,7 @@ export default function F24() {
             </thead>
             <tbody>
               {f.tributi_imu.map((t, i) => (
-                <tr key={i} style={{ borderBottom: '1px solid #dce8f4' }}>
+                <tr key={i} style={{ borderBottom: '1px solid #e5e7eb' }}>
                   <td style={{ padding: 6 }}>{t.codice_tributo || t.codice}</td>
                   <td style={{ padding: 6 }}>{t.codice_comune || t.codice_ente || '-'}</td>
                   <td style={{ padding: 6 }}>{t.periodo_riferimento || '-'}</td>
@@ -314,7 +314,7 @@ export default function F24() {
           data-testid="refresh-f24-btn"
           style={{
             padding: '10px 20px',
-            background: '#1535a8',
+            background: '#1e3a5f',
             color: 'white',
             border: 'none',
             borderRadius: 8,
@@ -333,19 +333,19 @@ export default function F24() {
       {/* Dashboard */}
       {dashboard && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 15, marginBottom: 25 }}>
-          <div style={{ background: '#e3f2fd', padding: 'clamp(10px, 3vw, 15px)', borderRadius: 8, borderLeft: '4px solid #1535a8' }}>
+          <div style={{ background: '#e3f2fd', padding: 'clamp(10px, 3vw, 15px)', borderRadius: 8, borderLeft: '4px solid #2196f3' }}>
             <div style={{ fontSize: 'clamp(10px, 2.5vw, 12px)', color: '#666' }}>📊 Totale F24</div>
-            <div style={{ fontSize: 'clamp(20px, 5vw, 28px)', fontWeight: 'bold', color: '#1535a8' }}>{dashboard.totale || 0}</div>
+            <div style={{ fontSize: 'clamp(20px, 5vw, 28px)', fontWeight: 'bold', color: '#2196f3' }}>{dashboard.totale || 0}</div>
             <div style={{ fontSize: 'clamp(9px, 2vw, 11px)', color: '#666' }}>{formatEuro(dashboard.importo_totale)}</div>
           </div>
-          <div style={{ background: '#e8f5e9', padding: 'clamp(10px, 3vw, 15px)', borderRadius: 8, borderLeft: '4px solid #15803d' }}>
+          <div style={{ background: '#e8f5e9', padding: 'clamp(10px, 3vw, 15px)', borderRadius: 8, borderLeft: '4px solid #4caf50' }}>
             <div style={{ fontSize: 'clamp(10px, 2.5vw, 12px)', color: '#666' }}>✅ Pagati</div>
-            <div style={{ fontSize: 'clamp(20px, 5vw, 28px)', fontWeight: 'bold', color: '#15803d' }}>{dashboard.pagati?.count || 0}</div>
+            <div style={{ fontSize: 'clamp(20px, 5vw, 28px)', fontWeight: 'bold', color: '#4caf50' }}>{dashboard.pagati?.count || 0}</div>
             <div style={{ fontSize: 'clamp(9px, 2vw, 11px)', color: '#666' }}>{formatEuro(dashboard.pagati?.totale)}</div>
           </div>
-          <div style={{ background: '#fff3e0', padding: 'clamp(10px, 3vw, 15px)', borderRadius: 8, borderLeft: '4px solid #d97706' }}>
+          <div style={{ background: '#fff3e0', padding: 'clamp(10px, 3vw, 15px)', borderRadius: 8, borderLeft: '4px solid #ff9800' }}>
             <div style={{ fontSize: 'clamp(10px, 2.5vw, 12px)', color: '#666' }}>⏳ Da Pagare</div>
-            <div style={{ fontSize: 'clamp(20px, 5vw, 28px)', fontWeight: 'bold', color: '#d97706' }}>{dashboard.da_pagare?.count || 0}</div>
+            <div style={{ fontSize: 'clamp(20px, 5vw, 28px)', fontWeight: 'bold', color: '#ff9800' }}>{dashboard.da_pagare?.count || 0}</div>
             <div style={{ fontSize: 'clamp(9px, 2vw, 11px)', color: '#666' }}>{formatEuro(dashboard.da_pagare?.totale)}</div>
           </div>
           <div style={{ 
@@ -421,7 +421,7 @@ export default function F24() {
                     style={{
                       marginTop: 8,
                       padding: '6px 12px',
-                      background: '#15803d',
+                      background: '#4caf50',
                       color: 'white',
                       border: 'none',
                       borderRadius: 4,
@@ -443,7 +443,7 @@ export default function F24() {
       <div style={{ background: 'white', borderRadius: 8, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
         <h3 style={{ marginTop: 0 }}>📋 Modelli F24 Registrati ({f24List.length})</h3>
         <p style={{ color: '#666', fontSize: 13, marginBottom: 15 }}>
-          Per importare nuovi F24, usa la sezione <a href="/import-export" style={{ color: '#1535a8' }}>Import/Export</a>
+          Per importare nuovi F24, usa la sezione <a href="/import-export" style={{ color: '#3b82f6' }}>Import/Export</a>
         </p>
         {loading ? (
           <div style={{ textAlign: 'center', padding: 40, color: '#666' }}>Caricamento...</div>
@@ -505,7 +505,7 @@ export default function F24() {
                                 borderRadius: 4, 
                                 fontSize: 11, 
                                 background: '#dbeafe', 
-                                color: '#1535a8' 
+                                color: '#1e40af' 
                               }}>
                                 ERARIO: {f.tributi_erario.length}
                               </span>
@@ -557,7 +557,7 @@ export default function F24() {
                           borderRadius: 12,
                           fontSize: 11,
                           fontWeight: 'bold',
-                          background: (f.status === 'paid' || f.pagato) ? '#15803d' : '#d97706',
+                          background: (f.status === 'paid' || f.pagato) ? '#4caf50' : '#ff9800',
                           color: 'white'
                         }}>
                           {(f.status === 'paid' || f.pagato) ? '✓ PAGATO' : '⏳ PENDING'}
@@ -590,7 +590,7 @@ export default function F24() {
                               onClick={() => handleMarkAsPaid(f.id)}
                               style={{
                                 padding: '6px 10px',
-                                background: '#15803d',
+                                background: '#4caf50',
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: 4,
@@ -606,7 +606,7 @@ export default function F24() {
                             onClick={() => setEditingF24(f)}
                             style={{
                               padding: '6px 10px',
-                              background: '#1535a8',
+                              background: '#2196f3',
                               color: 'white',
                               border: 'none',
                               borderRadius: 4,
@@ -843,7 +843,7 @@ export default function F24() {
               </button>
               <button
                 onClick={() => handleUpdateF24(editingF24.id, editingF24)}
-                style={{ padding: '10px 20px', background: '#d97706', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
+                style={{ padding: '10px 20px', background: '#ff9800', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer' }}
               >
                 Salva Modifiche
               </button>

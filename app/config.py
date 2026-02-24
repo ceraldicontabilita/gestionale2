@@ -34,7 +34,6 @@ class Settings(BaseSettings):
     SECRET_KEY: Optional[str] = None
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
-    AUTH_DISABLED: bool = False  # Disable auth for development
 
     # CORS
     CORS_ORIGINS: str = "*"

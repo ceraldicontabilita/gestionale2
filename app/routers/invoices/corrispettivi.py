@@ -18,36 +18,6 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-
-@router.get("/stats")
-async def get_corrispettivi_stats(anno: int = Query(None)) -> Dict[str, Any]:
-    """Statistiche corrispettivi per anno."""
-    from datetime import date as _date
-    db = Database.get_db()
-    if not anno:
-        anno = _date.today().year
-    query = {"anno": anno}
-    totale = await db["corrispettivi"].count_documents(query)
-    pipeline = [
-        {"$match": query},
-        {"$group": {"_id": None,
-            "totale_lordo": {"$sum": "$totale_lordo"},
-            "totale_iva": {"$sum": "$totale_iva"},
-            "totale_netto": {"$sum": "$totale_netto"},
-            "totale_non_riscosso": {"$sum": "$non_riscosso"}
-        }}
-    ]
-    result = await db["corrispettivi"].aggregate(pipeline).to_list(1)
-    stats = result[0] if result else {}
-    stats.pop("_id", None)
-    return {
-        "anno": anno, "count": totale,
-        "totale_lordo": round(stats.get("totale_lordo", 0), 2),
-        "totale_iva": round(stats.get("totale_iva", 0), 2),
-        "totale_netto": round(stats.get("totale_netto", 0), 2),
-        "totale_non_riscosso": round(stats.get("totale_non_riscosso", 0), 2),
-    }
-
 @router.get("")
 @handle_errors
 async def list_corrispettivi(
@@ -495,29 +465,33 @@ async def upload_corrispettivi_xml_bulk(
 async def sincronizza_corrispettivi_prima_nota() -> Dict[str, Any]:
     """
     Sincronizza i corrispettivi dalla collection 'corrispettivi' alla 'prima_nota_cassa'.
-    Usa bulk write per evitare timeout su grandi volumi.
+    Aggiorna i dettagli (contanti, elettronico, iva) mancanti.
     """
-    from pymongo import UpdateOne, InsertOne
     db = Database.get_db()
-
-    corrispettivi = await db["corrispettivi"].find({}, {"_id": 0}).to_list(None)
-
-    # Leggi tutti i movimenti corrispettivi esistenti in prima nota in un colpo solo
-    movimenti_map = {}
-    async for mov in db["prima_nota_cassa"].find({"categoria": "Corrispettivi"}, {"data": 1, "_id": 1}):
-        movimenti_map[mov["data"]] = mov["_id"]
-
-    aggiornati, creati, skipped, errors = 0, 0, 0, []
-    bulk_updates = []
-    bulk_inserts = []
-
+    
+    # Carica tutti i corrispettivi dalla collection dedicata
+    corrispettivi = await db["corrispettivi"].find({}, {"_id": 0}).to_list(5000)
+    
+    risultato = {
+        "aggiornati": 0,
+        "creati": 0,
+        "skipped": 0,
+        "errors": []
+    }
+    
     for corr in corrispettivi:
         try:
             data_corr = corr.get("data", "")
             if not data_corr:
-                skipped += 1
+                risultato["skipped"] += 1
                 continue
-
+            
+            # Cerca il movimento in prima_nota_cassa
+            movimento = await db["prima_nota_cassa"].find_one({
+                "data": data_corr,
+                "categoria": "Corrispettivi"
+            })
+            
             dettaglio = {
                 "matricola_rt": corr.get("matricola_rt", ""),
                 "contanti": float(corr.get("pagato_contanti", 0) or 0),
@@ -525,19 +499,21 @@ async def sincronizza_corrispettivi_prima_nota() -> Dict[str, Any]:
                 "totale_iva": float(corr.get("totale_iva", 0) or 0),
                 "numero_documenti": int(corr.get("numero_documenti", 0) or 0)
             }
-
-            if data_corr in movimenti_map:
-                bulk_updates.append(UpdateOne(
-                    {"_id": movimenti_map[data_corr]},
+            
+            if movimento:
+                # Aggiorna dettaglio
+                await db["prima_nota_cassa"].update_one(
+                    {"_id": movimento["_id"]},
                     {"$set": {
                         "dettaglio": dettaglio,
                         "importo": float(corr.get("totale", 0) or 0),
                         "updated_at": datetime.now(timezone.utc).isoformat()
                     }}
-                ))
-                aggiornati += 1
+                )
+                risultato["aggiornati"] += 1
             else:
-                bulk_inserts.append({
+                # Crea nuovo movimento
+                nuovo_movimento = {
                     "id": f"corr_{corr.get('id', str(uuid.uuid4()))}",
                     "data": data_corr,
                     "tipo": "entrata",
@@ -548,25 +524,17 @@ async def sincronizza_corrispettivi_prima_nota() -> Dict[str, Any]:
                     "corrispettivo_id": corr.get("id"),
                     "fonte": "sincronizzazione",
                     "created_at": datetime.now(timezone.utc).isoformat()
-                })
-                creati += 1
-
+                }
+                await db["prima_nota_cassa"].insert_one(nuovo_movimento.copy())
+                risultato["creati"] += 1
+                
         except Exception as e:
-            errors.append(str(e))
-
-    # Esegui bulk operations
-    if bulk_updates:
-        await db["prima_nota_cassa"].bulk_write(bulk_updates, ordered=False)
-    if bulk_inserts:
-        await db["prima_nota_cassa"].insert_many(bulk_inserts, ordered=False)
-
+            risultato["errors"].append(str(e))
+    
     return {
         "success": True,
-        "message": f"Sincronizzazione completata: {aggiornati} aggiornati, {creati} creati, {skipped} skippati",
-        "aggiornati": aggiornati,
-        "creati": creati,
-        "skipped": skipped,
-        "errors": errors[:10]
+        "message": f"Sincronizzazione completata: {risultato['aggiornati']} aggiornati, {risultato['creati']} creati",
+        **risultato
     }
 
 

@@ -6,11 +6,11 @@ import { PageLayout } from '../components/PageLayout';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
 
 const CATEGORIE = {
-  attivo: { nome: "ATTIVO", color: "#1535a8", icon: "📊" },
+  attivo: { nome: "ATTIVO", color: "#2196f3", icon: "📊" },
   passivo: { nome: "PASSIVO", color: "#f44336", icon: "📉" },
-  patrimonio_netto: { nome: "PATRIMONIO NETTO", color: "#7c3aed", icon: "💎" },
-  ricavi: { nome: "RICAVI", color: "#15803d", icon: "📈" },
-  costi: { nome: "COSTI", color: "#d97706", icon: "💸" }
+  patrimonio_netto: { nome: "PATRIMONIO NETTO", color: "#9c27b0", icon: "💎" },
+  ricavi: { nome: "RICAVI", color: "#4caf50", icon: "📈" },
+  costi: { nome: "COSTI", color: "#ff9800", icon: "💸" }
 };
 
 export default function PianoDeiConti() {
@@ -119,7 +119,7 @@ export default function PianoDeiConti() {
     <div style={{ maxWidth: 1400, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ marginBottom: 20 }}>
-        <h1 style={{ margin: 0, fontSize: 'clamp(20px, 5vw, 28px)', color: '#1535a8' }}>
+        <h1 style={{ margin: 0, fontSize: 'clamp(20px, 5vw, 28px)', color: '#1e3a5f' }}>
           📒 Piano dei Conti
         </h1>
         <p style={{ color: '#666', margin: '5px 0 0 0' }}>
@@ -130,7 +130,7 @@ export default function PianoDeiConti() {
       {/* Bilancio Summary Cards */}
       {bilancio && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 15, marginBottom: 25 }}>
-          <div style={{ background: '#e3f2fd', borderRadius: 12, padding: 15, borderLeft: '4px solid #1535a8' }}>
+          <div style={{ background: '#e3f2fd', borderRadius: 12, padding: 15, borderLeft: '4px solid #2196f3' }}>
             <div style={{ fontSize: 12, color: '#1565c0', marginBottom: 5 }}>Totale Attivo</div>
             <div style={{ fontSize: 24, fontWeight: 'bold', color: '#0d47a1' }}>
               {formatEuro(bilancio.stato_patrimoniale.attivo.totale)}
@@ -142,13 +142,13 @@ export default function PianoDeiConti() {
               {formatEuro(bilancio.stato_patrimoniale.passivo.totale)}
             </div>
           </div>
-          <div style={{ background: '#e8f5e9', borderRadius: 12, padding: 15, borderLeft: '4px solid #15803d' }}>
+          <div style={{ background: '#e8f5e9', borderRadius: 12, padding: 15, borderLeft: '4px solid #4caf50' }}>
             <div style={{ fontSize: 12, color: '#2e7d32', marginBottom: 5 }}>Totale Ricavi</div>
             <div style={{ fontSize: 24, fontWeight: 'bold', color: '#1b5e20' }}>
               {formatEuro(bilancio.conto_economico.ricavi.totale)}
             </div>
           </div>
-          <div style={{ background: '#fff3e0', borderRadius: 12, padding: 15, borderLeft: '4px solid #d97706' }}>
+          <div style={{ background: '#fff3e0', borderRadius: 12, padding: 15, borderLeft: '4px solid #ff9800' }}>
             <div style={{ fontSize: 12, color: '#e65100', marginBottom: 5 }}>Totale Costi</div>
             <div style={{ fontSize: 24, fontWeight: 'bold', color: '#bf360c' }}>
               {formatEuro(bilancio.conto_economico.costi.totale)}
@@ -158,7 +158,7 @@ export default function PianoDeiConti() {
             background: bilancio.conto_economico.risultato >= 0 ? '#e8f5e9' : '#ffebee', 
             borderRadius: 12, 
             padding: 15, 
-            borderLeft: `4px solid ${bilancio.conto_economico.risultato >= 0 ? '#15803d' : '#f44336'}`
+            borderLeft: `4px solid ${bilancio.conto_economico.risultato >= 0 ? '#4caf50' : '#f44336'}`
           }}>
             <div style={{ fontSize: 12, color: bilancio.conto_economico.risultato >= 0 ? '#2e7d32' : '#c62828', marginBottom: 5 }}>
               {bilancio.conto_economico.risultato >= 0 ? 'Utile' : 'Perdita'}
@@ -178,7 +178,7 @@ export default function PianoDeiConti() {
             onClick={() => setActiveTab(tab)}
             style={{
               padding: '12px 24px',
-              background: activeTab === tab ? '#1535a8' : '#dce8f4',
+              background: activeTab === tab ? '#1e3a5f' : '#e5e7eb',
               color: activeTab === tab ? 'white' : '#374151',
               border: 'none',
               borderRadius: 8,
@@ -200,7 +200,7 @@ export default function PianoDeiConti() {
               data-testid="new-conto-btn"
               style={{
                 padding: '10px 20px',
-                background: '#15803d',
+                background: '#4caf50',
                 color: 'white',
                 border: 'none',
                 borderRadius: 8,
@@ -218,7 +218,7 @@ export default function PianoDeiConti() {
                 background: 'white', 
                 borderRadius: 12, 
                 overflow: 'hidden',
-                border: '1px solid #dce8f4'
+                border: '1px solid #e5e7eb'
               }}>
                 {/* Category Header */}
                 <div 
@@ -257,7 +257,7 @@ export default function PianoDeiConti() {
                     ) : (
                       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                         <thead>
-                          <tr style={{ borderBottom: '2px solid #dce8f4' }}>
+                          <tr style={{ borderBottom: '2px solid #e5e7eb' }}>
                             <th style={{ padding: 10, textAlign: 'left', fontWeight: 600 }}>Codice</th>
                             <th style={{ padding: 10, textAlign: 'left', fontWeight: 600 }}>Nome Conto</th>
                             <th style={{ padding: 10, textAlign: 'center', fontWeight: 600 }}>Natura</th>
@@ -315,7 +315,7 @@ export default function PianoDeiConti() {
               data-testid="new-regola-btn"
               style={{
                 padding: '10px 20px',
-                background: '#d97706',
+                background: '#ff9800',
                 color: 'white',
                 border: 'none',
                 borderRadius: 8,
@@ -337,10 +337,10 @@ export default function PianoDeiConti() {
             </ul>
           </div>
 
-          <div style={{ background: 'white', borderRadius: 12, overflow: 'hidden', border: '1px solid #dce8f4' }}>
+          <div style={{ background: 'white', borderRadius: 12, overflow: 'hidden', border: '1px solid #e5e7eb' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ background: '#f8fafc', borderBottom: '2px solid #dce8f4' }}>
+                <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e5e7eb' }}>
                   <th style={{ padding: 12, textAlign: 'left' }}>Tipo</th>
                   <th style={{ padding: 12, textAlign: 'left' }}>Pattern</th>
                   <th style={{ padding: 12, textAlign: 'left' }}>Conto DARE</th>
@@ -377,7 +377,7 @@ export default function PianoDeiConti() {
                         width: 10,
                         height: 10,
                         borderRadius: '50%',
-                        background: regola.attiva ? '#15803d' : '#9e9e9e',
+                        background: regola.attiva ? '#4caf50' : '#9e9e9e',
                         display: 'inline-block'
                       }} />
                     </td>
@@ -458,7 +458,7 @@ export default function PianoDeiConti() {
               <button onClick={() => setShowNewConto(false)} style={{ padding: '10px 20px', background: '#9e9e9e', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer' }}>
                 Annulla
               </button>
-              <button onClick={handleCreateConto} style={{ padding: '10px 20px', background: '#15803d', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}>
+              <button onClick={handleCreateConto} style={{ padding: '10px 20px', background: '#4caf50', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}>
                 ➕ Crea Conto
               </button>
             </div>
@@ -551,7 +551,7 @@ export default function PianoDeiConti() {
               <button onClick={() => setShowNewRegola(false)} style={{ padding: '10px 20px', background: '#9e9e9e', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer' }}>
                 Annulla
               </button>
-              <button onClick={handleCreateRegola} style={{ padding: '10px 20px', background: '#d97706', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}>
+              <button onClick={handleCreateRegola} style={{ padding: '10px 20px', background: '#ff9800', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 'bold' }}>
                 ⚙️ Crea Regola
               </button>
             </div>

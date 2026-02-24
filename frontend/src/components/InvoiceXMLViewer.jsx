@@ -388,7 +388,7 @@ export default function InvoiceXMLViewer({ invoice: rawInvoice, onClose }) {
       }}>
         <div>
           <div style={{ fontSize: 11, color: '#666', textTransform: 'uppercase' }}>Fattura N.</div>
-          <div style={{ fontSize: 18, fontWeight: 700, color: '#1535a8' }}>{invoice.invoice_number}</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: '#1e3a5f' }}>{invoice.invoice_number}</div>
         </div>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: 11, color: '#666', textTransform: 'uppercase' }}>Data</div>
@@ -396,7 +396,7 @@ export default function InvoiceXMLViewer({ invoice: rawInvoice, onClose }) {
         </div>
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: 11, color: '#666', textTransform: 'uppercase' }}>Totale</div>
-          <div style={{ fontSize: 20, fontWeight: 700, color: '#1535a8' }}>€ {formatCurrency(invoice.total_amount)}</div>
+          <div style={{ fontSize: 20, fontWeight: 700, color: '#1e3a5f' }}>€ {formatCurrency(invoice.total_amount)}</div>
         </div>
       </div>
 
@@ -453,9 +453,9 @@ export default function InvoiceXMLViewer({ invoice: rawInvoice, onClose }) {
             <span style={{ color: '#666' }}>IVA:</span>
             <span>€ {formatCurrency(invoice.vat_amount)}</span>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 10, borderTop: '2px solid #1535a8' }}>
-            <span style={{ fontWeight: 700, color: '#1535a8' }}>TOTALE:</span>
-            <span style={{ fontWeight: 700, fontSize: 16, color: '#1535a8' }}>€ {formatCurrency(invoice.total_amount)}</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 10, borderTop: '2px solid #1e3a5f' }}>
+            <span style={{ fontWeight: 700, color: '#1e3a5f' }}>TOTALE:</span>
+            <span style={{ fontWeight: 700, fontSize: 16, color: '#1e3a5f' }}>€ {formatCurrency(invoice.total_amount)}</span>
           </div>
         </div>
       </div>
@@ -471,12 +471,12 @@ export default function InvoiceXMLViewer({ invoice: rawInvoice, onClose }) {
       <div style={{ 
         textAlign: 'center', 
         padding: 20, 
-        border: '2px solid #1535a8',
+        border: '2px solid #1e3a5f',
         borderRadius: 8,
         marginBottom: 20,
         background: 'linear-gradient(to bottom, #f8fafc, #fff)'
       }}>
-        <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: '#1535a8', letterSpacing: 1 }}>FATTURA</h2>
+        <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: '#1e3a5f', letterSpacing: 1 }}>FATTURA</h2>
         <div style={{ fontSize: 13, color: '#666', marginTop: 5 }}>
           N. <strong>{invoice.invoice_number}</strong> del <strong>{formatDate(invoice.invoice_date)}</strong>
         </div>
@@ -575,7 +575,7 @@ export default function InvoiceXMLViewer({ invoice: rawInvoice, onClose }) {
       {/* Dettaglio Linee */}
       <div style={{ marginBottom: 20 }}>
         <div style={{ 
-          background: '#1535a8', 
+          background: '#1e3a5f', 
           color: 'white', 
           padding: '10px 15px', 
           fontWeight: 600,
@@ -585,7 +585,7 @@ export default function InvoiceXMLViewer({ invoice: rawInvoice, onClose }) {
         }}>
           Dettaglio Beni e Servizi
         </div>
-        <div style={{ border: '1px solid #1535a8', borderTop: 'none', borderRadius: '0 0 6px 6px', overflow: 'hidden' }}>
+        <div style={{ border: '1px solid #1e3a5f', borderTop: 'none', borderRadius: '0 0 6px 6px', overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
             <thead>
               <tr style={{ background: '#f0f4f8' }}>
@@ -653,7 +653,7 @@ export default function InvoiceXMLViewer({ invoice: rawInvoice, onClose }) {
       {/* Totali */}
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <div style={{ 
-          border: '2px solid #1535a8', 
+          border: '2px solid #1e3a5f', 
           borderRadius: 8, 
           overflow: 'hidden',
           minWidth: 280
@@ -672,7 +672,7 @@ export default function InvoiceXMLViewer({ invoice: rawInvoice, onClose }) {
             display: 'flex', 
             justifyContent: 'space-between', 
             padding: '12px 15px',
-            background: '#1535a8',
+            background: '#1e3a5f',
             color: 'white',
             fontWeight: 700,
             fontSize: 15
@@ -947,7 +947,7 @@ export default function InvoiceXMLViewer({ invoice: rawInvoice, onClose }) {
         {/* Header */}
         <div style={{ 
           padding: '12px 20px', 
-          background: viewMode === 'ministeriale' ? '#37474f' : '#1535a8',
+          background: viewMode === 'ministeriale' ? '#37474f' : '#1e3a5f',
           color: 'white',
           display: 'flex',
           justifyContent: 'space-between',
@@ -1022,7 +1022,7 @@ export default function InvoiceXMLViewer({ invoice: rawInvoice, onClose }) {
               onClick={generatePDFFromHTML}
               style={{
                 padding: '6px 14px',
-                background: '#15803d',
+                background: '#4caf50',
                 color: 'white',
                 border: 'none',
                 borderRadius: 6,

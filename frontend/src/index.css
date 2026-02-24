@@ -1,5 +1,4 @@
 /* Base styles without Tailwind */
-@import './styles.css';
 @import './styles/common.css';
 
 body {

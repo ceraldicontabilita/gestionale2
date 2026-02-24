@@ -74,7 +74,7 @@ export default function Visure() {
         alignItems: 'flex-start',
         marginBottom: 24,
         paddingBottom: 24,
-        borderBottom: '1px solid #dce8f4'
+        borderBottom: '1px solid #e5e7eb'
       }}>
         <div>
           <h2 style={{ 
@@ -86,11 +86,11 @@ export default function Visure() {
             alignItems: 'center',
             gap: 12
           }}>
-            <Building2 size={28} style={{ color: '#1535a8' }} />
+            <Building2 size={28} style={{ color: '#3b82f6' }} />
             {data.companyName}
           </h2>
           <p style={{ 
-            color: '#6080a0', 
+            color: '#6b7280', 
             margin: '8px 0 0',
             fontSize: 14
           }}>
@@ -126,7 +126,7 @@ export default function Visure() {
           border: '1px solid #e2e8f0'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-            <MapPin size={18} style={{ color: '#1535a8' }} />
+            <MapPin size={18} style={{ color: '#3b82f6' }} />
             <span style={{ fontWeight: 600, color: '#374151' }}>Sede Legale</span>
           </div>
           <p style={{ margin: 0, color: '#4b5563', fontSize: 14, lineHeight: 1.6 }}>
@@ -143,7 +143,7 @@ export default function Visure() {
           border: '1px solid #e2e8f0'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-            <Mail size={18} style={{ color: '#1535a8' }} />
+            <Mail size={18} style={{ color: '#3b82f6' }} />
             <span style={{ fontWeight: 600, color: '#374151' }}>Contatti</span>
           </div>
           <p style={{ margin: 0, color: '#4b5563', fontSize: 14, lineHeight: 1.6 }}>
@@ -160,7 +160,7 @@ export default function Visure() {
           border: '1px solid #e2e8f0'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-            <FileText size={18} style={{ color: '#1535a8' }} />
+            <FileText size={18} style={{ color: '#3b82f6' }} />
             <span style={{ fontWeight: 600, color: '#374151' }}>Attività</span>
           </div>
           <p style={{ margin: 0, color: '#4b5563', fontSize: 14, lineHeight: 1.6 }}>
@@ -201,10 +201,10 @@ export default function Visure() {
               borderRadius: 12 
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <Users size={18} style={{ color: '#1535a8' }} />
-                <span style={{ fontWeight: 600, color: '#1535a8' }}>Dipendenti</span>
+                <Users size={18} style={{ color: '#2563eb' }} />
+                <span style={{ fontWeight: 600, color: '#1e40af' }}>Dipendenti</span>
               </div>
-              <p style={{ margin: 0, fontSize: 22, fontWeight: 700, color: '#1535a8' }}>
+              <p style={{ margin: 0, fontSize: 22, fontWeight: 700, color: '#1e40af' }}>
                 {mappedData.numero_dipendenti}
               </p>
             </div>
@@ -216,7 +216,7 @@ export default function Visure() {
       <div style={{ 
         marginTop: 24, 
         paddingTop: 24, 
-        borderTop: '1px solid #dce8f4',
+        borderTop: '1px solid #e5e7eb',
         display: 'flex',
         justifyContent: 'flex-end',
         gap: 12
@@ -257,7 +257,7 @@ export default function Visure() {
         }}>
           🔍 Visure Aziendali
         </h1>
-        <p style={{ color: '#6080a0', margin: 0 }}>
+        <p style={{ color: '#6b7280', margin: 0 }}>
           Cerca informazioni su aziende italiane tramite Camera di Commercio
         </p>
       </div>
@@ -275,9 +275,9 @@ export default function Visure() {
             onClick={() => setSearchType('piva')}
             style={{
               padding: '10px 20px',
-              border: searchType === 'piva' ? '2px solid #1535a8' : '2px solid #dce8f4',
+              border: searchType === 'piva' ? '2px solid #3b82f6' : '2px solid #e5e7eb',
               background: searchType === 'piva' ? '#eff6ff' : 'white',
-              color: searchType === 'piva' ? '#1535a8' : '#6080a0',
+              color: searchType === 'piva' ? '#3b82f6' : '#6b7280',
               borderRadius: 10,
               cursor: 'pointer',
               fontWeight: 600
@@ -289,9 +289,9 @@ export default function Visure() {
             onClick={() => setSearchType('nome')}
             style={{
               padding: '10px 20px',
-              border: searchType === 'nome' ? '2px solid #1535a8' : '2px solid #dce8f4',
+              border: searchType === 'nome' ? '2px solid #3b82f6' : '2px solid #e5e7eb',
               background: searchType === 'nome' ? '#eff6ff' : 'white',
-              color: searchType === 'nome' ? '#1535a8' : '#6080a0',
+              color: searchType === 'nome' ? '#3b82f6' : '#6b7280',
               borderRadius: 10,
               cursor: 'pointer',
               fontWeight: 600
@@ -311,7 +311,7 @@ export default function Visure() {
             style={{
               flex: 1,
               padding: '14px 18px',
-              border: '2px solid #dce8f4',
+              border: '2px solid #e5e7eb',
               borderRadius: 12,
               fontSize: 16,
               fontFamily: searchType === 'piva' ? 'monospace' : 'inherit'
@@ -323,7 +323,7 @@ export default function Visure() {
             disabled={loading}
             style={{
               padding: '14px 28px',
-              background: loading ? '#9ca3af' : 'linear-gradient(135deg, #1535a8 0%, #1535a8 100%)',
+              background: loading ? '#9ca3af' : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
               color: 'white',
               border: 'none',
               borderRadius: 12,
@@ -385,7 +385,7 @@ export default function Visure() {
                   }}
                   style={{
                     padding: 16,
-                    border: '1px solid #dce8f4',
+                    border: '1px solid #e5e7eb',
                     borderRadius: 10,
                     cursor: 'pointer',
                     transition: 'all 0.2s'
@@ -394,12 +394,12 @@ export default function Visure() {
                   onMouseLeave={(e) => e.target.style.background = 'white'}
                 >
                   <strong>{r.companyName || `ID: ${r.id}`}</strong>
-                  {r.vatCode && <span style={{ marginLeft: 12, color: '#6080a0' }}>P.IVA: {r.vatCode}</span>}
+                  {r.vatCode && <span style={{ marginLeft: 12, color: '#6b7280' }}>P.IVA: {r.vatCode}</span>}
                 </div>
               ))}
             </div>
           ) : (
-            <p style={{ color: '#6080a0' }}>Nessun risultato trovato. Prova con la Partita IVA.</p>
+            <p style={{ color: '#6b7280' }}>Nessun risultato trovato. Prova con la Partita IVA.</p>
           )}
         </div>
       )}

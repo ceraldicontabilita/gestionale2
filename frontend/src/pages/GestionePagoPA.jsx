@@ -97,7 +97,7 @@ export default function GestionePagoPA() {
         alignItems: 'center', 
         marginBottom: 20,
         padding: '15px 20px',
-        background: 'linear-gradient(135deg, #1535a8 0%, #2050e8 100%)',
+        background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
         borderRadius: 12,
         color: 'white',
         flexWrap: 'wrap',
@@ -116,7 +116,7 @@ export default function GestionePagoPA() {
             style={{ 
               padding: '10px 20px',
               background: 'rgba(255,255,255,0.95)',
-              color: '#1535a8',
+              color: '#1e3a5f',
               border: 'none',
               borderRadius: 8,
               cursor: loading ? 'not-allowed' : 'pointer',
@@ -162,10 +162,10 @@ export default function GestionePagoPA() {
               borderRadius: 8, 
               padding: '10px 12px', 
               boxShadow: '0 1px 4px rgba(0,0,0,0.06)', 
-              borderLeft: '3px solid #1535a8' 
+              borderLeft: '3px solid #3b82f6' 
             }}>
-              <div style={{ fontSize: 11, color: '#6080a0', marginBottom: 4 }}>📄 Ricevute Totali</div>
-              <div style={{ fontSize: 18, fontWeight: 'bold', color: '#1535a8' }} data-testid="stats-totali">{stats.totale_ricevute || 0}</div>
+              <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>📄 Ricevute Totali</div>
+              <div style={{ fontSize: 18, fontWeight: 'bold', color: '#3b82f6' }} data-testid="stats-totali">{stats.totale_ricevute || 0}</div>
             </div>
             <div style={{ 
               background: 'white', 
@@ -174,7 +174,7 @@ export default function GestionePagoPA() {
               boxShadow: '0 1px 4px rgba(0,0,0,0.06)', 
               borderLeft: '3px solid #22c55e' 
             }}>
-              <div style={{ fontSize: 11, color: '#6080a0', marginBottom: 4 }}>✅ Associate</div>
+              <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>✅ Associate</div>
               <div style={{ fontSize: 18, fontWeight: 'bold', color: '#22c55e' }} data-testid="stats-associate">{stats.associate || 0}</div>
             </div>
             <div style={{ 
@@ -184,11 +184,11 @@ export default function GestionePagoPA() {
               boxShadow: '0 1px 4px rgba(0,0,0,0.06)', 
               borderLeft: '3px solid #f97316' 
             }}>
-              <div style={{ fontSize: 11, color: '#6080a0', marginBottom: 4 }}>⏳ Da Associare</div>
+              <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>⏳ Da Associare</div>
               <div style={{ fontSize: 18, fontWeight: 'bold', color: '#f97316' }} data-testid="stats-da-associare">{stats.da_associare || 0}</div>
             </div>
             <div style={{ 
-              background: '#1535a8', 
+              background: '#1e3a5f', 
               borderRadius: 8, 
               padding: '10px 12px', 
               color: 'white'
@@ -207,9 +207,9 @@ export default function GestionePagoPA() {
         padding: 12, 
         background: '#eff6ff', 
         borderRadius: 8, 
-        borderLeft: '4px solid #1535a8',
+        borderLeft: '4px solid #3b82f6',
         fontSize: 13,
-        color: '#1535a8',
+        color: '#1e40af',
         marginBottom: 20
       }}>
         <strong>ℹ️ Come funziona:</strong> Il sistema cerca nei movimenti bancari il codice CBILL (bollettino) 
@@ -227,12 +227,12 @@ export default function GestionePagoPA() {
         <div style={{ 
           padding: '16px 20px', 
           background: '#f8fafc', 
-          borderBottom: '1px solid #dce8f4'
+          borderBottom: '1px solid #e5e7eb'
         }}>
           <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#1f2937' }}>
             📋 Tipologie Pagamenti CBILL
           </h2>
-          <p style={{ margin: '4px 0 0 0', fontSize: 13, color: '#6080a0' }}>
+          <p style={{ margin: '4px 0 0 0', fontSize: 13, color: '#6b7280' }}>
             Pagamenti identificabili tramite codice CBILL per rateizzazioni e tributi
           </p>
         </div>
@@ -243,11 +243,11 @@ export default function GestionePagoPA() {
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
                 <span style={{ fontSize: 24 }}>🏛️</span>
                 <div>
-                  <h4 style={{ margin: 0, fontWeight: 600, color: '#1535a8' }}>Rateizzi INPS</h4>
-                  <p style={{ margin: 0, fontSize: 12, color: '#1535a8' }}>Dilazioni contributive</p>
+                  <h4 style={{ margin: 0, fontWeight: 600, color: '#1e40af' }}>Rateizzi INPS</h4>
+                  <p style={{ margin: 0, fontSize: 12, color: '#3b82f6' }}>Dilazioni contributive</p>
                 </div>
               </div>
-              <ul style={{ fontSize: 13, color: '#1535a8', margin: 0, paddingLeft: 16 }}>
+              <ul style={{ fontSize: 13, color: '#1e40af', margin: 0, paddingLeft: 16 }}>
                 <li>Rateizzazione contributi</li>
                 <li>Avvisi di addebito</li>
                 <li>Sanzioni INPS</li>
@@ -319,12 +319,12 @@ export default function GestionePagoPA() {
             </div>
 
             {/* Altri tributi */}
-            <div style={{ padding: 16, borderRadius: 8, border: '2px solid #dce8f4', background: '#f2f6fd' }}>
+            <div style={{ padding: 16, borderRadius: 8, border: '2px solid #e5e7eb', background: '#f9fafb' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
                 <span style={{ fontSize: 24 }}>📄</span>
                 <div>
                   <h4 style={{ margin: 0, fontWeight: 600, color: '#374151' }}>Altri Tributi</h4>
-                  <p style={{ margin: 0, fontSize: 12, color: '#6080a0' }}>Pagamenti vari</p>
+                  <p style={{ margin: 0, fontSize: 12, color: '#6b7280' }}>Pagamenti vari</p>
                 </div>
               </div>
               <ul style={{ fontSize: 13, color: '#374151', margin: 0, paddingLeft: 16 }}>
@@ -355,7 +355,7 @@ export default function GestionePagoPA() {
               style={{ 
                 width: '100%', 
                 padding: '10px 12px', 
-                border: '1px solid #dce8f4', 
+                border: '1px solid #e5e7eb', 
                 borderRadius: 8,
                 fontSize: 14
               }}
@@ -368,9 +368,9 @@ export default function GestionePagoPA() {
               onClick={() => setStatoFiltro('tutti')}
               style={{
                 padding: '8px 16px',
-                background: statoFiltro === 'tutti' ? '#1535a8' : 'white',
-                color: statoFiltro === 'tutti' ? 'white' : '#6080a0',
-                border: '1px solid #dce8f4',
+                background: statoFiltro === 'tutti' ? '#1e3a5f' : 'white',
+                color: statoFiltro === 'tutti' ? 'white' : '#6b7280',
+                border: '1px solid #e5e7eb',
                 borderRadius: 6,
                 cursor: 'pointer',
                 fontWeight: 500,
@@ -384,8 +384,8 @@ export default function GestionePagoPA() {
               style={{
                 padding: '8px 16px',
                 background: statoFiltro === 'associati' ? '#22c55e' : 'white',
-                color: statoFiltro === 'associati' ? 'white' : '#6080a0',
-                border: '1px solid #dce8f4',
+                color: statoFiltro === 'associati' ? 'white' : '#6b7280',
+                border: '1px solid #e5e7eb',
                 borderRadius: 6,
                 cursor: 'pointer',
                 fontWeight: 500,
@@ -399,8 +399,8 @@ export default function GestionePagoPA() {
               style={{
                 padding: '8px 16px',
                 background: statoFiltro === 'non_associati' ? '#f97316' : 'white',
-                color: statoFiltro === 'non_associati' ? 'white' : '#6080a0',
-                border: '1px solid #dce8f4',
+                color: statoFiltro === 'non_associati' ? 'white' : '#6b7280',
+                border: '1px solid #e5e7eb',
                 borderRadius: 6,
                 cursor: 'pointer',
                 fontWeight: 500,
@@ -423,12 +423,12 @@ export default function GestionePagoPA() {
         <div style={{ 
           padding: '16px 20px', 
           background: '#f8fafc', 
-          borderBottom: '1px solid #dce8f4'
+          borderBottom: '1px solid #e5e7eb'
         }}>
           <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#1f2937' }}>
             📄 Ricevute PagoPA
           </h2>
-          <p style={{ margin: '4px 0 0 0', fontSize: 13, color: '#6080a0' }}>
+          <p style={{ margin: '4px 0 0 0', fontSize: 13, color: '#6b7280' }}>
             {ricevuteFiltrate.length} ricevute {filtro && `(filtrate per "${filtro}")`}
           </p>
         </div>
@@ -449,18 +449,18 @@ export default function GestionePagoPA() {
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ borderBottom: '2px solid #dce8f4', background: '#f2f6fd' }}>
-                    <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 500, color: '#6080a0', fontSize: 13 }}>Data</th>
-                    <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 500, color: '#6080a0', fontSize: 13 }}>Codice CBILL</th>
-                    <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 500, color: '#6080a0', fontSize: 13 }}>Beneficiario</th>
-                    <th style={{ textAlign: 'right', padding: '12px 16px', fontWeight: 500, color: '#6080a0', fontSize: 13 }}>Importo</th>
-                    <th style={{ textAlign: 'center', padding: '12px 16px', fontWeight: 500, color: '#6080a0', fontSize: 13 }}>Stato</th>
-                    <th style={{ textAlign: 'center', padding: '12px 16px', fontWeight: 500, color: '#6080a0', fontSize: 13 }}>Azioni</th>
+                  <tr style={{ borderBottom: '2px solid #e5e7eb', background: '#f9fafb' }}>
+                    <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 500, color: '#6b7280', fontSize: 13 }}>Data</th>
+                    <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 500, color: '#6b7280', fontSize: 13 }}>Codice CBILL</th>
+                    <th style={{ textAlign: 'left', padding: '12px 16px', fontWeight: 500, color: '#6b7280', fontSize: 13 }}>Beneficiario</th>
+                    <th style={{ textAlign: 'right', padding: '12px 16px', fontWeight: 500, color: '#6b7280', fontSize: 13 }}>Importo</th>
+                    <th style={{ textAlign: 'center', padding: '12px 16px', fontWeight: 500, color: '#6b7280', fontSize: 13 }}>Stato</th>
+                    <th style={{ textAlign: 'center', padding: '12px 16px', fontWeight: 500, color: '#6b7280', fontSize: 13 }}>Azioni</th>
                   </tr>
                 </thead>
                 <tbody>
                   {ricevuteFiltrate.map((ricevuta, idx) => (
-                    <tr key={ricevuta._id || idx} style={{ borderBottom: '1px solid #dce8f4' }}>
+                    <tr key={ricevuta._id || idx} style={{ borderBottom: '1px solid #e5e7eb' }}>
                       <td style={{ padding: '12px 16px' }}>
                         📅 {ricevuta.data_pagamento || '-'}
                       </td>
@@ -487,7 +487,7 @@ export default function GestionePagoPA() {
                       <td style={{ padding: '12px 16px', textAlign: 'center' }}>
                         <div style={{ display: 'flex', justifyContent: 'center', gap: 8 }}>
                           <button 
-                            style={{ padding: '6px 10px', background: 'transparent', border: '1px solid #dce8f4', borderRadius: 6, cursor: 'pointer' }}
+                            style={{ padding: '6px 10px', background: 'transparent', border: '1px solid #e5e7eb', borderRadius: 6, cursor: 'pointer' }}
                             data-testid={`view-ricevuta-${idx}`}
                           >
                             👁️
@@ -497,7 +497,7 @@ export default function GestionePagoPA() {
                               href={ricevuta.pdf_url} 
                               target="_blank" 
                               rel="noopener noreferrer"
-                              style={{ padding: '6px 10px', background: 'transparent', border: '1px solid #dce8f4', borderRadius: 6, textDecoration: 'none' }}
+                              style={{ padding: '6px 10px', background: 'transparent', border: '1px solid #e5e7eb', borderRadius: 6, textDecoration: 'none' }}
                             >
                               📥
                             </a>
