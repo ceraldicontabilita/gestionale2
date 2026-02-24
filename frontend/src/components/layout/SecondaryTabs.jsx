@@ -18,8 +18,8 @@ const TAB_CONFIGS = {
   ],
   '/fisco': [
     { to: '/f24', label: 'F24' },
-    { to: '/iva', label: 'IVA' },
-    { to: '/fisco', label: 'Tributi' },
+    { to: '/iva', label: 'Liquidazione IVA' },
+    { to: '/fisco', label: 'Calcolo IVA' },
   ],
   '/dipendenti': [
     { to: '/dipendenti', label: 'Anagrafica', exact: true },
