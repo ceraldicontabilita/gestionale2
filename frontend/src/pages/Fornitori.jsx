@@ -1302,7 +1302,7 @@ export default function Fornitori() {
               style={{ 
                 padding: '14px 28px',
                 background: 'white',
-                color: '#2563eb',
+                color: '#1535a8',
                 border: 'none',
                 borderRadius: 10,
                 cursor: loading ? 'wait' : 'pointer',
@@ -1351,7 +1351,7 @@ export default function Fornitori() {
               style={{ 
                 padding: '14px 28px',
                 background: 'white',
-                color: '#2563eb',
+                color: '#1535a8',
                 border: 'none',
                 borderRadius: 10,
                 cursor: 'pointer',
