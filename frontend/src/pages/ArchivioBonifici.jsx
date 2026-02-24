@@ -370,63 +370,56 @@ export default function ArchivioBonifici() {
   const transfersToShow = activeTab === 'da_associare' ? bonificiDaAssociare : bonificiAssociati;
 
   return (
-    <PageLayout title="Archivio Bonifici Bancari" subtitle="Visualizzazione e gestione bonifici bancari">
-    <div style={{ maxWidth: 1400, margin: '0 auto' }} ref={dropdownRef}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
-        <div>
-          <h1 style={{ fontSize: 28, fontWeight: 'bold', color: '#1e3a5f', marginBottom: 8 }}>
-            📂 Archivio Bonifici Bancari
-          </h1>
-          <p style={{ color: '#64748b', margin: 0 }}>
-            Visualizzazione e gestione bonifici bancari
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <a 
-            href="/import-export"
-            style={{ 
-              padding: "10px 20px",
-              background: "#3b82f6",
-              color: "white",
-              fontWeight: "bold",
-              borderRadius: 8,
-              textDecoration: "none",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 6
-            }}
-          >
-            📥 Importa Bonifici
-          </a>
-          <button
-            onClick={handleSyncIbanToAnagrafica}
-            style={{
-              padding: "10px 20px",
-              background: "#10b981",
-              color: "white",
-              fontWeight: "bold",
-              border: "none",
-              borderRadius: 8,
-              cursor: "pointer"
-            }}
-            title="Sincronizza gli IBAN dei bonifici nell'anagrafica dipendenti"
-          >
-            🏦 Sync IBAN → Anagrafica
-          </button>
-          <button
-            onClick={() => { loadTransfers(); loadSummary(); loadCount(); }}
-            style={{
-              padding: "10px 20px",
-              background: "#f5f5f5",
-              color: "#333",
-              border: "1px solid #ddd",
-              borderRadius: 8,
-              cursor: "pointer"
-            }}
-          >
-            🔄 Aggiorna
-          </button>
-        </div>
+    <div style={{ maxWidth: 1400, margin: '0 auto', padding: '16px' }} ref={dropdownRef}>
+      {/* Action bar senza titolo duplicato */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 16, gap: 10, flexWrap: 'wrap' }}>
+        <a 
+          href="/import-export"
+          style={{ 
+            padding: "8px 14px",
+            background: "#3b82f6",
+            color: "white",
+            fontWeight: 600,
+            fontSize: 13,
+            borderRadius: 8,
+            textDecoration: "none",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6
+          }}
+        >
+          📥 Importa
+        </a>
+        <button
+          onClick={handleSyncIbanToAnagrafica}
+          style={{
+            padding: "8px 14px",
+            background: "#10b981",
+            color: "white",
+            fontWeight: 600,
+            fontSize: 13,
+            border: "none",
+            borderRadius: 8,
+            cursor: "pointer"
+          }}
+          title="Sincronizza gli IBAN dei bonifici nell'anagrafica dipendenti"
+        >
+          🏦 Sync IBAN
+        </button>
+        <button
+          onClick={() => { loadTransfers(); loadSummary(); loadCount(); }}
+          style={{
+            padding: "8px 14px",
+            background: "#f5f5f5",
+            color: "#333",
+            border: "1px solid #ddd",
+            borderRadius: 8,
+            cursor: "pointer",
+            fontSize: 13
+          }}
+        >
+          🔄 Aggiorna
+        </button>
       </div>
 
       {/* Stats Cards */}
