@@ -240,8 +240,8 @@ const router = createBrowserRouter([
       { path: "centri-costo/:centro", element: <LazyPage><CucinaHub /></LazyPage> },
       { path: "utile-obiettivo", element: <LazyPage><CucinaHub /></LazyPage> },
       { path: "utile-obiettivo/:anno", element: <LazyPage><CucinaHub /></LazyPage> },
-      { path: "learning-machine", element: <LazyPage><CucinaHub /></LazyPage> },
-      { path: "learning-machine/:tab", element: <LazyPage><CucinaHub /></LazyPage> },
+      { path: "learning-machine", element: <LazyPage><LearningMachineUniversale /></LazyPage> },
+      { path: "learning-machine/:tab", element: <LazyPage><LearningMachineUniversale /></LazyPage> },
       
       // === SCADENZE ===
       { path: "scadenze", element: <LazyPage><Scadenze /></LazyPage> },
