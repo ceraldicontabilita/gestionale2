@@ -224,46 +224,33 @@ export default function ClassificazioneDocumenti() {
   };
 
   return (
-    <PageLayout title="Classificazione Documenti" subtitle="Gestione e classificazione automatica documenti">
-    <div style={{ maxWidth: 1400, margin: '0 auto' }} data-testid="classificazione-documenti-page">
-      {/* Header */}
+    <div style={{ maxWidth: 1400, margin: '0 auto', padding: '16px' }} data-testid="classificazione-documenti-page">
+      {/* Action Bar - senza cornice blu */}
       <div style={{ 
         display: 'flex', 
-        justifyContent: 'space-between', 
+        justifyContent: 'flex-end', 
         alignItems: 'center', 
-        marginBottom: 20,
-        padding: '15px 20px',
-        background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
-        borderRadius: 12,
-        color: 'white',
-        flexWrap: 'wrap',
+        marginBottom: 16,
         gap: 10
       }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 'bold' }}>🧠 Classificazione Intelligente Email</h1>
-          <p style={{ margin: '4px 0 0 0', fontSize: 13, opacity: 0.9 }}>
-            Scansiona email, classifica automaticamente e associa al gestionale
-          </p>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button
-            onClick={() => { loadData(); loadStats(); }}
-            disabled={loading}
-            style={{ 
-              padding: '10px 20px',
-              background: 'rgba(255,255,255,0.95)',
-              color: '#1e3a5f',
-              border: 'none',
-              borderRadius: 8,
-              cursor: loading ? 'not-allowed' : 'pointer',
-              fontWeight: '600',
-              opacity: loading ? 0.6 : 1
-            }}
-            data-testid="refresh-btn"
-          >
-            🔄 Aggiorna
-          </button>
-        </div>
+        <button
+          onClick={() => { loadData(); loadStats(); }}
+          disabled={loading}
+          style={{ 
+            padding: '8px 14px',
+            background: '#f1f5f9',
+            color: '#1e3a5f',
+            border: '1px solid #e2e8f0',
+            borderRadius: 8,
+            cursor: loading ? 'not-allowed' : 'pointer',
+            fontWeight: '600',
+            fontSize: 13,
+            opacity: loading ? 0.6 : 1
+          }}
+          data-testid="refresh-btn"
+        >
+          🔄 Aggiorna
+        </button>
       </div>
 
       {/* Info Card */}
