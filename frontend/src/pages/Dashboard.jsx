@@ -1681,7 +1681,7 @@ function ScadenzeWidget({ scadenze }) {
                   }}
                   title="Registra pagamento"
                 >
-                  💰
+                  ✓
                 </button>
               </div>
             </div>
@@ -1724,7 +1724,7 @@ function ScadenzeWidget({ scadenze }) {
             boxShadow: '0 25px 50px rgba(0,0,0,0.25)'
           }}>
             <h3 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 700, color: '#1e293b' }}>
-              💰 Registra Pagamento
+              Registra Pagamento
             </h3>
             
             <div style={{ 
@@ -1859,7 +1859,7 @@ function AlertPagamentiWidget({ data }) {
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: '1 1 300px' }}>
-        <span style={{ fontSize: 22 }}>💰</span>
+        <span style={{ fontSize: 22 }}>📋</span>
         <div>
           <div style={{ fontWeight: 700, fontSize: 14, color: '#92400e' }}>
             Pagamenti in attesa di riconciliazione bancaria
