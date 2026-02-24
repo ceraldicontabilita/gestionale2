@@ -118,12 +118,12 @@ export default function Documenti() {
     };
     loadKeywords();
     
-    // Polling per stato lock ogni 5 secondi se sta scaricando
+    // Polling per stato lock ogni 15 secondi se sta scaricando (ridotto per performance)
     const lockInterval = setInterval(() => {
       if (downloading || backgroundTask) {
         checkEmailLock();
       }
-    }, 5000);
+    }, 15000);
     
     // Cleanup polling on unmount
     return () => {
