@@ -1,43 +1,41 @@
-import React, { lazy } from 'react';
-import { SectionPage } from '../../components/SectionPage';
-import { ChefHat, BookOpen, Building, Target, Brain } from 'lucide-react';
+import React, { lazy, Suspense } from 'react';
+import { useLocation } from 'react-router-dom';
 
 const ProdottiContent = lazy(() => import('../DizionarioProdotti.jsx'));
 const CentriCostoContent = lazy(() => import('../CentriCosto.jsx'));
 const UtileContent = lazy(() => import('../UtileObiettivo.jsx'));
 const LearningContent = lazy(() => import('../LearningMachine.jsx'));
 
-export default function CucinaHub() {
-  const sections = [
-    {
-      id: 'prodotti',
-      label: 'Dizionario Prodotti',
-      icon: <BookOpen size={16} />,
-      desc: 'Ricette, schede tecniche, costi di produzione',
-      component: <ProdottiContent />
-    },
-    {
-      id: 'centri-costo',
-      label: 'Centri di Costo',
-      icon: <Building size={16} />,
-      desc: 'Allocazione costi per centro di responsabilità',
-      component: <CentriCostoContent />
-    },
-    {
-      id: 'utile',
-      label: 'Utile Obiettivo',
-      icon: <Target size={16} />,
-      desc: 'Target di marginalità per prodotto/reparto',
-      component: <UtileContent />
-    },
-    {
-      id: 'learning',
-      label: 'Learning Machine',
-      icon: <Brain size={16} />,
-      desc: 'Classificazione automatica AI dei documenti',
-      component: <LearningContent />
-    }
-  ];
+const Loading = () => (
+  <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>
+    <div style={{
+      width: 32, height: 32,
+      border: '3px solid #e2e8f0',
+      borderTop: '3px solid #2563eb',
+      borderRadius: '50%',
+      animation: 'spin 1s linear infinite',
+      margin: '0 auto 12px'
+    }} />
+    Caricamento...
+  </div>
+);
 
-  return <SectionPage title="Cucina & Produzione" icon={<ChefHat size={22} />} sections={sections} defaultOpen="prodotti" />;
+export default function CucinaHub() {
+  const location = useLocation();
+  const path = location.pathname;
+
+  const getContent = () => {
+    if (path.includes('/centri-costo')) return <CentriCostoContent />;
+    if (path.includes('/utile-obiettivo')) return <UtileContent />;
+    if (path.includes('/learning')) return <LearningContent />;
+    return <ProdottiContent />;
+  };
+
+  return (
+    <div style={{ padding: '16px 24px', minHeight: '100vh', background: '#f8fafc' }}>
+      <Suspense fallback={<Loading />}>
+        {getContent()}
+      </Suspense>
+    </div>
+  );
 }

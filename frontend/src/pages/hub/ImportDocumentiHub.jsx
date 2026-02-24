@@ -1,35 +1,39 @@
-import React, { lazy } from 'react';
-import { SectionPage } from '../../components/SectionPage';
-import { Download, Brain, Wand2 } from 'lucide-react';
+import React, { lazy, Suspense } from 'react';
+import { useLocation } from 'react-router-dom';
 
 const ImportContent = lazy(() => import('../ImportDocumenti.jsx'));
 const ImportAIContent = lazy(() => import('../ImportDocumentiAI.jsx'));
 const CorrezioneContent = lazy(() => import('../CorrezioneAI.jsx'));
 
-export default function ImportDocumentiHub() {
-  const sections = [
-    {
-      id: 'import',
-      label: 'Import Documenti',
-      icon: <Download size={16} />,
-      desc: 'Caricamento file, estratti conto, fatture, F24',
-      component: <ImportContent />
-    },
-    {
-      id: 'ai',
-      label: 'Import AI',
-      icon: <Brain size={16} />,
-      desc: 'Parsing automatico documenti con intelligenza artificiale',
-      component: <ImportAIContent />
-    },
-    {
-      id: 'correzione',
-      label: 'Correzione AI',
-      icon: <Wand2 size={16} />,
-      desc: 'Verifica e correzione automatica dati importati',
-      component: <CorrezioneContent />
-    }
-  ];
+const Loading = () => (
+  <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>
+    <div style={{
+      width: 32, height: 32,
+      border: '3px solid #e2e8f0',
+      borderTop: '3px solid #2563eb',
+      borderRadius: '50%',
+      animation: 'spin 1s linear infinite',
+      margin: '0 auto 12px'
+    }} />
+    Caricamento...
+  </div>
+);
 
-  return <SectionPage title="Import Documenti" icon={<Download size={22} />} sections={sections} defaultOpen="import" />;
+export default function ImportDocumentiHub() {
+  const location = useLocation();
+  const path = location.pathname;
+
+  const getContent = () => {
+    if (path.includes('/import-ai')) return <ImportAIContent />;
+    if (path.includes('/correzione-ai')) return <CorrezioneContent />;
+    return <ImportContent />;
+  };
+
+  return (
+    <div style={{ padding: '16px 24px', minHeight: '100vh', background: '#f8fafc' }}>
+      <Suspense fallback={<Loading />}>
+        {getContent()}
+      </Suspense>
+    </div>
+  );
 }

@@ -1,35 +1,39 @@
-import React, { lazy } from 'react';
-import { SectionPage } from '../../components/SectionPage';
-import { Globe, FileText, CreditCard } from 'lucide-react';
+import React, { lazy, Suspense } from 'react';
+import { useLocation } from 'react-router-dom';
 
 const OpenAPIContent = lazy(() => import('../IntegrazioniOpenAPI.jsx'));
 const InvoiceTronicContent = lazy(() => import('../GestioneInvoiceTronic.jsx'));
 const PagoPAContent = lazy(() => import('../GestionePagoPA.jsx'));
 
-export default function IntegrazioniHub() {
-  const sections = [
-    {
-      id: 'openapi',
-      label: 'OpenAPI.it (SDI/XBRL)',
-      icon: <Globe size={16} />,
-      desc: 'Fatturazione elettronica SDI e bilanci XBRL',
-      component: <OpenAPIContent />
-    },
-    {
-      id: 'invoicetronic',
-      label: 'InvoiceTronic (SDI)',
-      icon: <FileText size={16} />,
-      desc: 'Invio e ricezione fatture elettroniche',
-      component: <InvoiceTronicContent />
-    },
-    {
-      id: 'pagopa',
-      label: 'PagoPA',
-      icon: <CreditCard size={16} />,
-      desc: 'Pagamenti verso la Pubblica Amministrazione',
-      component: <PagoPAContent />
-    }
-  ];
+const Loading = () => (
+  <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>
+    <div style={{
+      width: 32, height: 32,
+      border: '3px solid #e2e8f0',
+      borderTop: '3px solid #2563eb',
+      borderRadius: '50%',
+      animation: 'spin 1s linear infinite',
+      margin: '0 auto 12px'
+    }} />
+    Caricamento...
+  </div>
+);
 
-  return <SectionPage title="Integrazioni" icon={<Globe size={22} />} sections={sections} defaultOpen="openapi" />;
+export default function IntegrazioniHub() {
+  const location = useLocation();
+  const path = location.pathname;
+
+  const getContent = () => {
+    if (path.includes('/invoicetronic')) return <InvoiceTronicContent />;
+    if (path.includes('/pagopa')) return <PagoPAContent />;
+    return <OpenAPIContent />;
+  };
+
+  return (
+    <div style={{ padding: '16px 24px', minHeight: '100vh', background: '#f8fafc' }}>
+      <Suspense fallback={<Loading />}>
+        {getContent()}
+      </Suspense>
+    </div>
+  );
 }
