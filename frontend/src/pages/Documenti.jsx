@@ -118,21 +118,13 @@ export default function Documenti() {
     };
     loadKeywords();
     
-    // Polling per stato lock ogni 15 secondi se sta scaricando (ridotto per performance)
-    const lockInterval = setInterval(() => {
-      if (downloading || backgroundTask) {
-        checkEmailLock();
-      }
-    }, 15000);
-    
     // Cleanup polling on unmount
     return () => {
       if (pollingRef.current) {
         clearInterval(pollingRef.current);
       }
-      clearInterval(lockInterval);
     };
-  }, [filtroCategoria, filtroStatus, downloading, backgroundTask, anno]);
+  }, [filtroCategoria, filtroStatus, anno]);
 
   // Polling per task in background
   const pollTaskStatus = useCallback(async (taskId) => {
