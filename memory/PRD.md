@@ -50,25 +50,25 @@ L'utente ha richiesto di ricreare un sistema ERP con:
 
 ### ✅ Completed (Additional - Feb 24, 2026)
 
-#### Filtro Anno Verificato
-- Tutti i moduli principali usano correttamente `useAnnoGlobale()`
-- Pagine verificate: Fatture, Cedolini, F24, Presenze, Prima Nota
-- Il selector anno (2026) nella top-nav aggiorna tutte le pagine
-- I fornitori e dipendenti non filtrano per anno (entità permanenti)
+#### UI Cleanup (Feb 24, 2026)
+- **Rimosse tutte le emoji 💰** da tutte le pagine per UI più pulita
+- **Layout scadenze compatto**: informazioni su una singola riga (Tipo | Importo | Data | Giorni | Descrizione)
+- Rimossi emoji da: Scadenze, Dashboard, RiconciliazioneUnificata, PrimaNota, GestioneDipendenti, Documenti, ecc.
 
-#### API Routing Verificato
-- Frontend usa correttamente `/api/suppliers` (inglese)
-- Nessun alias temporaneo trovato nel backend
-- Routing consistente tra frontend e backend
+#### Prima Nota - Verificato Funzionante
+- La pagina Prima Nota funziona correttamente
+- Sezione CASSA: nessun dato inserito (vuota) - comportamento normale
+- Sezione BANCA: mostra 161 movimenti dall'estratto conto
+- Il problema segnalato era un falso positivo: la pagina non era bloccata, semplicemente non c'erano dati nella collezione
 
 ### 📋 Backlog
-
-#### P2 - Future
 
 #### P2 - Future
 - Re-implementazione autenticazione (richiesta al deployment)
 - Testing E2E completo di tutti i moduli
 - Ottimizzazione performance query MongoDB
+- Learning Machine: fix tab switching bug (P2)
+- Refactoring codice morto (vecchio sidebar)
 
 ## Architecture
 
