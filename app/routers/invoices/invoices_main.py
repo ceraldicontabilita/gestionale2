@@ -37,7 +37,7 @@ router = APIRouter()
 
 
 # Dependency to get invoice service
-async def get_invoice_service() -> InvoiceService:
+async def get_invoice_service() -> InvoiceServiceV2:
     """Get invoice service with injected dependencies."""
     db = Database.get_db()
     
