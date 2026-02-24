@@ -240,39 +240,39 @@ frontend:
           
   - task: "Fornitori Page - Display 316 Suppliers"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/frontend/src/pages/Fornitori.jsx"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
-        - working: "NA"
+        - working: true
           agent: "testing"
-          comment: "Ready for testing - verify /fornitori shows 316 total suppliers"
+          comment: "✅ PASSED - Fornitori page shows exactly '316 Totale Fornitori' as required. Navigated successfully in 4.11s. Page displays '316 fornitori' count prominently."
           
   - task: "Fornitori Page - Stats Cards (4 cards)"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/frontend/src/pages/Fornitori.jsx"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
-        - working: "NA"
+        - working: true
           agent: "testing"
-          comment: "Ready for testing - verify 4 stat cards are visible (Total, With Invoices, Incomplete, Cash)"
+          comment: "✅ PASSED - All 4 stat cards visible and working: '316 Totale Fornitori', '148 Con Fatture', '180 Dati Incompleti', '29 Pagamento Contanti'. Stats are accurate and displayed in grid layout."
           
   - task: "Fornitori Page - Supplier List (min 10 visible)"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/frontend/src/pages/Fornitori.jsx"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
-        - working: "NA"
+        - working: true
           agent: "testing"
-          comment: "Ready for testing - verify supplier list loads with min 10 suppliers visible, each showing name, P.IVA, invoices count, payment days"
+          comment: "✅ PASSED - Supplier list loads with 311+ suppliers detected on page (exceeded minimum of 10). First visible suppliers include: NATURISSIME SRL (P.IVA 05157530634, 108 Fatture, 30 Giorni), SUNRISE SRL (P.IVA 09584837219, 100 Fatture, 30 Giorni), KIMBO S.P.A., Dolciaria Acquaviva S.p.A. All suppliers show required fields: nome, P.IVA, fatture count, giorni pagamento."
           
   - task: "Fornitori Page - Aggiorna Button"
     implemented: true
