@@ -285,4 +285,9 @@ async def get_statistiche(anno: Optional[int] = Query(None)) -> Dict[str, Any]:
     stats["importo_da_pagare"] = round(stats["importo_totale"] - stats["importo_pagato"], 2)
     stats["anno"] = anno
     
+    # Alias per compatibilità frontend
+    stats["totale_importo"] = stats["importo_totale"]
+    stats["fornitori_unici"] = 0  # Da calcolare separatamente se necessario
+    stats["fatture_anomale"] = 0  # Da calcolare separatamente se necessario
+    
     return stats
