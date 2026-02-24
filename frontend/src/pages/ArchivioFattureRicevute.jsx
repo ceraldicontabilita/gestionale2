@@ -73,7 +73,7 @@ const styles = {
     background: '#f8fafc'
   },
   uploadZoneActive: {
-    borderColor: '#3b82f6',
+    borderColor: '#1535a8',
     background: '#eff6ff'
   },
   table: { width: '100%', borderCollapse: 'collapse', fontSize: 14 },
