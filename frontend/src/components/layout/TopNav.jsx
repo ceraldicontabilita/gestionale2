@@ -96,26 +96,33 @@ export default function TopNav() {
 
       {/* Right Side - Utilities */}
       <div className="topnav-right">
-        {/* Anno Selector con etichetta */}
-        <div className="topnav-anno" data-testid="anno-selector">
+        {/* Anno Selector - BEN VISIBILE */}
+        <div className="topnav-anno" data-testid="anno-selector" style={{
+          display: 'flex',
+          alignItems: 'center',
+          background: '#1a40b5',
+          borderRadius: 8,
+          padding: '4px 12px',
+          gap: 6
+        }}>
           <span style={{ 
             fontSize: 11, 
-            fontWeight: 600, 
-            color: '#64748b',
-            marginRight: 6,
+            fontWeight: 700, 
+            color: 'white',
             textTransform: 'uppercase',
             letterSpacing: 0.5
-          }}>Anno</span>
+          }}>📅 ANNO</span>
           <AnnoSelector style={{ 
             background: 'white',
-            border: '1.5px solid #b3d2f5',
-            borderRadius: 7,
-            padding: '4px 12px',
-            fontSize: 13,
-            fontWeight: 700,
+            border: 'none',
+            borderRadius: 6,
+            padding: '4px 10px',
+            fontSize: 15,
+            fontWeight: 800,
             color: '#1a40b5',
-            minHeight: 32,
+            minWidth: 70,
             cursor: 'pointer',
+            textAlign: 'center'
           }} />
         </div>
         
