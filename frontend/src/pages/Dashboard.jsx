@@ -834,7 +834,7 @@ export default function Dashboard() {
             {/* Dettaglio Salari */}
             <div style={{ background: '#f8fafc', borderRadius: 8, padding: 12 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <span style={{ fontWeight: 600 }}>💰 Salari Dipendenti</span>
+                <span style={{ fontWeight: 600 }}>Salari Dipendenti</span>
                 <span style={{ 
                   padding: '2px 8px', 
                   borderRadius: 10, 

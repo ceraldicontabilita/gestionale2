@@ -634,7 +634,7 @@ export default function RiconciliazioneUnificata() {
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 4 }}>💰 Importo Min (€)</label>
+            <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 4 }}>Importo Min (€)</label>
             <input
               type="number"
               placeholder="0"
@@ -644,7 +644,7 @@ export default function RiconciliazioneUnificata() {
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 4 }}>💰 Importo Max (€)</label>
+            <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 4 }}>Importo Max (€)</label>
             <input
               type="number"
               placeholder="999999"
@@ -1004,7 +1004,7 @@ function MovimentoCard({ movimento, onConferma, onIgnora, onElimina, processing,
               gap: 12,
               alignItems: 'center'
             }}>
-              <span>💰 <b>Assegno:</b> {formatEuro(Math.abs(movimento.importo || 0))}</span>
+              <span><b>Assegno:</b> {formatEuro(Math.abs(movimento.importo || 0))}</span>
               {movimento.importo_fattura !== undefined && (
                 <>
                   <span>•</span>
@@ -1516,7 +1516,7 @@ function ArubaTab({ fatture, onConferma, processing, fornitori = [], onRefresh, 
                 onChange={e => setMetodoBatch(e.target.value)}
                 style={{ padding: '8px 12px', border: '1px solid #10b981', borderRadius: 6, fontSize: 13, background: '#d1fae5' }}
               >
-                <option value="cassa">💰 Cassa</option>
+                <option value="cassa">Cassa</option>
                 <option value="bonifico">🏦 Bonifico</option>
                 <option value="carta_credito">💳 Carta/POS</option>
                 <option value="assegno">📝 Assegno</option>

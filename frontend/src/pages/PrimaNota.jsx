@@ -693,7 +693,7 @@ function PrimaNotaDesktop() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 20 }}>
             <SummaryCard title="Totale Entrate" value={formatEuro(bancaData.totale_entrate)} color="#4caf50" icon="📈" subtitle="Accrediti sul conto" />
             <SummaryCard title="Totale Uscite" value={formatEuro(bancaData.totale_uscite)} color="#ef4444" icon="📉" subtitle="Addebiti dal conto" />
-            <SummaryCard title="Saldo Periodo" value={formatEuro(bancaData.saldo)} color={bancaData.saldo >= 0 ? '#4caf50' : '#ef4444'} icon="💰" highlight />
+            <SummaryCard title="Saldo Periodo" value={formatEuro(bancaData.saldo)} color={bancaData.saldo >= 0 ? '#4caf50' : '#ef4444'} icon="📊" highlight />
           </div>
 
           {/* Info Box */}
