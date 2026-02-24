@@ -29,14 +29,16 @@ async def get_archivio_fatture(
     query = {}
     
     if anno:
-        # Supporta sia campo 'anno' diretto che filtro per data
+        # Supporta sia campo 'anno' diretto che filtro per data (diversi formati)
         anno_start = f"{anno}-01-01"
         anno_end = f"{anno}-12-31"
         query["$or"] = [
             {"anno": anno},
             {"data_fattura": {"$gte": anno_start, "$lte": anno_end + "T23:59:59"}},
             {"data_documento": {"$gte": anno_start, "$lte": anno_end + "T23:59:59"}},
-            {"invoice_date": {"$gte": anno_start, "$lte": anno_end + "T23:59:59"}}
+            {"invoice_date": {"$gte": anno_start, "$lte": anno_end + "T23:59:59"}},
+            {"data_fattura": {"$regex": f"^{anno}-"}},
+            {"data_documento": {"$regex": f"^{anno}-"}}
         ]
     
     if mese and anno:
