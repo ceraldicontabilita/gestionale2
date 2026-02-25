@@ -661,44 +661,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Calendario POS Sfasamento */}
-      {posCalendario && (
-        <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', marginTop: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
-            <div>
-              <h2 style={{ fontSize: 18, margin: 0, fontWeight: 'bold', color: '#1e3a5f' }}>💳 Calendario POS - Sfasamento Accrediti</h2>
-              <span style={{ fontSize: 13, color: '#6b7280' }}>Mese corrente - Giorni con sfasamento lungo evidenziati</span>
-            </div>
-            <Link to="/riconciliazione" style={{
-              padding: '6px 12px',
-              background: '#3b82f6',
-              color: 'white',
-              borderRadius: 6,
-              textDecoration: 'none',
-              fontSize: 13
-            }}>
-              Vai a Riconciliazione
-            </Link>
-          </div>
-          
-          <POSCalendarWidget data={posCalendario} />
-          
-          {/* Legenda */}
-          <div style={{ 
-            display: 'flex', 
-            gap: 20, 
-            marginTop: 15, 
-            fontSize: 12,
-            flexWrap: 'wrap',
-            justifyContent: 'center'
-          }}>
-            <span><span style={{ display: 'inline-block', width: 12, height: 12, background: '#dcfce7', borderRadius: 2, marginRight: 4 }}></span> +1 giorno</span>
-            <span><span style={{ display: 'inline-block', width: 12, height: 12, background: '#fef3c7', borderRadius: 2, marginRight: 4 }}></span> +2 giorni</span>
-            <span><span style={{ display: 'inline-block', width: 12, height: 12, background: '#fee2e2', borderRadius: 2, marginRight: 4 }}></span> +3 giorni</span>
-            <span><span style={{ display: 'inline-block', width: 12, height: 12, background: '#fecaca', borderRadius: 2, marginRight: 4 }}></span> Festivo</span>
-          </div>
-        </div>
-      )}
 
       {/* Nuova sezione: Grafici Avanzati */}
       <div style={{ 
