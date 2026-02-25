@@ -481,14 +481,14 @@ export default function ArchivioFatture() {
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 4px', fontSize: 13 }}>
                   <thead>
-                    <tr style={{ background: '#1e3a5f' }}>
-                      <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: '600', color: 'white', borderRadius: '8px 0 0 8px' }}>Data</th>
-                      <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: '600', color: 'white' }}>Numero</th>
-                      <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: '600', color: 'white' }}>Fornitore</th>
-                      <th style={{ padding: '14px 16px', textAlign: 'right', fontWeight: '600', color: 'white' }}>Imponibile</th>
-                      <th style={{ padding: '14px 16px', textAlign: 'right', fontWeight: '600', color: 'white' }}>IVA</th>
-                      <th style={{ padding: '14px 16px', textAlign: 'right', fontWeight: '600', color: 'white' }}>Totale</th>
-                      <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: '600', color: 'white', borderRadius: '0 8px 8px 0', minWidth: 280 }}>Azioni</th>
+                    <tr style={{ background: '#f1f5f9' }}>
+                      <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: '600', color: '#1e293b', borderRadius: '8px 0 0 8px' }}>Data</th>
+                      <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: '600', color: '#1e293b' }}>Numero</th>
+                      <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: '600', color: '#1e293b' }}>Fornitore</th>
+                      <th style={{ padding: '14px 16px', textAlign: 'right', fontWeight: '600', color: '#1e293b' }}>Imponibile</th>
+                      <th style={{ padding: '14px 16px', textAlign: 'right', fontWeight: '600', color: '#1e293b' }}>IVA</th>
+                      <th style={{ padding: '14px 16px', textAlign: 'right', fontWeight: '600', color: '#1e293b' }}>Totale</th>
+                      <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: '600', color: '#1e293b', borderRadius: '0 8px 8px 0', minWidth: 280 }}>Azioni</th>
                     </tr>
                   </thead>
                   <tbody>

@@ -211,25 +211,33 @@ async def get_volume_affari_reale(
     db = Database.get_db()
     
     # 1. Fatturato ufficiale (fatture emesse)
-    fatture_query = {"anno": anno}
+    fatture_match = {"anno": anno}
     if mese:
-        fatture_query["mese"] = mese
+        fatture_match["mese"] = mese
     
     fatture_pipeline = [
-        {"$match": {"data_fattura": {"$regex": f"^{anno}"}}},
-        {"$group": {"_id": None, "totale": {"$sum": "$totale_fattura"}}}
+        {"$match": fatture_match},
+        {"$group": {"_id": None, "totale": {"$sum": "$importo_totale"}}}
     ]
     fatture_result = await db["invoices"].aggregate(fatture_pipeline).to_list(1)
     fatturato_ufficiale = fatture_result[0]["totale"] if fatture_result else 0
     
-    # 2. Corrispettivi
-    corr_query = {"anno": anno}
+    # Also check fatture_emesse
+    fe_pipeline = [
+        {"$match": fatture_match},
+        {"$group": {"_id": None, "totale": {"$sum": {"$ifNull": ["$importo_totale", "$totale"]}}}}
+    ]
+    fe_result = await db["fatture_emesse"].aggregate(fe_pipeline).to_list(1)
+    fatturato_ufficiale += fe_result[0]["totale"] if fe_result else 0
+    
+    # 2. Corrispettivi (data is string "YYYY-MM-DD", totale is the field name)
+    corr_match = {"data": {"$regex": f"^{anno}"}}
     if mese:
-        corr_query["mese"] = mese
+        corr_match["data"] = {"$regex": f"^{anno}-{str(mese).zfill(2)}"}
     
     corr_pipeline = [
-        {"$match": corr_query},
-        {"$group": {"_id": None, "totale": {"$sum": "$totale_giornaliero"}}}
+        {"$match": corr_match},
+        {"$group": {"_id": None, "totale": {"$sum": "$totale"}}}
     ]
     corr_result = await db["corrispettivi"].aggregate(corr_pipeline).to_list(1)
     corrispettivi = corr_result[0]["totale"] if corr_result else 0
