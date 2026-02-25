@@ -127,17 +127,39 @@ async def get_archivio_fatture(
     
     normalized = []
     for f in fatture:
+        importo_totale = f.get("importo_totale") or f.get("total_amount", 0)
+        imponibile = f.get("imponibile", 0)
+        iva = f.get("iva") or f.get("imposta", 0)
+        # If imponibile/iva not stored, try to compute from totale
+        try:
+            importo_totale = float(importo_totale or 0)
+            imponibile = float(imponibile or 0)
+            iva = float(iva or 0)
+        except (ValueError, TypeError):
+            importo_totale, imponibile, iva = 0, 0, 0
+        if imponibile == 0 and iva == 0 and importo_totale > 0:
+            # Estimate: assume 22% IVA if not available
+            imponibile = round(importo_totale / 1.22, 2)
+            iva = round(importo_totale - imponibile, 2)
         normalized.append({
             "id": f.get("id") or str(f.get("_id", "")),
             "numero_documento": f.get("numero_documento") or f.get("invoice_number") or f.get("numero_fattura"),
             "data_documento": f.get("data_documento") or f.get("invoice_date") or f.get("data_fattura"),
-            "importo_totale": f.get("importo_totale") or f.get("total_amount", 0),
+            "importo_totale": importo_totale,
+            "imponibile": imponibile,
+            "iva": iva,
             "fornitore_ragione_sociale": f.get("fornitore_ragione_sociale") or f.get("supplier_name") or f.get("fornitore_nome"),
             "fornitore_partita_iva": f.get("fornitore_partita_iva") or f.get("supplier_vat") or f.get("fornitore_piva"),
             "stato": f.get("stato") or f.get("stato_pagamento", "importata"),
             "metodo_pagamento": f.get("metodo_pagamento"),
+            "metodo_pagamento_effettivo": f.get("metodo_pagamento_effettivo"),
+            "fornitore_metodo_pagamento": f.get("fornitore_metodo_pagamento"),
             "pagato": f.get("pagato", False),
             "riconciliato": f.get("riconciliato", False),
+            "prima_nota_cassa_id": f.get("prima_nota_cassa_id"),
+            "prima_nota_banca_id": f.get("prima_nota_banca_id"),
+            "data_pagamento": f.get("data_pagamento"),
+            "status": f.get("status"),
             "has_pdf": f.get("has_pdf", False),
             "created_at": f.get("created_at"),
             "anno": f.get("anno")
