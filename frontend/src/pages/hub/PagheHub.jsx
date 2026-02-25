@@ -70,7 +70,7 @@ function SezioneBustePaga({ anno }) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.get('/api/cedolini', { params: { anno } });
+      const res = await api.get('/api/cedolini', { params: { anno, limit: 500 } });
       // Map cedolini to buste paga format
       const cedolini = res.data?.cedolini || [];
       const mapped = cedolini.map(c => ({
