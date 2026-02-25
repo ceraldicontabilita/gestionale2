@@ -149,7 +149,7 @@ async def get_stato_patrimoniale(
     # Il filtro esclude solo le note di credito (TD04, TD08)
     debiti = await db[Collections.INVOICES].aggregate([
         {"$match": {
-            "tipo_documento": {"$nin": ["TD04", "TD08"]},  # Escludi solo Note Credito
+            "tipo_documento": {"$nin": ["TD04", "TD08"]},
             "status": {"$nin": STATI_PAGATI},
             "pagato": {"$ne": True},
             "$or": [
@@ -157,7 +157,7 @@ async def get_stato_patrimoniale(
                 {"data_ricezione": {"$lte": data_fine}}
             ]
         }},
-        {"$group": {"_id": None, "totale": {"$sum": "$total_amount"}}}
+        {"$group": {"_id": None, "totale": {"$sum": {"$ifNull": ["$total_amount", {"$ifNull": ["$importo_totale", 0]}]}}}}
     ]).to_list(1)
     totale_debiti = debiti[0]["totale"] if debiti else 0
     
