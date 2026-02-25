@@ -265,7 +265,7 @@ async def get_giustificativi_dipendente(
         anno = datetime.now().year
     
     # Verifica dipendente
-    employee = await db["employees"].find_one(
+    employee = await db["dipendenti"].find_one(
         {"id": employee_id},
         {"_id": 0, "id": 1, "nome": 1, "cognome": 1, "nome_completo": 1}
     )
@@ -461,7 +461,7 @@ async def set_limiti_custom_dipendente(
     limiti = payload.get("limiti", {})
     
     # Verifica dipendente
-    employee = await db["employees"].find_one({"id": employee_id}, {"_id": 0, "id": 1})
+    employee = await db["dipendenti"].find_one({"id": employee_id}, {"_id": 0, "id": 1})
     if not employee:
         raise HTTPException(status_code=404, detail="Dipendente non trovato")
     
@@ -627,7 +627,7 @@ async def get_saldo_ferie_dipendente(
     mese_corrente = datetime.now().month if anno == datetime.now().year else 12
     
     # Verifica dipendente
-    employee = await db["employees"].find_one(
+    employee = await db["dipendenti"].find_one(
         {"id": employee_id},
         {"_id": 0, "id": 1, "nome": 1, "cognome": 1, "nome_completo": 1, 
          "data_assunzione": 1, "ore_settimanali": 1}
@@ -819,7 +819,7 @@ async def get_alert_limiti_giustificativi(
     mese_corrente = datetime.now().month
     
     # Recupera tutti i dipendenti in carico
-    dipendenti = await db["employees"].find(
+    dipendenti = await db["dipendenti"].find(
         {"$or": [{"in_carico": True}, {"in_carico": {"$exists": False}}]},
         {"_id": 0, "id": 1, "nome": 1, "cognome": 1, "nome_completo": 1}
     ).to_list(500)
@@ -960,7 +960,7 @@ async def get_riepilogo_limiti(anno: int = Query(None)) -> Dict[str, Any]:
         anno = datetime.now().year
     
     # Conta dipendenti attivi
-    totale_dipendenti = await db["employees"].count_documents(
+    totale_dipendenti = await db["dipendenti"].count_documents(
         {"$or": [{"in_carico": True}, {"in_carico": {"$exists": False}}]}
     )
     
@@ -1087,7 +1087,7 @@ async def upload_libro_unico_pdf(file: UploadFile = File(...)) -> Dict[str, Any]
                     # Trova dipendente nel database
                     employee = None
                     if cf:
-                        employee = await db["employees"].find_one(
+                        employee = await db["dipendenti"].find_one(
                             {"codice_fiscale": cf},
                             {"_id": 0, "id": 1, "nome_completo": 1}
                         )
@@ -1095,7 +1095,7 @@ async def upload_libro_unico_pdf(file: UploadFile = File(...)) -> Dict[str, Any]
                     if not employee and nome:
                         # Cerca per nome
                         nome_upper = nome.upper().strip()
-                        all_emps = await db["employees"].find({}, {"_id": 0, "id": 1, "nome_completo": 1, "cognome": 1, "nome": 1}).to_list(500)
+                        all_emps = await db["dipendenti"].find({}, {"_id": 0, "id": 1, "nome_completo": 1, "cognome": 1, "nome": 1}).to_list(500)
                         for emp in all_emps:
                             emp_nome = (emp.get("nome_completo") or f"{emp.get('cognome', '')} {emp.get('nome', '')}").upper().strip()
                             if emp_nome == nome_upper or nome_upper in emp_nome:
@@ -1399,7 +1399,7 @@ async def get_riepilogo_progressivo(
         anno = datetime.now().year
     
     # Verifica dipendente
-    employee = await db["employees"].find_one(
+    employee = await db["dipendenti"].find_one(
         {"id": employee_id},
         {"_id": 0, "id": 1, "nome_completo": 1, "nome": 1, "cognome": 1}
     )
@@ -1530,7 +1530,7 @@ async def salva_saldi_finali(payload: Dict[str, Any]) -> Dict[str, Any]:
         raise HTTPException(status_code=400, detail="employee_id obbligatorio")
     
     # Verifica dipendente
-    employee = await db["employees"].find_one({"id": employee_id}, {"_id": 0, "id": 1})
+    employee = await db["dipendenti"].find_one({"id": employee_id}, {"_id": 0, "id": 1})
     if not employee:
         raise HTTPException(status_code=404, detail="Dipendente non trovato")
     
@@ -1626,7 +1626,7 @@ async def get_saldi_finali(
         anno = datetime.now().year
     
     # Verifica dipendente
-    employee = await db["employees"].find_one(
+    employee = await db["dipendenti"].find_one(
         {"id": employee_id},
         {"_id": 0, "id": 1, "nome_completo": 1, "nome": 1, "cognome": 1}
     )
@@ -1684,7 +1684,7 @@ async def get_saldi_finali_tutti(
     # Se non ci sono saldi, calcola dai cedolini
     if not saldi:
         # Recupera tutti i dipendenti attivi
-        employees = await db["employees"].find(
+        employees = await db["dipendenti"].find(
             {"stato": {"$ne": "cessato"}},
             {"_id": 0, "id": 1, "nome_completo": 1, "nome": 1, "cognome": 1}
         ).to_list(500)
@@ -1716,7 +1716,7 @@ async def get_saldi_finali_tutti(
         # Arricchisci con nomi dipendenti
         for s in saldi:
             emp_id = s.get("employee_id")
-            employee = await db["employees"].find_one(
+            employee = await db["dipendenti"].find_one(
                 {"id": emp_id},
                 {"_id": 0, "nome_completo": 1, "nome": 1, "cognome": 1}
             )
