@@ -2,7 +2,6 @@
 Warehouse router.
 Handles inventory and stock management operations.
 """
-print("[WAREHOUSE MODULE LOADED]")
 from fastapi import APIRouter, Depends, Query, status, Body, Path
 from pydantic import BaseModel
 from fastapi import HTTPException
