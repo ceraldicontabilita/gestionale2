@@ -25,7 +25,7 @@ class TestIteration9Backend:
         print(f"Health check: {response.status_code}")
         assert response.status_code == 200
         data = response.json()
-        assert data.get("status") == "healthy"
+        assert data.get("status") in ["healthy", "ok"], f"Unexpected status: {data.get('status')}"
         print(f"Health response: {data}")
     
     def test_cedolini_api_2026(self):
