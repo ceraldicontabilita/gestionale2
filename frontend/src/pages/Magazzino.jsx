@@ -53,7 +53,7 @@ export default function Magazzino() {
         api.get("/api/warehouse/products"),
         api.get("/api/products/catalog").catch(() => ({ data: [] }))
       ]);
-      setProducts(Array.isArray(warehouseRes.data) ? warehouseRes.data : warehouseRes.data?.items || []);
+      setProducts(Array.isArray(warehouseRes.data) ? warehouseRes.data.filter(p => p.source === 'manuale' || p.categoria === 'manutenzione') : []);
       setCatalogProducts(Array.isArray(catalogRes.data) ? catalogRes.data : []);
     } catch (e) {
       console.error("Error loading products:", e);
