@@ -67,7 +67,7 @@ async def get_situazione_tfr(dipendente_id: str) -> Dict[str, Any]:
     db = Database.get_db()
     
     # Recupera dipendente
-    dipendente = await db["employees"].find_one(
+    dipendente = await db["dipendenti"].find_one(
         {"id": dipendente_id},
         {"_id": 0}
     )
@@ -118,7 +118,7 @@ async def registra_accantonamento_tfr(input_data: AccantonamentoTFRInput) -> Dic
     db = Database.get_db()
     
     # Recupera dipendente
-    dipendente = await db["employees"].find_one(
+    dipendente = await db["dipendenti"].find_one(
         {"id": input_data.dipendente_id},
         {"_id": 0}
     )
@@ -160,7 +160,7 @@ async def registra_accantonamento_tfr(input_data: AccantonamentoTFRInput) -> Dic
     await db["tfr_accantonamenti"].insert_one(accantonamento.copy())
     
     # Aggiorna TFR dipendente
-    await db["employees"].update_one(
+    await db["dipendenti"].update_one(
         {"id": input_data.dipendente_id},
         {"$set": {"tfr_accantonato": round(nuovo_tfr_totale, 2)}}
     )
@@ -205,7 +205,7 @@ async def liquida_tfr(input_data: LiquidazioneTFRInput) -> Dict[str, Any]:
     db = Database.get_db()
     
     # Recupera dipendente
-    dipendente = await db["employees"].find_one(
+    dipendente = await db["dipendenti"].find_one(
         {"id": input_data.dipendente_id},
         {"_id": 0}
     )
@@ -249,7 +249,7 @@ async def liquida_tfr(input_data: LiquidazioneTFRInput) -> Dict[str, Any]:
     
     # Aggiorna TFR dipendente
     nuovo_tfr = tfr_disponibile - importo_lordo
-    await db["employees"].update_one(
+    await db["dipendenti"].update_one(
         {"id": input_data.dipendente_id},
         {"$set": {"tfr_accantonato": round(nuovo_tfr, 2)}}
     )
@@ -307,7 +307,7 @@ async def get_riepilogo_tfr_aziendale(anno: int = Query(None)) -> Dict[str, Any]
         anno = datetime.now().year
     
     # Dipendenti attivi
-    dipendenti = await db["employees"].find(
+    dipendenti = await db["dipendenti"].find(
         {"status": {"$in": ["attivo", "active"]}},
         {"_id": 0, "id": 1, "nome_completo": 1, "tfr_accantonato": 1}
     ).to_list(1000)
@@ -380,7 +380,7 @@ async def calcola_tfr_batch(anno: int) -> Dict[str, Any]:
     db = Database.get_db()
     
     # Dipendenti attivi
-    dipendenti = await db["employees"].find(
+    dipendenti = await db["dipendenti"].find(
         {"status": {"$in": ["attivo", "active"]}},
         {"_id": 0}
     ).to_list(1000)
@@ -491,7 +491,7 @@ async def get_acconti_dipendente(dipendente_id: str) -> Dict[str, Any]:
     db = Database.get_db()
     
     # Verifica dipendente
-    dipendente = await db["employees"].find_one(
+    dipendente = await db["dipendenti"].find_one(
         {"id": dipendente_id},
         {"_id": 0, "id": 1, "nome_completo": 1, "tfr_accantonato": 1}
     )
@@ -556,7 +556,7 @@ async def registra_acconto(input_data: AccontoInput) -> Dict[str, Any]:
     db = Database.get_db()
     
     # Verifica dipendente
-    dipendente = await db["employees"].find_one(
+    dipendente = await db["dipendenti"].find_one(
         {"id": input_data.dipendente_id},
         {"_id": 0}
     )
@@ -590,7 +590,7 @@ async def registra_acconto(input_data: AccontoInput) -> Dict[str, Any]:
     if input_data.tipo == "tfr":
         tfr_attuale = float(dipendente.get("tfr_accantonato", 0))
         nuovo_tfr = max(0, tfr_attuale - input_data.importo)
-        await db["employees"].update_one(
+        await db["dipendenti"].update_one(
             {"id": input_data.dipendente_id},
             {"$set": {"tfr_accantonato": round(nuovo_tfr, 2)}}
         )
@@ -636,12 +636,12 @@ async def modifica_acconto(acconto_id: str, input_data: dict) -> Dict[str, Any]:
         
         # Se è un acconto TFR, aggiorna il saldo del dipendente
         if acconto.get("tipo") == "tfr":
-            dipendente = await db["employees"].find_one({"id": acconto["dipendente_id"]})
+            dipendente = await db["dipendenti"].find_one({"id": acconto["dipendente_id"]})
             if dipendente:
                 tfr_attuale = float(dipendente.get("tfr_accantonato", 0))
                 # Ripristina il vecchio importo e sottrai il nuovo
                 nuovo_tfr = tfr_attuale + vecchio_importo - nuovo_importo
-                await db["employees"].update_one(
+                await db["dipendenti"].update_one(
                     {"id": acconto["dipendente_id"]},
                     {"$set": {"tfr_accantonato": round(nuovo_tfr, 2)}}
                 )
@@ -679,11 +679,11 @@ async def elimina_acconto(acconto_id: str) -> Dict[str, Any]:
     
     # Se era un acconto TFR, ripristina il valore
     if acconto.get("tipo") == "tfr":
-        dipendente = await db["employees"].find_one({"id": acconto["dipendente_id"]})
+        dipendente = await db["dipendenti"].find_one({"id": acconto["dipendente_id"]})
         if dipendente:
             tfr_attuale = float(dipendente.get("tfr_accantonato", 0))
             nuovo_tfr = tfr_attuale + acconto.get("importo", 0)
-            await db["employees"].update_one(
+            await db["dipendenti"].update_one(
                 {"id": acconto["dipendente_id"]},
                 {"$set": {"tfr_accantonato": round(nuovo_tfr, 2)}}
             )
@@ -753,7 +753,7 @@ async def get_storico_tfr(dipendente_id: str) -> Dict[str, Any]:
     db = Database.get_db()
     
     # Verifica dipendente
-    dipendente = await db["employees"].find_one(
+    dipendente = await db["dipendenti"].find_one(
         {"id": dipendente_id},
         {"_id": 0}
     )

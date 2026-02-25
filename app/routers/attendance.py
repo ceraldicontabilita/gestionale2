@@ -112,7 +112,7 @@ async def registra_timbratura(payload: Dict[str, Any]) -> Dict[str, Any]:
         raise HTTPException(status_code=400, detail=f"tipo deve essere uno di: {tipi_validi}")
     
     # Verifica dipendente esiste
-    employee = await db["employees"].find_one({"id": employee_id}, {"_id": 0, "id": 1, "nome": 1, "cognome": 1})
+    employee = await db["dipendenti"].find_one({"id": employee_id}, {"_id": 0, "id": 1, "nome": 1, "cognome": 1})
     if not employee:
         raise HTTPException(status_code=404, detail="Dipendente non trovato")
     
@@ -290,7 +290,7 @@ async def crea_richiesta_assenza(payload: Dict[str, Any]) -> Dict[str, Any]:
         raise HTTPException(status_code=400, detail=f"tipo deve essere uno di: {tipi_validi}")
     
     # Verifica dipendente
-    employee = await db["employees"].find_one({"id": employee_id}, {"_id": 0, "id": 1, "nome": 1, "cognome": 1})
+    employee = await db["dipendenti"].find_one({"id": employee_id}, {"_id": 0, "id": 1, "nome": 1, "cognome": 1})
     if not employee:
         raise HTTPException(status_code=404, detail="Dipendente non trovato")
     
@@ -626,7 +626,7 @@ async def get_dashboard_presenze(data: str = Query(None)) -> Dict[str, Any]:
         data = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     
     # Solo dipendenti con status "attivo" E in_carico=true E non cessati
-    dipendenti = await db["employees"].find(
+    dipendenti = await db["dipendenti"].find(
         {
             "$and": [
                 {"$or": [
@@ -952,7 +952,7 @@ async def batch_insert_presenze(body: Dict[str, Any]) -> Dict[str, Any]:
         raise HTTPException(status_code=400, detail="employee_id e giorni sono obbligatori")
     
     # Verifica dipendente esiste
-    dipendente = await db["employees"].find_one({"id": employee_id}, {"_id": 0, "nome": 1, "cognome": 1})
+    dipendente = await db["dipendenti"].find_one({"id": employee_id}, {"_id": 0, "nome": 1, "cognome": 1})
     if not dipendente:
         raise HTTPException(status_code=404, detail=f"Dipendente {employee_id} non trovato")
     
@@ -1009,7 +1009,7 @@ async def get_dipendenti_in_carico() -> Dict[str, Any]:
     """
     db = Database.get_db()
     
-    dipendenti = await db["employees"].find(
+    dipendenti = await db["dipendenti"].find(
         {
             "$and": [
                 {"$or": [
@@ -1056,7 +1056,7 @@ async def set_in_carico(employee_id: str, data: Dict[str, Any]) -> Dict[str, Any
     
     in_carico = data.get("in_carico", True)
     
-    result = await db["employees"].update_one(
+    result = await db["dipendenti"].update_one(
         {"$or": [{"id": employee_id}, {"codice_fiscale": employee_id}]},
         {"$set": {
             "in_carico": in_carico,
@@ -1193,7 +1193,7 @@ async def genera_pdf_consulente(data: Dict[str, Any]):
             "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"]
     
     # Recupera dipendenti in carico (escludi cessati)
-    dipendenti = await db["employees"].find(
+    dipendenti = await db["dipendenti"].find(
         {
             "$and": [
                 {"$or": [{"in_carico": True}, {"in_carico": {"$exists": False}}]},
