@@ -96,11 +96,9 @@ export function useScadenzeNotifiche() {
     }
   }, []);
 
-  // Check periodico (ogni 30 minuti)
+  // Check only on mount (no periodic refresh)
   useEffect(() => {
     checkScadenze();
-    const interval = setInterval(checkScadenze, 30 * 60 * 1000);
-    return () => clearInterval(interval);
   }, [checkScadenze]);
 
   return {
