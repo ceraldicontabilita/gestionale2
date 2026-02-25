@@ -209,8 +209,8 @@ const btnOutline = {
 
 // ── DASHBOARD ────────────────────────────────────────────────────────────────
 function DashboardHR({ dips, loading }) {
-  const attivi = dips.filter(d => d.status === 'attivo' || d.in_carico).length;
-  const cessati = dips.filter(d => d.status === 'cessato' || !d.in_carico).length;
+  const attivi = dips.filter(d => d.in_carico !== false).length;
+  const cessati = dips.filter(d => d.in_carico === false).length;
 
   return (
     <div>
