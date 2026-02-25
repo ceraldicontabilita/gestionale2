@@ -1738,6 +1738,67 @@ async def get_saldi_finali_tutti(
     }
 
 
+@router.delete("/saldi-finali/{employee_id}")
+@handle_errors
+async def delete_saldi_finali(
+    employee_id: str,
+    anno: int = Query(None)
+) -> Dict[str, Any]:
+    """Elimina i saldi ferie/permessi di un dipendente per un anno."""
+    db = Database.get_db()
+    if not anno:
+        anno = datetime.now().year
+    
+    result = await db["giustificativi_saldi_finali"].delete_one(
+        {"employee_id": employee_id, "anno": anno}
+    )
+    
+    return {
+        "success": True,
+        "deleted": result.deleted_count,
+        "message": f"Saldi eliminati per anno {anno}" if result.deleted_count > 0 else "Nessun saldo trovato"
+    }
+
+
+@router.put("/saldi-finali/{employee_id}/periodo")
+@handle_errors
+async def update_periodo_saldi(
+    employee_id: str,
+    payload: Dict[str, Any]
+) -> Dict[str, Any]:
+    """Modifica il periodo dei saldi ferie/permessi."""
+    db = Database.get_db()
+    
+    anno = payload.get("anno", datetime.now().year)
+    nuovo_periodo = payload.get("periodo")
+    nuovi_saldi = payload.get("saldi")
+    
+    if not nuovo_periodo:
+        raise HTTPException(status_code=400, detail="periodo obbligatorio")
+    
+    update_fields = {
+        "periodo": nuovo_periodo,
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    if nuovi_saldi:
+        update_fields["saldi"] = nuovi_saldi
+    
+    result = await db["giustificativi_saldi_finali"].update_one(
+        {"employee_id": employee_id, "anno": anno},
+        {"$set": update_fields}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Saldo non trovato per questo dipendente/anno")
+    
+    return {
+        "success": True,
+        "message": f"Periodo aggiornato a {nuovo_periodo}",
+        "modified": result.modified_count
+    }
+
+
+
 @router.post("/aggiorna-riepilogo")
 @handle_errors
 async def aggiorna_riepilogo_dipendente(
