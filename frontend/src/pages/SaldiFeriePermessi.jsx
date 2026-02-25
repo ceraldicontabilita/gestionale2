@@ -316,7 +316,7 @@ export default function SaldiFeriePermessi() {
                           )}
                         </td>
                         <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                          <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+                          <div style={{ display: 'flex', gap: 6, justifyContent: 'center', flexWrap: 'wrap' }}>
                             <Button
                               size="sm"
                               variant="outline"
@@ -329,8 +329,42 @@ export default function SaldiFeriePermessi() {
                               size="sm"
                               variant="ghost"
                               onClick={() => openEditModal(dip, dip.saldi)}
+                              title="Modifica saldi"
                             >
                               <Edit size={14} />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              data-testid={`modifica-periodo-${dip.id}`}
+                              onClick={() => {
+                                const nuovoPeriodo = prompt('Modifica periodo (es. 2026-02):', dip.periodo || '');
+                                if (nuovoPeriodo && nuovoPeriodo !== dip.periodo) {
+                                  api.put(`/api/giustificativi/saldi-finali/${dip.id}/periodo`, { anno: selectedYear, periodo: nuovoPeriodo })
+                                    .then(() => { loadSaldi(); })
+                                    .catch(e => alert('Errore: ' + (e.response?.data?.detail || e.message)));
+                                }
+                              }}
+                              title="Modifica periodo"
+                              style={{ color: '#3b82f6' }}
+                            >
+                              <Calendar size={14} />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              data-testid={`elimina-saldo-${dip.id}`}
+                              onClick={() => {
+                                if (window.confirm(`Eliminare i saldi ferie/permessi di ${dip.nome}?`)) {
+                                  api.delete(`/api/giustificativi/saldi-finali/${dip.id}?anno=${selectedYear}`)
+                                    .then(() => { loadSaldi(); })
+                                    .catch(e => alert('Errore: ' + (e.response?.data?.detail || e.message)));
+                                }
+                              }}
+                              title="Elimina richiesta"
+                              style={{ color: '#ef4444' }}
+                            >
+                              <Trash2 size={14} />
                             </Button>
                           </div>
                         </td>
