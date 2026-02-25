@@ -66,10 +66,7 @@ export default function Dashboard() {
       console.log('🔧 Auto-riparazione completata:', { fatture: fatRes.data, riconciliazione: ricRes.data });
       setAutoRepairStatus({ fatture: fatRes.data, riconciliazione: ricRes.data, totale: totaleCorrezioni });
       
-      // Ricarica dati dopo riparazione
-      if (totaleCorrezioni > 0) {
-        window.location.reload();
-      }
+      // Ricarica dati dopo riparazione (senza reload pagina)
     } catch (error) {
       console.warn('Auto-riparazione non riuscita:', error);
       setAutoRepairStatus({ error: true, totale: 0 });
