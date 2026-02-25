@@ -362,7 +362,64 @@ class EmailDocumentDownloader:
             except:
                 pass
             self.connection = None
-    
+
+    def fetch_message_id(self, email_id: bytes) -> Optional[str]:
+        """Recupera il Message-ID di un'email senza scaricare il corpo (leggero)."""
+        try:
+            status, data = self.connection.fetch(email_id, '(BODY[HEADER.FIELDS (MESSAGE-ID DATE)])')
+            if status != 'OK' or not data or not data[0]:
+                return None
+            raw_headers = data[0][1] if isinstance(data[0], tuple) else data[0]
+            if isinstance(raw_headers, bytes):
+                raw_headers = raw_headers.decode('utf-8', errors='replace')
+            for line in raw_headers.splitlines():
+                if line.lower().startswith('message-id:'):
+                    return line.split(':', 1)[1].strip()
+            return None
+        except Exception as e:
+            logger.debug(f"Errore fetch Message-ID: {e}")
+            return None
+
+    def sort_email_ids_by_date(self, email_ids: List[bytes]) -> List[bytes]:
+        """Ordina gli ID email per data di arrivo (dal più recente al più vecchio)."""
+        if not email_ids or not self.connection:
+            return email_ids
+        
+        id_date_pairs = []
+        # Processa in batch per efficienza
+        batch_size = 50
+        for i in range(0, len(email_ids), batch_size):
+            batch = email_ids[i:i+batch_size]
+            batch_str = b','.join(batch)
+            try:
+                status, data = self.connection.fetch(batch_str, '(INTERNALDATE)')
+                if status == 'OK':
+                    for item in data:
+                        if isinstance(item, bytes):
+                            line = item.decode('utf-8', errors='replace')
+                            # Estrai UID e data
+                            uid_match = re.search(r'(\d+)\s+\(INTERNALDATE', line)
+                            date_match = re.search(r'INTERNALDATE\s+"([^"]+)"', line)
+                            if uid_match and date_match:
+                                uid = uid_match.group(1).encode()
+                                try:
+                                    dt = email.utils.parsedate_to_datetime(date_match.group(1))
+                                    id_date_pairs.append((uid, dt))
+                                except Exception:
+                                    id_date_pairs.append((uid, datetime.min.replace(tzinfo=timezone.utc)))
+            except Exception as e:
+                logger.debug(f"Errore fetch date batch: {e}")
+                # Fallback: usa gli IDs come sono (ordinati numericamente = ordine arrivo)
+                for eid in batch:
+                    id_date_pairs.append((eid, datetime.min.replace(tzinfo=timezone.utc)))
+        
+        if not id_date_pairs:
+            return email_ids
+        
+        # Ordina per data discendente (più recente prima)
+        id_date_pairs.sort(key=lambda x: x[1], reverse=True)
+        return [uid for uid, _ in id_date_pairs]
+
     def search_emails_with_attachments(
         self, 
         folder: str = "INBOX",
@@ -370,6 +427,7 @@ class EmailDocumentDownloader:
         search_criteria: Optional[str] = None,
         search_keywords: Optional[List[str]] = None,
         allowed_senders: Optional[List[str]] = None,
+        keyword_senders: Optional[List[Tuple[str, List[str]]]] = None,
         limit: int = 200
     ) -> List[bytes]:
         """
@@ -377,84 +435,98 @@ class EmailDocumentDownloader:
         since_date: formato "01-Jan-2025"
         search_keywords: lista di parole chiave da cercare nell'oggetto
         allowed_senders: lista di mittenti autorizzati (filtra FROM)
+        keyword_senders: lista di tuple (email, [parole_chiave]) per mittenti
+                         che potrebbero arrivare da indirizzi diversi
         """
         if not self.connection:
             return []
         
         try:
             self.connection.select(folder)
+            all_email_ids = []
             
-            # Se ci sono mittenti autorizzati, cerca per ciascun mittente
-            if allowed_senders and len(allowed_senders) > 0:
-                all_email_ids = []
+            # 1. Cerca per mittenti FROM standard
+            if allowed_senders:
                 for sender in allowed_senders:
                     criteria = []
                     if since_date:
                         criteria.append(f'SINCE {since_date}')
                     criteria.append(f'FROM "{sender}"')
-                    
                     search_string = ' '.join(criteria)
                     try:
                         status, messages = self.connection.search(None, search_string)
                         if status == 'OK' and messages[0]:
-                            ids = messages[0].split()
-                            all_email_ids.extend(ids)
+                            all_email_ids.extend(messages[0].split())
                     except Exception as e:
                         logger.debug(f"Ricerca mittente {sender}: {e}")
+            
+            # 2. Cerca per parole chiave (mittenti che potrebbero cambiare indirizzo)
+            if keyword_senders:
+                for email_addr, keywords in keyword_senders:
+                    for kw in keywords:
+                        criteria = []
+                        if since_date:
+                            criteria.append(f'SINCE {since_date}')
+                        criteria.append(f'(OR SUBJECT "{kw}" BODY "{kw}")')
+                        search_string = ' '.join(criteria)
+                        try:
+                            status, messages = self.connection.search(None, search_string)
+                            if status == 'OK' and messages[0]:
+                                all_email_ids.extend(messages[0].split())
+                                logger.info(f"Trovate {len(messages[0].split())} email con keyword '{kw}' per {email_addr}")
+                        except Exception as e:
+                            # Alcuni server IMAP non supportano BODY search, usa solo SUBJECT
+                            try:
+                                criteria_fallback = []
+                                if since_date:
+                                    criteria_fallback.append(f'SINCE {since_date}')
+                                criteria_fallback.append(f'SUBJECT "{kw}"')
+                                status, messages = self.connection.search(None, ' '.join(criteria_fallback))
+                                if status == 'OK' and messages[0]:
+                                    all_email_ids.extend(messages[0].split())
+                            except Exception as e2:
+                                logger.debug(f"Ricerca keyword '{kw}': {e2}")
+            
+            # 3. Se nessun filtro, usa search_keywords generici
+            if not allowed_senders and not keyword_senders:
+                criteria = []
+                if since_date:
+                    criteria.append(f'SINCE {since_date}')
+                if search_criteria:
+                    criteria.append(search_criteria)
+                if search_keywords:
+                    keyword_criteria = [f'(SUBJECT "{kw}")' for kw in search_keywords]
+                    if len(keyword_criteria) == 1:
+                        criteria.append(keyword_criteria[0])
+                    else:
+                        or_expr = keyword_criteria[-1]
+                        for i in range(len(keyword_criteria) - 2, -1, -1):
+                            or_expr = f'(OR {keyword_criteria[i]} {or_expr})'
+                        criteria.append(or_expr)
                 
-                # Rimuovi duplicati e limita
-                seen = set()
-                unique_ids = []
-                for eid in all_email_ids:
-                    if eid not in seen:
-                        seen.add(eid)
-                        unique_ids.append(eid)
-                
-                if len(unique_ids) > limit:
-                    unique_ids = unique_ids[-limit:]
-                
-                logger.info(f"Trovate {len(unique_ids)} email da {len(allowed_senders)} mittenti autorizzati")
-                return unique_ids
+                search_string = ' '.join(criteria) if criteria else 'ALL'
+                status, messages = self.connection.search(None, search_string)
+                if status == 'OK' and messages[0]:
+                    all_email_ids = messages[0].split()
             
-            # Costruisci criteri di ricerca
-            criteria = []
-            if since_date:
-                criteria.append(f'SINCE {since_date}')
-            if search_criteria:
-                criteria.append(search_criteria)
+            # Rimuovi duplicati mantenendo l'ordine
+            seen_set = set()
+            unique_ids = []
+            for eid in all_email_ids:
+                if eid not in seen_set:
+                    seen_set.add(eid)
+                    unique_ids.append(eid)
             
-            # Se ci sono parole chiave, costruisci il filtro OR
-            if search_keywords and len(search_keywords) > 0:
-                # Costruisci OR per ogni parola chiave
-                keyword_criteria = []
-                for kw in search_keywords:
-                    keyword_criteria.append(f'(SUBJECT "{kw}")')
-                
-                if len(keyword_criteria) == 1:
-                    criteria.append(keyword_criteria[0])
-                else:
-                    # Costruisci OR ricorsivo: (OR (a) (OR (b) (c)))
-                    or_expr = keyword_criteria[-1]
-                    for i in range(len(keyword_criteria) - 2, -1, -1):
-                        or_expr = f'(OR {keyword_criteria[i]} {or_expr})'
-                    criteria.append(or_expr)
+            # Limita
+            if len(unique_ids) > limit:
+                unique_ids = unique_ids[-limit:]
             
-            search_string = ' '.join(criteria) if criteria else 'ALL'
-            logger.info(f"Ricerca email con criteri: {search_string}")
+            # Ordina per data (più recente prima)
+            if unique_ids:
+                unique_ids = self.sort_email_ids_by_date(unique_ids)
             
-            status, messages = self.connection.search(None, search_string)
-            
-            if status != 'OK':
-                return []
-            
-            email_ids = messages[0].split()
-            
-            # Limita e prendi i più recenti
-            if len(email_ids) > limit:
-                email_ids = email_ids[-limit:]
-            
-            logger.info(f"Trovate {len(email_ids)} email")
-            return email_ids
+            logger.info(f"Trovate {len(unique_ids)} email uniche (ordinate per data)")
+            return unique_ids
             
         except Exception as e:
             logger.error(f"Errore ricerca email: {e}")
