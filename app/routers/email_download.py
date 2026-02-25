@@ -779,22 +779,28 @@ async def list_mittenti() -> Dict[str, Any]:
 async def add_mittente(payload: Dict[str, Any]) -> Dict[str, Any]:
     """Aggiunge un nuovo mittente email."""
     db = Database.get_db()
-    email = payload.get("email", "").strip().lower()
-    if not email:
+    email_addr = payload.get("email", "").strip().lower()
+    if not email_addr:
         raise HTTPException(status_code=400, detail="Email obbligatoria")
     
-    existing = await db["mittenti_email"].find_one({"email": email})
+    existing = await db["mittenti_email"].find_one({"email": email_addr})
     if existing:
         raise HTTPException(status_code=409, detail="Mittente già presente")
     
     doc = {
-        "email": email,
+        "email": email_addr,
         "categoria": payload.get("categoria", "altro"),
         "attivo": True,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
+    # Campi opzionali per mittenti speciali
+    if "cerca_per_oggetto" in payload:
+        doc["cerca_per_oggetto"] = bool(payload["cerca_per_oggetto"])
+    if "parole_chiave_ricerca" in payload:
+        doc["parole_chiave_ricerca"] = payload["parole_chiave_ricerca"]
+    
     await db["mittenti_email"].insert_one(doc)
-    return {"success": True, "message": f"Mittente {email} aggiunto"}
+    return {"success": True, "message": f"Mittente {email_addr} aggiunto"}
 
 
 @router.delete("/mittenti/{email}")
@@ -807,16 +813,34 @@ async def delete_mittente(email: str) -> Dict[str, Any]:
 
 @router.put("/mittenti/{email}")
 async def update_mittente(email: str, payload: Dict[str, Any]) -> Dict[str, Any]:
-    """Aggiorna un mittente email (attivo/categoria)."""
+    """Aggiorna un mittente email (attivo/categoria/cerca_per_oggetto)."""
     db = Database.get_db()
     update = {}
-    if "attivo" in payload:
-        update["attivo"] = payload["attivo"]
-    if "categoria" in payload:
-        update["categoria"] = payload["categoria"]
+    for field in ["attivo", "categoria", "cerca_per_oggetto", "parole_chiave_ricerca"]:
+        if field in payload:
+            update[field] = payload[field]
     
     result = await db["mittenti_email"].update_one({"email": email}, {"$set": update})
     return {"success": True, "modified": result.modified_count}
+
+
+@router.get("/dizionario-email")
+async def get_dizionario_email(limit: int = 100) -> Dict[str, Any]:
+    """Visualizza il dizionario delle email già scaricate (Message-ID index)."""
+    db = Database.get_db()
+    totale = await db["email_message_index"].count_documents({})
+    recenti = await db["email_message_index"].find(
+        {}, {"_id": 0}
+    ).sort("seen_at", -1).limit(limit).to_list(limit)
+    return {"totale": totale, "recenti": recenti}
+
+
+@router.delete("/dizionario-email/reset")
+async def reset_dizionario_email() -> Dict[str, Any]:
+    """Resetta il dizionario email (forza re-download di tutte le email)."""
+    db = Database.get_db()
+    result = await db["email_message_index"].delete_many({})
+    return {"success": True, "eliminati": result.deleted_count}
 
 
 @router.post("/sync-email-now")
