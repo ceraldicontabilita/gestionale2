@@ -75,12 +75,9 @@ export default function EmailDownloadManager() {
     fetchStats();
     fetchDocuments();
     
-    // Poll status every 30 seconds if download in progress (ridotto per evitare problemi)
-    const interval = setInterval(() => {
-      fetchStatus();
-    }, 30000);
+    // Poll status removed - use manual refresh button instead
     
-    return () => clearInterval(interval);
+    return () => {};
   }, [fetchStatus, fetchStats, fetchDocuments]);
 
   useEffect(() => {
