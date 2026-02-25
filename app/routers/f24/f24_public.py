@@ -70,9 +70,14 @@ async def list_f24_models(anno: int = None) -> Dict[str, Any]:
             data_pag = q.get("data_pagamento") or dati.get("data_pagamento")
             saldo = q.get("saldo", 0) or totali.get("saldo_netto", 0) or totali.get("totale_debito", 0)
             qid = q.get("id", "")
-            if qid in seen_ids:
+            # Dedup by protocollo_telematico (unique per F24)
+            proto = q.get("protocollo_telematico", "")
+            dedup_key = proto if proto else f"{data_pag}_{saldo}"
+            if dedup_key in seen_ids:
                 continue
-            seen_ids.add(qid)
+            seen_ids.add(dedup_key)
+            if qid:
+                seen_ids.add(qid)
             
             f24s.append({
                 "id": qid,
