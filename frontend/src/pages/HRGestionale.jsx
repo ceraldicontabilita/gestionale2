@@ -442,7 +442,26 @@ function Anagrafica({ dips, setDips, loading, reload }) {
                   <td style={{ padding: "12px 16px", fontFamily: "monospace", fontSize: 12 }}>{d.codice_fiscale}</td>
                   <td style={{ padding: "12px 16px", color: "#6b7280" }}>{d.mansione || d.role || '-'}</td>
                   <td style={{ padding: "12px 16px", color: "#6b7280" }}>{d.contract_type || 'dipendente'}</td>
-                  <td style={{ padding: "12px 16px" }}><Badge stato={d.in_carico !== false ? 'attivo' : 'cessato'} /></td>
+                  <td style={{ padding: "12px 16px" }}>
+                    <button 
+                      data-testid={`toggle-in-carico-${d.id}`}
+                      onClick={async () => {
+                        const newVal = d.in_carico === false ? true : false;
+                        try {
+                          await api.put(`/api/dipendenti/${d.id}`, { in_carico: newVal });
+                          reload();
+                        } catch (e) { console.error(e); }
+                      }}
+                      style={{ 
+                        padding: "4px 12px", borderRadius: 20, border: "none", cursor: "pointer",
+                        fontSize: 12, fontWeight: 600,
+                        background: d.in_carico !== false ? '#dcfce7' : '#fee2e2',
+                        color: d.in_carico !== false ? '#16a34a' : '#dc2626'
+                      }}
+                    >
+                      {d.in_carico !== false ? 'In carico' : 'Cessato'}
+                    </button>
+                  </td>
                   <td style={{ padding: "12px 16px" }}>
                     <div style={{ display: "flex", gap: 6 }}>
                       <button onClick={() => openEdit(d)} style={{ ...btnOutline, padding: "5px 10px" }}><Edit2 size={14} /></button>
