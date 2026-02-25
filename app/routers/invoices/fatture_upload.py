@@ -173,11 +173,10 @@ async def process_fattura_to_db(db, parsed: Dict[str, Any], filename: str = "upl
     # Controlla duplicati
     existing = await db[Collections.INVOICES].find_one({"invoice_key": invoice_key})
     if existing:
-        return {
-            "status": "duplicate",
-            "invoice_number": parsed.get("invoice_number"),
-            "message": f"Fattura già presente: {parsed.get('invoice_number')}"
-        }
+        raise HTTPException(
+            status_code=409,
+            detail=f"Fattura duplicata: {parsed.get('invoice_number')} del fornitore {parsed.get('supplier_name', 'N/A')} esiste già"
+        )
     
     # Assicura che il fornitore esista
     supplier_result = await ensure_supplier_exists(db, parsed)
