@@ -1153,8 +1153,8 @@ function F24Tab({ f24, onConfermaF24, processing }) {
       await api.post('/api/riconciliazione-intelligente/conferma-multipla', { operazioni });
       alert(`✅ Confermati ${selezionati.size} F24`);
       setSelezionati(new Set());
-      // Ricarica dati
-      window.location.reload();
+      // Ricarica dati senza reload pagina
+      loadAllData();
     } catch (e) {
       alert('Errore: ' + (e.response?.data?.detail || e.message));
     } finally {
