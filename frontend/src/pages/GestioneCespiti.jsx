@@ -157,6 +157,7 @@ export default function GestioneCespiti() {
           <div style={{ ...styles.row, marginBottom: 8 }}>
             <Button onClick={() => setShowForm(!showForm)} size="sm" style={styles.btn}><Plus style={styles.icon} />Nuovo</Button>
             <Button onClick={handleCalcolaAmm} variant="outline" size="sm" style={styles.btn}><Calculator style={styles.icon} />Ammort. {anno}</Button>
+            <Button onClick={handleScanFatture} variant="outline" size="sm" style={styles.btn} data-testid="scan-fatture-btn">Scan Fatture XML</Button>
           </div>
           {showForm && (
             <div style={styles.formCard}>
