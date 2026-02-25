@@ -55,27 +55,18 @@ export default function F24() {
   async function loadF24() {
     try {
       setLoading(true);
-      const [oldRes, newRes] = await Promise.all([
-        api.get(`/api/f24?anno=${anno}`).catch(() => ({ data: [] })),
-        api.get(`/api/f24-public/models?anno=${anno}`).catch(() => ({ data: { f24s: [] } }))
-      ]);
+      const res = await api.get(`/api/f24-public/models?anno=${anno}`);
+      const f24s = res.data?.f24s || [];
       
-      const oldList = Array.isArray(oldRes.data) ? oldRes.data : oldRes.data?.items || [];
-      const newList = newRes.data?.f24s || [];
-      
-      // Add unique keys to avoid React duplicate key warnings
-      const combined = [
-        ...oldList.map((f, idx) => ({ ...f, _uniqueKey: `old_${f.id || idx}` })),
-        ...newList.map((f, idx) => ({
-          ...f,
-          _uniqueKey: `pdf_${f.id || idx}`,
-          tipo: "F24 Contributi",
-          importo: f.saldo_finale,
-          scadenza: f.data_scadenza,
-          descrizione: `ERARIO: ${f.tributi_erario?.length || 0}, INPS: ${f.tributi_inps?.length || 0}`,
-          source: "pdf_upload"
-        }))
-      ];
+      // Add unique keys
+      const combined = f24s.map((f, idx) => ({
+        ...f,
+        _uniqueKey: `f24_${f.id || idx}`,
+        tipo: "F24 Contributi",
+        importo: f.saldo_finale,
+        scadenza: f.data_scadenza,
+        descrizione: `ERARIO: ${f.tributi_erario?.length || 0}, INPS: ${f.tributi_inps?.length || 0}`
+      }));
       
       setF24List(combined);
     } catch (e) {
