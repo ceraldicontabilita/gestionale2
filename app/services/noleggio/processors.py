@@ -330,7 +330,7 @@ def _aggiungi_verbale(veicolo: dict, invoice_data: dict, desc: str, importo: flo
     }
     
     veicolo["verbali"].append(record)
-    veicolo["totale_verbali"] += imponibile
+    veicolo["totale_verbali"] += totale
 
 
 async def scan_fatture_noleggio(anno: Optional[int] = None) -> Tuple[Dict[str, Any], List[dict]]:
@@ -457,7 +457,7 @@ async def scan_fatture_noleggio(anno: Optional[int] = None) -> Tuple[Dict[str, A
                 }
                 
                 veicoli[targa][categoria].append(record)
-                veicoli[targa][f"totale_{categoria}"] += imponibile
+                veicoli[targa][f"totale_{categoria}"] += totale
     
     # Calcola totali generali
     for targa in veicoli:
