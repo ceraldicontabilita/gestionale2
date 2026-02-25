@@ -369,18 +369,52 @@ class EmailDocumentDownloader:
         since_date: Optional[str] = None,
         search_criteria: Optional[str] = None,
         search_keywords: Optional[List[str]] = None,
+        allowed_senders: Optional[List[str]] = None,
         limit: int = 200
     ) -> List[bytes]:
         """
         Cerca email con allegati.
         since_date: formato "01-Jan-2025"
         search_keywords: lista di parole chiave da cercare nell'oggetto
+        allowed_senders: lista di mittenti autorizzati (filtra FROM)
         """
         if not self.connection:
             return []
         
         try:
             self.connection.select(folder)
+            
+            # Se ci sono mittenti autorizzati, cerca per ciascun mittente
+            if allowed_senders and len(allowed_senders) > 0:
+                all_email_ids = []
+                for sender in allowed_senders:
+                    criteria = []
+                    if since_date:
+                        criteria.append(f'SINCE {since_date}')
+                    criteria.append(f'FROM "{sender}"')
+                    
+                    search_string = ' '.join(criteria)
+                    try:
+                        status, messages = self.connection.search(None, search_string)
+                        if status == 'OK' and messages[0]:
+                            ids = messages[0].split()
+                            all_email_ids.extend(ids)
+                    except Exception as e:
+                        logger.debug(f"Ricerca mittente {sender}: {e}")
+                
+                # Rimuovi duplicati e limita
+                seen = set()
+                unique_ids = []
+                for eid in all_email_ids:
+                    if eid not in seen:
+                        seen.add(eid)
+                        unique_ids.append(eid)
+                
+                if len(unique_ids) > limit:
+                    unique_ids = unique_ids[-limit:]
+                
+                logger.info(f"Trovate {len(unique_ids)} email da {len(allowed_senders)} mittenti autorizzati")
+                return unique_ids
             
             # Costruisci criteri di ricerca
             criteria = []
