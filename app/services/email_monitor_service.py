@@ -37,19 +37,30 @@ _sync_stats = {
 async def sync_email_documents(db, giorni: int = 30) -> Dict[str, Any]:
     """
     Scarica documenti dalla posta in modo SICURO.
+    - Filtra solo mittenti configurati
     - NON sovrascrive mai documenti esistenti
     - Salta sempre i duplicati
-    - Salva nel database corretto
+    - Processa fatture XML e inserisce in Prima Nota Banca se metodo SEPA/banca/carta
     """
     from app.services.email_document_downloader import download_documents_from_email
     
     # Leggi credenziali email da ambiente
-    email_user = os.environ.get("EMAIL_USER")
-    email_password = os.environ.get("EMAIL_PASSWORD")
+    email_user = os.environ.get("EMAIL_USER") or os.environ.get("IMAP_USER")
+    email_password = os.environ.get("EMAIL_PASSWORD") or os.environ.get("IMAP_PASSWORD")
     
     if not email_user or not email_password:
         logger.warning("Credenziali email non configurate")
         return {"success": False, "error": "Credenziali email non configurate"}
+    
+    # Carica mittenti autorizzati dal DB
+    mittenti = await db["mittenti_email"].find(
+        {"attivo": True}, {"_id": 0, "email": 1}
+    ).to_list(100)
+    mittenti_emails = [m["email"] for m in mittenti]
+    
+    if not mittenti_emails:
+        logger.warning("Nessun mittente configurato")
+        return {"success": False, "error": "Nessun mittente configurato"}
     
     try:
         result = await download_documents_from_email(
@@ -57,7 +68,8 @@ async def sync_email_documents(db, giorni: int = 30) -> Dict[str, Any]:
             email_user=email_user,
             email_password=email_password,
             since_days=giorni,
-            max_emails=200
+            max_emails=200,
+            allowed_senders=mittenti_emails
         )
         
         stats = result.get("stats", {})
