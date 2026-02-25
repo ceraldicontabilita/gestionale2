@@ -15,30 +15,25 @@ from app.exceptions import AuthenticationError
 
 logger = logging.getLogger(__name__)
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)
 ) -> Dict[str, Any]:
     """
     Dependency to get current authenticated user from JWT token.
-    
-    Args:
-        credentials: HTTP Bearer token from request header
-        
-    Returns:
-        User data from JWT payload
-        
-    Raises:
-        HTTPException: If token is invalid or expired
-        
-    Usage:
-        @router.get("/protected")
-        async def protected_route(current_user: dict = Depends(get_current_user)):
-            user_id = current_user['user_id']
-            ...
+    Returns default user when auth is disabled (no token provided).
     """
+    # Auth bypass: return default user when no credentials provided
+    if credentials is None:
+        return {
+            "user_id": "default_user",
+            "email": "admin@erp.local",
+            "name": "Amministratore",
+            "role": "admin"
+        }
+    
     token = credentials.credentials
     
     try:
