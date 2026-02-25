@@ -70,8 +70,18 @@ function SezioneBustePaga({ anno }) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.get('/api/paghe/buste-paga', { params: { anno } });
-      setData(res.data?.data || []);
+      const res = await api.get('/api/cedolini', { params: { anno } });
+      // Map cedolini to buste paga format
+      const cedolini = res.data?.cedolini || [];
+      const mapped = cedolini.map(c => ({
+        ...c,
+        dipendente_nome: c.dipendente_nome || c.nome_dipendente || 'N/D',
+        netto_mese: c.netto || c.netto_mese || 0,
+        stato_pagamento: c.stato_pagamento || 'DA_PAGARE',
+        codice_fiscale: c.codice_fiscale || '',
+        periodo: c.periodo || `${c.anno}-${String(c.mese).padStart(2, '0')}`
+      }));
+      setData(mapped);
     } catch (e) {
       console.error('Errore caricamento buste paga:', e);
     }
