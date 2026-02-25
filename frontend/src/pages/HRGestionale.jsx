@@ -990,34 +990,35 @@ function TabVeicoli() {
   const totCanoni = veicoli.reduce((s, v) => s + (v.totale_canoni || 0), 0);
   const totBolli = veicoli.reduce((s, v) => s + (v.totale_bollo || 0), 0);
   const totVerbali = veicoli.reduce((s, v) => s + (v.totale_verbali || 0), 0);
+  const totPedaggi = veicoli.reduce((s, v) => s + (v.totale_pedaggio || 0), 0);
+  const totRiparazioni = veicoli.reduce((s, v) => s + (v.totale_riparazioni || 0), 0);
 
   return (
     <div>
       {/* Header con totali */}
       <div style={{ background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)', borderRadius: 12, padding: 20, marginBottom: 24, color: 'white' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>🚗 Flotta Veicoli Noleggio</h2>
+          <h2 style={{ fontSize: 20, fontWeight: 700, margin: 0 }}>Flotta Veicoli Noleggio</h2>
           <button onClick={loadVeicoli} disabled={loading} style={{ padding: '8px 16px', background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 8, color: 'white', cursor: 'pointer', fontSize: 13 }}>
-            {loading ? 'Caricamento...' : '🔄 Aggiorna'}
+            {loading ? 'Caricamento...' : 'Aggiorna'}
           </button>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 16 }}>
-          <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 8, padding: 12, textAlign: 'center' }}>
-            <div style={{ fontSize: 11, opacity: 0.8, marginBottom: 4 }}>VEICOLI</div>
-            <div style={{ fontSize: 24, fontWeight: 800 }}>{veicoli.length}</div>
-          </div>
-          <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 8, padding: 12, textAlign: 'center' }}>
-            <div style={{ fontSize: 11, opacity: 0.8, marginBottom: 4 }}>CANONI</div>
-            <div style={{ fontSize: 20, fontWeight: 700 }}>{formatEuro(totCanoni)}</div>
-          </div>
-          <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 8, padding: 12, textAlign: 'center' }}>
-            <div style={{ fontSize: 11, opacity: 0.8, marginBottom: 4 }}>BOLLI</div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: '#fcd34d' }}>{formatEuro(totBolli)}</div>
-          </div>
-          <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 8, padding: 12, textAlign: 'center' }}>
-            <div style={{ fontSize: 11, opacity: 0.8, marginBottom: 4 }}>VERBALI</div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: '#fca5a5' }}>{formatEuro(totVerbali)}</div>
-          </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: 12 }}>
+          {[
+            { label: 'VEICOLI', value: veicoli.length, isCount: true },
+            { label: 'CANONI', value: totCanoni },
+            { label: 'BOLLI', value: totBolli, color: '#fcd34d' },
+            { label: 'VERBALI', value: totVerbali, color: '#fca5a5' },
+            { label: 'PEDAGGI', value: totPedaggi, color: '#c4b5fd' },
+            { label: 'RIPARAZIONI', value: totRiparazioni, color: '#f9a8d4' },
+          ].filter(s => s.isCount || s.value > 0).map((s, i) => (
+            <div key={i} style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 8, padding: 12, textAlign: 'center' }}>
+              <div style={{ fontSize: 11, opacity: 0.8, marginBottom: 4 }}>{s.label}</div>
+              <div style={{ fontSize: s.isCount ? 24 : 18, fontWeight: 700, color: s.color || 'white' }}>
+                {s.isCount ? s.value : formatEuro(s.value)}
+              </div>
+            </div>
+          ))}
           <div style={{ background: 'rgba(16,185,129,0.3)', borderRadius: 8, padding: 12, textAlign: 'center' }}>
             <div style={{ fontSize: 11, opacity: 0.8, marginBottom: 4 }}>TOTALE</div>
             <div style={{ fontSize: 22, fontWeight: 800 }}>{formatEuro(totGenerale)}</div>
