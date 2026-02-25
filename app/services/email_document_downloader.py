@@ -587,7 +587,8 @@ class EmailDocumentDownloader:
         folder: str = "INBOX",
         since_date: Optional[str] = None,
         limit: int = 200,
-        search_keywords: List[str] = None
+        search_keywords: List[str] = None,
+        allowed_senders: List[str] = None
     ) -> Tuple[List[Dict], Dict[str, int]]:
         """
         Scarica tutti gli allegati dalle email.
@@ -595,6 +596,7 @@ class EmailDocumentDownloader:
         
         Args:
             search_keywords: Lista di parole chiave per filtrare le email
+            allowed_senders: Lista di mittenti autorizzati
         """
         all_documents = []
         stats = {
@@ -607,7 +609,8 @@ class EmailDocumentDownloader:
             folder, 
             since_date, 
             limit=limit,
-            search_keywords=search_keywords
+            search_keywords=search_keywords,
+            allowed_senders=allowed_senders
         )
         stats["emails_checked"] = len(email_ids)
         
