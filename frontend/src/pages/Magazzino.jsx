@@ -50,10 +50,10 @@ export default function Magazzino() {
     try {
       setLoading(true);
       const [warehouseRes, catalogRes] = await Promise.all([
-        api.get("/api/warehouse/products"),
+        api.get("/api/warehouse/products?category=manutenzione&limit=200"),
         api.get("/api/products/catalog").catch(() => ({ data: [] }))
       ]);
-      setProducts(Array.isArray(warehouseRes.data) ? warehouseRes.data.filter(p => p.source === 'manuale' || p.categoria === 'manutenzione') : []);
+      setProducts(Array.isArray(warehouseRes.data) ? warehouseRes.data : []);
       setCatalogProducts(Array.isArray(catalogRes.data) ? catalogRes.data : []);
     } catch (e) {
       console.error("Error loading products:", e);
