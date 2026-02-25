@@ -253,7 +253,7 @@ class Collections:
     CORRISPETTIVI = "corrispettivi"
     
     # Employees
-    EMPLOYEES = "employees"
+    EMPLOYEES = "dipendenti"
     PAYSLIPS = "cedolini"  # Cambiato a collezione principale
     
     LIBRETTI_SANITARI = "libretti_sanitari"
