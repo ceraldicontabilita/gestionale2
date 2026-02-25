@@ -379,8 +379,8 @@ export default function Magazzino() {
                   <tbody>
                     {products.map((p, i) => (
                       <tr key={p.id || i} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                        <td style={{ padding: 12, fontFamily: 'monospace' }}>{p.code || "-"}</td>
-                        <td style={{ padding: 12, fontWeight: 500 }}>{p.name}</td>
+                        <td style={{ padding: 12, fontFamily: 'monospace' }}>{p.code || p.codice_articolo || "-"}</td>
+                        <td style={{ padding: 12, fontWeight: 500 }}>{p.name || p.nome || "-"}</td>
                         <td style={{ padding: 12, textAlign: 'right' }}>{p.quantity} {p.unit}</td>
                         <td style={{ padding: 12, textAlign: 'right', color: '#16a34a' }}>{formatEuro(p.unit_price || 0)}</td>
                         <td style={{ padding: 12 }}>{p.category || "-"}</td>
