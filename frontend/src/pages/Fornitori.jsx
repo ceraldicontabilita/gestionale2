@@ -35,9 +35,16 @@ const METODI_PAGAMENTO = {
   contanti: { label: 'Contanti', bg: '#dcfce7', color: '#16a34a' },
   bonifico: { label: 'Bonifico', bg: '#dbeafe', color: '#2563eb' },
   assegno: { label: 'Assegno', bg: '#fef3c7', color: '#d97706' },
-  misto: { label: 'Misto', bg: '#f3e8ff', color: '#9333ea' },
+  riba: { label: 'Ri.Ba.', bg: '#fed7aa', color: '#c2410c' },
   carta: { label: 'Carta', bg: '#fce7f3', color: '#db2777' },
-  sepa: { label: 'SEPA', bg: '#e0e7ff', color: '#4f46e5' }
+  carta_credito: { label: 'Carta/POS', bg: '#fce7f3', color: '#db2777' },
+  sepa: { label: 'SEPA', bg: '#e0e7ff', color: '#4f46e5' },
+  mav: { label: 'MAV', bg: '#d1fae5', color: '#059669' },
+  rav: { label: 'RAV', bg: '#cffafe', color: '#0891b2' },
+  rid: { label: 'RID', bg: '#e0f2fe', color: '#0284c7' },
+  f24: { label: 'F24', bg: '#fef9c3', color: '#ca8a04' },
+  compensazione: { label: 'Compensazione', bg: '#f5f5f4', color: '#78716c' },
+  misto: { label: 'Misto', bg: '#f3e8ff', color: '#9333ea' },
 };
 
 const getMetodo = (key) => METODI_PAGAMENTO[key] || METODI_PAGAMENTO.bonifico;
