@@ -31,7 +31,7 @@ async def test_route():
 @router.get("/models")
 @handle_errors
 async def list_f24_models() -> Dict[str, Any]:
-    """Lista tutti i modelli F24."""
+    """Lista tutti i modelli F24 - unifica quietanze e f24_unificato."""
     import time
     logger.info("=== /models endpoint called ===")
     t_start = time.time()
@@ -39,31 +39,85 @@ async def list_f24_models() -> Dict[str, Any]:
     db = Database.get_db()
     
     try:
-        # Query dalla collezione unificata f24_commercialista
-        f24s_raw = await db[F24_COLLECTION].find(
-            {"status": {"$ne": "eliminato"}},  # Escludi eliminati
-            {"_id": 0}
+        # Primary: quietanze_f24 (ha dati completi con pagamenti reali)
+        quietanze = await db["quietanze_f24"].find(
+            {},
+            {"_id": 0, "pdf_data": 0}
+        ).sort("created_at", -1).to_list(500)
+        
+        # Secondary: f24_unificato (per eventuali F24 non ancora pagati)
+        f24_uni = await db[F24_COLLECTION].find(
+            {"status": {"$ne": "eliminato"}},
+            {"_id": 0, "pdf_data": 0}
         ).sort("created_at", -1).to_list(100)
         
-        # Trasforma nel formato atteso dal frontend
+        # Trasforma quietanze nel formato atteso dal frontend
         f24s = []
-        for f in f24s_raw:
-            totali = f.get("totali", {})
-            dati = f.get("dati_generali", {})
+        seen_ids = set()
+        
+        for q in quietanze:
+            dati = q.get("dati_generali", {})
+            totali = q.get("totali", {})
+            data_pag = q.get("data_pagamento") or dati.get("data_pagamento")
+            saldo = q.get("saldo", 0) or totali.get("saldo_netto", 0) or totali.get("totale_debito", 0)
+            qid = q.get("id", "")
+            if qid in seen_ids:
+                continue
+            seen_ids.add(qid)
+            
             f24s.append({
-                "id": f.get("id"),
+                "id": qid,
                 "tipo_modello": "F24",
-                "anno": f.get("anno"),  # Campo anno estratto
-                "data_scadenza": f.get("data_scadenza") or f.get("data_versamento") or dati.get("data_versamento"),
-                "data_versamento": f.get("data_versamento") or dati.get("data_versamento"),
-                "saldo_finale": totali.get("saldo_netto", 0),
-                "pagato": f.get("status") == "pagato",
-                "contribuente": dati.get("ragione_sociale", dati.get("codice_fiscale", "")),
-                "file_name": f.get("file_name"),
-                "status": f.get("status")
+                "anno": int(data_pag[:4]) if data_pag and len(data_pag) >= 4 else None,
+                "data_scadenza": data_pag,
+                "data_versamento": data_pag,
+                "saldo_finale": saldo,
+                "pagato": True,
+                "contribuente": dati.get("ragione_sociale", dati.get("codice_fiscale", q.get("codice_fiscale", ""))),
+                "file_name": q.get("filename"),
+                "status": "pagato",
+                "protocollo": q.get("protocollo_telematico", ""),
+                "tributi_erario": q.get("sezione_erario", []),
+                "tributi_inps": q.get("sezione_inps", []),
+                "tributi_regioni": q.get("sezione_regioni", []),
+                "tributi_imu": q.get("sezione_tributi_locali", []),
+                "totale_debito": totali.get("totale_debito", 0),
+                "totale_credito": totali.get("totale_credito", 0),
+                "source": "quietanza"
             })
         
-        logger.info(f"F24 models query took {time.time() - t_start:.2f}s for {len(f24s)} items")
+        # Aggiungi f24_unificato (solo quelli non presenti)
+        for f in f24_uni:
+            fid = f.get("id", "")
+            if fid in seen_ids:
+                continue
+            seen_ids.add(fid)
+            totali = f.get("totali", {})
+            dati = f.get("dati_generali", {})
+            data_vers = f.get("data_versamento") or f.get("data_pagamento") or dati.get("data_versamento")
+            saldo = f.get("totale_versato", 0) or totali.get("saldo_netto", 0) or 0
+            
+            if not data_vers and not saldo:
+                continue  # Skip documenti completamente vuoti
+            
+            f24s.append({
+                "id": fid,
+                "tipo_modello": "F24",
+                "anno": int(data_vers[:4]) if data_vers and len(data_vers) >= 4 else None,
+                "data_scadenza": data_vers,
+                "data_versamento": data_vers,
+                "saldo_finale": saldo,
+                "pagato": f.get("status") == "pagato",
+                "contribuente": dati.get("ragione_sociale", dati.get("codice_fiscale", f.get("codice_fiscale", ""))),
+                "file_name": f.get("filename") or f.get("file_name"),
+                "status": f.get("status"),
+                "source": "f24_unificato"
+            })
+        
+        # Sort by date desc
+        f24s.sort(key=lambda x: x.get("data_scadenza") or "", reverse=True)
+        
+        logger.info(f"F24 models query took {time.time() - t_start:.2f}s for {len(f24s)} items (quietanze: {len(quietanze)}, f24_uni: {len(f24_uni)})")
     except Exception as e:
         logger.error(f"F24 models query error: {e}")
         f24s = []
