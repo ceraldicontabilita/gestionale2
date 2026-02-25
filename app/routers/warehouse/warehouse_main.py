@@ -57,7 +57,6 @@ async def list_products(
     - **supplier_vat**: Filter by supplier VAT number
     """
     user_id = current_user["user_id"]
-    print(f"[WAREHOUSE-DEBUG] list_products: user_id={user_id}, category={category}, skip={pagination['skip']}, limit={pagination['limit']}")
     
     return await warehouse_service.list_products(
         user_id=user_id,
