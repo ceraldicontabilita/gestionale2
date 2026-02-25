@@ -161,7 +161,7 @@ async def get_veicoli(
                 record["data_verbale"] = dati["metadata"].get("data_verbale")
             
             veicoli_fatture[target_targa][categoria].append(record)
-            veicoli_fatture[target_targa][f"totale_{categoria}"] += imponibile
+            veicoli_fatture[target_targa][f"totale_{categoria}"] += round(imponibile + iva, 2)
         
         # Ricalcola totale
         veicoli_fatture[target_targa]["totale_generale"] = round(sum(
