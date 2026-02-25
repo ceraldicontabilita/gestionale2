@@ -520,10 +520,42 @@ async def get_movimenti_contabili(
 @router.get("/bilancio")
 @handle_errors
 async def get_bilancio() -> Dict[str, Any]:
-    """Genera il bilancio (situazione patrimoniale ed economica)."""
+    """Genera il bilancio (situazione patrimoniale ed economica) con dati reali."""
     db = Database.get_db()
     
     conti = await db[COLLECTION_PIANO_CONTI].find({}, {"_id": 0}).to_list(1000)
+    
+    # Compute real saldi from actual data
+    # Costi: sum of all invoices (fatture ricevute)
+    costi_pipeline = [
+        {"$group": {"_id": None, "totale": {"$sum": "$importo_totale"}, "imponibile": {"$sum": "$importo_imponibile"}, "iva": {"$sum": "$importo_iva"}}}
+    ]
+    costi_res = await db["invoices"].aggregate(costi_pipeline).to_list(1)
+    totale_costi = costi_res[0]["imponibile"] if costi_res else 0
+    totale_iva_credito = costi_res[0]["iva"] if costi_res else 0
+    totale_debiti_fornitori = costi_res[0]["totale"] if costi_res else 0
+    
+    # Ricavi: corrispettivi
+    ricavi_pipeline = [
+        {"$match": {"entity_status": {"$ne": "deleted"}}},
+        {"$group": {"_id": None, "totale": {"$sum": "$totale"}, "imponibile": {"$sum": "$totale_imponibile"}, "iva": {"$sum": "$totale_iva"}}}
+    ]
+    ricavi_res = await db["corrispettivi"].aggregate(ricavi_pipeline).to_list(1)
+    totale_ricavi = ricavi_res[0]["imponibile"] if ricavi_res else 0
+    totale_iva_debito = ricavi_res[0]["iva"] if ricavi_res else 0
+    totale_crediti_clienti = ricavi_res[0]["totale"] if ricavi_res else 0
+    
+    # Map real values to conti
+    real_saldi = {
+        "01.01.01": 0,  # Cassa
+        "01.01.02": 0,  # Banca c/c
+        "01.02.01": round(totale_crediti_clienti, 2),  # Crediti v/clienti
+        "01.04.01": round(totale_iva_credito, 2),  # IVA a credito
+        "02.01.01": round(totale_debiti_fornitori, 2),  # Debiti v/fornitori
+        "02.02.01": round(totale_iva_debito, 2),  # IVA a debito
+        "04.01.01": round(totale_ricavi, 2),  # Ricavi
+        "05.01.01": round(totale_costi, 2),  # Costi merci
+    }
     
     bilancio = {
         "stato_patrimoniale": {
@@ -539,11 +571,12 @@ async def get_bilancio() -> Dict[str, Any]:
     }
     
     for conto in conti:
-        saldo = float(conto.get("saldo", 0))
+        codice = conto.get("codice", "")
+        saldo = real_saldi.get(codice, float(conto.get("saldo", 0)))
         categoria = conto.get("categoria", "")
         
         conto_info = {
-            "codice": conto.get("codice"),
+            "codice": codice,
             "nome": conto.get("nome"),
             "saldo": saldo
         }
@@ -564,11 +597,17 @@ async def get_bilancio() -> Dict[str, Any]:
             bilancio["conto_economico"]["costi"]["conti"].append(conto_info)
             bilancio["conto_economico"]["costi"]["totale"] += saldo
     
-    # Calcola risultato d'esercizio
     bilancio["conto_economico"]["risultato"] = (
         bilancio["conto_economico"]["ricavi"]["totale"] - 
         bilancio["conto_economico"]["costi"]["totale"]
     )
+    
+    # Round totals
+    for key in ["attivo", "passivo", "patrimonio_netto"]:
+        bilancio["stato_patrimoniale"][key]["totale"] = round(bilancio["stato_patrimoniale"][key]["totale"], 2)
+    for key in ["ricavi", "costi"]:
+        bilancio["conto_economico"][key]["totale"] = round(bilancio["conto_economico"][key]["totale"], 2)
+    bilancio["conto_economico"]["risultato"] = round(bilancio["conto_economico"]["risultato"], 2)
     
     return bilancio
 
