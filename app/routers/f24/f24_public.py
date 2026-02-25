@@ -30,10 +30,10 @@ async def test_route():
 
 @router.get("/models")
 @handle_errors
-async def list_f24_models() -> Dict[str, Any]:
+async def list_f24_models(anno: int = None) -> Dict[str, Any]:
     """Lista tutti i modelli F24 - unifica quietanze e f24_unificato."""
     import time
-    logger.info("=== /models endpoint called ===")
+    logger.info(f"=== /models endpoint called (anno={anno}) ===")
     t_start = time.time()
     
     db = Database.get_db()
