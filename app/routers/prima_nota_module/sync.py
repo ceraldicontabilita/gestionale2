@@ -260,12 +260,18 @@ async def sync_corrispettivi_anno(anno: int = Query(...)) -> Dict:
             skipped_no_contanti += 1
             continue
         
+        data_str = str(corr.get("data", ""))
+        anno_movimento = int(data_str[:4]) if data_str and len(data_str) >= 4 else anno
+        mese_movimento = int(data_str[5:7]) if data_str and len(data_str) >= 7 else 1
+
         movimento = {
             "id": str(uuid.uuid4()),
-            "data": corr.get("data"),
+            "data": data_str,
+            "anno": anno_movimento,
+            "mese": mese_movimento,
             "tipo": "entrata",
             "importo": contanti,  # SOLO CONTANTI
-            "descrizione": f"Corrispettivo contanti {corr.get('data', '')}",
+            "descrizione": f"Corrispettivo contanti {data_str}",
             "categoria": "Corrispettivi",
             "riferimento": ref,
             "dettaglio": {

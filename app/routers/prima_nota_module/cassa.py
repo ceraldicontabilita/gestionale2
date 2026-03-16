@@ -31,8 +31,15 @@ async def list_prima_nota_cassa(
     }
     
     if anno:
-        # data field can be either datetime or string, use anno field for reliable filtering
-        query["anno"] = anno
+        # Support both: records with anno field AND records without anno but with date in range
+        from datetime import datetime as _dt
+        date_start = f"{anno}-01-01"
+        date_end = f"{anno}-12-31"
+        query["$or"] = [
+            {"anno": anno},
+            {"anno": {"$exists": False}, "data": {"$gte": _dt(anno, 1, 1), "$lte": _dt(anno, 12, 31, 23, 59, 59)}},
+            {"anno": None, "data": {"$gte": date_start, "$lte": date_end}}
+        ]
     
     if data_da:
         query.setdefault("data", {})["$gte"] = data_da
