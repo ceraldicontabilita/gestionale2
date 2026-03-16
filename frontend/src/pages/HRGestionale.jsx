@@ -754,16 +754,7 @@ export default function HRGestionale() {
     setLoading(false);
   }, []);
 
-  // Per la tab presenze, usa il componente Attendance esistente (senza caricare dipendenti qui)
-  if (currentTab === 'presenze') {
-    return (
-      <Suspense fallback={<div style={{ padding: 40, textAlign: "center" }}><Loader2 className="animate-spin" /></div>}>
-        <Attendance />
-      </Suspense>
-    );
-  }
-
-  // Carica dipendenti solo per le altre tab
+  // Carica dipendenti per le tab che ne hanno bisogno
   useEffect(() => { 
     if (currentTab !== 'presenze') {
       loadDipendenti(); 
@@ -773,6 +764,43 @@ export default function HRGestionale() {
   const handleTabChange = (tabId) => {
     navigate(`/dipendenti/${tabId}`);
   };
+
+  // Tab presenze: render diretto senza PageLayout (ha il proprio layout)
+  if (currentTab === 'presenze') {
+    return (
+      <div>
+        <div style={{ display: "flex", gap: 4, background: "#f3f4f6", borderRadius: 10, padding: 4, marginBottom: 0, overflowX: "auto", margin: '0 0 0 0' }}>
+          {TABS.map(t => (
+            <button
+              key={t.id}
+              onClick={() => handleTabChange(t.id)}
+              style={{
+                padding: "8px 18px",
+                borderRadius: 7,
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: "pointer",
+                border: "none",
+                background: currentTab === t.id ? "white" : "transparent",
+                color: currentTab === t.id ? "#1e293b" : "#6b7280",
+                boxShadow: currentTab === t.id ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                whiteSpace: "nowrap"
+              }}
+            >
+              <t.icon size={16} />
+              {t.label}
+            </button>
+          ))}
+        </div>
+        <Suspense fallback={<div style={{ padding: 40, textAlign: "center" }}><Loader2 className="animate-spin" /></div>}>
+          <Attendance />
+        </Suspense>
+      </div>
+    );
+  }
 
   return (
     <PageLayout
