@@ -671,8 +671,8 @@ async def system_lock_status():
 
 # Mount static files for downloads
 docs_path = "./docs"
-if os.path.exists(docs_path):
-    app.mount("/api/download", StaticFiles(directory=docs_path), name="download")
+os.makedirs(docs_path, exist_ok=True)
+app.mount("/api/download", StaticFiles(directory=docs_path), name="download")
 
 
 if __name__ == "__main__":
