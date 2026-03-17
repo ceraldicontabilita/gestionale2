@@ -322,25 +322,36 @@ async def import_estratto_conto(file: UploadFile = File(...)) -> Dict[str, Any]:
     else:
         raise HTTPException(status_code=400, detail="Formato non supportato. Usa CSV o Excel.")
     
-    # Salva nel database, evitando duplicati tramite fingerprint MD5
+    # Salva nel database, evitando duplicati solo contro il DB (no dedup interna al CSV)
+    # Ogni riga del CSV va inserita come è (anche doppioni interni al file sono voluti)
     import hashlib as _hashlib
+    import uuid as _uuid
     inserted = 0
     duplicates = 0
     
+    # Ordina per data contabile ASCENDENTE prima di inserire
+    movimenti.sort(key=lambda x: x["data"].isoformat()[:10] if hasattr(x["data"], "isoformat") else str(x["data"]))
+    
     for mov in movimenti:
         desc_raw = (mov.get("descrizione_originale") or mov.get("descrizione") or "")[:80]
-        data_str = mov["data"].isoformat()[:10]
+        data_str = mov["data"].isoformat()[:10] if hasattr(mov["data"], "isoformat") else str(mov["data"])[:10]
         importo_abs = abs(mov["importo"])
-        # Fingerprint univoco: data + importo_assoluto + primi 80 char descrizione
-        fingerprint = _hashlib.md5(f"{data_str}|{importo_abs:.2f}|{desc_raw}".encode()).hexdigest()
-        desc_hash = desc_raw[:50]
+        
+        # Determina tipo da segno importo
+        tipo_mov = "entrata" if mov["importo"] >= 0 else "uscita"
+        if any(kw in desc_raw.upper() for kw in ["DISPOSIZIONE", "VS.DISP", "ADD.TOT"]):
+            tipo_mov = "uscita"
+        if any(kw in desc_raw.upper() for kw in ["I24 AGENZIA ENTRATE", "BOLL.CBILL", "PAG. UTENZE"]):
+            tipo_mov = "uscita"
+        
+        # Fingerprint univoco per riga (include uuid per non deduplicare dentro il CSV)
+        row_uuid = str(_uuid.uuid4())
+        fingerprint = _hashlib.md5(f"{data_str}|{importo_abs:.2f}|{desc_raw}|{row_uuid}".encode()).hexdigest()
         mov_id = f"EC-{data_str}-{importo_abs:.2f}-{fingerprint[:8]}"
         
-        # Controlla duplicati: fingerprint, id, o data+importo+descrizione_originale
+        # Controlla duplicati SOLO contro il DB (non dentro il CSV)
         existing = await db["estratto_conto_movimenti"].find_one({
             "$or": [
-                {"fingerprint": fingerprint},
-                {"id": mov_id},
                 {"data": data_str, "importo": importo_abs, "descrizione_originale": desc_raw},
                 {"data": data_str, "importo": importo_abs, "descrizione": desc_raw}
             ]
@@ -350,22 +361,16 @@ async def import_estratto_conto(file: UploadFile = File(...)) -> Dict[str, Any]:
             duplicates += 1
             continue
         
-        # Determina tipo da segno importo
-        tipo_mov = "entrata" if mov["importo"] >= 0 else "uscita"
-        # Override: VOSTRA DISPOSIZIONE = sempre uscita
-        if any(kw in desc_raw.upper() for kw in ["DISPOSIZIONE", "VS.DISP", "ADD.TOT"]):
-            tipo_mov = "uscita"
-        
         # Salva
         record = {
             "id": mov_id,
             "data": data_str,
             "ragione_sociale": mov.get("ragione_sociale"),
-            "fornitore": mov["fornitore"],
+            "fornitore": mov.get("fornitore"),
             "importo": importo_abs,
-            "numero_fattura": mov["numero_fattura"],
-            "data_pagamento": mov["data_pagamento"].isoformat() if mov["data_pagamento"] else None,
-            "categoria": mov["categoria"],
+            "numero_fattura": mov.get("numero_fattura"),
+            "data_pagamento": mov["data_pagamento"].isoformat() if mov.get("data_pagamento") else None,
+            "categoria": mov.get("categoria", ""),
             "descrizione_originale": mov["descrizione_originale"],
             "descrizione": mov.get("descrizione") or mov["descrizione_originale"],
             "banca": mov.get("banca"),
@@ -373,7 +378,7 @@ async def import_estratto_conto(file: UploadFile = File(...)) -> Dict[str, Any]:
             "divisa": mov.get("divisa", "EUR"),
             "hashtag": mov.get("hashtag"),
             "tipo": tipo_mov,
-            "descrizione_hash": desc_hash,
+            "descrizione_hash": desc_raw[:50],
             "fingerprint": fingerprint,
             "riconciliato": False,
             "created_at": datetime.now(timezone.utc).isoformat()
@@ -455,7 +460,7 @@ async def get_movimenti(
     movimenti = await db["estratto_conto_movimenti"].find(
         query,
         {"_id": 0}
-    ).sort("data", -1).skip(offset).limit(limit).to_list(limit)
+    ).sort("data", 1).skip(offset).limit(limit).to_list(limit)
     
     # Calcola totali anno selezionato
     pipeline = [
