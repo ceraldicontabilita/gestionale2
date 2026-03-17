@@ -443,8 +443,8 @@ async def get_movimenti(
         {"$match": query},
         {"$group": {
             "_id": None,
-            "totale_entrate": {"$sum": {"$cond": [{"$gt": ["$importo", 0]}, "$importo", 0]}},
-            "totale_uscite": {"$sum": {"$cond": [{"$lt": ["$importo", 0]}, {"$abs": "$importo"}, 0]}}
+            "totale_entrate": {"$sum": {"$cond": [{"$eq": ["$tipo", "entrata"]}, {"$abs": "$importo"}, 0]}},
+            "totale_uscite": {"$sum": {"$cond": [{"$eq": ["$tipo", "uscita"]}, {"$abs": "$importo"}, 0]}}
         }}
     ]
     totali_result = await db["estratto_conto_movimenti"].aggregate(pipeline).to_list(1)
