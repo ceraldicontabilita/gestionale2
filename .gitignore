@@ -112,3 +112,4 @@ frontend/node_modules/.cache/default-development/8.pack
 *.env
 *.env.*
 backend/docs/mongo_backup_ceraldi_20260316.zip
+backend/docs/mongo_backup_ceraldi_20260317_1626.zip
