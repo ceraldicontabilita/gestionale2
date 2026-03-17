@@ -696,9 +696,25 @@ function PrimaNotaDesktop() {
         <section>
           {/* Summary Cards Banca */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 20 }}>
-            <SummaryCard title={`Entrate ${selectedYear}`} value={formatEuro(bancaData.totale_entrate)} color="#4caf50" icon="📈" subtitle="Accrediti sul conto" />
-            <SummaryCard title={`Uscite ${selectedYear}`} value={formatEuro(bancaData.totale_uscite)} color="#ef4444" icon="📉" subtitle="Addebiti dal conto" />
-            <SummaryCard title={`Saldo ${selectedYear}`} value={formatEuro(bancaData.saldo_anno || (bancaData.totale_entrate - bancaData.totale_uscite))} color={(bancaData.saldo_anno || (bancaData.totale_entrate - bancaData.totale_uscite)) >= 0 ? '#4caf50' : '#ef4444'} icon="📊" subtitle={`Solo anno ${selectedYear}`} />
+            <SummaryCard
+              title={`Accrediti ${selectedYear}`}
+              value={formatEuro(bancaData.totale_entrate)}
+              color="#4caf50" icon="📈"
+              subtitle="Totale accrediti bancari (POS + bonifici + altro)"
+            />
+            <SummaryCard
+              title={`Pagamenti ${selectedYear}`}
+              value={formatEuro(bancaData.totale_uscite)}
+              color="#ef4444" icon="📉"
+              subtitle="Totale addebiti (fornitori, tasse, stipendi)"
+            />
+            <SummaryCard
+              title={`Saldo Banca ${selectedYear}`}
+              value={formatEuro(bancaData.saldo_anno || (bancaData.totale_entrate - bancaData.totale_uscite))}
+              color={(bancaData.saldo_anno || (bancaData.totale_entrate - bancaData.totale_uscite)) >= 0 ? '#4caf50' : '#ef4444'}
+              icon="📊"
+              subtitle={`Accrediti - Pagamenti ${selectedYear}`}
+            />
             {bancaData.saldo_precedente !== undefined && bancaData.saldo_precedente !== 0 && (
               <SummaryCard title="Saldo Cumulativo" value={formatEuro(bancaData.saldo)} color="#1e3a5f" icon="🏦" subtitle="Saldo totale complessivo" highlight />
             )}
@@ -707,15 +723,9 @@ function PrimaNotaDesktop() {
             )}
           </div>
 
-          {/* Info Box */}
-          <div style={{ background: '#eff6ff', border: '1px solid #1e3a5f', borderRadius: 12, padding: 16, marginBottom: 20 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-              <span style={{ fontSize: 20 }}>ℹ️</span>
-              <strong style={{ color: '#1e40af' }}>Estratto Conto Bancario</strong>
-            </div>
-            <p style={{ margin: 0, fontSize: 13, color: '#1e40af' }}>
-              Questa sezione visualizza i movimenti importati dall'<strong>estratto conto bancario</strong>. Per importare nuovi movimenti, vai alla pagina <strong>Import/Export</strong> e carica il file CSV dell'estratto conto.
-            </p>
+          {/* Nota banca */}
+          <div style={{ background: '#fefce8', border: '1px solid #ca8a04', borderRadius: 10, padding: '10px 16px', marginBottom: 14, fontSize: 13, color: '#854d0e' }}>
+            ⚠️ <strong>Nota contabile:</strong> Gli "Accrediti" mostrano tutti i movimenti in entrata sul conto bancario (POS, bonifici, depositi, finanziamenti). <strong>I ricavi reali dell'azienda sono nei Corrispettivi</strong>, visibili nella sezione Cassa. Alcuni accrediti (es. bonifici interni, finanziamenti) non sono ricavi.
           </div>
 
           {/* Filter - Bottoni Mesi */}
