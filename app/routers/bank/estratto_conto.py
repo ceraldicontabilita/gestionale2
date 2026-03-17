@@ -4,7 +4,7 @@ Salva e visualizza tutti i movimenti bancari importati con campi strutturati.
 """
 from fastapi import APIRouter, HTTPException, Query, UploadFile, File
 from typing import Dict, Any, List, Optional
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 import logging
 import io
 import re
@@ -426,6 +426,7 @@ async def get_movimenti(
     """
     Recupera i movimenti dell'estratto conto con filtri.
     Ordinati per data decrescente.
+    Restituisce anche saldo_precedente (anni precedenti all'anno selezionato).
     """
     db = Database.get_db()
     
@@ -455,7 +456,7 @@ async def get_movimenti(
         {"_id": 0}
     ).sort("data", -1).skip(offset).limit(limit).to_list(limit)
     
-    # Calcola totali
+    # Calcola totali anno selezionato
     pipeline = [
         {"$match": query},
         {"$group": {
@@ -467,13 +468,36 @@ async def get_movimenti(
     totali_result = await db["estratto_conto_movimenti"].aggregate(pipeline).to_list(1)
     totali = totali_result[0] if totali_result else {"totale_entrate": 0, "totale_uscite": 0}
     
+    # Calcola saldo_precedente (tutti gli anni precedenti a quello selezionato)
+    saldo_precedente = 0.0
+    if anno:
+        pipeline_prec = [
+            {"$match": {"data": {"$lt": f"{anno}-01-01"}}},
+            {"$group": {
+                "_id": None,
+                "entrate": {"$sum": {"$cond": [{"$eq": ["$tipo", "entrata"]}, {"$abs": "$importo"}, 0]}},
+                "uscite": {"$sum": {"$cond": [{"$eq": ["$tipo", "uscita"]}, {"$abs": "$importo"}, 0]}}
+            }}
+        ]
+        prec_result = await db["estratto_conto_movimenti"].aggregate(pipeline_prec).to_list(1)
+        if prec_result:
+            saldo_precedente = round(prec_result[0].get("entrate", 0) - prec_result[0].get("uscite", 0), 2)
+    
+    totale_entrate = round(totali.get("totale_entrate", 0), 2)
+    totale_uscite = round(totali.get("totale_uscite", 0), 2)
+    saldo_anno = round(totale_entrate - totale_uscite, 2)
+    
     return {
         "movimenti": movimenti,
         "totale": total,
         "offset": offset,
         "limit": limit,
-        "totale_entrate": round(totali.get("totale_entrate", 0), 2),
-        "totale_uscite": round(totali.get("totale_uscite", 0), 2)
+        "totale_entrate": totale_entrate,
+        "totale_uscite": totale_uscite,
+        "saldo_anno": saldo_anno,
+        "saldo_precedente": saldo_precedente,
+        "saldo": round(saldo_precedente + saldo_anno, 2),
+        "anno": anno
     }
 
 

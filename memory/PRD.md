@@ -90,7 +90,11 @@ Applicazione ERP full-stack italiana (React + FastAPI + MongoDB) per gestione az
 - **PUT /api/email-download/mittenti/{email}**: Ora supporta anche `cerca_per_oggetto` e `parole_chiave_ricerca`
 
 ## Problemi in sospeso
-- P0: Credenziali Gmail non valide (IMAP_PASSWORD nel .env) - BLOCCANTE per funzionalità email
-- P1: Completare logica elaborazione fatture XML (xml_invoice_processor.py è completo ma non testato con email reali)
-- P1: Integrare UI gestione mittenti (MittentiManager.jsx non collegato a pagina)
-- P2: Migliorare copertura test E2E
+- P2: Credenziali Gmail non valide (IMAP_PASSWORD nel .env) - blocca automazione email (NON priorità corrente)
+
+## Sessione 5 (17 Marzo 2026)
+- **Import CSV BPM**: Importati 3.370 nuovi movimenti bancari (da ElencoEntrateUsciteAndamento_17-03-2026), 30 duplicati saltati. Totale in DB: 7.868 record.
+- **Totali Prima Nota Banca per anno + cumulativo**: L'API `/movimenti` ora restituisce `saldo_anno`, `saldo_precedente`, `saldo` (cumulativo). La UI mostra 5 card: Entrate Anno, Uscite Anno, Saldo Anno, Saldo Cumulativo, Riporto Anni Prec.
+- **Filtri avanzati Prima Nota**: Aggiunti filtri Data Da/A e Importo Min/Max (client-side) alla tabella movimenti sia Cassa che Banca
+- **Documentazione aggiornata**: logica_operativa.md aggiornato + ZIP scaricabile: `/api/download/documentazione_ceraldi_erp_17032026.zip`
+- **Fix timezone**: Corretto import mancante `timezone` in estratto_conto.py che causava errore 500 sull'endpoint import

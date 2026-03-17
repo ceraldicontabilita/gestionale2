@@ -135,15 +135,17 @@ function PrimaNotaDesktop() {
         importo: Math.abs(m.importo || 0),
         descrizione: m.descrizione || m.descrizione_originale || '',
         categoria: m.categoria || 'Movimento bancario',
-        // Preserva fattura_id dalla risposta API (può essere nel root o in dettagli_riconciliazione)
         fattura_id: m.fattura_id || m.dettagli_riconciliazione?.fattura_id || null,
-        // Preserva bonifico_pdf_id per visualizzare PDF bonifico
         bonifico_pdf_id: m.bonifico_pdf_id || null
       }));
       
+      const saldoPrec = ecData.saldo_precedente || 0;
+      const saldoAnno = (ecData.totale_entrate || 0) - (ecData.totale_uscite || 0);
       setBancaData({
         movimenti: movimenti,
-        saldo: (ecData.totale_entrate || 0) - (ecData.totale_uscite || 0),
+        saldo: ecData.saldo || saldoPrec + saldoAnno,
+        saldo_anno: ecData.saldo_anno || saldoAnno,
+        saldo_precedente: saldoPrec,
         totale_entrate: ecData.totale_entrate || 0,
         totale_uscite: ecData.totale_uscite || 0,
         count: ecData.totale || movimenti.length
@@ -530,11 +532,14 @@ function PrimaNotaDesktop() {
         <section>
           {/* Summary Cards Cassa - Compatti */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 10, marginBottom: 16 }}>
-            <MiniCard title="Entrate (DARE)" value={formatEuro(cassaData.totale_entrate)} color="#4caf50" />
-            <MiniCard title="Uscite (AVERE)" value={formatEuro(cassaData.totale_uscite)} color="#ef4444" />
+            <MiniCard title={`Entrate (DARE) ${selectedYear}`} value={formatEuro(cassaData.totale_entrate)} color="#4caf50" />
+            <MiniCard title={`Uscite (AVERE) ${selectedYear}`} value={formatEuro(cassaData.totale_uscite)} color="#ef4444" />
             <MiniCard title={`Saldo ${selectedYear}`} value={formatEuro(cassaData.saldo_anno || (cassaData.totale_entrate - cassaData.totale_uscite))} color={(cassaData.saldo_anno || (cassaData.totale_entrate - cassaData.totale_uscite)) >= 0 ? '#4caf50' : '#ef4444'} highlight />
             {cassaData.saldo_precedente !== 0 && cassaData.saldo_precedente !== undefined && (
-              <MiniCard title="Riporto anni prec." value={formatEuro(cassaData.saldo_precedente)} color="#6b7280" />
+              <MiniCard title="Riporto Anni Prec." value={formatEuro(cassaData.saldo_precedente)} color="#6b7280" />
+            )}
+            {cassaData.saldo_precedente !== 0 && cassaData.saldo_precedente !== undefined && (
+              <MiniCard title="Saldo Cumulativo" value={formatEuro(cassaData.saldo)} color="#1e3a5f" highlight />
             )}
           </div>
 
@@ -691,9 +696,15 @@ function PrimaNotaDesktop() {
         <section>
           {/* Summary Cards Banca */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 20 }}>
-            <SummaryCard title="Totale Entrate" value={formatEuro(bancaData.totale_entrate)} color="#4caf50" icon="📈" subtitle="Accrediti sul conto" />
-            <SummaryCard title="Totale Uscite" value={formatEuro(bancaData.totale_uscite)} color="#ef4444" icon="📉" subtitle="Addebiti dal conto" />
-            <SummaryCard title="Saldo Periodo" value={formatEuro(bancaData.saldo)} color={bancaData.saldo >= 0 ? '#4caf50' : '#ef4444'} icon="📊" highlight />
+            <SummaryCard title={`Entrate ${selectedYear}`} value={formatEuro(bancaData.totale_entrate)} color="#4caf50" icon="📈" subtitle="Accrediti sul conto" />
+            <SummaryCard title={`Uscite ${selectedYear}`} value={formatEuro(bancaData.totale_uscite)} color="#ef4444" icon="📉" subtitle="Addebiti dal conto" />
+            <SummaryCard title={`Saldo ${selectedYear}`} value={formatEuro(bancaData.saldo_anno || (bancaData.totale_entrate - bancaData.totale_uscite))} color={(bancaData.saldo_anno || (bancaData.totale_entrate - bancaData.totale_uscite)) >= 0 ? '#4caf50' : '#ef4444'} icon="📊" subtitle={`Solo anno ${selectedYear}`} />
+            {bancaData.saldo_precedente !== undefined && bancaData.saldo_precedente !== 0 && (
+              <SummaryCard title="Saldo Cumulativo" value={formatEuro(bancaData.saldo)} color="#1e3a5f" icon="🏦" subtitle="Saldo totale complessivo" highlight />
+            )}
+            {bancaData.saldo_precedente !== undefined && bancaData.saldo_precedente !== 0 && (
+              <SummaryCard title="Riporto Anni Prec." value={formatEuro(bancaData.saldo_precedente)} color="#6b7280" icon="📅" subtitle="Saldo al 31/12 anno prec." />
+            )}
           </div>
 
           {/* Info Box */}
@@ -859,6 +870,10 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
   const [filtroCategoria, setFiltroCategoria] = useState('');
   const [filtroTipo, setFiltroTipo] = useState('');
   const [filtroDareAvere, setFiltroDareAvere] = useState(''); // dare = entrata, avere = uscita
+  const [filtroDataDa, setFiltroDataDa] = useState(''); // YYYY-MM-DD
+  const [filtroDataA, setFiltroDataA] = useState('');
+  const [filtroImportoMin, setFiltroImportoMin] = useState('');
+  const [filtroImportoMax, setFiltroImportoMax] = useState('');
   
   // Lista categorie uniche
   const categorieUniche = [...new Set(movimenti.map(m => m.categoria).filter(Boolean))].sort();
@@ -890,6 +905,25 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
     movimentiFiltrati = movimentiFiltrati.filter(m => m.tipo === 'uscita');
   }
 
+  // Filtro data da
+  if (filtroDataDa) {
+    movimentiFiltrati = movimentiFiltrati.filter(m => (m.data || '') >= filtroDataDa);
+  }
+  // Filtro data a
+  if (filtroDataA) {
+    movimentiFiltrati = movimentiFiltrati.filter(m => (m.data || '') <= filtroDataA);
+  }
+  // Filtro importo min
+  if (filtroImportoMin !== '') {
+    const min = parseFloat(filtroImportoMin);
+    if (!isNaN(min)) movimentiFiltrati = movimentiFiltrati.filter(m => Math.abs(m.importo || 0) >= min);
+  }
+  // Filtro importo max
+  if (filtroImportoMax !== '') {
+    const max = parseFloat(filtroImportoMax);
+    if (!isNaN(max)) movimentiFiltrati = movimentiFiltrati.filter(m => Math.abs(m.importo || 0) <= max);
+  }
+
   const totalPages = Math.ceil(movimentiFiltrati.length / itemsPerPage);
   const start = (currentPage - 1) * itemsPerPage;
   const _currentMovimenti = movimentiFiltrati.slice(start, start + itemsPerPage);
@@ -911,8 +945,14 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
     setFiltroCategoria('');
     setFiltroTipo('');
     setFiltroDareAvere('');
+    setFiltroDataDa('');
+    setFiltroDataA('');
+    setFiltroImportoMin('');
+    setFiltroImportoMax('');
     setCurrentPage(1);
   };
+
+  const hasActiveFilters = filtroDescrizione || filtroCategoria || filtroDareAvere || filtroDataDa || filtroDataA || filtroImportoMin !== '' || filtroImportoMax !== '';
 
   return (
     <div style={{ background: 'white', borderRadius: 12, overflow: 'hidden', border: '1px solid #e5e7eb' }}>
@@ -955,89 +995,110 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
         padding: '12px 16px', 
         background: '#f8fafc', 
         borderBottom: '1px solid #e5e7eb',
-        display: 'flex',
-        gap: 12,
-        flexWrap: 'wrap',
-        alignItems: 'center'
       }}>
-        <span style={{ fontWeight: 600, fontSize: 12, color: '#374151' }}>🔍 Filtri:</span>
-        
-        {/* Filtro Descrizione */}
-        <input
-          type="text"
-          placeholder="Cerca descrizione..."
-          value={filtroDescrizione}
-          onChange={(e) => { setFiltroDescrizione(e.target.value); setCurrentPage(1); }}
-          style={{ 
-            padding: '6px 10px', 
-            border: '1px solid #d1d5db', 
-            borderRadius: 6, 
-            fontSize: 12,
-            width: 180
-          }}
-          data-testid="filtro-descrizione"
-        />
-        
-        {/* Filtro Categoria */}
-        <select
-          value={filtroCategoria}
-          onChange={(e) => { setFiltroCategoria(e.target.value); setCurrentPage(1); }}
-          style={{ 
-            padding: '6px 10px', 
-            border: '1px solid #d1d5db', 
-            borderRadius: 6, 
-            fontSize: 12,
-            background: 'white'
-          }}
-          data-testid="filtro-categoria"
-        >
-          <option value="">Tutte le categorie</option>
-          {categorieUniche.map(cat => (
-            <option key={cat} value={cat}>{cat}</option>
-          ))}
-        </select>
-        
-        {/* Filtro DARE/AVERE */}
-        <select
-          value={filtroDareAvere}
-          onChange={(e) => { setFiltroDareAvere(e.target.value); setCurrentPage(1); }}
-          style={{ 
-            padding: '6px 10px', 
-            border: '1px solid #d1d5db', 
-            borderRadius: 6, 
-            fontSize: 12,
-            background: 'white'
-          }}
-          data-testid="filtro-dare-avere"
-        >
-          <option value="">DARE + AVERE</option>
-          <option value="dare">Solo DARE (Entrate)</option>
-          <option value="avere">Solo AVERE (Uscite)</option>
-        </select>
-        
-        {/* Contatore risultati */}
-        <span style={{ fontSize: 12, color: '#6b7280' }}>
-          {movimentiFiltrati.length} / {movimenti.length} movimenti
-        </span>
-        
-        {/* Reset Filtri */}
-        {(filtroDescrizione || filtroCategoria || filtroDareAvere) && (
-          <button
-            onClick={resetFilters}
-            style={{
-              padding: '6px 12px',
-              background: '#ef4444',
-              color: 'white',
-              border: 'none',
-              borderRadius: 6,
-              fontSize: 12,
-              cursor: 'pointer'
-            }}
-            data-testid="btn-reset-filtri"
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', marginBottom: 8 }}>
+          <span style={{ fontWeight: 600, fontSize: 12, color: '#374151' }}>🔍 Filtri:</span>
+          
+          {/* Filtro Descrizione */}
+          <input
+            type="text"
+            placeholder="Cerca descrizione..."
+            value={filtroDescrizione}
+            onChange={(e) => { setFiltroDescrizione(e.target.value); setCurrentPage(1); }}
+            style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 12, width: 180 }}
+            data-testid="filtro-descrizione"
+          />
+          
+          {/* Filtro Categoria */}
+          <select
+            value={filtroCategoria}
+            onChange={(e) => { setFiltroCategoria(e.target.value); setCurrentPage(1); }}
+            style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 12, background: 'white' }}
+            data-testid="filtro-categoria"
           >
-            ✕ Reset
-          </button>
-        )}
+            <option value="">Tutte le categorie</option>
+            {categorieUniche.map(cat => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
+          
+          {/* Filtro DARE/AVERE */}
+          <select
+            value={filtroDareAvere}
+            onChange={(e) => { setFiltroDareAvere(e.target.value); setCurrentPage(1); }}
+            style={{ padding: '6px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 12, background: 'white' }}
+            data-testid="filtro-dare-avere"
+          >
+            <option value="">DARE + AVERE</option>
+            <option value="dare">Solo DARE (Entrate)</option>
+            <option value="avere">Solo AVERE (Uscite)</option>
+          </select>
+        </div>
+        
+        {/* Seconda riga filtri: Data e Importo */}
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+          <span style={{ fontWeight: 600, fontSize: 12, color: '#374151' }}>📅 Data:</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <label style={{ fontSize: 11, color: '#6b7280' }}>Da</label>
+            <input
+              type="date"
+              value={filtroDataDa}
+              onChange={(e) => { setFiltroDataDa(e.target.value); setCurrentPage(1); }}
+              style={{ padding: '5px 8px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 12 }}
+              data-testid="filtro-data-da"
+            />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <label style={{ fontSize: 11, color: '#6b7280' }}>A</label>
+            <input
+              type="date"
+              value={filtroDataA}
+              onChange={(e) => { setFiltroDataA(e.target.value); setCurrentPage(1); }}
+              style={{ padding: '5px 8px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 12 }}
+              data-testid="filtro-data-a"
+            />
+          </div>
+          
+          <span style={{ fontWeight: 600, fontSize: 12, color: '#374151', marginLeft: 8 }}>💶 Importo:</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <label style={{ fontSize: 11, color: '#6b7280' }}>Min €</label>
+            <input
+              type="number"
+              placeholder="0"
+              value={filtroImportoMin}
+              onChange={(e) => { setFiltroImportoMin(e.target.value); setCurrentPage(1); }}
+              style={{ padding: '5px 8px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 12, width: 90 }}
+              data-testid="filtro-importo-min"
+            />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <label style={{ fontSize: 11, color: '#6b7280' }}>Max €</label>
+            <input
+              type="number"
+              placeholder="∞"
+              value={filtroImportoMax}
+              onChange={(e) => { setFiltroImportoMax(e.target.value); setCurrentPage(1); }}
+              style={{ padding: '5px 8px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 12, width: 90 }}
+              data-testid="filtro-importo-max"
+            />
+          </div>
+          
+          {/* Contatore risultati */}
+          <span style={{ fontSize: 12, color: '#6b7280', marginLeft: 8 }}>
+            {movimentiFiltrati.length} / {movimenti.length} movimenti
+          </span>
+          
+          {/* Reset Filtri */}
+          {hasActiveFilters && (
+            <button
+              onClick={resetFilters}
+              style={{ padding: '6px 12px', background: '#ef4444', color: 'white', border: 'none', borderRadius: 6, fontSize: 12, cursor: 'pointer' }}
+              data-testid="btn-reset-filtri"
+            >
+              ✕ Reset filtri
+            </button>
+          )}
+        </div>
       </div>
       
       {/* Pagination Header */}

@@ -412,4 +412,70 @@ azienda_erp_db
 
 ---
 
-*File generato automaticamente dal sistema ERP Ceraldi — Marzo 2026*
+*File generato automaticamente dal sistema ERP Ceraldi — Aggiornato: 17 Marzo 2026*
+
+---
+
+## 13. AGGIORNAMENTI SESSIONE 17 MARZO 2026
+
+### 13.1 Import Estratto Conto BPM (Marzo 2026)
+- **File importato**: `ElencoEntrateUsciteAndamento_17-03-2026_06.35.38.csv`
+- **Formato**: CSV con separatore `;`, encoding UTF-8-BOM
+- **Colonne**: Ragione Sociale, Data contabile, Data valuta, Banca, Rapporto, Importo, Divisa, Descrizione, Categoria/sottocategoria, Hashtag
+- **Risultato import**: 3.370 nuovi movimenti inseriti, 30 duplicati saltati (de-duplicazione MD5 attiva)
+- **Totale movimenti in DB dopo import**: 7.868 record in `estratto_conto_movimenti`
+- **De-duplicazione**: tramite fingerprint MD5 (`data + importo + descrizione`)
+
+### 13.2 Calcolo Totali Banca per Anno vs Cumulativo
+L'API `/api/estratto-conto-movimenti/movimenti?anno=ANNO` ora restituisce:
+
+| Campo | Significato |
+|---|---|
+| `totale_entrate` | Somma entrate SOLO per l'anno selezionato |
+| `totale_uscite` | Somma uscite SOLO per l'anno selezionato |
+| `saldo_anno` | Entrate - Uscite dell'anno selezionato |
+| `saldo_precedente` | Saldo cumulativo di TUTTI gli anni precedenti |
+| `saldo` | Saldo complessivo (saldo_precedente + saldo_anno) |
+
+**Esempio anno 2026** (dopo import 17/03/2026):
+- Entrate 2026: €450.244,40
+- Uscite 2026: €439.936,61
+- Saldo 2026: €10.307,79
+- Saldo anni precedenti: €1.060.035,43
+- Saldo complessivo: €1.070.343,22
+
+### 13.3 Filtri Avanzati Prima Nota
+Aggiunti nella barra filtri della tabella movimenti (sia Cassa che Banca):
+
+| Filtro | Tipo | Comportamento |
+|---|---|---|
+| Descrizione | Testo libero | Ricerca case-insensitive nella descrizione |
+| Categoria | Dropdown | Filtra per categoria esatta |
+| DARE/AVERE | Dropdown | Filtra per tipo (entrata/uscita) |
+| Data Da | Date picker | Mostra solo movimenti con data >= valore |
+| Data A | Date picker | Mostra solo movimenti con data <= valore |
+| Importo Min (€) | Numerico | Mostra solo movimenti con importo >= valore |
+| Importo Max (€) | Numerico | Mostra solo movimenti con importo <= valore |
+
+Tutti i filtri sono **client-side** (i dati sono già caricati in memoria) e si combinano tra loro (AND logico). Il pulsante "Reset filtri" appare solo se almeno un filtro è attivo.
+
+### 13.4 Visualizzazione Totali in Prima Nota (UI)
+Prima Nota Banca mostra ora 5 schede di riepilogo:
+1. **Entrate {anno}** — accrediti dell'anno selezionato
+2. **Uscite {anno}** — addebiti dell'anno selezionato
+3. **Saldo {anno}** — differenza dell'anno selezionato
+4. **Riporto Anni Prec.** — saldo al 31/12 degli anni precedenti
+5. **Saldo Cumulativo** — saldo totale complessivo
+
+Prima Nota Cassa mostra analogamente:
+1. **Entrate (DARE) {anno}**
+2. **Uscite (AVERE) {anno}**
+3. **Saldo {anno}**
+4. **Riporto Anni Prec.** (se presente)
+5. **Saldo Cumulativo** (se presente)
+
+### 13.5 Fix Tecnici
+- Corretto import mancante `timezone` in `estratto_conto.py` che causava errore 500 sull'endpoint import
+- L'API `/movimenti` ora include il calcolo del `saldo_precedente` tramite pipeline MongoDB separata
+
+---
