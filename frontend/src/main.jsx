@@ -68,6 +68,7 @@ const StrumentiHub = lazy(() => import("./pages/hub/StrumentiHub.jsx"));
 const IntegrazioniHub = lazy(() => import("./pages/hub/IntegrazioniHub.jsx"));
 const AdminHub = lazy(() => import("./pages/hub/AdminHub.jsx"));
 const LearningMachineUniversale = lazy(() => import("./pages/LearningMachineUniversale.jsx"));
+const MappaGestionale = lazy(() => import("./pages/MappaGestionale.jsx"));
 
 // === STANDALONE PAGES ===
 const InserimentoRapido = lazy(() => import("./pages/InserimentoRapido.jsx"));
@@ -306,6 +307,9 @@ const router = createBrowserRouter([
       { path: "batch-reprocessing", element: <LazyPage><AdminHub /></LazyPage> },
       { path: "batch-processor", element: <LazyPage><AdminHub /></LazyPage> },
       
+      // === MAPPA GESTIONALE ===
+      { path: "mappa-gestionale", element: <LazyPage><MappaGestionale /></LazyPage> },
+
       // === AI (redirect to OpenClaw) ===
       { path: "assistente-ai", element: <Navigate to="/api/openclaw/ui/" replace /> },
       { path: "claude", element: <Navigate to="/api/openclaw/ui/" replace /> },

@@ -117,3 +117,16 @@ Applicazione ERP full-stack italiana (React + FastAPI + MongoDB) per gestione az
 - **Filtri avanzati Prima Nota**: Aggiunti filtri Data Da/A e Importo Min/Max (client-side) alla tabella movimenti sia Cassa che Banca
 - **Documentazione aggiornata**: logica_operativa.md aggiornato + ZIP scaricabile: `/api/download/documentazione_ceraldi_erp_17032026.zip`
 - **Fix timezone**: Corretto import mancante `timezone` in estratto_conto.py che causava errore 500 sull'endpoint import
+
+## Sessione 8 (20 Marzo 2026 - Corrente)
+- **Pagina "Come Funziona il Gestionale"** (`/mappa-gestionale`): Creata e resa accessibile tramite menu "Altro"
+- **Flusso dati per 16 moduli**: Ogni modulo ha 4 sezioni strutturate:
+  - ENTRA DA: sorgenti dati con dettaglio
+  - COSA FA: logica di elaborazione
+  - ALIMENTA / POPOLA: destinazioni a valle
+  - ASPETTA / RICONCILIA CON: controlli incrociati e riconciliazioni (con livello di urgenza)
+- **Diagramma Mermaid interattivo**: Mostra l'intero flusso dati aziendale; editor modificabile dall'utente
+- **Logica specifica documentata**:
+  - Prima Nota Cassa: DARE=Ricavi Lordi, AVERE=POS→Banca, aspetta estratto conto + chiusura POS sera
+  - Prima Nota Banca: aspetta POS cassa, bonifici fornitori, F24, cedolini stipendi
+  - Prima Nota Salari: genera F24 contributi + bonifici attesi in banca
