@@ -28,9 +28,10 @@ from dataclasses import dataclass
 logger = logging.getLogger(__name__)
 
 # Configurazione email
-EMAIL = os.environ.get("EMAIL_ADDRESS", "")
-EMAIL_PASSWORD = os.environ.get("EMAIL_APP_PASSWORD", "")
-IMAP_SERVER = os.environ.get("IMAP_SERVER", "imap.gmail.com")
+from app.config import settings
+EMAIL = settings.EMAIL_ADDRESS or settings.IMAP_USER or ""
+EMAIL_PASSWORD = settings.EMAIL_APP_PASSWORD or settings.IMAP_PASSWORD or ""
+IMAP_SERVER = settings.IMAP_HOST or "imap.gmail.com"
 
 
 @dataclass

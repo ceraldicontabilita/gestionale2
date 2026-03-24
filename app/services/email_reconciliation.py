@@ -36,8 +36,9 @@ COLLECTION_MATCH_LOG = "log_riconciliazione"  # Log dei match trovati
 # Configurazione Email
 IMAP_SERVER = "imap.gmail.com"
 IMAP_PORT = 993
-EMAIL_ADDRESS = os.environ.get("EMAIL_ADDRESS", os.environ.get("GMAIL_EMAIL", "ceraldigroupsrl@gmail.com"))
-EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD", os.environ.get("GMAIL_APP_PASSWORD"))
+from app.config import settings as _s
+EMAIL_ADDRESS = _s.EMAIL_ADDRESS or _s.IMAP_USER or _s.EMAIL_USER or ""
+EMAIL_PASSWORD = _s.EMAIL_PASSWORD or _s.GMAIL_APP_PASSWORD or _s.IMAP_PASSWORD or ""
 
 # Tipi di documento da indicizzare
 TIPI_DOCUMENTO = [

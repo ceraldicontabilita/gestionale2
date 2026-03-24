@@ -44,10 +44,11 @@ async def sync_email_documents(db, giorni: int = 30) -> Dict[str, Any]:
     - Mittenti con cerca_per_oggetto=True vengono cercati per parole chiave
     """
     from app.services.email_document_downloader import download_documents_from_email
-    
-    # Leggi credenziali email da ambiente
-    email_user = os.environ.get("EMAIL_USER") or os.environ.get("IMAP_USER")
-    email_password = os.environ.get("EMAIL_PASSWORD") or os.environ.get("IMAP_PASSWORD")
+    from app.config import settings
+
+    # Leggi credenziali email da settings (carica /app/backend/.env)
+    email_user = settings.IMAP_USER or settings.EMAIL_USER
+    email_password = settings.IMAP_PASSWORD or settings.EMAIL_PASSWORD
     
     if not email_user or not email_password:
         logger.warning("Credenziali email non configurate")

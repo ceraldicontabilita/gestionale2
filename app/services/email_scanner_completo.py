@@ -27,8 +27,9 @@ logger = logging.getLogger(__name__)
 # Config
 IMAP_SERVER = "imap.gmail.com"
 IMAP_PORT = 993
-EMAIL_ADDRESS = os.environ.get("GMAIL_EMAIL", "ceraldigroupsrl@gmail.com")
-EMAIL_PASSWORD = os.environ.get("GMAIL_APP_PASSWORD", "okzonmhlwrnqjlcf")
+from app.config import settings as _s
+EMAIL_ADDRESS = _s.IMAP_USER or _s.EMAIL_USER or _s.GMAIL_EMAIL or "ceraldigroupsrl@gmail.com"
+EMAIL_PASSWORD = _s.GMAIL_APP_PASSWORD or _s.IMAP_PASSWORD or _s.EMAIL_PASSWORD or ""
 
 # Collections
 COLL_VERBALI_POSTA = "verbali_noleggio"

@@ -42,8 +42,9 @@ async def fetch_aruba_emails_to_operazioni(db, giorni: int = 30) -> Dict[str, An
     """
     from app.services.aruba_invoice_parser import fetch_aruba_invoices
     
-    email_user = os.environ.get("EMAIL_USER")
-    email_password = os.environ.get("EMAIL_APP_PASSWORD") or os.environ.get("EMAIL_PASSWORD")
+    from app.config import settings
+    email_user = settings.EMAIL_USER or settings.IMAP_USER
+    email_password = settings.EMAIL_APP_PASSWORD or settings.EMAIL_PASSWORD or settings.IMAP_PASSWORD
     
     if not email_user or not email_password:
         logger.warning("Credenziali email non configurate per Aruba")
