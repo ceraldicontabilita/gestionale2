@@ -119,7 +119,21 @@ Applicazione ERP full-stack italiana (React + FastAPI + MongoDB) per gestione az
 - **Dipendenti P2**: Deduplicazione per CF in list_dipendenti e report ferie-permessi
 - **Fix routing**: Dashboard widget link /dipendenti/giustificativi → /presenze?tab=giustificativi
 
-## Problemi in sospeso
+## Sessione 10 (24 Marzo 2026 - Riattivazione e Fix Dati)
+- **Riattivazione verificata**: tutti i moduli P0/P1/P2 funzionanti con dati reali MongoDB Atlas
+- **Fix Cedolini**: filtro `anno` ora usa `$or [int, string]` - prima restituiva 0 record per 2026
+- **Fix Prima Nota Salari**: filtro `anno` ora usa campo `anno` (int) invece di `data` (regex) - prima restituiva 0 record
+- **Stato dati reali verificato**:
+  - Prima Nota Cassa 2025: 100 movimenti, saldo=€359k ✅
+  - Prima Nota Banca 2026: 100 movimenti ✅
+  - Prima Nota Salari 2025: 100 movimenti ✅
+  - Fornitori: 323 record ✅
+  - Invoices: 204 totali (199 del 2026) ✅
+  - Dipendenti: 34, no duplicati CF ✅
+  - Cedolini 2025: 253, Cedolini 2026: 15 ✅
+  - Dashboard bilancio 2026: ricavi=€31k, costi=€171k ✅
+- **Test**: 22/22 backend tests passed, 100% frontend modules working
+
 - P2: Credenziali Gmail non valide (IMAP_PASSWORD nel .env) - blocca automazione email (NON priorità corrente)
 
 
