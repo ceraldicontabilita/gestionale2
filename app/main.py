@@ -214,9 +214,9 @@ from app.routers import openapi_imprese
 # --- Core Routers (non modulari) ---
 from app.routers import (
     auth, cash, chart_of_accounts, notifications,
-    cash_register, failed_invoices, settings as settings_router,
-    config, search, incasso_reale, ocr_assegni, portal,
-    portal_extended, cash_register_extended, finanziaria, public_api,
+    cash_register, settings as settings_router,
+    config, search, ocr_assegni, portal,
+    finanziaria, public_api,
     comparatore, gestione_riservata, commercialista, scadenze,
     riconciliazione_fornitori, ordini_fornitori, payroll,
     pianificazione, admin, verifica_coerenza, documenti,
@@ -398,15 +398,11 @@ app.include_router(cash.router, prefix="/api/cash", tags=["Cash Register"])
 app.include_router(chart_of_accounts.router, prefix="/api/chart-of-accounts", tags=["Chart of Accounts"])
 app.include_router(notifications.router, prefix="/api/notifications", tags=["Notifications"])
 app.include_router(cash_register.router, prefix="/api/cash-register", tags=["Cash Register Operations"])
-app.include_router(cash_register_extended.router, prefix="/api/cash-register", tags=["Cash Register Extended"])
-app.include_router(failed_invoices.router, prefix="/api/failed-invoices", tags=["Failed Invoices"])
 app.include_router(settings_router.router, prefix="/api/settings", tags=["Settings"])
 app.include_router(config.router, prefix="/api/config", tags=["Config"])
 app.include_router(search.router, prefix="/api/search", tags=["Search"])
-app.include_router(incasso_reale.router, prefix="/api/incasso-reale", tags=["Incasso Reale"])
 app.include_router(ocr_assegni.router, prefix="/api/ocr-assegni", tags=["OCR Assegni"])
 app.include_router(portal.router, prefix="/api/portal", tags=["Portal"])
-app.include_router(portal_extended.router, prefix="/api/portal", tags=["Portal Extended"])
 app.include_router(finanziaria.router, prefix="/api/finanziaria", tags=["Finanziaria"])
 app.include_router(comparatore.router, prefix="/api/comparatore", tags=["Comparatore Prezzi"])
 app.include_router(gestione_riservata.router, prefix="/api/gestione-riservata", tags=["Gestione Riservata"])
