@@ -548,6 +548,15 @@ async def run_full_sync(db) -> Dict[str, Any]:
         f24_new = results.get("f24_sync", {}).get("processamento", {}).get("f24_inseriti", 0) if results.get("f24_sync") else 0
         logger.info(f"✅ Sync completo - Doc: {results['email_sync'].get('new_documents', 0)}, Aruba: {aruba_new}, F24: {f24_new}, Processati: {_sync_stats['documents_processed']}")
         
+        # Passo finale: esegui agenti AI
+        try:
+            from app.agents.orchestrator import run_agenti
+            await run_agenti(db)
+        except Exception as e:
+            logger.error(f"Errore agenti AI: {e}")
+        
+        # 7. NOTIFICA TELEGRAM se ci sono novità
+        
         # 7. NOTIFICA TELEGRAM se ci sono novità
         try:
             from app.services.telegram_notifications import notifica_sync_completato

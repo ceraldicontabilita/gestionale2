@@ -177,8 +177,8 @@ from app.routers.bank import riconciliazione_f24_banca
 
 # --- Warehouse Module ---
 from app.routers.warehouse import (
-    warehouse_main, magazzino, magazzino_products, magazzino_doppia_verita,
-    products, products_catalog, lotti, tracciabilita, dizionario_articoli
+    warehouse_main, magazzino, magazzino_products,
+    products, products_catalog, dizionario_articoli
 )
 
 # --- Invoices Module ---
@@ -259,8 +259,8 @@ from app.routers import ai_parser  # AI Parser - Estrazione intelligente documen
 from app.routers import upload_ai  # Upload AI - Parsing automatico su upload diretto
 # REMOVED: chat_router - replaced by OpenClaw
 from app.routers import schede_tecniche  # Schede Tecniche Prodotti
-from app.routers import auto_repair  # Auto-Riparazione Globale delle relazioni
-from app.routers import odoo_integration  # Integrazione Odoo External API
+# auto_repair rimosso (Blocco J1)
+# odoo_integration rimosso (Blocco J1)
 from app.routers import accounting_engine  # Motore Contabile Odoo-style
 from app.routers import contabilita_italiana  # Contabilità Italiana Completa
 from app.routers import fiscalita_italiana  # Fiscalità e Calendario Scadenze
@@ -268,6 +268,7 @@ from app.routers import fiscalita_italiana  # Fiscalità e Calendario Scadenze
 from app.routers import batch_operations  # Operazioni Batch - Riconcilia/Paga N documenti
 from app.routers import google_auth  # Google OAuth - Login con Google
 from app.routers import openclaw  # OpenClaw/MoltBot AI Assistant
+from app.routers.agenti import router as r_agenti  # Agenti AI
 
 
 # =============================================================================
@@ -281,6 +282,7 @@ app.include_router(public_api.router, prefix="/api", tags=["Public API"])
 app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(google_auth.router, prefix="/api", tags=["Google OAuth"])
 app.include_router(openclaw.router, prefix="/api", tags=["OpenClaw AI Assistant"])
+app.include_router(r_agenti, prefix="/api", tags=["Agenti AI"])
 
 # --- F24 Module ---
 app.include_router(f24_main.router, prefix="/api/f24", tags=["F24"])
@@ -350,11 +352,11 @@ app.include_router(riconciliazione_f24_banca.router, prefix="/api/f24-riconcilia
 app.include_router(warehouse_main.router, prefix="/api/warehouse", tags=["Warehouse"])
 app.include_router(magazzino.router, prefix="/api/magazzino", tags=["Magazzino"])
 app.include_router(magazzino_products.router, prefix="/api/magazzino", tags=["Magazzino Products"])
-app.include_router(magazzino_doppia_verita.router, prefix="/api/magazzino-dv", tags=["Magazzino Doppia Verità"])
+# magazzino_doppia_verita rimosso (Blocco J1)
 app.include_router(products.router, prefix="/api/products", tags=["Products"])
 app.include_router(products_catalog.router, prefix="/api/products", tags=["Products Catalog"])
-app.include_router(lotti.router, prefix="/api/lotti", tags=["Lotti"])
-app.include_router(tracciabilita.router, prefix="/api/tracciabilita", tags=["Tracciabilita"])
+# lotti rimosso (Blocco J1)
+# tracciabilita rimosso (Blocco J1)
 app.include_router(dizionario_articoli.router, prefix="/api/dizionario-articoli", tags=["Dizionario Articoli"])
 
 # --- Invoices Module ---
@@ -527,8 +529,8 @@ app.include_router(upload_ai.router, prefix="/api/upload-ai", tags=["Upload AI"]
 # --- Schede Tecniche Prodotti ---
 app.include_router(schede_tecniche.router, prefix="/api", tags=["Schede Tecniche Prodotti"])
 
-# --- Auto-Riparazione Globale ---
-app.include_router(auto_repair.router, prefix="/api", tags=["Auto Riparazione"])
+# --- Auto-Riparazione rimossa (Blocco J1) ---
+# app.include_router(auto_repair.router, prefix="/api", tags=["Auto Riparazione"])
 
 # --- Riconciliazione Email ↔ Gestionale ---
 app.include_router(email_reconciliation.router, tags=["Riconciliazione Email"])
@@ -551,7 +553,8 @@ from app.routers import learning_universal
 app.include_router(learning_universal.router, prefix="/api/learning-universal", tags=["Learning Machine Universale"])
 
 app.include_router(magazzino_avanzato.router, prefix="/api", tags=["Magazzino Avanzato"])
-app.include_router(odoo_integration.router, prefix="/api/odoo", tags=["Odoo Integration"])
+# odoo_integration rimosso (Blocco J1)
+# app.include_router(odoo_integration.router, prefix="/api/odoo", tags=["Odoo Integration"])
 app.include_router(accounting_engine.router, prefix="/api/accounting", tags=["Accounting Engine"])
 app.include_router(contabilita_italiana.router, prefix="/api/contabilita", tags=["Contabilità Italiana"])
 
@@ -563,9 +566,8 @@ app.include_router(contabilita_italiana.router, prefix="/api/contabilita", tags=
 from app.routers import paypal_statements
 app.include_router(paypal_statements.router, prefix="/api/paypal-statements", tags=["PayPal Statements"])
 
-# --- Fix Endpoint Mancanti (frontend → backend) ---
-from app.routers import missing_endpoints
-#from app.routers import fix_endpoints_mancanti  # Fix endpoint 404
+# missing_endpoints, sync_router rimossi (Blocco J1)
+# from app.routers import missing_endpoints
 #from app.routers import sync_router  # Sync email configuration
 #from app.routers import fix_sync_diagnostica  # Diagnostica e sync
 #from app.routers import fix_riconciliazione_endpoints  # Fix riconciliazione 404
@@ -585,21 +587,21 @@ app.include_router(bonifici_associazioni.router, prefix="/api", tags=["Archivio 
 from app.routers import enhanced_parser
 app.include_router(enhanced_parser.router, prefix="/api", tags=["Enhanced Parser"])
 
-# --- Force Sync (Email Aruba + F24 Riconciliazione) ---
-from app.routers import force_sync
-app.include_router(force_sync.router, prefix="/api/force-sync", tags=["Force Sync"])
+# force_sync rimosso (Blocco J1)
+# from app.routers import force_sync
+# app.include_router(force_sync.router, prefix="/api/force-sync", tags=["Force Sync"])
 
-# --- Missing Endpoints Fix (health, ordini-fornitori) ---
-from app.routers import missing_endpoints_fix
-app.include_router(missing_endpoints_fix.router, prefix="/api", tags=["Missing Endpoints Fix"])
+# missing_endpoints_fix rimosso (Blocco J1)
+# from app.routers import missing_endpoints_fix
+# app.include_router(missing_endpoints_fix.router, prefix="/api", tags=["Missing Endpoints Fix"])
 
 # --- Dati Provvisori (NUOVA LOGICA WORKFLOW) ---
 from app.routers import dati_provvisori
 app.include_router(dati_provvisori.router, prefix="/api", tags=["Dati Provvisori"])
 
-# --- Batch Reprocessing (Riprocessamento massivo documenti) ---
-from app.routers import batch_reprocessing
-app.include_router(batch_reprocessing.router, prefix="/api", tags=["Batch Reprocessing"])
+# batch_reprocessing rimosso (Blocco J1)
+# from app.routers import batch_reprocessing
+# app.include_router(batch_reprocessing.router, prefix="/api", tags=["Batch Reprocessing"])
 
 
 # --- POS Corrispettivi Check (Verifica coerenza POS/Corrispettivi XML) ---

@@ -146,57 +146,94 @@ class DataPropagationService:
         logger.info(f"Payment propagated for invoice {invoice_id}: {results}")
         return results
     
-    # ==================== CORRISPETTIVO → PRIMA NOTA ====================
+    # ==================== CORRISPETTIVO → PRIMA NOTA (Blocco G4) ====================
     
     async def propagate_corrispettivo_to_prima_nota(
         self,
         corrispettivo: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
-        Propaga un corrispettivo a Prima Nota Cassa come entrata.
+        Propaga un corrispettivo separando contanti (cassa) da elettronico (banca).
+        Blocco G4: 
+        - Porzione contanti → prima_nota_cassa (DARE)
+        - Porzione elettronica POS → prima_nota_banca (DARE)
         """
         results = {
-            "movement_created": False,
+            "movement_cassa_created": False,
+            "movement_banca_created": False,
             "movement_id": None,
             "errors": []
         }
         
-        movement_id = str(uuid.uuid4())
+        data = corrispettivo.get("data")
+        totale = float(corrispettivo.get("totale", 0))
+        contanti = float(corrispettivo.get("pagato_contanti", 0))
+        elettronico = float(corrispettivo.get("pagato_elettronico", 0))
         
-        movement = {
-            "id": movement_id,
-            "date": corrispettivo.get("data"),
-            "data": corrispettivo.get("data"),
-            "type": "entrata",
-            "tipo": "entrata",
-            "amount": corrispettivo.get("totale", 0),
-            "importo": corrispettivo.get("totale", 0),
-            "description": f"Corrispettivo giornaliero {corrispettivo.get('data', '')}",
-            "descrizione": f"Corrispettivo giornaliero {corrispettivo.get('data', '')}",
-            "category": "Corrispettivi",
-            "categoria": "Corrispettivi",
-            "corrispettivo_id": corrispettivo.get("id"),
-            "source": "corrispettivo_import",
-            "created_at": datetime.now(timezone.utc).isoformat(),
-            # Dettaglio pagamenti (struttura usata da ControlloMensile)
-            "dettaglio": {
-                "contanti": corrispettivo.get("pagato_contanti", 0),
-                "elettronico": corrispettivo.get("pagato_elettronico", 0),
-                "totale_iva": corrispettivo.get("totale_iva", 0),
-                "matricola_rt": corrispettivo.get("matricola_rt", ""),
-                "numero_documenti": corrispettivo.get("numero_documenti", 0)
-            },
-            # Campi flat per retrocompatibilità
-            "pagato_contanti": corrispettivo.get("pagato_contanti", 0),
-            "pagato_elettronico": corrispettivo.get("pagato_elettronico", 0)
-        }
+        # Se non ci sono dati di suddivisione, usa totale come contanti
+        if contanti == 0 and elettronico == 0:
+            contanti = totale
         
-        try:
-            await self.db["prima_nota_cassa"].insert_one(movement.copy())
-            results["movement_created"] = True
-            results["movement_id"] = movement_id
-        except Exception as e:
-            results["errors"].append(f"Errore creazione movimento: {str(e)}")
+        # 1. Movimento cassa (solo porzione contanti)
+        if contanti > 0:
+            movement_cassa_id = str(uuid.uuid4())
+            movement_cassa = {
+                "id": movement_cassa_id,
+                "date": data,
+                "data": data,
+                "type": "entrata",
+                "tipo": "entrata",
+                "amount": contanti,
+                "importo": contanti,
+                "description": f"Corrispettivo contanti {data or ''}",
+                "descrizione": f"Corrispettivo contanti {data or ''}",
+                "category": "Corrispettivi",
+                "categoria": "Corrispettivi",
+                "corrispettivo_id": corrispettivo.get("id"),
+                "source": "corrispettivo_import",
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "dettaglio": {
+                    "contanti": contanti,
+                    "elettronico": elettronico,
+                    "totale_iva": corrispettivo.get("totale_iva", 0),
+                    "matricola_rt": corrispettivo.get("matricola_rt", ""),
+                    "numero_documenti": corrispettivo.get("numero_documenti", 0)
+                },
+                "pagato_contanti": contanti,
+                "pagato_elettronico": elettronico
+            }
+            try:
+                await self.db["prima_nota_cassa"].insert_one(movement_cassa.copy())
+                results["movement_cassa_created"] = True
+                results["movement_id"] = movement_cassa_id
+            except Exception as e:
+                results["errors"].append(f"Errore creazione cassa: {str(e)}")
+        
+        # 2. Movimento banca (porzione elettronica POS)
+        if elettronico > 0:
+            movement_banca_id = str(uuid.uuid4())
+            movement_banca = {
+                "id": movement_banca_id,
+                "date": data,
+                "data": data,
+                "type": "entrata",
+                "tipo": "entrata",
+                "amount": elettronico,
+                "importo": elettronico,
+                "description": f"POS corrispettivo {data or ''}",
+                "descrizione": f"POS corrispettivo {data or ''}",
+                "category": "Corrispettivi POS",
+                "categoria": "Corrispettivi POS",
+                "corrispettivo_id": corrispettivo.get("id"),
+                "source": "corrispettivo_pos",
+                "riconciliato": False,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            }
+            try:
+                await self.db["prima_nota_banca"].insert_one(movement_banca.copy())
+                results["movement_banca_created"] = True
+            except Exception as e:
+                results["errors"].append(f"Errore creazione banca: {str(e)}")
         
         return results
     

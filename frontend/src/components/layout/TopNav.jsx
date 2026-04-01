@@ -3,6 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { Calendar, ChevronDown } from 'lucide-react';
 import { AnnoSelector } from '../../contexts/AnnoContext';
 import NotificationBell from '../NotificationBell';
+import { AgentiPanel } from '../AgentiPanel';
 
 // Navigazione principale - link diretti (no dropdown tranne "Altro")
 const NAV_ITEMS = [
@@ -145,6 +146,8 @@ export default function TopNav() {
         </div>
         
         <NotificationBell />
+        
+        <AgentiPanel />
         
         <button className="topnav-icon-btn" title="Calendario">
           <Calendar size={15} />

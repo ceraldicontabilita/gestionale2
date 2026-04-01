@@ -54,7 +54,7 @@ const FornitoriHub = lazy(() => import("./pages/hub/FornitoriHub.jsx"));
 const PrimaNotaHub = lazy(() => import("./pages/hub/PrimaNotaHub.jsx"));
 const RiconciliazioneHub = lazy(() => import("./pages/hub/RiconciliazioneHub.jsx"));
 const DipendentiHub = lazy(() => import("./pages/hub/DipendentiHub.jsx"));
-const HRGestionale = lazy(() => import("./pages/HRGestionale.jsx"));
+const GestioneDipendentiUnificata = lazy(() => import("./pages/GestioneDipendentiUnificata.jsx"));
 const PagheHub = lazy(() => import("./pages/hub/PagheHub.jsx"));
 const VeicoliHub = lazy(() => import("./pages/hub/VeicoliHub.jsx"));
 const FiscoHub = lazy(() => import("./pages/hub/FiscoHub.jsx"));
@@ -140,10 +140,10 @@ const router = createBrowserRouter([
       { path: "archivio-bonifici/:anno/:mese", element: <LazyPage><RiconciliazioneHub /></LazyPage> },
       
       // === DIPENDENTI ===
-      { path: "dipendenti", element: <LazyPage><HRGestionale /></LazyPage> },
-      { path: "dipendenti/:tab", element: <LazyPage><HRGestionale /></LazyPage> },
-      { path: "dipendenti/:tab/:subtab", element: <LazyPage><HRGestionale /></LazyPage> },
-      { path: "dipendenti/:nome/:tab", element: <LazyPage><HRGestionale /></LazyPage> },
+      { path: "dipendenti", element: <LazyPage><GestioneDipendentiUnificata /></LazyPage> },
+      { path: "dipendenti/:tab", element: <LazyPage><GestioneDipendentiUnificata /></LazyPage> },
+      { path: "dipendenti/:tab/:subtab", element: <LazyPage><GestioneDipendentiUnificata /></LazyPage> },
+      { path: "dipendenti/:nome/:tab", element: <LazyPage><GestioneDipendentiUnificata /></LazyPage> },
       { path: "presenze", element: <LazyPage><DipendentiHub /></LazyPage> },
       { path: "presenze/:dipendente", element: <LazyPage><DipendentiHub /></LazyPage> },
       { path: "presenze/:dipendente/:mese", element: <LazyPage><DipendentiHub /></LazyPage> },

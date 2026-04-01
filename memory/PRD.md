@@ -119,7 +119,48 @@ Applicazione ERP full-stack italiana (React + FastAPI + MongoDB) per gestione az
 - **Dipendenti P2**: Deduplicazione per CF in list_dipendenti e report ferie-permessi
 - **Fix routing**: Dashboard widget link /dipendenti/giustificativi → /presenze?tab=giustificativi
 
-## Sessione 10 (24 Marzo 2026 - Riattivazione e Fix Dati)
+## Sessione 11 (1 Aprile 2026 - Corrente)
+
+### Blocco J — Pulizia Codebase
+- **Blocco J1 — Backend**: Eliminati 10 file legacy (`lotti.py`, `tracciabilita.py`, `magazzino_doppia_verita.py`, `auto_repair.py`, `force_sync.py`, `sync_router.py`, `missing_endpoints.py`, `missing_endpoints_fix.py`, `batch_reprocessing.py`, `odoo_integration.py`). Rimossi tutti i `include_router` corrispondenti da `main.py`.
+- **Blocco J2 — Frontend**: Eliminati 4 file legacy (`HRGestionale.jsx`, `MagazzinoDoppiaVerita.jsx`, `PrimaNotaSalari.jsx`, `RegoleContabili.jsx`). Route `/dipendenti` ora punta a `GestioneDipendentiUnificata.jsx`.
+
+### Blocco G4 — Corrispettivi POS
+- `propagate_corrispettivo_to_prima_nota()` in `data_propagation.py` ora separa:
+  - Porzione contanti → `prima_nota_cassa` (DARE = pagato_contanti)
+  - Porzione elettronica → `prima_nota_banca` (DARE = pagato_elettronico, source=corrispettivo_pos)
+
+### Parte 1 — Sistema Agenti AI
+- Creata directory `/app/app/agents/` con: `models.py`, `notifier.py`, `fiscale_sentinella.py`, `hr_guardiano.py`, `learning_brain.py`, `orchestrator.py`
+- **FiscaleSentinella**: analizza email ADE, controlla scadenze F24, genera segnalazioni urgenti
+- **HRGuardiano**: controlla dimissioni telematiche, scadenze contratti, libretti sanitari, riconcilia cedolini
+- **LearningCervello**: genera suggerimenti automatici (es. fatture non pagate >60 giorni)
+- Agenti eseguiti ad ogni ciclo di sync email (via `email_monitor_service.py`)
+- Nuovo router `/api/agenti/*` con endpoint: segnalazioni, stato, count, run
+- Collezioni MongoDB: `agenti_segnalazioni`, `agenti_stato`, `agenti_apprendimenti`
+
+### Parte 2 — Portale HR con Firma Elettronica
+- `portal.py` aggiornato con:
+  - `POST /portal/collega-google`: collega Google Account a dipendente via codice invito
+  - `POST /portal/genera-invito/{id}`: genera codice invito 8 caratteri (valido 7 giorni)
+  - `GET /portal/portale/cedolini`: cedolini del dipendente loggato (filtrati per google_email)
+  - `GET /portal/portale/contratti`: contratti del dipendente
+  - `POST /portal/portale/firma/{id}`: firma FES (timestamp + IP + SHA256 hash documento)
+  - Notifica automatica in `agenti_segnalazioni` alla firma
+
+### AgentiPanel.jsx
+- Componente `AgentiPanel` in TopNav con badge rosso (count non lette)
+- Sidebar destra con lista segnalazioni colorate per tipo (urgente=rosso, avviso=arancio, info=blu)
+- Azioni: "Segna letta" e "Risolto"
+- Polling badge ogni 60 secondi
+
+### Test Finali Superati
+- GET /api/fornitori ✅
+- GET /api/prima-nota/banca?anno=2025 ✅
+- GET /api/finanziaria/summary (saldo_cassa + saldo_banca) ✅
+- GET /api/fatture-tracciabilita/status ✅
+- GET /api/agenti/stato (tutti e 3 completati) ✅
+
 - **Riattivazione verificata**: tutti i moduli P0/P1/P2 funzionanti con dati reali MongoDB Atlas
 - **Fix Cedolini**: filtro `anno` ora usa `$or [int, string]` - prima restituiva 0 record per 2026
 - **Fix Prima Nota Salari**: filtro `anno` ora usa campo `anno` (int) invece di `data` (regex) - prima restituiva 0 record
