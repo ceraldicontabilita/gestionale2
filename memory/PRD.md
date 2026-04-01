@@ -39,6 +39,8 @@ Applicazione ERP full-stack italiana (React + FastAPI + MongoDB) per gestione az
 >   - `GET /api/cedolini?anno=2025&mese=3` → solo cedolini marzo 2025
 > - **Quando si crea un nuovo endpoint** che restituisce saldi o liste, aggiungere SEMPRE il filtro `anno` (e `mese` se la granularità lo richiede)
 > - **Quando si crea un nuovo componente React** che mostra dati finanziari, passare SEMPRE `anno` dall'AnnoContext all'API call
+>
+> **BUG NOTO FIXATO (Apr 2026):** Prima Nota Banca → il saldo progressivo nella tabella partiva sempre da 0 invece di usare il riporto dall'anno precedente. Fixato passando `saldoPrecedente={bancaData.saldo_precedente || 0}` al componente `MovementsTable`.
 
 ## Sessione 1 (Precedente)
 - Fix contabilità critica (Bilancio, Veicoli)
@@ -132,7 +134,24 @@ Applicazione ERP full-stack italiana (React + FastAPI + MongoDB) per gestione az
 - **Dipendenti P2**: Deduplicazione per CF in list_dipendenti e report ferie-permessi
 - **Fix routing**: Dashboard widget link /dipendenti/giustificativi → /presenze?tab=giustificativi
 
-## Sessione 11 (1 Aprile 2026 - Corrente)
+## Sessione 12 (1 Aprile 2026 - Agenti AI + Fix Prima Nota)
+
+#### Fix Prima Nota Banca — saldoPrecedente
+- **Bug fixato**: `PrimaNota.jsx` — Il saldo progressivo in tabella Banca partiva da 0 invece del riporto anni precedenti. Fixato: `saldoPrecedente={bancaData.saldo_precedente || 0}`
+- Regola documentata nel PRD: ogni saldo/calcolo rispetta l'anno globale (AnnoContext)
+
+#### Pagina /agenti
+- Nuova pagina `Agenti.jsx` con 6 tab: Agenti, Urgenti, Avvisi, Info, Suggerimenti, Pattern appresi
+- Ogni agente mostra: nome, stato (attivo/errore), ultima esecuzione, pulsante "Esegui ora"
+- Segnalazioni raggruppate per tipo con colori (rosso/arancio/blu/verde), pulsante "Risolto"
+- Tab "Pattern appresi" con confidenza e occorrenze per categoria
+- Pulsante "Esegui tutti ora" globale in alto a destra
+
+#### OCR PDF in FiscaleSentinella
+- Aggiunta funzione `_estrai_testo_pdf()` con `pdfplumber`
+- Testo estratto salvato in `documents_inbox.testo_estratto_ocr`
+
+## Sessione 11 (1 Aprile 2026 - Blocchi J+G4)
 
 ### Blocco J — Pulizia Codebase
 - **Blocco J1 — Backend**: Eliminati 10 file legacy (`lotti.py`, `tracciabilita.py`, `magazzino_doppia_verita.py`, `auto_repair.py`, `force_sync.py`, `sync_router.py`, `missing_endpoints.py`, `missing_endpoints_fix.py`, `batch_reprocessing.py`, `odoo_integration.py`). Rimossi tutti i `include_router` corrispondenti da `main.py`.

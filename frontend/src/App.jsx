@@ -44,6 +44,7 @@ const ALL_NAV_ITEMS = [
   { to: "/documenti", label: "Documenti", icon: "📨" },
   { to: "/strumenti", label: "Strumenti", icon: "🔧" },
   { to: "/integrazioni", label: "Integrazioni", icon: "🔗" },
+  { to: "/agenti", label: "Agenti AI", icon: "🤖" },
   { to: "/admin", label: "Admin", icon: "⚙️" },
 ];
 

@@ -79,6 +79,7 @@ const DettaglioVerbale = lazy(() => import("./pages/DettaglioVerbale.jsx"));
 const ImpostazioniF24Email = lazy(() => import("./pages/ImpostazioniF24Email.jsx"));
 const Mutui = lazy(() => import("./pages/Mutui.jsx"));
 const VerificaCoerenza = lazy(() => import("./pages/VerificaCoerenza.jsx"));
+const AgentiPage = lazy(() => import("./pages/Agenti.jsx"));
 
 const LazyPage = ({ children }) => (
   <Suspense fallback={<PageLoader />}>{children}</Suspense>
@@ -281,6 +282,7 @@ const router = createBrowserRouter([
       { path: "strumenti", element: <LazyPage><StrumentiHub /></LazyPage> },
       { path: "verifica-coerenza", element: <LazyPage><VerificaCoerenza /></LazyPage> },
       { path: "verifica-coerenza/:tab", element: <LazyPage><VerificaCoerenza /></LazyPage> },
+      { path: "agenti", element: <LazyPage><AgentiPage /></LazyPage> },
       { path: "commercialista", element: <LazyPage><StrumentiHub /></LazyPage> },
       { path: "commercialista/:anno/:mese", element: <LazyPage><StrumentiHub /></LazyPage> },
       { path: "pianificazione", element: <LazyPage><StrumentiHub /></LazyPage> },

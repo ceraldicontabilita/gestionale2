@@ -75,3 +75,17 @@ async def run_agenti_manuale():
         return {"status": "ok", "message": "Agenti eseguiti con successo"}
     except Exception as e:
         return {"status": "errore", "error": str(e)}
+
+
+@router.get("/pattern-appresi")
+async def get_pattern_appresi(categoria: str = Query(None)):
+    """Pattern appresi dalla LearningCervello."""
+    db = Database.get_db()
+    query = {"confidenza": {"$gte": 0.3}}
+    if categoria:
+        query["categoria"] = categoria
+    pattern = await db["agenti_apprendimenti"].find(
+        query, {"_id": 0}
+    ).sort("occorrenze", -1).limit(100).to_list(100)
+    categorie = list({p.get("categoria", "generico") for p in pattern})
+    return {"pattern": pattern, "totale": len(pattern), "categorie": categorie}

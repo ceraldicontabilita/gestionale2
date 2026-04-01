@@ -943,7 +943,7 @@ function PrimaNotaDesktop() {
             onEdit={(updated) => handleEditMovimento('banca', updated)}
             onSposta={handleSpostaMovimento}
             readOnly={false}
-            saldoPrecedente={0}
+            saldoPrecedente={bancaData.saldo_precedente || 0}
           />
         </section>
       )}

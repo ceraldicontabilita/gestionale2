@@ -1,7 +1,28 @@
 import re
 import asyncio
+import base64
+import logging
 from datetime import datetime, timezone, date, timedelta
 from app.agents.notifier import crea_segnalazione
+
+logger = logging.getLogger(__name__)
+
+
+def _estrai_testo_pdf(pdf_bytes: bytes) -> str:
+    """Estrae testo da PDF con pdfplumber (OCR semplice)."""
+    try:
+        import pdfplumber
+        import io
+        with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
+            testi = []
+            for page in pdf.pages[:5]:  # max 5 pagine
+                t = page.extract_text()
+                if t:
+                    testi.append(t)
+            return "\n".join(testi)
+    except Exception as e:
+        logger.warning(f"pdfplumber fallito: {e}")
+        return ""
 
 
 class FiscaleSentinella:
@@ -33,14 +54,31 @@ class FiscaleSentinella:
         }, {"_id": 0}).to_list(30)
 
         for doc in docs:
+            # Estrai testo da PDF se presente
+            testo_pdf = ""
+            if doc.get("pdf_data") or doc.get("content_base64"):
+                try:
+                    raw = doc.get("pdf_data") or doc.get("content_base64", "")
+                    pdf_bytes = base64.b64decode(raw) if raw else b""
+                    if pdf_bytes:
+                        testo_pdf = _estrai_testo_pdf(pdf_bytes)
+                        if testo_pdf:
+                            await db["documents_inbox"].update_one(
+                                {"id": doc["id"]},
+                                {"$set": {"testo_estratto_ocr": testo_pdf[:5000]}}
+                            )
+                except Exception as e:
+                    logger.warning(f"OCR PDF doc {doc.get('id')}: {e}")
+
             testo = (
                 doc.get("testo_estratto", "") + " " +
+                testo_pdf + " " +
                 doc.get("oggetto", "") + " " +
                 doc.get("filename", "")
             ).lower()
             is_avviso = any(p in testo for p in self.PATTERN_AVVISO_BONARIO)
             if is_avviso:
-                await self._processa_avviso_bonario(db, doc)
+                await self._processa_avviso_bonario(db, doc, testo)
             await db["documents_inbox"].update_one(
                 {"id": doc["id"]},
                 {"$set": {
@@ -49,8 +87,9 @@ class FiscaleSentinella:
                 }}
             )
 
-    async def _processa_avviso_bonario(self, db, doc):
-        testo = doc.get("testo_estratto", "") + " " + doc.get("oggetto", "")
+    async def _processa_avviso_bonario(self, db, doc, testo: str = None):
+        if testo is None:
+            testo = (doc.get("testo_estratto", "") + " " + doc.get("oggetto", ""))
         avviso = self._estrai_dati_avviso(testo)
         codice = avviso.get("codice_tributo")
         periodo = avviso.get("periodo_riferimento")
