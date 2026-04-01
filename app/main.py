@@ -215,10 +215,10 @@ from app.routers import openapi_imprese
 from app.routers import (
     auth, cash, chart_of_accounts, notifications,
     cash_register, failed_invoices, settings as settings_router,
-    config, search, incasso_reale, ocr_assegni, cart, portal, orders,
+    config, search, incasso_reale, ocr_assegni, portal,
     portal_extended, cash_register_extended, finanziaria, public_api,
     comparatore, gestione_riservata, commercialista, scadenze,
-    riconciliazione_fornitori, ordini_fornitori, payroll, documents,
+    riconciliazione_fornitori, ordini_fornitori, payroll,
     pianificazione, admin, verifica_coerenza, documenti,
     previsioni_acquisti,
     cedolini, tfr, cespiti, scadenzario_fornitori,
@@ -405,10 +405,8 @@ app.include_router(config.router, prefix="/api/config", tags=["Config"])
 app.include_router(search.router, prefix="/api/search", tags=["Search"])
 app.include_router(incasso_reale.router, prefix="/api/incasso-reale", tags=["Incasso Reale"])
 app.include_router(ocr_assegni.router, prefix="/api/ocr-assegni", tags=["OCR Assegni"])
-app.include_router(cart.router, prefix="/api/cart", tags=["Cart"])
 app.include_router(portal.router, prefix="/api/portal", tags=["Portal"])
 app.include_router(portal_extended.router, prefix="/api/portal", tags=["Portal Extended"])
-app.include_router(orders.router, prefix="/api", tags=["Orders"])
 app.include_router(finanziaria.router, prefix="/api/finanziaria", tags=["Finanziaria"])
 app.include_router(comparatore.router, prefix="/api/comparatore", tags=["Comparatore Prezzi"])
 app.include_router(gestione_riservata.router, prefix="/api/gestione-riservata", tags=["Gestione Riservata"])
@@ -416,7 +414,6 @@ app.include_router(commercialista.router, prefix="/api/commercialista", tags=["C
 app.include_router(scadenze.router, prefix="/api/scadenze", tags=["Scadenze e Notifiche"])
 app.include_router(riconciliazione_fornitori.router, prefix="/api/riconciliazione-fornitori", tags=["Riconciliazione Fornitori"])
 app.include_router(ordini_fornitori.router, prefix="/api/ordini-fornitori", tags=["Ordini Fornitori"])
-app.include_router(documents.router, prefix="/api/documents", tags=["Documents"])
 app.include_router(pianificazione.router, prefix="/api/pianificazione", tags=["Pianificazione"])
 app.include_router(admin.router, prefix="/api/admin", tags=["Admin"])
 app.include_router(verifica_coerenza.router, prefix="/api/verifica-coerenza", tags=["Verifica Coerenza Dati"])
@@ -675,6 +672,16 @@ async def system_lock_status():
         "can_start_email_operation": not is_email_operation_running()
     }
 
+
+# ─── Cucina Module ────────────────────────────────────────────────────────────
+from app.routers.cucina.ricette import router as r_cu_ricette
+from app.routers.cucina.food_cost import router as r_cu_foodcost
+from app.routers.cucina.prodotti_vendita import router as r_cu_prodotti
+from app.routers.cucina.ordini_fornitori import router as r_cu_ord_fornitori
+app.include_router(r_cu_ricette, prefix="/api", tags=["Cucina Ricette"])
+app.include_router(r_cu_foodcost, prefix="/api", tags=["Cucina Food Cost"])
+app.include_router(r_cu_prodotti, prefix="/api", tags=["Cucina Prodotti Vendita"])
+app.include_router(r_cu_ord_fornitori, prefix="/api", tags=["Cucina Ordini Fornitori"])
 
 # Mount static files for downloads
 docs_path = "./docs"
