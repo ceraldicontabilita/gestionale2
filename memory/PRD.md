@@ -30,6 +30,12 @@ Applicazione ERP full-stack italiana (React + FastAPI + MongoDB) per gestione az
 - **UI Admin**: Tab Email in `/admin/email` mostra card Gmail + card PEC Aruba separata
 - **API PEC**: `GET/PUT /api/config/pec-account`, `POST /api/config/pec-account/test`
 
+## G3 — Ordini da Tracciabilità (implementato 2026-04-01)
+- **Backend**: `GET /api/ordini-fornitori/tracciabilita?giorni=N` — legge da `ordini_fornitori` con `stato=inviato`
+- **Frontend**: `OrdiniFornitori.jsx` — aggiunta tab navigation ("Storico Ordini" / "Da Tracciabilità")
+- **Tab Tracciabilità**: tabella con data, fornitore, prodotti collassabili, totale stimato, note operatore
+- **Filtri**: per periodo (10/20/30/60/90 giorni) e per fornitore (testo libero)
+
 ## Logica aziendale chiave
 - **Volume Affari** = SOLO corrispettivi (le fatture emesse sono GIA incluse nei corrispettivi come scontrini)
 - **Fatture ricevute** (collezione invoices) = COSTI/ACQUISTI, NON ricavi

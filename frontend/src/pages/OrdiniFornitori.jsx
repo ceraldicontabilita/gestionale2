@@ -186,9 +186,42 @@ export default function OrdiniFornitori() {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [sendingEmail, setSendingEmail] = useState(null);
 
+  // Tab navigation
+  const [activeTab, setActiveTab] = useState("storico");
+
+  // Tab "Da Tracciabilità"
+  const [ordiniTracciabilita, setOrdiniTracciabilita] = useState([]);
+  const [loadingTrac, setLoadingTrac] = useState(false);
+  const [giorniTrac, setGiorniTrac] = useState(30);
+  const [filtroFornitore, setFiltroFornitore] = useState("");
+  const [expandedRows, setExpandedRows] = useState({});
+
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === "tracciabilita") {
+      loadOrdiniTracciabilita(giorniTrac);
+    }
+  }, [activeTab, giorniTrac]);
+
+  async function loadOrdiniTracciabilita(giorni) {
+    setLoadingTrac(true);
+    try {
+      const res = await api.get(`/api/ordini-fornitori/tracciabilita?giorni=${giorni}`);
+      setOrdiniTracciabilita(res.data || []);
+    } catch (e) {
+      console.error("Errore caricamento ordini tracciabilità:", e);
+      setOrdiniTracciabilita([]);
+    } finally {
+      setLoadingTrac(false);
+    }
+  }
+
+  function toggleRow(id) {
+    setExpandedRows(prev => ({ ...prev, [id]: !prev[id] }));
+  }
 
   async function loadData() {
     setLoading(true);
@@ -397,7 +430,38 @@ export default function OrdiniFornitori() {
 
         {err && <div style={styles.error}>{err}</div>}
         {success && <div style={styles.success}>{success}</div>}
+
+        {/* Tab Navigation */}
+        <div style={{ display: 'flex', gap: 0, borderBottom: '2px solid #e2e8f0', marginTop: 12 }}>
+          {[
+            { id: "storico", label: "📋 Storico Ordini" },
+            { id: "tracciabilita", label: "🔍 Da Tracciabilità" },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              data-testid={`tab-${tab.id}`}
+              onClick={() => setActiveTab(tab.id)}
+              style={{
+                padding: '8px 18px',
+                border: 'none',
+                borderBottom: activeTab === tab.id ? '2px solid #1e3a5f' : '2px solid transparent',
+                background: 'transparent',
+                fontWeight: activeTab === tab.id ? '700' : '500',
+                color: activeTab === tab.id ? '#1e3a5f' : '#64748b',
+                cursor: 'pointer',
+                fontSize: 13,
+                marginBottom: -2,
+                transition: 'all 0.15s'
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
+
+      {/* TAB: STORICO ORDINI */}
+      {activeTab === "storico" && <>
 
       {/* Carrello per Fornitore */}
       {cart.by_supplier.length > 0 && (
@@ -570,6 +634,148 @@ export default function OrdiniFornitori() {
           </div>
         </div>
       </div>
+
+      </> /* fine TAB STORICO */ }
+
+      {/* TAB: DA TRACCIABILITÀ */}
+      {activeTab === "tracciabilita" && (
+        <div style={styles.card}>
+          <h2 style={styles.header}>🔍 Ordini da Tracciabilità</h2>
+          <p style={styles.subtitle}>
+            Ordini con stato <strong>inviato</strong> provenienti dalla collection <code>ordini_fornitori</code>.
+            Solo visualizzazione — nessuna modifica da qui.
+          </p>
+
+          {/* Filtri */}
+          <div style={{ ...styles.row, marginBottom: 14, gap: 10, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <label style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>Periodo:</label>
+              <select
+                data-testid="filtro-giorni"
+                value={giorniTrac}
+                onChange={e => setGiorniTrac(Number(e.target.value))}
+                style={{ padding: '5px 10px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 12 }}
+              >
+                <option value={10}>Ultimi 10 giorni</option>
+                <option value={20}>Ultimi 20 giorni</option>
+                <option value={30}>Ultimi 30 giorni</option>
+                <option value={60}>Ultimi 60 giorni</option>
+                <option value={90}>Ultimi 90 giorni</option>
+              </select>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <label style={{ fontSize: 12, fontWeight: 600, color: '#475569' }}>Fornitore:</label>
+              <input
+                data-testid="filtro-fornitore"
+                type="text"
+                value={filtroFornitore}
+                onChange={e => setFiltroFornitore(e.target.value)}
+                placeholder="Filtra per fornitore..."
+                style={{ padding: '5px 10px', border: '1px solid #e2e8f0', borderRadius: 6, fontSize: 12, width: 200 }}
+              />
+              {filtroFornitore && (
+                <button onClick={() => setFiltroFornitore("")} style={styles.btnSecondary}>✕</button>
+              )}
+            </div>
+            <button
+              data-testid="btn-ricarica-tracciabilita"
+              onClick={() => loadOrdiniTracciabilita(giorniTrac)}
+              style={styles.btnSecondary}
+            >
+              ↻ Ricarica
+            </button>
+          </div>
+
+          {loadingTrac ? (
+            <div style={styles.emptyState}><div style={{ fontSize: 32, marginBottom: 12 }}>⏳</div><p>Caricamento...</p></div>
+          ) : (() => {
+            const filtrati = ordiniTracciabilita.filter(o =>
+              !filtroFornitore || (o.fornitore || o.supplier_name || "").toLowerCase().includes(filtroFornitore.toLowerCase())
+            );
+            return filtrati.length === 0 ? (
+              <div style={styles.emptyState}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>📭</div>
+                <p style={{ margin: 0 }}>Nessun ordine trovato</p>
+                <p style={{ margin: '8px 0 0 0', fontSize: 13, color: '#94a3b8' }}>
+                  {ordiniTracciabilita.length === 0
+                    ? `Nessun ordine con stato "inviato" negli ultimi ${giorniTrac} giorni`
+                    : "Nessun risultato per il filtro applicato"}
+                </p>
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <div style={{ fontSize: 12, color: '#64748b', marginBottom: 8 }}>
+                  {filtrati.length} ordine{filtrati.length !== 1 ? 'i' : ''} trovato{filtrati.length !== 1 ? 'i' : ''}
+                </div>
+                <table style={styles.table}>
+                  <thead>
+                    <tr>
+                      <th style={styles.th}>Data</th>
+                      <th style={styles.th}>Fornitore</th>
+                      <th style={styles.th}>Prodotti</th>
+                      <th style={{ ...styles.th, textAlign: 'right' }}>Totale Stimato</th>
+                      <th style={styles.th}>Note Operatore</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtrati.map((ord, i) => {
+                      const rowId = ord.id || ord._id || i;
+                      const prodotti = ord.prodotti || ord.items || [];
+                      const isExpanded = !!expandedRows[rowId];
+                      const fornitore = ord.fornitore || ord.supplier_name || "—";
+                      const totale = ord.totale_stimato ?? ord.totale ?? ord.total ?? ord.subtotal ?? null;
+                      const note = ord.note_operatore || ord.note || ord.notes || "—";
+                      const data = ord.created_at
+                        ? new Date(ord.created_at).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                        : "—";
+
+                      return (
+                        <tr key={rowId} style={{ background: i % 2 === 0 ? 'white' : '#fafafa' }}>
+                          <td style={{ ...styles.td, whiteSpace: 'nowrap' }}>{data}</td>
+                          <td style={styles.td}>
+                            <strong style={{ color: '#1e293b' }}>{fornitore}</strong>
+                          </td>
+                          <td style={styles.td}>
+                            {prodotti.length > 0 ? (
+                              <div>
+                                <button
+                                  data-testid={`toggle-prodotti-${i}`}
+                                  onClick={() => toggleRow(rowId)}
+                                  style={{ ...styles.btnSecondary, marginBottom: isExpanded ? 6 : 0 }}
+                                >
+                                  {isExpanded ? '▲' : '▼'} {prodotti.length} prodott{prodotti.length !== 1 ? 'i' : 'o'}
+                                </button>
+                                {isExpanded && (
+                                  <ul style={{ margin: '4px 0 0 0', paddingLeft: 16, fontSize: 12, color: '#475569' }}>
+                                    {prodotti.map((p, j) => (
+                                      <li key={j}>
+                                        {p.nome || p.product_name || p.descrizione || p.description || JSON.stringify(p)}
+                                        {p.quantita != null && ` — ${p.quantita} ${p.unita || p.unit || ''}`}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </div>
+                            ) : (
+                              <span style={{ color: '#94a3b8', fontSize: 12 }}>Nessun dettaglio</span>
+                            )}
+                          </td>
+                          <td style={{ ...styles.td, textAlign: 'right', fontWeight: 'bold' }}>
+                            {totale != null ? `€ ${Number(totale).toFixed(2)}` : <span style={{ color: '#94a3b8' }}>—</span>}
+                          </td>
+                          <td style={{ ...styles.td, maxWidth: 200, fontSize: 12, color: '#475569' }}>
+                            {note}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })()}
+        </div>
+      )}
 
       {/* Modal Dettaglio Ordine */}
       {selectedOrder && (

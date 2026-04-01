@@ -98,6 +98,20 @@ async def get_stats() -> Dict[str, Any]:
     }
 
 
+@router.get("/tracciabilita")
+@handle_errors
+async def get_ordini_tracciabilita(giorni: int = 30) -> List[Dict[str, Any]]:
+    """Legge ordini dalla collection ordini_fornitori con stato='inviato' negli ultimi N giorni."""
+    from datetime import timedelta
+    db = Database.get_db()
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=giorni)).isoformat()
+    docs = await db["ordini_fornitori"].find(
+        {"stato": "inviato", "created_at": {"$gte": cutoff}},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(200)
+    return docs
+
+
 @router.get("/{order_id}")
 @handle_errors
 async def get_ordine(order_id: str) -> Dict[str, Any]:
