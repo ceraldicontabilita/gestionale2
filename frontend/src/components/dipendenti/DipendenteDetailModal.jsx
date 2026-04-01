@@ -787,7 +787,7 @@ function DipendenteBonificiTab({ bonifici, loading, onReload }) {
                   </td>
                   <td style={{ padding: 8, textAlign: 'center' }}>
                     <button
-                      onClick={() => window.open(`${process.env.REACT_APP_BACKEND_URL}/api/archivio-bonifici/transfers/${bon.id}/pdf`, '_blank')}
+                      onClick={() => window.open(`${import.meta.env.VITE_BACKEND_URL || ''}/api/archivio-bonifici/transfers/${bon.id}/pdf`, '_blank')}
                       style={{
                         background: '#e3f2fd',
                         color: '#1565c0',

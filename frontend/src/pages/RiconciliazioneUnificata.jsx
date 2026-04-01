@@ -1649,7 +1649,7 @@ function DocumentiTab({ documenti, stats, onRefresh, processing }) {
   }, []);
   
   const handleViewPdf = (doc) => {
-    const url = `${process.env.REACT_APP_BACKEND_URL}/api/documenti-non-associati/pdf/${doc.id}`;
+    const url = `${import.meta.env.VITE_BACKEND_URL || ''}/api/documenti-non-associati/pdf/${doc.id}`;
     window.open(url, '_blank');
   };
   
