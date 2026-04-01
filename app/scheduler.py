@@ -22,7 +22,7 @@ async def sync_gmail_aruba_task():
     """
     from app.database import Database
     from app.services.aruba_invoice_parser import fetch_aruba_invoices
-    from app.services.telegram_notifications import is_configured, send_telegram_notification
+    from app.services.telegram_notifications import is_configured, send_notification
     
     logger.info("📧 [SCHEDULER] Avvio sync Gmail/Aruba...")
     
@@ -79,7 +79,7 @@ async def sync_gmail_aruba_task():
 👉 Vai su /operazioni-da-confermare per gestirle"""
             
             try:
-                await send_telegram_notification(messaggio)
+                await send_notification(messaggio)
                 logger.info("📱 [SCHEDULER] Notifica Telegram inviata")
             except Exception as e:
                 logger.error(f"📱 [SCHEDULER] Errore notifica Telegram: {e}")
@@ -115,7 +115,7 @@ async def scan_verbali_email_task():
         # Se ci sono nuovi verbali, prova a inviarli via Telegram
         if fase2.get("verbali_nuovi", 0) > 0:
             try:
-                from app.services.telegram_notifications import is_configured, send_telegram_notification
+                from app.services.telegram_notifications import is_configured, send_notification
                 
                 if is_configured():
                     messaggio = f"""🚗 *Nuovi Verbali Trovati*
@@ -126,7 +126,7 @@ async def scan_verbali_email_task():
 
 👉 Vai su /verbali-riconciliazione per gestirli"""
                     
-                    await send_telegram_notification(messaggio)
+                    await send_notification(messaggio)
                     logger.info("📱 [SCHEDULER] Notifica Telegram verbali inviata")
             except Exception as e:
                 logger.warning(f"📱 [SCHEDULER] Notifica Telegram non inviata: {e}")

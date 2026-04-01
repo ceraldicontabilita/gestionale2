@@ -134,6 +134,17 @@ Applicazione ERP full-stack italiana (React + FastAPI + MongoDB) per gestione az
 - **Dipendenti P2**: Deduplicazione per CF in list_dipendenti e report ferie-permessi
 - **Fix routing**: Dashboard widget link /dipendenti/giustificativi → /presenze?tab=giustificativi
 
+## Sessione 17 (1 Aprile 2026 - Fix Scheduler + Verifica MongoDB)
+
+### Fix critico Scheduler
+- Bug `send_telegram_notification` → `send_notification` in `scheduler.py` (causava ImportError al deploy)
+- Credenziali MongoDB verificate: `MONGO_URL` e `MONGODB_ATLAS_URI` entrambe puntano correttamente a Atlas cluster0
+
+### Stato DB confermato via /api/admin/stats
+- invoices: 204 | suppliers: 330 | products: 6957 | employees: 31
+- prima_nota_cassa: 2091 | prima_nota_banca: 1855 | f24: 68
+- Health: healthy | Alerts non letti: 2
+
 ## Sessione 16 (1 Aprile 2026 - Verifica Flusso Email→XML→Prima Nota)
 
 ### Risultati verifica flusso completo
