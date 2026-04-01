@@ -77,6 +77,22 @@ async def list_dipendenti(
     return dipendenti
 
 
+@router.get("/by-google-email")
+async def get_dipendente_by_google_email(email: str = Query(...)):
+    """Cerca dipendente associato a un Google email (per portale)."""
+    from fastapi import HTTPException
+    db = Database.get_db()
+    dip = await db[Collections.EMPLOYEES].find_one(
+        {"google_email": email.lower().strip()},
+        {"_id": 0, "nome_completo": 1, "mansione": 1, "data_inizio_contratto": 1, "id": 1}
+    )
+    if not dip:
+        raise HTTPException(status_code=404, detail="Dipendente non trovato")
+    return dip
+
+
+
+
 @router.get("/stats")
 @handle_errors
 async def get_dipendenti_stats() -> Dict[str, Any]:

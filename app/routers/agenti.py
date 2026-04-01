@@ -35,6 +35,26 @@ async def get_count_non_lette():
     return {"non_lette": count}
 
 
+@router.get("/segnalazioni/summary")
+async def get_segnalazioni_summary():
+    """Contatori per tipo — usato dal widget dashboard."""
+    db = Database.get_db()
+    pipeline = [
+        {"$match": {"risolta": {"$ne": True}}},
+        {"$group": {"_id": "$tipo", "count": {"$sum": 1}}}
+    ]
+    rows = await db["agenti_segnalazioni"].aggregate(pipeline).to_list(20)
+    result = {"urgente": 0, "avviso": 0, "info": 0, "suggerimento": 0, "anomalia": 0}
+    for r in rows:
+        tipo = r["_id"] or "info"
+        if tipo in result:
+            result[tipo] += r["count"]
+    # Urgenti include anche anomalie
+    result["urgente"] += result.pop("anomalia", 0)
+    result["totale"] = sum(result.values())
+    return result
+
+
 @router.put("/segnalazioni/{sid}/letta")
 async def segna_letta(sid: str):
     """Segna una segnalazione come letta."""

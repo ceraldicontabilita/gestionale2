@@ -80,6 +80,7 @@ const ImpostazioniF24Email = lazy(() => import("./pages/ImpostazioniF24Email.jsx
 const Mutui = lazy(() => import("./pages/Mutui.jsx"));
 const VerificaCoerenza = lazy(() => import("./pages/VerificaCoerenza.jsx"));
 const AgentiPage = lazy(() => import("./pages/Agenti.jsx"));
+const Portale = lazy(() => import("./pages/Portale.jsx"));
 
 const LazyPage = ({ children }) => (
   <Suspense fallback={<PageLoader />}>{children}</Suspense>
@@ -89,6 +90,7 @@ const router = createBrowserRouter([
   { path: "/auth/callback", element: <AuthCallback /> },
   { path: "/login", element: <Login /> },
   { path: "/register", element: <Register /> },
+  { path: "/portale", element: <Portale /> },
   { path: "/gestione-riservata", element: <LazyPage><GestioneRiservata /></LazyPage> },
   {
     path: "/",
@@ -283,6 +285,7 @@ const router = createBrowserRouter([
       { path: "verifica-coerenza", element: <LazyPage><VerificaCoerenza /></LazyPage> },
       { path: "verifica-coerenza/:tab", element: <LazyPage><VerificaCoerenza /></LazyPage> },
       { path: "agenti", element: <LazyPage><AgentiPage /></LazyPage> },
+      // portale è già definito a root level (fuori dall'App layout)
       { path: "commercialista", element: <LazyPage><StrumentiHub /></LazyPage> },
       { path: "commercialista/:anno/:mese", element: <LazyPage><StrumentiHub /></LazyPage> },
       { path: "pianificazione", element: <LazyPage><StrumentiHub /></LazyPage> },

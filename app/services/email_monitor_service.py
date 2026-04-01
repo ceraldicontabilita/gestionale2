@@ -46,9 +46,26 @@ async def sync_email_documents(db, giorni: int = 30) -> Dict[str, Any]:
     from app.services.email_document_downloader import download_documents_from_email
     from app.config import settings
 
-    # Leggi credenziali email da settings (carica /app/backend/.env)
-    email_user = settings.IMAP_USER or settings.EMAIL_USER
-    email_password = settings.IMAP_PASSWORD or settings.EMAIL_PASSWORD
+    # Leggi credenziali prima da MongoDB (impostazioni UI), poi da .env
+    email_user = None
+    email_password = None
+    imap_host = settings.IMAP_HOST or "imap.gmail.com"
+
+    try:
+        gmail_cfg = await db["settings"].find_one({"chiave": "gmail"}, {"_id": 0})
+        if gmail_cfg and gmail_cfg.get("gmail_app_password") and gmail_cfg.get("imap_user"):
+            email_user = gmail_cfg["imap_user"]
+            email_password = gmail_cfg["gmail_app_password"]
+            imap_host = gmail_cfg.get("imap_host", imap_host)
+            logger.info("Credenziali IMAP caricate da MongoDB settings")
+    except Exception as e:
+        logger.warning(f"Impossibile leggere settings MongoDB: {e}")
+
+    # Fallback a .env
+    if not email_user:
+        email_user = settings.IMAP_USER or settings.EMAIL_USER
+    if not email_password:
+        email_password = settings.IMAP_PASSWORD or settings.EMAIL_PASSWORD
     
     if not email_user or not email_password:
         logger.warning("Credenziali email non configurate")

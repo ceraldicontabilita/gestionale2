@@ -24,6 +24,139 @@ const CATEGORIE_F24 = [
   { value: 'altro', label: 'Altro' }
 ];
 
+// ===== COMPONENTE GMAIL SETTINGS =====
+function GmailSettingsSection() {
+  const [cfg, setCfg] = useState(null);
+  const [form, setForm] = useState({ imap_user: '', gmail_app_password: '', imap_host: 'imap.gmail.com' });
+  const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [msg, setMsg] = useState(null);
+  const [showPass, setShowPass] = useState(false);
+
+  useEffect(() => {
+    api.get('/api/settings/gmail')
+      .then(r => {
+        setCfg(r.data);
+        setForm(f => ({ ...f, imap_user: r.data.imap_user || '', imap_host: r.data.imap_host || 'imap.gmail.com' }));
+      })
+      .catch(() => {});
+  }, []);
+
+  const salva = async () => {
+    setSaving(true);
+    setMsg(null);
+    try {
+      const res = await api.post('/api/settings/gmail', form);
+      setMsg({ ok: res.data.status === 'ok', testo: res.data.messaggio });
+      if (res.data.status === 'ok') setCfg(c => ({ ...c, has_password: true, sorgente: 'database', imap_user: form.imap_user }));
+    } catch (e) {
+      setMsg({ ok: false, testo: e.response?.data?.detail || 'Errore durante il salvataggio' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const testConnessione = async () => {
+    setTesting(true);
+    setMsg(null);
+    try {
+      const res = await api.post('/api/settings/gmail/test');
+      setMsg({ ok: res.data.ok, testo: res.data.messaggio || res.data.error });
+    } catch {
+      setMsg({ ok: false, testo: 'Errore durante il test' });
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: 860, margin: '0 auto', padding: '16px 0' }}>
+      <Card>
+        <CardHeader>
+          <CardTitle style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Mail className="w-5 h-5 text-blue-600" />
+            Credenziali Gmail IMAP
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p style={{ fontSize: 13, color: '#64748b', marginBottom: 16, lineHeight: 1.6 }}>
+            Inserisci la Gmail App Password per permettere al sistema di scaricare automaticamente
+            le email con le fatture. Vai su <strong>Account Google → Sicurezza → Verifica in 2 passaggi → App Password</strong> per generare una nuova password.
+            La password viene salvata nel database (non nel codice).
+          </p>
+
+          {cfg && (
+            <div style={{ marginBottom: 16, padding: '8px 12px', borderRadius: 8, background: cfg.has_password ? '#f0fdf4' : '#fff7ed', border: `1px solid ${cfg.has_password ? '#bbf7d0' : '#fed7aa'}` }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: cfg.has_password ? '#16a34a' : '#d97706' }}>
+                {cfg.has_password
+                  ? `Credenziali presenti — Sorgente: ${cfg.sorgente} — Utente: ${cfg.imap_user}`
+                  : 'Nessuna credenziale configurata — il download email è disattivato'}
+              </span>
+            </div>
+          )}
+
+          <div style={{ display: 'grid', gap: 12 }}>
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Email Gmail</label>
+              <Input
+                value={form.imap_user}
+                onChange={e => setForm(f => ({ ...f, imap_user: e.target.value }))}
+                placeholder="ceraldigroupsrl@gmail.com"
+                type="email"
+              />
+            </div>
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>App Password Gmail (16 caratteri)</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <Input
+                  value={form.gmail_app_password}
+                  onChange={e => setForm(f => ({ ...f, gmail_app_password: e.target.value.replace(/\s/g, '') }))}
+                  placeholder="abcdabcdabcdabcd"
+                  type={showPass ? 'text' : 'password'}
+                  style={{ flex: 1, fontFamily: 'monospace' }}
+                />
+                <Button variant="outline" size="sm" onClick={() => setShowPass(s => !s)} style={{ flexShrink: 0 }}>
+                  {showPass ? 'Nascondi' : 'Mostra'}
+                </Button>
+              </div>
+              <p style={{ fontSize: 11, color: '#94a3b8', margin: '4px 0 0' }}>
+                Incolla la App Password senza spazi. Es: <code>abcdabcdabcdabcd</code>
+              </p>
+            </div>
+            <div>
+              <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 4 }}>Server IMAP</label>
+              <Input
+                value={form.imap_host}
+                onChange={e => setForm(f => ({ ...f, imap_host: e.target.value }))}
+                placeholder="imap.gmail.com"
+              />
+            </div>
+          </div>
+
+          {msg && (
+            <div style={{ marginTop: 12, padding: '8px 12px', borderRadius: 8, background: msg.ok ? '#f0fdf4' : '#fef2f2', border: `1px solid ${msg.ok ? '#bbf7d0' : '#fecaca'}`, fontSize: 13, color: msg.ok ? '#16a34a' : '#dc2626' }}>
+              {msg.ok ? '✓ ' : '✗ '}{msg.testo}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+            <Button onClick={salva} disabled={saving || !form.imap_user || !form.gmail_app_password} style={{ background: '#1e3a5f', color: '#fff' }}>
+              {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+              Salva credenziali
+            </Button>
+            <Button variant="outline" onClick={testConnessione} disabled={testing || saving}>
+              {testing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+              Testa connessione
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+
+
 export default function ImpostazioniF24Email() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -511,6 +644,10 @@ export default function ImpostazioniF24Email() {
           </CardContent>
         </Card>
       </div>
+
+      {/* ===== SEZIONE GMAIL APP PASSWORD ===== */}
+      <GmailSettingsSection />
+
     </PageLayout>
   );
 }

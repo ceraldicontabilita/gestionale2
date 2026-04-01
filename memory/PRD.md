@@ -134,7 +134,32 @@ Applicazione ERP full-stack italiana (React + FastAPI + MongoDB) per gestione az
 - **Dipendenti P2**: Deduplicazione per CF in list_dipendenti e report ferie-permessi
 - **Fix routing**: Dashboard widget link /dipendenti/giustificativi → /presenze?tab=giustificativi
 
-## Sessione 12 (1 Aprile 2026 - Agenti AI + Fix Prima Nota)
+## Sessione 13 (1 Aprile 2026 - Widget Dashboard + Portale + Gmail Settings)
+
+#### Widget Agenti in Dashboard
+- `WidgetAgenti.jsx` con 4 contatori colorati (Urgenti/Avvisi/Info/Suggerimenti)
+- Auto-refresh ogni 5 minuti, si nasconde se 0 segnalazioni attive
+- Click su ogni contatore → naviga a `/agenti`
+- Nuovo endpoint `GET /api/agenti/segnalazioni/summary` con aggregazione per tipo
+
+#### Portale Dipendenti (/portale)
+- Login Google con Emergent Auth (fuori dal layout principale)
+- Dashboard benvenuto con nome e mansione
+- Lista cedolini con download PDF
+- Lista contratti con pulsante Firma (FES: hash SHA256 + IP + timestamp)
+- Nota: la pagina funziona solo se il dipendente ha `google_email` associata nel profilo
+
+#### Impostazioni Gmail IMAP
+- Form in `/impostazioni-f24-email` con campi: email, app password (con mostra/nascondi), server IMAP
+- Salva in MongoDB `settings` collection (non nel codice/env)
+- Test connessione immediato al salvataggio e pulsante "Testa connessione" separato
+- `email_monitor_service.py` legge prima da MongoDB, fallback a .env
+- Nuovo router `settings_router.py` con `GET/POST /api/settings/gmail` e `POST /api/settings/gmail/test`
+
+#### Endpoint dipendenti
+- `GET /api/dipendenti/by-google-email?email=` per il portale
+
+
 
 #### Fix Prima Nota Banca — saldoPrecedente
 - **Bug fixato**: `PrimaNota.jsx` — Il saldo progressivo in tabella Banca partiva da 0 invece del riporto anni precedenti. Fixato: `saldoPrecedente={bancaData.saldo_precedente || 0}`

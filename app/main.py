@@ -269,6 +269,7 @@ from app.routers import batch_operations  # Operazioni Batch - Riconcilia/Paga N
 from app.routers import google_auth  # Google OAuth - Login con Google
 from app.routers import openclaw  # OpenClaw/MoltBot AI Assistant
 from app.routers.agenti import router as r_agenti  # Agenti AI
+from app.routers import settings_router  # Impostazioni Gestionale
 
 
 # =============================================================================
@@ -283,6 +284,7 @@ app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(google_auth.router, prefix="/api", tags=["Google OAuth"])
 app.include_router(openclaw.router, prefix="/api", tags=["OpenClaw AI Assistant"])
 app.include_router(r_agenti, prefix="/api", tags=["Agenti AI"])
+app.include_router(settings_router.router, prefix="/api", tags=["Impostazioni"])
 
 # --- F24 Module ---
 app.include_router(f24_main.router, prefix="/api/f24", tags=["F24"])

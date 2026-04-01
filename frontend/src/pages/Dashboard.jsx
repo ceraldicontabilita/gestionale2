@@ -8,6 +8,7 @@ import { PageLayout } from '../components/PageLayout';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Legend, PieChart, Pie, Cell } from 'recharts';
 import { Eye, EyeOff, TrendingUp, Lock, AlertTriangle, Users } from "lucide-react";
 import WidgetVerificaCoerenza from "../components/WidgetVerificaCoerenza";
+import WidgetAgenti from "../components/WidgetAgenti";
 
 export default function Dashboard() {
   const { anno } = useAnnoGlobale();
@@ -241,6 +242,7 @@ export default function Dashboard() {
 
       {/* Widget Verifica Coerenza Dati */}
       <WidgetVerificaCoerenza anno={anno} />
+      <WidgetAgenti />
 
       {/* Alert Limiti Giustificativi */}
       {alertGiustificativi && alertGiustificativi.totale_alerts > 0 && (
