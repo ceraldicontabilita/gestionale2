@@ -2,8 +2,8 @@
 Application configuration using Pydantic Settings.
 FIX: path .env corretto
 """
-from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import Optional
+from pydantic_settings import BaseSettings, SettingsConfigDict, PydanticBaseSettingsSource
+from typing import Optional, Type, Tuple
 from pathlib import Path
 import os
 
@@ -139,6 +139,20 @@ class Settings(BaseSettings):
         case_sensitive=True,
         extra="ignore"
     )
+
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: Type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> Tuple[PydanticBaseSettingsSource, ...]:
+        # Priorità: valori espliciti > .env file > variabili OS (pod Kubernetes)
+        # Garantisce che MONGO_URL e DB_NAME nel .env non vengano
+        # sovrascritti dalle variabili iniettate dalla piattaforma Emergent.
+        return (init_settings, dotenv_settings, env_settings, file_secret_settings)
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
