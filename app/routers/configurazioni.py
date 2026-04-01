@@ -236,7 +236,8 @@ async def update_parole_chiave(
     return {"success": True, "categoria": categoria, "parole": parole}
 
 
-@router.post("/parole-chiave/aggiungi")async def aggiungi_parola_chiave(
+@router.post("/parole-chiave/aggiungi")
+async def aggiungi_parola_chiave(
     categoria: str = Query(...),
     parola: str = Query(...)
 ) -> Dict[str, Any]:
@@ -413,7 +414,7 @@ async def test_pec_account_connection() -> Dict[str, Any]:
         mail.logout()
         return {
             "success": True,
-            "message": f"Connessione PEC riuscita!",
+            "message": "Connessione PEC riuscita!",
             "email": email_addr,
             "email_count": email_count,
         }

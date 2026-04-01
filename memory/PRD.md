@@ -21,6 +21,14 @@ Applicazione ERP full-stack italiana (React + FastAPI + MongoDB) per gestione az
 9. Magazzino (inventario)
 10. Dipendenti/Presenze (HR, presenze, cedolini, ferie)
 11. Fisco/IVA (calcoli fiscali)
+12. **Admin → Email**: Gestione account Gmail (IMAP) + PEC Aruba (SDI fatture XML)
+
+## Integrazione Email / PEC
+- **Gmail IMAP**: Account `ceraldigroupsrl@gmail.com`, credenziali in DB (`email_accounts`) + fallback `.env`
+- **PEC Aruba IMAP**: Account `fatturazioneceraldi@pec.it`, server `imaps.pec.aruba.it:993`, credenziali in DB (`pec_email_settings`) + fallback `.env`
+- **Download automatico**: `aruba_pec_downloader.py` legge credenziali da MongoDB (`get_pec_credentials(db)`) con fallback a `.env`
+- **UI Admin**: Tab Email in `/admin/email` mostra card Gmail + card PEC Aruba separata
+- **API PEC**: `GET/PUT /api/config/pec-account`, `POST /api/config/pec-account/test`
 
 ## Logica aziendale chiave
 - **Volume Affari** = SOLO corrispettivi (le fatture emesse sono GIA incluse nei corrispettivi come scontrini)

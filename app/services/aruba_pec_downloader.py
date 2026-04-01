@@ -30,10 +30,39 @@ logger = logging.getLogger(__name__)
 # Importa da settings (carica automaticamente /app/backend/.env)
 from app.config import settings
 
+# Valori di fallback da .env
 PEC_HOST = settings.ARUBA_PEC_HOST
 PEC_PORT = settings.ARUBA_PEC_PORT
 PEC_USER = settings.ARUBA_PEC_USER or ""
 PEC_PASSWORD = settings.ARUBA_PEC_PASSWORD or ""
+
+
+async def get_pec_credentials(db) -> Dict[str, Any]:
+    """
+    Legge le credenziali PEC da MongoDB (pec_email_settings).
+    Fallback alle variabili d'ambiente se il DB non ha dati.
+    """
+    try:
+        cfg = await db["pec_email_settings"].find_one({}, {"_id": 0})
+        if cfg and cfg.get("email") and cfg.get("app_password"):
+            return {
+                "host": cfg.get("imap_server", PEC_HOST),
+                "port": int(cfg.get("imap_port", PEC_PORT)),
+                "user": cfg["email"],
+                "password": cfg["app_password"],
+                "source": "database",
+            }
+    except Exception as e:
+        logger.warning(f"Impossibile leggere credenziali PEC da DB: {e}")
+
+    # Fallback a .env
+    return {
+        "host": PEC_HOST,
+        "port": PEC_PORT,
+        "user": PEC_USER,
+        "password": PEC_PASSWORD,
+        "source": "env",
+    }
 
 # Mittenti SDI attesi nella PEC
 SDI_SENDERS = [
@@ -248,19 +277,22 @@ async def download_pec_invoices(
 ) -> Dict[str, Any]:
     """
     Scarica e processa le fatture XML dalla casella PEC Aruba.
+    Le credenziali vengono lette da MongoDB (pec_email_settings) con fallback a .env.
 
     Args:
         db: MongoDB database
         since_days: Quanti giorni indietro cercare
-        host/port/user/password: Override credenziali (usa .env se non specificato)
+        host/port/user/password: Override credenziali esplicito (opzionale)
 
     Returns:
         Statistiche del download
     """
-    _host = host or PEC_HOST
-    _port = port or PEC_PORT
-    _user = user or PEC_USER
-    _password = password or PEC_PASSWORD
+    # Recupera credenziali da MongoDB o .env
+    creds = await get_pec_credentials(db)
+    _host = host or creds["host"]
+    _port = port or creds["port"]
+    _user = user or creds["user"]
+    _password = password or creds["password"]
 
     stats = {
         "emails_checked": 0,
@@ -268,11 +300,12 @@ async def download_pec_invoices(
         "new_invoices": 0,
         "duplicates_skipped": 0,
         "errors": 0,
-        "inserted": []
+        "inserted": [],
+        "credentials_source": creds.get("source", "unknown"),
     }
 
     if not _user or not _password:
-        return {"success": False, "error": "Credenziali PEC non configurate nel .env", "stats": stats}
+        return {"success": False, "error": "Credenziali PEC non configurate (né in DB né in .env)", "stats": stats}
 
     try:
         logger.info(f"Connessione PEC: {_host}:{_port} come {_user}")
@@ -443,12 +476,19 @@ async def download_pec_invoices(
     return {"success": True, "stats": stats}
 
 
-async def test_pec_connection(host: str = None, port: int = None, user: str = None, password: str = None) -> Dict[str, Any]:
-    """Test rapido della connessione PEC."""
-    _host = host or PEC_HOST
-    _port = port or PEC_PORT
-    _user = user or PEC_USER
-    _password = password or PEC_PASSWORD
+async def test_pec_connection(db=None, host: str = None, port: int = None, user: str = None, password: str = None) -> Dict[str, Any]:
+    """Test rapido della connessione PEC. Legge credenziali da MongoDB se db è fornito."""
+    if db is not None:
+        creds = await get_pec_credentials(db)
+        _host = host or creds["host"]
+        _port = port or creds["port"]
+        _user = user or creds["user"]
+        _password = password or creds["password"]
+    else:
+        _host = host or PEC_HOST
+        _port = port or PEC_PORT
+        _user = user or PEC_USER
+        _password = password or PEC_PASSWORD
 
     if not _user or not _password:
         return {"success": False, "error": "Credenziali PEC non configurate"}
