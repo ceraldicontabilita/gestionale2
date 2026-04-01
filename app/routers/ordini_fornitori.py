@@ -35,7 +35,7 @@ router = APIRouter()
 async def list_ordini(skip: int = 0, limit: int = 10000) -> List[Dict[str, Any]]:
     """Lista ordini fornitori."""
     db = Database.get_db()
-    return await db["supplier_orders"].find({}, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    return await db["ordini_fornitori"].find({}, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
 
 
 @router.post("")
@@ -45,31 +45,36 @@ async def create_ordine(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     db = Database.get_db()
     
     # Numero progressivo
-    last = await db["supplier_orders"].find_one({}, {"order_number": 1}, sort=[("order_number", -1)])
+    last = await db["ordini_fornitori"].find_one({}, {"order_number": 1}, sort=[("order_number", -1)])
     try:
         new_num = int(last["order_number"]) + 1 if last and last.get("order_number") else 1
     except (ValueError, TypeError):
         new_num = 1
     
-    items = data.get("items", [])
-    total = sum(float(i.get("unit_price", 0) or 0) * float(i.get("quantity", 1) or 1) for i in items)
+    items = data.get("items", data.get("prodotti", []))
+    total = sum(float(i.get("unit_price", i.get("prezzo", 0)) or 0) * float(i.get("quantity", i.get("quantita", 1)) or 1) for i in items)
     
     order = {
         "id": str(uuid.uuid4()),
-        "order_number": str(new_num).zfill(5),
-        "supplier_name": data.get("supplier_name", ""),
+        "source": "gestionale",
+        "stato": "bozza",
+        "status": "bozza",            # compat
+        "fornitore_nome": data.get("fornitore_nome", data.get("supplier_name", "")),
+        "supplier_name": data.get("supplier_name", data.get("fornitore_nome", "")),  # compat
         "supplier_vat": data.get("supplier_vat", ""),
-        "items": items,
+        "prodotti": items,
+        "items": items,               # compat
+        "note": data.get("note", data.get("notes", "")),
+        "notes": data.get("notes", data.get("note", "")),  # compat
+        "order_number": str(new_num).zfill(5),
         "subtotal": data.get("subtotal", total),
         "total": total,
         "vat": 0,
-        "notes": data.get("notes", ""),
-        "status": "bozza",
         "created_at": datetime.now(timezone.utc).isoformat(),
         "updated_at": datetime.now(timezone.utc).isoformat()
     }
     
-    await db["supplier_orders"].insert_one(order.copy())
+    await db["ordini_fornitori"].insert_one(order.copy())
     order.pop("_id", None)
     return order
 
@@ -80,8 +85,8 @@ async def get_stats() -> Dict[str, Any]:
     """Statistiche ordini."""
     db = Database.get_db()
     
-    pipeline = [{"$group": {"_id": "$status", "count": {"$sum": 1}, "total": {"$sum": "$total"}}}]
-    result = await db["supplier_orders"].aggregate(pipeline).to_list(10)
+    pipeline = [{"$group": {"_id": {"$ifNull": ["$stato", "$status"]}, "count": {"$sum": 1}, "total": {"$sum": "$total"}}}]
+    result = await db["ordini_fornitori"].aggregate(pipeline).to_list(10)
     
     stats = {"bozza": {"count": 0, "total": 0}, "inviato": {"count": 0, "total": 0},
              "confermato": {"count": 0, "total": 0}, "consegnato": {"count": 0, "total": 0}, "annullato": {"count": 0, "total": 0}}
@@ -112,12 +117,46 @@ async def get_ordini_tracciabilita(giorni: int = 30) -> List[Dict[str, Any]]:
     return docs
 
 
+@router.get("/bozze")
+@handle_errors
+async def list_bozze() -> List[Dict[str, Any]]:
+    """Lista ordini in stato bozza."""
+    db = Database.get_db()
+    query = {"$or": [{"stato": "bozza"}, {"status": "bozza"}]}
+    return await db["ordini_fornitori"].find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
+
+
+@router.get("/bozze/count")
+@handle_errors
+async def count_bozze() -> Dict[str, Any]:
+    """Conta ordini in stato bozza."""
+    db = Database.get_db()
+    query = {"$or": [{"stato": "bozza"}, {"status": "bozza"}]}
+    count = await db["ordini_fornitori"].count_documents(query)
+    return {"count": count}
+
+
+@router.post("/{order_id}/invia")
+@handle_errors
+async def invia_ordine(order_id: str) -> Dict[str, Any]:
+    """Segna ordine come inviato."""
+    db = Database.get_db()
+    now = datetime.now(timezone.utc).isoformat()
+    result = await db["ordini_fornitori"].update_one(
+        {"id": order_id},
+        {"$set": {"stato": "inviato", "status": "inviato", "inviato_at": now, "updated_at": now}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Ordine non trovato")
+    return {"ok": True, "inviato_at": now}
+
+
 @router.get("/{order_id}")
 @handle_errors
 async def get_ordine(order_id: str) -> Dict[str, Any]:
     """Ottiene ordine."""
     db = Database.get_db()
-    order = await db["supplier_orders"].find_one({"id": order_id}, {"_id": 0})
+    order = await db["ordini_fornitori"].find_one({"id": order_id}, {"_id": 0})
     if not order:
         raise HTTPException(status_code=404, detail="Ordine non trovato")
     return order
@@ -132,7 +171,7 @@ async def update_ordine(order_id: str, data: Dict[str, Any] = Body(...)) -> Dict
     update = {k: v for k, v in data.items() if k not in ["id", "_id", "order_number"]}
     update["updated_at"] = datetime.now(timezone.utc).isoformat()
     
-    result = await db["supplier_orders"].update_one({"id": order_id}, {"$set": update})
+    result = await db["ordini_fornitori"].update_one({"id": order_id}, {"$set": update})
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Ordine non trovato")
     
@@ -144,7 +183,7 @@ async def update_ordine(order_id: str, data: Dict[str, Any] = Body(...)) -> Dict
 async def delete_ordine(order_id: str) -> Dict[str, Any]:
     """Elimina ordine."""
     db = Database.get_db()
-    result = await db["supplier_orders"].delete_one({"id": order_id})
+    result = await db["ordini_fornitori"].delete_one({"id": order_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Ordine non trovato")
     return {"success": True, "deleted_id": order_id}
@@ -154,14 +193,14 @@ async def delete_ordine(order_id: str) -> Dict[str, Any]:
 @handle_errors
 async def update_status(order_id: str, status: str = Body(..., embed=True)) -> Dict[str, Any]:
     """Cambia stato ordine."""
-    valid = ["bozza", "inviato", "confermato", "consegnato", "annullato"]
+    valid = ["bozza", "inviato", "confermato", "consegnato", "annullato", "completato"]
     if status not in valid:
         raise HTTPException(status_code=400, detail=f"Stato non valido. Usa: {valid}")
     
     db = Database.get_db()
-    result = await db["supplier_orders"].update_one(
+    result = await db["ordini_fornitori"].update_one(
         {"id": order_id},
-        {"$set": {"status": status, "updated_at": datetime.now(timezone.utc).isoformat()}}
+        {"$set": {"status": status, "stato": status, "updated_at": datetime.now(timezone.utc).isoformat()}}
     )
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Ordine non trovato")
@@ -481,12 +520,14 @@ CERALDI GROUP S.R.L.
             server.sendmail(from_email, [supplier_email], msg.as_string())
         
         # Aggiorna stato ordine
-        await db["supplier_orders"].update_one(
+        await db["ordini_fornitori"].update_one(
             {"id": order_id},
             {"$set": {
                 "status": "inviato",
+                "stato": "inviato",
                 "email_sent_to": supplier_email,
                 "email_sent_at": datetime.now(timezone.utc).isoformat(),
+                "inviato_at": datetime.now(timezone.utc).isoformat(),
                 "updated_at": datetime.now(timezone.utc).isoformat()
             }}
         )
