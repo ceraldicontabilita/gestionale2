@@ -61,15 +61,37 @@ export default function Admin() {
   const [syncStatus, setSyncStatus] = useState(null);
   const [syncLoading, setSyncLoading] = useState(false);
   const [verificaCorrispettivi, setVerificaCorrispettivi] = useState(null);
+  const [initialLoad, setInitialLoad] = useState(true);
+
+  // Carica tutti i dati dalla dashboard aggregata in un'unica chiamata
+  const loadDashboardSummary = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    try {
+      const r = await api.get("/api/admin/dashboard-summary").catch(() => ({ data: null }));
+      if (r.data) {
+        if (r.data.stats) setStats(r.data.stats);
+        if (r.data.health) setDbStatus(r.data.health);
+        if (r.data.sync) setSyncStatus(r.data.sync);
+        // alert count e agenti count vengono gestiti da AgentiPanel/NotificationBell
+      }
+    } catch (e) {
+      console.error("Error loading dashboard summary:", e);
+    } finally {
+      if (!silent) setLoading(false);
+      setInitialLoad(false);
+    }
+  }, []);
 
   useEffect(() => {
-    loadStats();
-    checkHealth();
-    loadSchedulerStatus();
+    // Caricamento iniziale
+    loadDashboardSummary(false);
     loadEmailAccounts();
     loadParoleChiave();
-    loadSyncStatus();
-  }, []);
+
+    // Polling silenzioso ogni 5 minuti
+    const interval = setInterval(() => loadDashboardSummary(true), 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [loadDashboardSummary]);
 
   async function loadStats() {
     try {

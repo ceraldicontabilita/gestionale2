@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Switch } from '../components/ui/switch';
-import { Badge } from '../components/ui/badge';
 import { PageLayout } from '../components/PageLayout';
+import { STYLES, COLORS } from '../lib/utils';
 import { 
   Settings, Mail, Plus, Trash2, Save, RefreshCw, Play, 
   Clock, CheckCircle, AlertCircle, Loader2, Tag
@@ -69,16 +68,17 @@ function GmailSettingsSection() {
     }
   };
 
+  const cardStyle = { background: '#fff', borderRadius: 12, border: '1px solid #e8ecf1', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', marginBottom: 20 };
+  const cardHeaderStyle = { borderBottom: '1px solid #f1f5f9', padding: '12px 20px', background: '#f8fafc', borderRadius: '12px 12px 0 0', display: 'flex', alignItems: 'center', gap: 8 };
+
   return (
-    <div style={{ maxWidth: 860, margin: '0 auto', padding: '16px 0' }}>
-      <Card>
-        <CardHeader>
-          <CardTitle style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Mail className="w-5 h-5 text-blue-600" />
-            Credenziali Gmail IMAP
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+    <div style={{ marginTop: 4 }}>
+      <div style={cardStyle}>
+        <div style={cardHeaderStyle}>
+          <Mail size={16} color="#2563eb" />
+          <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: '#1e293b' }}>Credenziali Gmail IMAP</h3>
+        </div>
+        <div style={{ padding: 20 }}>
           <p style={{ fontSize: 13, color: '#64748b', marginBottom: 16, lineHeight: 1.6 }}>
             Inserisci la Gmail App Password per permettere al sistema di scaricare automaticamente
             le email con le fatture. Vai su <strong>Account Google → Sicurezza → Verifica in 2 passaggi → App Password</strong> per generare una nuova password.
@@ -141,16 +141,16 @@ function GmailSettingsSection() {
 
           <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
             <Button onClick={salva} disabled={saving || !form.imap_user || !form.gmail_app_password} style={{ background: '#1e3a5f', color: '#fff' }}>
-              {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+              {saving ? <Loader2 size={14} className="animate-spin" style={{ marginRight: 6 }} /> : <Save size={14} style={{ marginRight: 6 }} />}
               Salva credenziali
             </Button>
             <Button variant="outline" onClick={testConnessione} disabled={testing || saving}>
-              {testing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+              {testing ? <Loader2 size={14} className="animate-spin" style={{ marginRight: 6 }} /> : <RefreshCw size={14} style={{ marginRight: 6 }} />}
               Testa connessione
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
@@ -316,347 +316,250 @@ export default function ImpostazioniF24Email() {
 
   if (loading) {
     return (
-      <PageLayout title="Impostazioni F24 Email" subtitle="Configura download automatico F24 da email">
-        <div className="flex justify-center items-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+      <PageLayout title="Impostazioni Email" subtitle="Configura download automatico F24 da email">
+        <div style={{ display: 'flex', justifyContent: 'center', padding: 60, color: '#94a3b8' }}>
+          <Loader2 size={32} className="animate-spin" />
         </div>
       </PageLayout>
     );
   }
 
+  const cardStyle = { background: '#fff', borderRadius: 12, border: '1px solid #e8ecf1', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', marginBottom: 20 };
+  const cardHeaderStyle = { borderBottom: '1px solid #f1f5f9', padding: '12px 20px', background: '#f8fafc', borderRadius: '12px 12px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' };
+  const cardBodyStyle = { padding: '20px' };
+  const statBoxStyle = { padding: '12px 16px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e8ecf1' };
+
   return (
-    <PageLayout title="Impostazioni F24 Email" subtitle="Configura download automatico F24 da email">
-      <div className="space-y-6" data-testid="f24-email-settings">
+    <PageLayout title="Impostazioni Email" subtitle="Configura download automatico F24 da email">
+      <div style={{ maxWidth: 1100 }} data-testid="f24-email-settings">
         
-        {/* Status Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Settings className="w-5 h-5" />
-                Stato Sistema
-              </div>
-              <div className="flex items-center gap-3">
-                <Button variant="outline" size="sm" onClick={fetchData}>
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Aggiorna
-                </Button>
-                <Button 
-                  onClick={runManualScan} 
-                  disabled={scanning}
-                  data-testid="scan-manuale-btn"
-                >
-                  {scanning ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <Play className="w-4 h-4 mr-2" />
-                  )}
-                  Scansiona Ora
-                </Button>
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <div className="text-sm text-gray-500">Scansione Auto</div>
-                <div className="flex items-center gap-2 mt-1">
-                  <Switch 
-                    checked={settings?.auto_scan_attivo || false}
-                    onCheckedChange={toggleAutoScan}
-                    data-testid="auto-scan-toggle"
-                  />
-                  <span className={`font-medium ${settings?.auto_scan_attivo ? 'text-green-600' : 'text-gray-400'}`}>
+        {/* === STATO SISTEMA === */}
+        <div style={cardStyle}>
+          <div style={cardHeaderStyle}>
+            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, color: '#1e293b' }}>
+              <Settings size={16} color={COLORS.primary} /> Stato Sistema
+            </h3>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <Button variant="outline" size="sm" onClick={fetchData} style={{ fontSize: 12 }}>
+                <RefreshCw size={13} style={{ marginRight: 5 }} /> Aggiorna
+              </Button>
+              <Button size="sm" onClick={runManualScan} disabled={scanning} data-testid="scan-manuale-btn" style={{ background: COLORS.primary, color: '#fff', fontSize: 12 }}>
+                {scanning ? <Loader2 size={13} className="animate-spin" style={{ marginRight: 5 }} /> : <Play size={13} style={{ marginRight: 5 }} />}
+                Scansiona Ora
+              </Button>
+            </div>
+          </div>
+          <div style={cardBodyStyle}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 16 }}>
+              <div style={statBoxStyle}>
+                <div style={{ fontSize: 11, color: '#64748b', marginBottom: 4 }}>Scansione Auto</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Switch checked={settings?.auto_scan_attivo || false} onCheckedChange={toggleAutoScan} data-testid="auto-scan-toggle" />
+                  <span style={{ fontSize: 13, fontWeight: 600, color: settings?.auto_scan_attivo ? '#16a34a' : '#94a3b8' }}>
                     {settings?.auto_scan_attivo ? 'Attiva' : 'Disattiva'}
                   </span>
                 </div>
               </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <div className="text-sm text-gray-500 flex items-center gap-1">
-                  <Clock className="w-3 h-3" /> Intervallo
+              <div style={statBoxStyle}>
+                <div style={{ fontSize: 11, color: '#64748b', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <Clock size={11} /> Intervallo
                 </div>
-                <div className="font-semibold mt-1">{settings?.scan_interval_minuti || 10} minuti</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#1e293b' }}>{settings?.scan_interval_minuti || 10} min</div>
               </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <div className="text-sm text-gray-500">Mittenti Configurati</div>
-                <div className="font-semibold mt-1">{stato?.mittenti_configurati || 0}</div>
+              <div style={statBoxStyle}>
+                <div style={{ fontSize: 11, color: '#64748b', marginBottom: 4 }}>Mittenti Configurati</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#1e293b' }}>{(settings?.mittenti || []).length}</div>
               </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <div className="text-sm text-gray-500">F24 da Pagare</div>
-                <div className="font-semibold mt-1 text-red-600">{stato?.statistiche?.f24_da_pagare || 0}</div>
+              <div style={statBoxStyle}>
+                <div style={{ fontSize: 11, color: '#64748b', marginBottom: 4 }}>F24 da Pagare</div>
+                <div style={{ fontSize: 15, fontWeight: 700, color: '#dc2626' }}>{stato?.statistiche?.f24_da_pagare || 0}</div>
               </div>
             </div>
-
             {stato?.ultima_scansione && (
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg text-sm">
-                <div className="flex items-center gap-2">
-                  {stato.ultima_scansione.success ? (
-                    <CheckCircle className="w-4 h-4 text-green-500" />
-                  ) : (
-                    <AlertCircle className="w-4 h-4 text-red-500" />
-                  )}
-                  <span>
-                    Ultima scansione: {new Date(stato.ultima_scansione.timestamp).toLocaleString('it-IT')}
-                    {' - '}{stato.ultima_scansione.tipo}
-                  </span>
-                </div>
+              <div style={{ padding: '8px 12px', background: '#eff6ff', borderRadius: 8, fontSize: 12, display: 'flex', alignItems: 'center', gap: 8, color: '#3b82f6' }}>
+                {stato.ultima_scansione.success
+                  ? <CheckCircle size={14} color="#16a34a" />
+                  : <AlertCircle size={14} color="#dc2626" />}
+                Ultima scansione: {new Date(stato.ultima_scansione.timestamp).toLocaleString('it-IT')} — {stato.ultima_scansione.tipo}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        {/* Configurazione Intervallo */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="w-5 h-5" />
-              Configurazione Scansione
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* === CONFIGURAZIONE === */}
+        <div style={cardStyle}>
+          <div style={cardHeaderStyle}>
+            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, color: '#1e293b' }}>
+              <Clock size={16} color={COLORS.primary} /> Configurazione Scansione
+            </h3>
+          </div>
+          <div style={cardBodyStyle}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-2">
-                  Intervallo scansione (minuti)
-                </label>
-                <Input
-                  type="number"
-                  min="5"
-                  max="60"
-                  value={settings?.scan_interval_minuti || 10}
-                  onChange={(e) => setSettings(prev => ({ 
-                    ...prev, 
-                    scan_interval_minuti: parseInt(e.target.value) || 10 
-                  }))}
-                  data-testid="scan-interval-input"
-                />
+                <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Intervallo scansione (minuti)</label>
+                <Input type="number" min="5" max="120" value={settings?.scan_interval_minuti || 10}
+                  onChange={(e) => setSettings(prev => ({ ...prev, scan_interval_minuti: parseInt(e.target.value) || 10 }))}
+                  data-testid="scan-interval-input" />
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-700 block mb-2">
-                  Giorni indietro da cercare
-                </label>
-                <Input
-                  type="number"
-                  min="1"
-                  max="365"
-                  value={settings?.giorni_indietro || 7}
-                  onChange={(e) => setSettings(prev => ({ 
-                    ...prev, 
-                    giorni_indietro: parseInt(e.target.value) || 7 
-                  }))}
-                  data-testid="giorni-indietro-input"
-                />
+                <label style={{ fontSize: 12, fontWeight: 600, color: '#374151', display: 'block', marginBottom: 6 }}>Giorni indietro da cercare</label>
+                <Input type="number" min="1" max="365" value={settings?.giorni_indietro || 7}
+                  onChange={(e) => setSettings(prev => ({ ...prev, giorni_indietro: parseInt(e.target.value) || 7 }))}
+                  data-testid="giorni-indietro-input" />
               </div>
-              <div className="flex items-end">
-                <Button onClick={saveSettings} disabled={saving} className="w-full" data-testid="save-settings-btn">
-                  {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+              <div style={{ display: 'flex', alignItems: 'flex-end' }}>
+                <Button onClick={saveSettings} disabled={saving} style={{ width: '100%', background: COLORS.primary, color: '#fff' }} data-testid="save-settings-btn">
+                  {saving ? <Loader2 size={14} className="animate-spin" style={{ marginRight: 6 }} /> : <Save size={14} style={{ marginRight: 6 }} />}
                   Salva Impostazioni
                 </Button>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        {/* Mittenti Configurati */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Mail className="w-5 h-5" />
-                Mittenti Configurati
-              </div>
-              <Button size="sm" onClick={() => setShowAddMittente(true)} data-testid="add-mittente-btn">
-                <Plus className="w-4 h-4 mr-2" />
-                Aggiungi Mittente
-              </Button>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+        {/* === MITTENTI === */}
+        <div style={cardStyle}>
+          <div style={cardHeaderStyle}>
+            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, color: '#1e293b' }}>
+              <Mail size={16} color={COLORS.primary} /> Mittenti Configurati ({(settings?.mittenti || []).length})
+            </h3>
+            <Button size="sm" onClick={() => setShowAddMittente(true)} style={{ background: COLORS.primary, color: '#fff', fontSize: 12 }} data-testid="add-mittente-btn">
+              <Plus size={13} style={{ marginRight: 5 }} /> Aggiungi Mittente
+            </Button>
+          </div>
+          <div style={cardBodyStyle}>
             {/* Form nuovo mittente */}
             {showAddMittente && (
-              <div className="mb-6 p-4 border rounded-lg bg-blue-50">
-                <h4 className="font-medium mb-3">Nuovo Mittente</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <Input
-                    placeholder="Email mittente"
-                    value={newMittente.email}
-                    onChange={(e) => setNewMittente(prev => ({ ...prev, email: e.target.value }))}
-                    data-testid="new-mittente-email"
-                  />
-                  <Input
-                    placeholder="Nome"
-                    value={newMittente.nome}
-                    onChange={(e) => setNewMittente(prev => ({ ...prev, nome: e.target.value }))}
-                    data-testid="new-mittente-nome"
-                  />
-                  <Select 
-                    value={newMittente.tipo} 
-                    onValueChange={(v) => setNewMittente(prev => ({ ...prev, tipo: v }))}
-                  >
+              <div style={{ marginBottom: 20, padding: 16, borderRadius: 10, background: '#eff6ff', border: '1px solid #bfdbfe' }}>
+                <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 12, color: '#1e40af' }}>Nuovo Mittente</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                  <Input placeholder="Email mittente" value={newMittente.email}
+                    onChange={(e) => setNewMittente(prev => ({ ...prev, email: e.target.value }))} data-testid="new-mittente-email" />
+                  <Input placeholder="Nome (opzionale)" value={newMittente.nome}
+                    onChange={(e) => setNewMittente(prev => ({ ...prev, nome: e.target.value }))} data-testid="new-mittente-nome" />
+                  <Select value={newMittente.tipo} onValueChange={(v) => setNewMittente(prev => ({ ...prev, tipo: v }))}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {TIPI_MITTENTE.map(t => (
-                        <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                      ))}
+                      {TIPI_MITTENTE.map(t => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
-                  <Select 
-                    value={newMittente.categoria_f24} 
-                    onValueChange={(v) => setNewMittente(prev => ({ ...prev, categoria_f24: v }))}
-                  >
+                  <Select value={newMittente.categoria_f24} onValueChange={(v) => setNewMittente(prev => ({ ...prev, categoria_f24: v }))}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {CATEGORIE_F24.map(c => (
-                        <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-                      ))}
+                      {CATEGORIE_F24.map(c => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex gap-2 mt-3">
-                  <Button size="sm" onClick={addMittente} data-testid="confirm-add-mittente-btn">
-                    <Plus className="w-4 h-4 mr-1" /> Aggiungi
+                <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                  <Button size="sm" onClick={addMittente} style={{ background: COLORS.primary, color: '#fff' }} data-testid="confirm-add-mittente-btn">
+                    <Plus size={13} style={{ marginRight: 4 }} /> Aggiungi
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => setShowAddMittente(false)}>
-                    Annulla
-                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => setShowAddMittente(false)}>Annulla</Button>
                 </div>
               </div>
             )}
 
             {/* Lista mittenti */}
-            <div className="space-y-4">
-              {(settings?.mittenti || []).map((mittente, index) => (
-                <div 
-                  key={mittente.email} 
-                  className={`p-4 border rounded-lg ${mittente.attivo ? 'bg-white' : 'bg-gray-50 opacity-60'}`}
-                  data-testid={`mittente-card-${index}`}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Mail className="w-4 h-4 text-blue-500" />
-                        <span className="font-medium">{mittente.nome}</span>
-                        <Badge variant={mittente.tipo === 'commercialista' ? 'default' : 'secondary'}>
-                          {TIPI_MITTENTE.find(t => t.value === mittente.tipo)?.label || mittente.tipo}
-                        </Badge>
-                        <Badge variant="outline">
-                          {CATEGORIE_F24.find(c => c.value === mittente.categoria_f24)?.label || mittente.categoria_f24}
-                        </Badge>
-                      </div>
-                      <div className="text-sm text-gray-500 mb-3">{mittente.email}</div>
-                      
-                      {/* Parole chiave */}
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Tag className="w-4 h-4 text-gray-400" />
-                        {(mittente.parole_chiave || []).map(kw => (
-                          <Badge 
-                            key={kw} 
-                            variant="outline" 
-                            className="cursor-pointer hover:bg-red-50"
-                            onClick={() => removeKeyword(index, kw)}
-                          >
-                            {kw} <span className="ml-1 text-red-400">x</span>
-                          </Badge>
-                        ))}
-                        <div className="flex items-center gap-1">
-                          <Input
-                            placeholder="Nuova parola chiave"
-                            className="w-36 h-7 text-sm"
-                            value={newKeyword[index] || ''}
-                            onChange={(e) => setNewKeyword(prev => ({ ...prev, [index]: e.target.value }))}
-                            onKeyPress={(e) => e.key === 'Enter' && addKeywordToMittente(index)}
-                          />
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            className="h-7 px-2"
-                            onClick={() => addKeywordToMittente(index)}
-                          >
-                            <Plus className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <Switch
-                        checked={mittente.attivo}
-                        onCheckedChange={(v) => updateMittente(index, 'attivo', v)}
-                      />
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        className="text-red-500 hover:text-red-700"
-                        onClick={() => removeMittente(mittente.email)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
+            <div>
+              {(settings?.mittenti || []).length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '32px 0', color: '#94a3b8', fontSize: 13 }}>
+                  Nessun mittente configurato. Aggiungine uno.
                 </div>
-              ))}
-              
-              {(!settings?.mittenti || settings.mittenti.length === 0) && (
-                <div className="text-center py-8 text-gray-500">
-                  Nessun mittente configurato. Aggiungi il primo mittente.
-                </div>
+              ) : (
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '2px solid #f1f5f9' }}>
+                      <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#64748b', background: '#f8fafc' }}>EMAIL</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#64748b', background: '#f8fafc' }}>TIPO</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: '#64748b', background: '#f8fafc' }}>PAROLE CHIAVE</th>
+                      <th style={{ padding: '8px 12px', textAlign: 'center', fontSize: 11, fontWeight: 600, color: '#64748b', background: '#f8fafc' }}>ATTIVO</th>
+                      <th style={{ padding: '8px 12px', background: '#f8fafc' }}></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(settings?.mittenti || []).map((mittente, index) => (
+                      <tr key={mittente.email || index} style={{ borderBottom: '1px solid #f1f5f9', opacity: mittente.attivo ? 1 : 0.5 }}
+                        data-testid={`mittente-card-${index}`}>
+                        <td style={{ padding: '10px 12px' }}>
+                          <div style={{ fontSize: 13, fontWeight: 500, color: '#1e293b' }}>{mittente.email}</div>
+                          {mittente.nome && mittente.nome !== mittente.email && (
+                            <div style={{ fontSize: 11, color: '#94a3b8' }}>{mittente.nome}</div>
+                          )}
+                        </td>
+                        <td style={{ padding: '10px 12px' }}>
+                          <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 10, background: mittente.tipo === 'commercialista' ? '#dbeafe' : '#f1f5f9', color: mittente.tipo === 'commercialista' ? '#1d4ed8' : '#64748b', fontWeight: 500 }}>
+                            {TIPI_MITTENTE.find(t => t.value === mittente.tipo)?.label || mittente.tipo || 'Altro'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '10px 12px' }}>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
+                            {(mittente.parole_chiave || []).map(kw => (
+                              <span key={kw} style={{ fontSize: 11, padding: '2px 8px', borderRadius: 10, background: '#f1f5f9', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                {kw}
+                                <button onClick={() => removeKeyword(index, kw)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: 0, fontSize: 12 }}>×</button>
+                              </span>
+                            ))}
+                            <div style={{ display: 'flex', gap: 4 }}>
+                              <Input placeholder="+ parola" style={{ width: 100, height: 26, fontSize: 11, padding: '0 8px' }}
+                                value={newKeyword[index] || ''}
+                                onChange={(e) => setNewKeyword(prev => ({ ...prev, [index]: e.target.value }))}
+                                onKeyPress={(e) => e.key === 'Enter' && addKeywordToMittente(index)} />
+                              <button onClick={() => addKeywordToMittente(index)} style={{ background: '#e8ecf1', border: 'none', borderRadius: 6, cursor: 'pointer', width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Plus size={12} />
+                              </button>
+                            </div>
+                          </div>
+                        </td>
+                        <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                          <Switch checked={mittente.attivo} onCheckedChange={(v) => updateMittente(index, 'attivo', v)} />
+                        </td>
+                        <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                          <button onClick={() => removeMittente(mittente.email)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', padding: 4 }}>
+                            <Trash2 size={15} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        {/* Log scansioni */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <RefreshCw className="w-5 h-5" />
-              Log Scansioni Recenti
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+        {/* === LOG SCANSIONI === */}
+        <div style={cardStyle}>
+          <div style={cardHeaderStyle}>
+            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, color: '#1e293b' }}>
+              <RefreshCw size={16} color={COLORS.primary} /> Log Scansioni Recenti
+            </h3>
+          </div>
+          <div style={cardBodyStyle}>
             {logs.length === 0 ? (
-              <div className="text-center py-6 text-gray-500">
-                Nessuna scansione effettuata
-              </div>
+              <div style={{ textAlign: 'center', padding: '24px 0', color: '#94a3b8', fontSize: 13 }}>Nessuna scansione effettuata</div>
             ) : (
-              <div className="space-y-2">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {logs.map((log, index) => (
-                  <div 
-                    key={index} 
-                    className={`p-3 rounded-lg flex items-center justify-between ${
-                      log.success ? 'bg-green-50' : 'bg-red-50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      {log.success ? (
-                        <CheckCircle className="w-4 h-4 text-green-500" />
-                      ) : (
-                        <AlertCircle className="w-4 h-4 text-red-500" />
-                      )}
-                      <span className="text-sm">
-                        {new Date(log.timestamp).toLocaleString('it-IT')}
-                      </span>
-                      <Badge variant="outline">{log.tipo}</Badge>
+                  <div key={index} style={{ padding: '10px 14px', borderRadius: 8, background: log.success ? '#f0fdf4' : '#fef2f2', border: `1px solid ${log.success ? '#bbf7d0' : '#fecaca'}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {log.success ? <CheckCircle size={14} color="#16a34a" /> : <AlertCircle size={14} color="#dc2626" />}
+                      <span style={{ color: '#374151' }}>{new Date(log.timestamp).toLocaleString('it-IT')}</span>
+                      <span style={{ padding: '2px 8px', borderRadius: 10, background: '#f1f5f9', fontSize: 11 }}>{log.tipo}</span>
                     </div>
-                    {log.risultato?.processamento && (
-                      <span className="text-xs text-gray-500">
-                        F24: {log.risultato.processamento.f24_inseriti || 0}
-                      </span>
-                    )}
-                    {log.errore && (
-                      <span className="text-xs text-red-500">{log.errore}</span>
-                    )}
+                    <div style={{ display: 'flex', gap: 12, color: '#64748b' }}>
+                      {log.risultato?.processamento && <span>F24: {log.risultato.processamento.f24_inseriti || 0}</span>}
+                      {log.errore && <span style={{ color: '#dc2626' }}>{log.errore}</span>}
+                    </div>
                   </div>
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
+
+        {/* === GMAIL SETTINGS === */}
+        <GmailSettingsSection />
       </div>
-
-      {/* ===== SEZIONE GMAIL APP PASSWORD ===== */}
-      <GmailSettingsSection />
-
     </PageLayout>
   );
 }

@@ -1,14 +1,88 @@
 """Admin router - Administrative functions."""
 from fastapi import APIRouter, Depends, Path, Query
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 import logging
+import asyncio
 
 from app.database import Database
 from app.utils.dependencies import get_current_user
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+@router.get("/dashboard-summary", summary="Aggregated dashboard summary for admin page")
+async def get_dashboard_summary() -> Dict[str, Any]:
+    """Restituisce in un'unica chiamata tutti i dati per la pagina admin."""
+    db = Database.get_db()
+
+    async def _stats():
+        try:
+            return {
+                "invoices": await db["invoices"].count_documents({}),
+                "suppliers": await db["fornitori"].count_documents({}),
+                "employees": await db["employees"].count_documents({}),
+                "prima_nota_cassa": await db["prima_nota_cassa"].count_documents({}),
+                "prima_nota_banca": await db["prima_nota_banca"].count_documents({}),
+                "f24": await db["f24_unificato"].count_documents({}),
+            }
+        except Exception:
+            return {}
+
+    async def _alert_count():
+        try:
+            count = await db["alerts"].count_documents({"letto": {"$ne": True}, "risolto": {"$ne": True}})
+            return {"non_letti": count}
+        except Exception:
+            return {"non_letti": 0}
+
+    async def _agenti_count():
+        try:
+            count = await db["agenti_segnalazioni"].count_documents({"letta": {"$ne": True}})
+            return {"non_lette": count}
+        except Exception:
+            return {"non_lette": 0}
+
+    async def _sync_status():
+        try:
+            fatture = await db["invoices"].count_documents({})
+            cassa = await db["prima_nota_cassa"].count_documents({})
+            banca = await db["prima_nota_banca"].count_documents({})
+            return {"fatture": fatture, "prima_nota_cassa": cassa, "prima_nota_banca": banca}
+        except Exception:
+            return {}
+
+    async def _commercialista_alert():
+        try:
+            from datetime import date
+            today = date.today()
+            # Controlla se siamo nel periodo di invio (primi 10 giorni del mese)
+            if today.day <= 10:
+                prev_month = today.month - 1 if today.month > 1 else 12
+                prev_year = today.year if today.month > 1 else today.year - 1
+                return {
+                    "show_alert": True,
+                    "mese": prev_month,
+                    "anno": prev_year
+                }
+            return {"show_alert": False}
+        except Exception:
+            return {"show_alert": False}
+
+    stats, alerts, agenti, sync, comm_alert = await asyncio.gather(
+        _stats(), _alert_count(), _agenti_count(), _sync_status(), _commercialista_alert()
+    )
+
+    return {
+        "stats": stats,
+        "alerts": alerts,
+        "agenti": agenti,
+        "sync": sync,
+        "commercialista_alert": comm_alert,
+        "health": {"status": "healthy", "database": "connected"},
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
 
 
 @router.get(

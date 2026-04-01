@@ -134,6 +134,14 @@ Applicazione ERP full-stack italiana (React + FastAPI + MongoDB) per gestione az
 - **Dipendenti P2**: Deduplicazione per CF in list_dipendenti e report ferie-permessi
 - **Fix routing**: Dashboard widget link /dipendenti/giustificativi → /presenze?tab=giustificativi
 
+## Sessione 15 (1 Aprile 2026 - Ottimizzazione Polling Admin + Layout Fix)
+
+### Ottimizzazioni Admin Page
+- **Nuovo endpoint aggregato** `GET /api/admin/dashboard-summary`: restituisce stats, alerts count, agenti count, sync status e health in **1 sola chiamata** invece di 6 separate
+- **Polling da 30s → 5 minuti**: `Admin.jsx` ora usa `setInterval(loadDashboardSummary, 5 * 60 * 1000)` 
+- **Aggiornamento silenzioso**: durante il polling di background i dati vecchi restano visibili (nessuno spinner); il loading compare solo al primo caricamento
+- **Fix layout `ImpostazioniF24Email.jsx`**: riscritta con STYLES/COLORS coerenti con il resto dell'app (cardStyle, cardHeaderStyle) invece di Shadcn Card + Tailwind. Mittenti ora in tabella ordinata senza duplicazione email/nome
+
 ## Sessione 14 (1 Aprile 2026 - Fix Gmail IMAP + Email Integration)
 
 ### Fix Integrazione Gmail
