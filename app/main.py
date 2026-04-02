@@ -717,6 +717,11 @@ try:
     from app.routers.tracciabilita.supervisor_operativo import router as r_tr_supervisor
     from app.routers.tracciabilita.utils import router as r_tr_utils
     from app.routers.tracciabilita.codici_cun import router as r_tr_codici_cun
+    from app.routers.tracciabilita.pec_import import router as r_tr_pec
+    from app.routers.tracciabilita.mepa import router as r_tr_mepa
+    from app.routers.tracciabilita.saima import router as r_tr_saima
+    from app.routers.tracciabilita.saima_ricettari import router as r_tr_saima_ric
+    from app.routers.tracciabilita.pipeline import router as r_tr_pipeline
     _TR_ROUTERS = [
         r_tr_lotti, r_tr_lotti_forn, r_tr_lotti_prod, r_tr_produzioni,
         r_tr_temp_neg, r_tr_temp_pos, r_tr_san, r_tr_dis,
@@ -727,6 +732,7 @@ try:
         r_tr_ricette, r_tr_backup, r_tr_olio, r_tr_prodotti_v,
         r_tr_fc, r_tr_norm, r_tr_materie, r_tr_ord_forn, r_tr_temp_cott,
         r_tr_fatture, r_tr_supervisor, r_tr_utils, r_tr_codici_cun,
+        r_tr_pec, r_tr_mepa, r_tr_saima, r_tr_saima_ric, r_tr_pipeline,
     ]
     for _r in _TR_ROUTERS:
         app.include_router(_r, prefix="/api/tr")
