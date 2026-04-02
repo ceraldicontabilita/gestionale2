@@ -679,6 +679,46 @@ app.include_router(r_cu_foodcost, prefix="/api/cucina", tags=["Cucina Food Cost"
 app.include_router(r_cu_prodotti, prefix="/api/cucina", tags=["Cucina Prodotti Vendita"])
 app.include_router(r_cu_ord_fornitori, prefix="/api/cucina", tags=["Cucina Ordini Fornitori"])
 
+# ─── Tracciabilità Module (mini-sito interno) ─────────────────────────────────
+try:
+    from app.routers.tracciabilita.lotti import router as r_tr_lotti
+    from app.routers.tracciabilita.lotti_fornitori import router as r_tr_lotti_forn
+    from app.routers.tracciabilita.lotti_produzione import router as r_tr_lotti_prod
+    from app.routers.tracciabilita.produzioni import router as r_tr_produzioni
+    from app.routers.tracciabilita.temperature_negative import router as r_tr_temp_neg
+    from app.routers.tracciabilita.temperature_positive import router as r_tr_temp_pos
+    from app.routers.tracciabilita.sanificazione import router as r_tr_san
+    from app.routers.tracciabilita.disinfestazione import router as r_tr_dis
+    from app.routers.tracciabilita.haccp_auto import router as r_tr_haccp_auto
+    from app.routers.tracciabilita.haccp_report import router as r_tr_haccp_rep
+    from app.routers.tracciabilita.report_haccp import router as r_tr_report
+    from app.routers.tracciabilita.anomalie import router as r_tr_anomalie
+    from app.routers.tracciabilita.chiusure import router as r_tr_chiusure
+    from app.routers.tracciabilita.attrezzature import router as r_tr_attr
+    from app.routers.tracciabilita.costi_giornalieri import router as r_tr_costi
+    from app.routers.tracciabilita.acquaviva import router as r_tr_acquaviva
+    from app.routers.tracciabilita.colazione import router as r_tr_colazione
+    from app.routers.tracciabilita.vendita_banco import router as r_tr_vendita
+    from app.routers.tracciabilita.fornitori import router as r_tr_fornitori_tr
+    from app.routers.tracciabilita.sconti_merce import router as r_tr_sconti
+    from app.routers.tracciabilita.ricezione_merce import router as r_tr_ricezione
+    from app.routers.tracciabilita.stampa import router as r_tr_stampa
+    from app.routers.tracciabilita.manuale_haccp import router as r_tr_manuale
+    from app.routers.tracciabilita.haccp_manuale_auto import router as r_tr_haccp_man
+    _TR_ROUTERS = [
+        r_tr_lotti, r_tr_lotti_forn, r_tr_lotti_prod, r_tr_produzioni,
+        r_tr_temp_neg, r_tr_temp_pos, r_tr_san, r_tr_dis,
+        r_tr_haccp_auto, r_tr_haccp_rep, r_tr_report, r_tr_anomalie,
+        r_tr_chiusure, r_tr_attr, r_tr_costi, r_tr_acquaviva, r_tr_colazione,
+        r_tr_vendita, r_tr_fornitori_tr, r_tr_sconti, r_tr_ricezione,
+        r_tr_stampa, r_tr_manuale, r_tr_haccp_man,
+    ]
+    for _r in _TR_ROUTERS:
+        app.include_router(_r, prefix="/api/tr")
+    logger.info("✅ Modulo Tracciabilità caricato (%d router)", len(_TR_ROUTERS))
+except Exception as _e:
+    logger.warning("⚠️ Tracciabilità: alcuni router non caricati — %s", str(_e)[:120])
+
 # Mount static files for downloads
 docs_path = "./docs"
 os.makedirs(docs_path, exist_ok=True)
