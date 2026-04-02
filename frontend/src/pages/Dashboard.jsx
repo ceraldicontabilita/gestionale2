@@ -61,7 +61,7 @@ export default function Dashboard() {
       // Esegue riparazioni
       const [fatRes, ricRes] = await Promise.all([
         api.post('/api/fatture-ricevute/auto-ricostruisci-dati').catch(() => ({ data: {} })),
-        api.post('/api/fatture-ricevute/auto-ricostruisci-dati').catch(() => ({ data: {} }))
+        api.post('/api/batch/auto-riconcilia-tutto').catch(() => ({ data: {} }))
       ]);
       
       const totaleCorrezioni = 
