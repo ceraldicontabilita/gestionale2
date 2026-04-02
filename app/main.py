@@ -612,7 +612,15 @@ app.include_router(distinte_bpm.router, prefix="/api/paghe", tags=["Distinte BPM
 from app.routers import veicoli
 app.include_router(veicoli.router, tags=["Veicoli Noleggio"])
 
-
+# --- Cucina: Ricette, Food Cost, Prodotti Vendita, Ordini Fornitori ---
+from app.routers.cucina import ricette as r_cu_ricette_mod
+from app.routers.cucina import food_cost as r_cu_foodcost_mod
+from app.routers.cucina import prodotti_vendita as r_cu_prodotti_mod
+from app.routers.cucina import ordini_fornitori as r_cu_ord_mod
+app.include_router(r_cu_ricette_mod.router,    prefix="/api", tags=["Cucina Ricette"])
+app.include_router(r_cu_foodcost_mod.router,   prefix="/api", tags=["Cucina Food Cost"])
+app.include_router(r_cu_prodotti_mod.router,   prefix="/api", tags=["Cucina Prodotti Vendita"])
+app.include_router(r_cu_ord_mod.router,        prefix="/api", tags=["Cucina Ordini Fornitori"])
 
 
 # =============================================================================

@@ -129,8 +129,18 @@ Ogni hub usa:
 
 ## Router Backend Cucina
 
-Tutti registrati in `/api/cucina/`:
-- `/ricette` — RicettarioAdmin
-- `/food-cost/*` — FoodCostAdmin
-- `/prodotti-vendita/*` — ProdottiVendita
-- `/ordini-fornitori/*` — OrdiniFornitori (con tab Bozze da Tracciabilità)
+Tutti registrati in `/api/cucina/` (cartella: `/app/app/routers/cucina/`):
+- `/ricette` — RicettarioAdmin (`ricette.py`)
+- `/food-cost/*` — FoodCostAdmin (`food_cost.py`)
+- `/prodotti-vendita/*` — ProdottiVendita (`prodotti_vendita.py`)
+- `/ordini-fornitori/*` — OrdiniFornitori cucina (`ordini_fornitori.py`)
+
+## CucinaHub Tab (aggiornato 2026-04-02)
+
+`/cucina/:tab` — 4 tab navigabili:
+| Tab | ID | Componente |
+|-----|----|------------|
+| Ricettario | `ricettario` | RicettarioAdmin.jsx |
+| Food Cost | `food-cost` | FoodCostAdmin.jsx |
+| Catalogo Ordini | `catalogo-ordini` | CatalogoOrdini.jsx |
+| Prodotti Vendita | `prodotti-vendita` | ProdottiVendita.jsx |

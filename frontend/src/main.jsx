@@ -229,14 +229,16 @@ const router = createBrowserRouter([
       
       // === CUCINA ===
       { path: "cucina", element: <LazyPage><CucinaHub /></LazyPage> },
-      { path: "dizionario-prodotti", element: <LazyPage><CucinaHub /></LazyPage> },
-      { path: "dizionario-prodotti/:prodotto", element: <LazyPage><CucinaHub /></LazyPage> },
-      { path: "centri-costo", element: <LazyPage><CucinaHub /></LazyPage> },
-      { path: "centri-costo/:centro", element: <LazyPage><CucinaHub /></LazyPage> },
-      { path: "utile-obiettivo", element: <LazyPage><CucinaHub /></LazyPage> },
-      { path: "utile-obiettivo/:anno", element: <LazyPage><CucinaHub /></LazyPage> },
-      { path: "ricettario", element: <LazyPage><CucinaHub /></LazyPage> },
-      { path: "ricettario/:tab", element: <LazyPage><CucinaHub /></LazyPage> },
+      { path: "cucina/:tab", element: <LazyPage><CucinaHub /></LazyPage> },
+      // Redirect vecchi path cucina → /cucina/:tab
+      { path: "dizionario-prodotti", element: <Navigate to="/cucina/ricettario" replace /> },
+      { path: "dizionario-prodotti/:prodotto", element: <Navigate to="/cucina/ricettario" replace /> },
+      { path: "centri-costo", element: <Navigate to="/cucina/food-cost" replace /> },
+      { path: "centri-costo/:centro", element: <Navigate to="/cucina/food-cost" replace /> },
+      { path: "utile-obiettivo", element: <Navigate to="/cucina/food-cost" replace /> },
+      { path: "utile-obiettivo/:anno", element: <Navigate to="/cucina/food-cost" replace /> },
+      { path: "ricettario", element: <Navigate to="/cucina/ricettario" replace /> },
+      { path: "ricettario/:tab", element: <Navigate to="/cucina/ricettario" replace /> },
       { path: "learning-machine", element: <LazyPage><LearningMachine /></LazyPage> },
       { path: "learning-machine/:tab", element: <LazyPage><LearningMachine /></LazyPage> },
       
