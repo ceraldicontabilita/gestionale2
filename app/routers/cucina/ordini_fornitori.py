@@ -54,11 +54,9 @@ async def list_bozze() -> List[Dict[str, Any]]:
 
 
 @router.get("/bozze/count")
-@handle_errors
-async def count_bozze() -> Dict[str, Any]:
-    """Numero bozze ordini in attesa."""
+async def count_bozze():
     db = Database.get_db()
-    count = await db["ordini_fornitori"].count_documents({"stato": "bozza"})
+    count = await db.ordini_fornitori.count_documents({"stato": "bozza"})
     return {"count": count}
 
 
