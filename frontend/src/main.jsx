@@ -44,6 +44,8 @@ const StrumentiHub = lazy(() => import("./pages/hub/StrumentiHub.jsx"));
 const IntegrazioniHub = lazy(() => import("./pages/hub/IntegrazioniHub.jsx"));
 const AdminHub = lazy(() => import("./pages/hub/AdminHub.jsx"));
 const LearningMachineUniversale = lazy(() => import("./pages/LearningMachineUniversale.jsx"));
+const LearningMachine = lazy(() => import("./pages/LearningMachine.jsx"));
+const RiconciliazioneUnificata = lazy(() => import("./pages/RiconciliazioneUnificata.jsx"));
 const MappaGestionale = lazy(() => import("./pages/MappaGestionale.jsx"));
 
 // === STANDALONE PAGES ===
@@ -89,9 +91,11 @@ const router = createBrowserRouter([
       // === CICLO PASSIVO & VENDITE ===
       { path: "ciclo-passivo", element: <LazyPage><CicloPassivoHub /></LazyPage> },
       { path: "ciclo-passivo/import", element: <LazyPage><CicloPassivoAdmin /></LazyPage> },
-      { path: "fatture-ricevute", element: <LazyPage><CicloPassivoHub /></LazyPage> },
-      { path: "fatture-ricevute/:fornitore", element: <LazyPage><CicloPassivoHub /></LazyPage> },
-      { path: "fatture-ricevute/:fornitore/:fattura", element: <LazyPage><CicloPassivoHub /></LazyPage> },
+      { path: "fatture", element: <LazyPage><CicloPassivoHub /></LazyPage> },
+      { path: "fatture/:tab", element: <LazyPage><CicloPassivoHub /></LazyPage> },
+      { path: "fatture-ricevute", element: <Navigate to="/fatture" replace /> },
+      { path: "fatture-ricevute/:fornitore", element: <Navigate to="/fatture" replace /> },
+      { path: "fatture-ricevute/:fornitore/:fattura", element: <Navigate to="/fatture" replace /> },
       { path: "archivio-fatture-ricevute", element: <LazyPage><CicloPassivoHub /></LazyPage> },
       { path: "corrispettivi", element: <LazyPage><CicloPassivoHub /></LazyPage> },
       { path: "corrispettivi/:anno/:mese", element: <LazyPage><CicloPassivoHub /></LazyPage> },
@@ -112,13 +116,17 @@ const router = createBrowserRouter([
       { path: "dati-provvisori", element: <LazyPage><PrimaNotaHub /></LazyPage> },
       
       // === RICONCILIAZIONE ===
-      { path: "riconciliazione", element: <LazyPage><RiconciliazioneHub /></LazyPage> },
-      { path: "riconciliazione/:tab", element: <LazyPage><RiconciliazioneHub /></LazyPage> },
-      { path: "riconciliazione/:tab/:id", element: <LazyPage><RiconciliazioneHub /></LazyPage> },
-      { path: "riconciliazione-intelligente", element: <Navigate to="/riconciliazione" replace /> },
-      { path: "riconciliazione-paypal", element: <LazyPage><RiconciliazioneHub /></LazyPage> },
-      { path: "gestione-assegni", element: <LazyPage><RiconciliazioneHub /></LazyPage> },
-      { path: "gestione-assegni/:stato", element: <LazyPage><RiconciliazioneHub /></LazyPage> },
+      // Nuova rotta principale (unificata con PayPal)
+      { path: "riconciliazione-unificata", element: <LazyPage><RiconciliazioneUnificata /></LazyPage> },
+      { path: "riconciliazione-unificata/:tab", element: <LazyPage><RiconciliazioneUnificata /></LazyPage> },
+      // Redirect vecchi URL → nuova rotta
+      { path: "riconciliazione", element: <Navigate to="/riconciliazione-unificata" replace /> },
+      { path: "riconciliazione/:tab", element: <Navigate to="/riconciliazione-unificata" replace /> },
+      { path: "riconciliazione/:tab/:id", element: <Navigate to="/riconciliazione-unificata" replace /> },
+      { path: "riconciliazione-intelligente", element: <Navigate to="/riconciliazione-unificata" replace /> },
+      { path: "riconciliazione-paypal", element: <Navigate to="/riconciliazione-unificata/paypal" replace /> },
+      { path: "gestione-assegni", element: <Navigate to="/riconciliazione-unificata/assegni" replace /> },
+      { path: "gestione-assegni/:stato", element: <Navigate to="/riconciliazione-unificata/assegni" replace /> },
       { path: "archivio-bonifici", element: <LazyPage><RiconciliazioneHub /></LazyPage> },
       { path: "archivio-bonifici/:tab", element: <LazyPage><RiconciliazioneHub /></LazyPage> },
       { path: "archivio-bonifici/:anno/:mese", element: <LazyPage><RiconciliazioneHub /></LazyPage> },
@@ -147,9 +155,11 @@ const router = createBrowserRouter([
       { path: "tfr/:tab", element: <LazyPage><PagheHub /></LazyPage> },
       { path: "tfr/:dipendente", element: <LazyPage><PagheHub /></LazyPage> },
       
-      // === VEICOLI → ora in /dipendenti/veicoli ===
-      { path: "veicoli", element: <Navigate to="/dipendenti/veicoli" replace /> },
-      { path: "noleggio-auto", element: <Navigate to="/dipendenti/veicoli" replace /> },
+      // === VEICOLI/NOLEGGIO ===
+      { path: "noleggio", element: <LazyPage><VeicoliHub /></LazyPage> },
+      { path: "noleggio/:tab", element: <LazyPage><VeicoliHub /></LazyPage> },
+      { path: "veicoli", element: <Navigate to="/noleggio" replace /> },
+      { path: "noleggio-auto", element: <Navigate to="/noleggio" replace /> },
       { path: "noleggio-auto/:targa", element: <LazyPage><VeicoliHub /></LazyPage> },
       { path: "verbali-noleggio/:numeroVerbale", element: <LazyPage><DettaglioVerbale /></LazyPage> },
       { path: "verbali-noleggio/:prefisso/:numero", element: <LazyPage><DettaglioVerbale /></LazyPage> },
@@ -173,8 +183,9 @@ const router = createBrowserRouter([
       { path: "riconciliazione-f24/:anno", element: <LazyPage><FiscoHub /></LazyPage> },
       { path: "codici-tributari", element: <LazyPage><FiscoHub /></LazyPage> },
       { path: "codici-tributari/:codice", element: <LazyPage><FiscoHub /></LazyPage> },
-      { path: "contabilita", element: <LazyPage><FiscoHub /></LazyPage> },
-      { path: "contabilita/:sezione", element: <LazyPage><FiscoHub /></LazyPage> },
+      { path: "contabilita", element: <LazyPage><ContabilitaHub /></LazyPage> },
+      { path: "contabilita/:sezione", element: <LazyPage><ContabilitaHub /></LazyPage> },
+      { path: "contabilita-hub", element: <Navigate to="/contabilita" replace /> },
       
       // === BILANCIO ===
       { path: "bilancio", element: <LazyPage><BilancioHub /></LazyPage> },
@@ -228,8 +239,8 @@ const router = createBrowserRouter([
       { path: "utile-obiettivo/:anno", element: <LazyPage><CucinaHub /></LazyPage> },
       { path: "ricettario", element: <LazyPage><CucinaHub /></LazyPage> },
       { path: "ricettario/:tab", element: <LazyPage><CucinaHub /></LazyPage> },
-      { path: "learning-machine", element: <LazyPage><LearningMachineUniversale /></LazyPage> },
-      { path: "learning-machine/:tab", element: <LazyPage><LearningMachineUniversale /></LazyPage> },
+      { path: "learning-machine", element: <LazyPage><LearningMachine /></LazyPage> },
+      { path: "learning-machine/:tab", element: <LazyPage><LearningMachine /></LazyPage> },
       
       // === SCADENZE ===
       { path: "scadenze", element: <LazyPage><Scadenze /></LazyPage> },
@@ -260,7 +271,7 @@ const router = createBrowserRouter([
       { path: "da-rivedere/:stato", element: <LazyPage><DocumentiHub /></LazyPage> },
       { path: "classificazione-email", element: <LazyPage><DocumentiHub /></LazyPage> },
       { path: "classificazione-email/:tab", element: <LazyPage><DocumentiHub /></LazyPage> },
-      { path: "regole-categorizzazione", element: <LazyPage><DocumentiHub /></LazyPage> },
+      { path: "regole-categorizzazione", element: <Navigate to="/learning-machine/regole" replace /> },
       { path: "fornitori-learning", element: <Navigate to="/fornitori" replace /> },
       
       // === STRUMENTI ===

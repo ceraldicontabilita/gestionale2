@@ -11,8 +11,8 @@
  * Creato: 4 Febbraio 2026
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import api from '../api';
 import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
@@ -21,6 +21,8 @@ import {
   Lightbulb, TrendingUp, FileText, CreditCard, BarChart3, Zap,
   Trash2, Settings, Search, Filter, Download, Play, Pause
 } from 'lucide-react';
+
+const RegoleCategorizzazioneLazy = lazy(() => import('./RegoleCategorizzazione.jsx'));
 
 // ============================================================
 // COMPONENTI RIUTILIZZABILI
@@ -94,8 +96,18 @@ function LoadingSpinner({ text = 'Caricamento...' }) {
 // ============================================================
 
 export default function LearningMachine() {
-  // === TAB STATE ===
-  const [activeTab, setActiveTab] = useState('fornitori');
+  // === URL TAB NAVIGATION ===
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  const getTabFromPath = () => {
+    const match = location.pathname.match(/\/learning-machine\/(\w+)/);
+    const validTabs = ['dashboard', 'fornitori', 'assegni', 'documenti', 'regole'];
+    if (match && validTabs.includes(match[1])) return match[1];
+    return 'fornitori';
+  };
+
+  const [activeTab, setActiveTab] = useState(getTabFromPath());
   const [message, setMessage] = useState(null);
   
   // === FORNITORI STATE ===
@@ -333,7 +345,8 @@ export default function LearningMachine() {
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
     { id: 'fornitori', label: 'Fornitori & Keywords', icon: Tag },
     { id: 'assegni', label: 'Pattern Assegni', icon: CreditCard },
-    { id: 'documenti', label: 'Classificazione Documenti', icon: FileText }
+    { id: 'documenti', label: 'Classificazione Documenti', icon: FileText },
+    { id: 'regole', label: '⚙️ Regole Categorizzazione', icon: Settings },
   ];
 
   // ============================================================
@@ -388,7 +401,10 @@ export default function LearningMachine() {
         {TABS.map(tab => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => {
+              setActiveTab(tab.id);
+              navigate(tab.id === 'fornitori' ? '/learning-machine' : `/learning-machine/${tab.id}`);
+            }}
             style={{
               flex: 1,
               padding: '12px 16px',
@@ -1076,6 +1092,18 @@ export default function LearningMachine() {
             </>
           )}
         </div>
+      )}
+
+      {/* === TAB: REGOLE CATEGORIZZAZIONE === */}
+      {activeTab === 'regole' && (
+        <Suspense fallback={
+          <div style={{ textAlign: 'center', padding: 60, color: '#6b7280' }}>
+            <RefreshCw size={32} style={{ margin: '0 auto 12px', animation: 'spin 1s linear infinite' }} />
+            <p>Caricamento Regole...</p>
+          </div>
+        }>
+          <RegoleCategorizzazioneLazy />
+        </Suspense>
       )}
     </div>
   );

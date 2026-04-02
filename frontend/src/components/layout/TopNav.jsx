@@ -8,9 +8,9 @@ import { AgentiPanel } from '../AgentiPanel';
 // Navigazione principale - link diretti (no dropdown tranne "Altro")
 const NAV_ITEMS = [
   { to: '/', label: 'Dashboard', icon: '⊞' },
-  { to: '/fatture-ricevute', label: 'Fatture', icon: '🧾', badge: '180' },
+  { to: '/fatture', label: 'Fatture', icon: '🧾' },
   { to: '/prima-nota', label: 'Prima Nota', icon: '📒' },
-  { to: '/riconciliazione', label: 'Banca', icon: '🏦', dot: true },
+  { to: '/riconciliazione-unificata', label: 'Banca', icon: '🏦', dot: true },
   { to: '/fisco', label: 'Fisco', icon: '📋' },
   { to: '/fornitori', label: 'Fornitori', icon: '🏢' },
   { to: '/dipendenti', label: 'HR', icon: '👥' },
@@ -18,21 +18,14 @@ const NAV_ITEMS = [
 
 // Solo "Altro" ha dropdown perché ha molti items
 const ALTRO_ITEMS = [
-  { to: '/bilancio', label: 'Bilancio' },
-  { to: '/mutui', label: 'Mutui' },
-  { to: '/contabilita-hub', label: 'Contabilità' },
+  { to: '/contabilita', label: 'Contabilità' },
   { to: '/magazzino', label: 'Magazzino' },
   { to: '/cucina', label: 'Cucina' },
-  { to: '/scadenze', label: 'Scadenze' },
-  { to: '/todo', label: 'To-Do' },
-  { to: '/import-documenti', label: 'Import Documenti' },
   { to: '/documenti', label: 'Documenti' },
-  { to: '/learning-machine', label: 'Learning Machine' },
+  { to: '/noleggio', label: 'Noleggio' },
+  { to: '/learning-machine', label: 'Learning' },
   { to: '/strumenti', label: 'Strumenti' },
-  { to: '/integrazioni', label: 'Integrazioni' },
-  { to: '/ciclo-passivo/import', label: '📥 Import Fatture' },
   { to: '/admin', label: 'Admin' },
-  { to: '/mappa-gestionale', label: 'Come Funziona' },
 ];
 
 export default function TopNav() {

@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import api from '../api';
 import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { ExportButton } from '../components/ExportButton';
 import { PageLayout } from '../components/PageLayout';
+
+const RiconciliazionePaypalLazy = lazy(() => import('./RiconciliazionePaypal.jsx'));
 
 /**
  * RICONCILIAZIONE UNIFICATA
@@ -25,6 +27,7 @@ const TABS = [
   { id: 'aruba', label: '🧾 Fatture Aruba', color: '#8b5cf6' },
   { id: 'stipendi', label: '👤 Stipendi', color: '#06b6d4' },
   { id: 'documenti', label: '📎 Documenti', color: '#ec4899' },
+  { id: 'paypal', label: '💳 PayPal', color: '#003087' },
 ];
 
 export default function RiconciliazioneUnificata() {
@@ -32,10 +35,10 @@ export default function RiconciliazioneUnificata() {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Ottieni tab dall'URL (es. /riconciliazione/banca -> banca)
+  // Ottieni tab dall'URL (es. /riconciliazione-unificata/banca -> banca)
   const getTabFromPath = () => {
     const path = location.pathname;
-    const match = path.match(/\/riconciliazione\/(\w+)/);
+    const match = path.match(/\/riconciliazione(?:-unificata)?\/(\w+)/);
     if (match && TABS.find(t => t.id === match[1])) {
       return match[1];
     }
@@ -51,9 +54,9 @@ export default function RiconciliazioneUnificata() {
   const handleTabChange = (tabId) => {
     setActiveTab(tabId);
     if (tabId === 'dashboard') {
-      navigate('/riconciliazione');
+      navigate('/riconciliazione-unificata');
     } else {
-      navigate(`/riconciliazione/${tabId}`);
+      navigate(`/riconciliazione-unificata/${tabId}`);
     }
   };
   
@@ -760,6 +763,18 @@ export default function RiconciliazioneUnificata() {
             onRefresh={loadAllData}
             processing={processing}
           />
+        )}
+        {activeTab === 'paypal' && (
+          <Suspense fallback={
+            <div style={{ padding: 40, textAlign: 'center', color: '#6b7280' }}>
+              <div style={{ width: 36, height: 36, border: '3px solid #e2e8f0', borderTop: '3px solid #003087', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 12px' }} />
+              Caricamento PayPal...
+            </div>
+          }>
+            <div style={{ padding: 20 }}>
+              <RiconciliazionePaypalLazy />
+            </div>
+          </Suspense>
         )}
       </div>
 
