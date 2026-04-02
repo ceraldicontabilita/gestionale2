@@ -576,12 +576,12 @@ async def upload_foto(ricetta_id: str, file: UploadFile = File(...)):
         ext = ".jpg"
     safe_id = ricetta_id.replace("/", "_")
     filename = f"{safe_id}{ext}"
-    upload_dir = ROOT_DIR.parent / "frontend" / "public" / "uploads"
+    upload_dir = Path(__file__).resolve().parent.parent.parent / "static" / "tracciabilita" / "uploads"
     upload_dir.mkdir(parents=True, exist_ok=True)
     dest = upload_dir / filename
     with dest.open("wb") as f:
         shutil.copyfileobj(file.file, f)
-    foto_url = f"/uploads/{filename}"
+    foto_url = f"/api/tracciabilita/uploads/{filename}"
     await db.ricette.update_one({"id": ricetta_id}, {"$set": {"foto_url": foto_url}})
     return {"success": True, "foto_url": foto_url}
 

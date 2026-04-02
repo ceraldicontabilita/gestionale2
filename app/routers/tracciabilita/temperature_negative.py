@@ -25,7 +25,7 @@ router = APIRouter(prefix="/temperature-negative", tags=["Temperature Negative"]
 # MongoDB connection
 mongo_url = os.environ.get('MONGO_URL')
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ.get('DB_NAME', 'test_database')]
+db = client[os.environ.get('DB_NAME', 'azienda_erp_db')]
 
 # ==================== COSTANTI NORMATIVE ====================
 
@@ -327,7 +327,7 @@ async def popola_con_chiusure(anno: int, congelatore: int = Query(default=None))
     
     NOTA: La sanificazione è gestita separatamente nel modulo Sanificazione.
     """
-    from routers.chiusure import get_chiusure_obbligatorie, genera_stati_speciali_random
+    from app.routers.tracciabilita.chiusure import get_chiusure_obbligatorie, genera_stati_speciali_random
     import random
     from datetime import date
     

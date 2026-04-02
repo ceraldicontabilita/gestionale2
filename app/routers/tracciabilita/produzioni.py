@@ -68,7 +68,7 @@ async def registra_produzione(produzione: ProduzioneCrea):
 @router.get("/per-oggi")
 async def get_produzioni_oggi():
     """Produzioni registrate oggi, solo quelle da laboratorio (pasticceria/rosticceria)."""
-    from routers.date_utils import oggi_iso
+    from app.routers.tracciabilita.date_utils import oggi_iso
     oggi = oggi_iso()
     # Cerca per data ISO oppure data con timestamp (substr 10)
     pipeline = [

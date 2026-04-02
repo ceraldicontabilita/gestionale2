@@ -1963,7 +1963,7 @@ async def calcola_nutrizionale_ricetta(ricetta_id: str):
 
     # Se la ricetta ha componenti[], usa il BOM esploso come sorgente ingredienti
     if ricetta.get("componenti"):
-        from routers.ricette import _esplodi_componente
+        from app.routers.tracciabilita.ricette import _esplodi_componente
         porzioni_base = float(ricetta.get("porzioni", 1) or 1)
         visitati = {ricetta_id}
         ing_flat_totale = []

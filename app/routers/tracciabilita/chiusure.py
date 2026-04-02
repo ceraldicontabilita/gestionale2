@@ -21,7 +21,7 @@ router = APIRouter(prefix="/chiusure", tags=["Chiusure e Festività"])
 # MongoDB connection
 mongo_url = os.environ.get('MONGO_URL')
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ.get('DB_NAME', 'test_database')]
+db = client[os.environ.get('DB_NAME', 'azienda_erp_db')]
 
 # ==================== CALCOLO PASQUA ====================
 

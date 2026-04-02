@@ -19,7 +19,7 @@ router = APIRouter(tags=["Lotti Produzione"])
 # MongoDB connection (stessa logica degli altri router)
 _mongo_url = os.environ.get('MONGO_URL')
 _client = AsyncIOMotorClient(_mongo_url)
-db = _client[os.environ.get('DB_NAME', 'test_database')]
+db = _client[os.environ.get('DB_NAME', 'azienda_erp_db')]
 
 
 def _json_loads_safe(s: Optional[str]) -> list:
@@ -524,7 +524,7 @@ async def registra_produzione_e_crea_lotto(
             {"$set": {"ricetta_ultimo_utilizzo": ricetta["nome"]}}
         )
 
-    from routers.utils import _calcola_scadenza, _rileva_allergeni
+    from app.routers.tracciabilita.utils import _calcola_scadenza, _rileva_allergeni
 
     # Calcola scadenza dalla deperibilità degli ingredienti
     ingredienti_nomi = [ing.get("nome", "") for ing in ricetta.get("ingredienti_dettaglio", [])]
@@ -595,7 +595,7 @@ async def genera_lotto_da_ricetta(
     unita_misura: str = Query(None),
     frigo_numero: str = Query(None)
 ):
-    from routers.utils import _calcola_scadenza, _rileva_allergeni
+    from app.routers.tracciabilita.utils import _calcola_scadenza, _rileva_allergeni
 
     ricetta = await db.ricette.find_one({"nome": {"$regex": f"^{ricetta_nome}$", "$options": "i"}}, {"_id": 0})
     if not ricetta:
@@ -928,7 +928,7 @@ async def ricalcola_tracciabilita_lotti(solo_mancanti: bool = True):
 
 async def ricalcola_scadenze_lotti():
     """Ricalcola la data di scadenza per tutti i lotti che la hanno vuota o mancante."""
-    from routers.utils import _calcola_scadenza
+    from app.routers.tracciabilita.utils import _calcola_scadenza
 
     lotti_senza_scad = await db.lotti.find(
         {"$or": [{"data_scadenza": ""}, {"data_scadenza": None}, {"data_scadenza": {"$exists": False}}]},

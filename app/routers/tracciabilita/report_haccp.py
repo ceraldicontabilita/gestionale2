@@ -391,7 +391,7 @@ async def ingredienti_non_mappati():
     """
     import sys
     sys.path.insert(0, str(ROOT_DIR))
-    from routers.food_cost import trova_prodotto_dizionario
+    from app.routers.tracciabilita.food_cost import trova_prodotto_dizionario
 
     prodotti = await db.dizionario_prodotti.find({}, {"_id": 0}).to_list(10000)
     dizionario = {p["nome_normalizzato"].lower(): p for p in prodotti}

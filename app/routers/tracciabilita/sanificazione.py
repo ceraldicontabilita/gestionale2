@@ -26,7 +26,7 @@ router = APIRouter(prefix="/sanificazione", tags=["Sanificazione"])
 # MongoDB connection
 mongo_url = os.environ.get('MONGO_URL')
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ.get('DB_NAME', 'test_database')]
+db = client[os.environ.get('DB_NAME', 'azienda_erp_db')]
 
 # ==================== OPERATORE SANIFICAZIONE ====================
 
@@ -390,7 +390,7 @@ async def popola_attrezzature(start_anno: int = 2022, end_anno: int = 2025):
     Domeniche e chiusure aziendali vengono saltate.
     A volte (~5%) qualche attrezzatura non viene sanificata per realismo.
     """
-    from routers.chiusure import get_chiusure_obbligatorie
+    from app.routers.tracciabilita.chiusure import get_chiusure_obbligatorie
     
     oggi = date.today()
     schede_aggiornate = 0

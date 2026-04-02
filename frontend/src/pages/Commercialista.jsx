@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import api from '../api';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -29,11 +30,16 @@ export default function Commercialista() {
   const [message, setMessage] = useState(null);
   const [alertStatus, setAlertStatus] = useState(null);
   const [log, setLog] = useState([]);
+  const [segnandoInviata, setSegnandoInviata] = useState(false);
   
   // Anno dal context globale
   const { anno: selectedYear, setAnno } = useAnnoGlobale();
   const now = new Date();
-  const [selectedMonth, setSelectedMonth] = useState(now.getMonth()); // 0-indexed for prev month
+  const [searchParams] = useSearchParams();
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const mese = parseInt(searchParams.get('mese') || '0');
+    return mese > 0 ? mese - 1 : now.getMonth(); // 0-indexed
+  });
   
   // Data states
   const [primaNotaData, setPrimaNotaData] = useState(null);
@@ -41,6 +47,12 @@ export default function Commercialista() {
   const [carnets, setCarnets] = useState([]);
   const [selectedCarnets, setSelectedCarnets] = useState([]); // Array per selezione multipla
   const [carnetSearch, setCarnetSearch] = useState(''); // Barra di ricerca
+
+  // Pre-seleziona anno da URL params se presente
+  useEffect(() => {
+    const anno = parseInt(searchParams.get('anno') || '0');
+    if (anno > 0) setAnno(anno);
+  }, []);
 
   const loadConfig = useCallback(async () => {
     try {
@@ -56,6 +68,24 @@ export default function Commercialista() {
       console.error('Error loading config:', e);
     }
   }, []);
+
+  const handleSegnaComeInviata = async () => {
+    if (!alertStatus?.show_alert) return;
+    setSegnandoInviata(true);
+    try {
+      await api.post('/api/commercialista/segna-inviata', {
+        anno: alertStatus.anno_pendente,
+        mese: alertStatus.mese_pendente,
+        email: config.email
+      });
+      setMessage({ type: 'success', text: `Prima Nota Cassa ${alertStatus.mese_nome} ${alertStatus.anno_pendente} segnata come inviata.` });
+      await loadConfig();
+    } catch (e) {
+      setMessage({ type: 'error', text: 'Errore nel segnare come inviata.' });
+    } finally {
+      setSegnandoInviata(false);
+    }
+  };
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -691,6 +721,22 @@ export default function Commercialista() {
             }}
           >
             Vai al mese
+          </button>
+          <button
+            onClick={handleSegnaComeInviata}
+            disabled={segnandoInviata}
+            style={{
+              padding: '10px 20px',
+              background: 'rgba(255,255,255,0.2)',
+              color: 'white',
+              border: '2px solid rgba(255,255,255,0.5)',
+              borderRadius: 8,
+              fontWeight: 'bold',
+              cursor: segnandoInviata ? 'wait' : 'pointer',
+              fontSize: 13
+            }}
+          >
+            {segnandoInviata ? '...' : 'Segna come inviata'}
           </button>
         </div>
       )}

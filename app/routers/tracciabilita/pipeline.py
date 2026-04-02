@@ -281,7 +281,7 @@ async def esegui_pipeline_post_import(motivo: str = "manuale"):
         await step_fornitori(log)
         # ── Step 7 — Aggiorna Manuale HACCP dinamico ──────────────────────
         try:
-            from routers.haccp_manuale_auto import aggiorna_sezioni_manuale
+            from app.routers.tracciabilita.haccp_manuale_auto import aggiorna_sezioni_manuale
             sezioni = await aggiorna_sezioni_manuale()
             log["manuale_haccp_aggiornato"] = True
             log["fornitori_in_scheda_qualifica"] = (

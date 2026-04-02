@@ -529,6 +529,37 @@ async def get_invio_log(limit: int = 50) -> Dict[str, Any]:
     }
 
 
+@router.post("/segna-inviata")
+@handle_errors
+async def segna_prima_nota_inviata(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+    """Segna manualmente la Prima Nota Cassa come inviata per un determinato mese/anno."""
+    anno = data.get("anno")
+    mese = data.get("mese")
+    email = data.get("email", DEFAULT_COMMERCIALISTA_EMAIL)
+    
+    if not anno or not mese:
+        raise HTTPException(status_code=400, detail="anno e mese sono obbligatori")
+    
+    db = Database.get_db()
+    log_doc = {
+        "tipo": "prima_nota_cassa",
+        "anno": anno,
+        "mese": mese,
+        "email": email,
+        "data_invio": datetime.now(timezone.utc).isoformat(),
+        "success": True,
+        "note": "Segnata manualmente come inviata"
+    }
+    await db["commercialista_log"].insert_one(log_doc.copy())
+    
+    mese_nome = ["", "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
+                 "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"][mese]
+    return {
+        "success": True,
+        "message": f"Prima Nota Cassa {mese_nome} {anno} segnata come inviata"
+    }
+
+
 @router.get("/alert-status")
 @handle_errors
 async def get_alert_status() -> Dict[str, Any]:

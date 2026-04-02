@@ -33,7 +33,7 @@ import os
 router = APIRouter(prefix="/attrezzature", tags=["Attrezzature"])
 
 _client = AsyncIOMotorClient(os.environ.get('MONGO_URL'))
-db = _client[os.environ.get('DB_NAME', 'test_database')]
+db = _client[os.environ.get('DB_NAME', 'azienda_erp_db')]
 
 # ─── Modello ──────────────────────────────────────────────────────────────────
 class NuovaAttrezzatura(BaseModel):

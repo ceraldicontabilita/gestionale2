@@ -566,8 +566,8 @@ async def import_fatture_from_pec(
         # Se sono state importate nuove fatture → aggiorna tutto il sistema
         if risultati["fatture_processate"] > 0:
             try:
-                from routers.pipeline import esegui_pipeline_post_import
-                from routers.haccp_manuale_auto import aggiorna_sezioni_manuale
+                from app.routers.tracciabilita.pipeline import esegui_pipeline_post_import
+                from app.routers.tracciabilita.haccp_manuale_auto import aggiorna_sezioni_manuale
                 import asyncio
                 asyncio.create_task(
                     esegui_pipeline_post_import(motivo=f"pec_auto_{risultati['fatture_processate']}_fatture")

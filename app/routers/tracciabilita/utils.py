@@ -21,7 +21,7 @@ router = APIRouter(tags=["Utils"])
 # MongoDB connection
 _mongo_url = os.environ.get('MONGO_URL')
 _client = AsyncIOMotorClient(_mongo_url)
-db = _client[os.environ.get('DB_NAME', 'test_database')]
+db = _client[os.environ.get('DB_NAME', 'azienda_erp_db')]
 
 
 def set_database(database):
@@ -307,7 +307,7 @@ async def esporta_ricette_csv():
 @router.post("/importa-ricette")
 async def importa_ricette(file: UploadFile = File(...)):
     """Importa ricette da file CSV."""
-    from routers.xml_helpers import pulisci_nome_ingrediente
+    from app.routers.tracciabilita.xml_helpers import pulisci_nome_ingrediente
 
     content = await file.read()
     risultato = {"ricette_importate": 0, "ricette_aggiornate": 0, "errori": []}

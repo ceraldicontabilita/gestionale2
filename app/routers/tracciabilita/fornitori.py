@@ -11,7 +11,7 @@ import os
 from motor.motor_asyncio import AsyncIOMotorClient
 
 client = AsyncIOMotorClient(os.environ.get('MONGO_URL'))
-db = client[os.environ.get('DB_NAME', 'test_database')]
+db = client[os.environ.get('DB_NAME', 'azienda_erp_db')]
 
 router = APIRouter(prefix="/fornitori", tags=["Fornitori"])
 

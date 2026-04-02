@@ -150,7 +150,7 @@ async def create_prodotto(prodotto: ProdottoVendita):
             prodotto.allergeni = ricetta.get("allergeni", [])
             # Calcola costo dalla ricetta tramite food cost — usa costo_porzione (per pezzo)
             try:
-                from routers.food_cost import calcola_food_cost_ricetta
+                from app.routers.tracciabilita.food_cost import calcola_food_cost_ricetta
                 costo = await calcola_food_cost_ricetta(prodotto.ricetta_id)
                 # USA costo_porzione (per pezzo) non costo_totale (dell'intera ricetta)
                 prodotto.costo_produzione = costo.get("costo_porzione") or costo.get("costo_totale", 0)
@@ -500,7 +500,7 @@ async def sync_prodotti_da_ricette():
 
     # Carica dizionario prodotti per calcolo costi
     prodotti_diz = await db.dizionario_prodotti.find({}, {"_id": 0}).to_list(10000)
-    from routers.food_cost import trova_prodotto_dizionario, converti_in_kg
+    from app.routers.tracciabilita.food_cost import trova_prodotto_dizionario, converti_in_kg
     dizionario = {p["nome_normalizzato"].lower(): p for p in prodotti_diz}
 
     def calcola_costo_ricetta(ricetta):

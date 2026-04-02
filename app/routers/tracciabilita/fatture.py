@@ -222,7 +222,7 @@ def _genera_html_fallback(fattura: dict, errore: str = None) -> str:
 @router.post("/importa-xml")
 async def importa_fattura_xml(files: List[UploadFile] = File(...)):
     """Importa fatture XML e aggiorna automaticamente le materie prime."""
-    from routers.xml_helpers import (
+    from app.routers.tracciabilita.xml_helpers import (
         parse_fattura_xml, fuzzy_match, estrai_quantita_da_descrizione
     )
 
@@ -461,7 +461,7 @@ async def importa_fattura_xml(files: List[UploadFile] = File(...)):
     # Trigger pipeline automatica
     if risultati["fatture_processate"] > 0:
         try:
-            from routers.pipeline import esegui_pipeline_post_import
+            from app.routers.tracciabilita.pipeline import esegui_pipeline_post_import
             import asyncio
             asyncio.create_task(
                 esegui_pipeline_post_import(motivo=f"xml_manuale_{risultati['fatture_processate']}_fatture")
