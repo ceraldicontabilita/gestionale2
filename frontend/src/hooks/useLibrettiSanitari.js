@@ -22,7 +22,7 @@ export function useLibrettiSanitari() {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await api.get('/api/dipendenti/libretti').catch(() => ({ data: [] }));
+      const res = await api.get('/api/dipendenti/libretti-sanitari/all').catch(() => ({ data: [] }));
       setLibretti(res.data || []);
     } catch (error) {
       console.error('Error loading libretti:', error);
@@ -41,7 +41,7 @@ export function useLibrettiSanitari() {
     }
     
     try {
-      await api.post('/api/dipendenti/libretti', formData);
+      await api.post('/api/dipendenti/libretti-sanitari', formData);
       setShowForm(false);
       setFormData(DEFAULT_FORM);
       await loadData();
@@ -56,7 +56,7 @@ export function useLibrettiSanitari() {
     
     
     try {
-      await api.delete(`/api/dipendenti/libretti/${librettoId}`);
+      await api.delete(`/api/dipendenti/libretti-sanitari/${librettoId}`);
       await loadData();
       return true;
     } catch (error) {

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { STYLES, COLORS, formatEuro, button, badge } from '../lib/utils';
 import { PageLayout } from '../components/PageLayout';
 
 export default function IntegrazioniOpenAPI() {
+  const navigate = useNavigate();
   const [sdiStatus, setSdiStatus] = useState(null);
   const [xbrlStatus, setXbrlStatus] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -227,7 +229,7 @@ export default function IntegrazioniOpenAPI() {
                     Invia le fatture attive allo SDI per la trasmissione.
                   </p>
                   <button 
-                    onClick={() => alert('Vai su Fatture Emesse per inviare singole fatture')}
+                    onClick={() => navigate('/fatture/emesse')}
                     style={{ ...button('#3b82f6'), width: '100%' }}
                   >
                     📤 Gestione Invii

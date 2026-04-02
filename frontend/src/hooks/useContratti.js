@@ -63,7 +63,8 @@ export function useContratti() {
     
     
     try {
-      await api.patch(`/api/dipendenti/contratti/${contrattoId}/termina`);
+      const oggi = new Date().toISOString().split('T')[0];
+      await api.post(`/api/dipendenti/contratti/${contrattoId}/termina?data_fine=${oggi}`);
       await loadData();
       return true;
     } catch (error) {
@@ -76,7 +77,7 @@ export function useContratti() {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      const res = await api.post('/api/dipendenti/contratti/import', formData, {
+      const res = await api.post('/api/dipendenti/contratti/import-excel', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       await loadData();

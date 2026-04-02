@@ -559,13 +559,15 @@ app.include_router(ai_parser.router, prefix="/api/ai-parser", tags=["AI Parser"]
 app.include_router(upload_ai.router, prefix="/api/upload-ai", tags=["Upload AI"])
 
 # REMOVED: Chat Intelligente - replaced by OpenClaw
-# app.include_router(chat_router.router, prefix="/api/chat", tags=["Chat Intelligente"])
+from app.routers import chat_router
+app.include_router(chat_router.router, prefix="/api", tags=["Chat Intelligente"])
 
 # --- Schede Tecniche Prodotti ---
 app.include_router(schede_tecniche.router, prefix="/api", tags=["Schede Tecniche Prodotti"])
 
 # --- Auto-Riparazione rimossa (Blocco J1) ---
-# app.include_router(auto_repair.router, prefix="/api", tags=["Auto Riparazione"])
+from app.routers import auto_repair
+app.include_router(auto_repair.router, prefix="/api", tags=["Auto Riparazione"])
 
 # --- Riconciliazione Email ↔ Gestionale ---
 app.include_router(email_reconciliation.router, tags=["Riconciliazione Email"])
@@ -634,9 +636,9 @@ app.include_router(enhanced_parser.router, prefix="/api", tags=["Enhanced Parser
 from app.routers import dati_provvisori
 app.include_router(dati_provvisori.router, prefix="/api", tags=["Dati Provvisori"])
 
-# batch_reprocessing rimosso (Blocco J1)
-# from app.routers import batch_reprocessing
-# app.include_router(batch_reprocessing.router, prefix="/api", tags=["Batch Reprocessing"])
+# batch_reprocessing
+from app.routers import batch_reprocessing
+app.include_router(batch_reprocessing.router, prefix="/api", tags=["Batch Reprocessing"])
 
 
 # --- POS Corrispettivi Check (Verifica coerenza POS/Corrispettivi XML) ---

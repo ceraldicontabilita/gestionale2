@@ -106,7 +106,7 @@ export default function DatiProvvisori() {
       setProcessing(true);
       toast.info('Scarico email Aruba...');
       
-      const res = await api.post('/api/force-sync/aruba-email?days_back=30');
+      const res = await api.post('/api/documenti/scarica-fatture-aruba?since_days=30');
       
       toast.success(`${res.data.fatture_create} nuove fatture scaricate`);
       loadData();

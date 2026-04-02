@@ -246,7 +246,7 @@ const AUTO_TASKS = [
     description: 'Importa fatture da noreply@fatturazioneelettronica.aruba.it',
     icon: Download,
     color: COLORS.success,
-    endpoint: '/api/sync/forza-sync-aruba?days_back=30',
+    endpoint: '/api/documenti/scarica-fatture-aruba?since_days=30',
     method: 'POST',
     autoRun: true
   },
