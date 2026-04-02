@@ -1159,16 +1159,25 @@ export default function Fornitori() {
 
   // Eliminazione fornitore dal database
   const handleDelete = async (id, forceDelete = false) => {
+    if (!forceDelete) {
+      const supplier = suppliers.find(s => s.id === id);
+      const nome = supplier?.ragione_sociale || supplier?.name || 'questo fornitore';
+      if (!window.confirm(`Eliminare definitivamente "${nome}"?\n\nAttenzione: questa operazione non può essere annullata.`)) {
+        return;
+      }
+    }
     try {
-      // DELETE dal database
       const url = forceDelete ? `/api/suppliers/${id}?force=true` : `/api/suppliers/${id}`;
       await api.delete(url);
-      reloadData(); // Ricarica dati
+      reloadData();
     } catch (error) {
       const errorMsg = error.response?.data?.detail || error.response?.data?.message || error.message;
-      // Se ci sono fatture collegate, procedi con eliminazione forzata
       if (error.response?.status === 400 && errorMsg.includes('fatture collegate')) {
-        handleDelete(id, true); // Riprova con force=true
+        const supplier = suppliers.find(s => s.id === id);
+        const nome = supplier?.ragione_sociale || supplier?.name || 'questo fornitore';
+        if (window.confirm(`"${nome}" ha fatture collegate. Eliminare comunque (eliminazione forzata)?`)) {
+          handleDelete(id, true);
+        }
       } else {
         alert('Errore eliminazione: ' + errorMsg);
       }
