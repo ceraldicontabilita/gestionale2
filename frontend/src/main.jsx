@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, Component } from "react";
+import React, { Suspense, lazy } from "react";
 import ReactDOM from "react-dom/client";
 import { createBrowserRouter, RouterProvider, Navigate } from "react-router-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -8,36 +8,10 @@ import { AnnoProvider } from "./contexts/AnnoContext.jsx";
 import { AuthProvider, RequireAuth } from "./contexts/AuthContext.jsx";
 import { queryClient } from "./lib/queryClient.js";
 import { ConfirmProvider } from "./components/ui/ConfirmDialog.jsx";
+import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import AuthCallback from "./pages/AuthCallback.jsx";
-
-class ErrorBoundary extends Component {
-  constructor(props) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-  static getDerivedStateFromError(error) {
-    return { hasError: true, error };
-  }
-  componentDidCatch(error, errorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
-  }
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div style={{ padding: 40, textAlign: 'center', background: '#fef2f2', borderRadius: 12, margin: 20, border: '1px solid #fca5a5' }}>
-          <h2 style={{ color: '#dc2626', marginBottom: 16 }}>Si è verificato un errore</h2>
-          <p style={{ color: '#7f1d1d', marginBottom: 20 }}>{this.state.error?.message || 'Errore sconosciuto'}</p>
-          <button onClick={() => window.location.reload()} style={{ padding: '10px 20px', background: '#2563eb', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600 }}>
-            Ricarica Pagina
-          </button>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
 
 const PageLoader = () => (
   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', flexDirection: 'column', gap: 16 }}>
@@ -253,9 +227,6 @@ const router = createBrowserRouter([
       { path: "utile-obiettivo/:anno", element: <LazyPage><CucinaHub /></LazyPage> },
       { path: "ricettario", element: <LazyPage><CucinaHub /></LazyPage> },
       { path: "ricettario/:tab", element: <LazyPage><CucinaHub /></LazyPage> },
-      { path: "food-cost", element: <LazyPage><CucinaHub /></LazyPage> },
-      { path: "catalogo-ordini", element: <LazyPage><CucinaHub /></LazyPage> },
-      { path: "prodotti-vendita", element: <LazyPage><CucinaHub /></LazyPage> },
       { path: "learning-machine", element: <LazyPage><LearningMachineUniversale /></LazyPage> },
       { path: "learning-machine/:tab", element: <LazyPage><LearningMachineUniversale /></LazyPage> },
       
