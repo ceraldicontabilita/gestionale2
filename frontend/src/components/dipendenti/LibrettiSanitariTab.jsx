@@ -35,7 +35,7 @@ const LibrettiSanitariTab = memo(function LibrettiSanitariTab() {
   const { data: libretti = [], isLoading } = useQuery({
     queryKey: queryKeys.libretti.list(),
     queryFn: async () => {
-      const res = await api.get('/api/dipendenti/libretti');
+      const res = await api.get('/api/dipendenti/libretti-sanitari/all');
       return res.data || [];
     }
   });
@@ -43,7 +43,7 @@ const LibrettiSanitariTab = memo(function LibrettiSanitariTab() {
   // Mutation per creare
   const createMutation = useMutation({
     mutationFn: async (data) => {
-      const res = await api.post('/api/dipendenti/libretti', data);
+      const res = await api.post('/api/dipendenti/libretti-sanitari', data);
       return res.data;
     },
     onSuccess: () => {
@@ -56,7 +56,7 @@ const LibrettiSanitariTab = memo(function LibrettiSanitariTab() {
   // Mutation per eliminare
   const deleteMutation = useMutation({
     mutationFn: async (librettoId) => {
-      await api.delete(`/api/dipendenti/libretti/${librettoId}`);
+      await api.delete(`/api/dipendenti/libretti-sanitari/${librettoId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.libretti.list() });
