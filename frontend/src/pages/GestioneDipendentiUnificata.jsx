@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../api';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
@@ -10,6 +10,8 @@ import { TabSaldoFerie } from '../components/attendance/TabSaldoFerie';
 import { STATI_PRESENZA, MESI } from '../components/attendance/constants';
 import { toast } from 'sonner';
 import { Wallet, RefreshCw, CheckCircle, Clock, AlertCircle, FileText, Users, Car } from 'lucide-react';
+
+const TFRContent = lazy(() => import('./TFR.jsx'));
 
 /**
  * GESTIONE DIPENDENTI UNIFICATA
@@ -38,6 +40,7 @@ const TABS = [
   { id: 'saldo-ferie', label: 'Saldo Ferie', icon: '📅', global: true },
   { id: 'paghe', label: 'Paghe', icon: '📋', global: true },
   { id: 'veicoli', label: 'Veicoli', icon: '🚗', global: true },
+  { id: 'tfr', label: 'TFR', icon: '💰', global: true },
 ];
 
 export default function GestioneDipendentiUnificata() {
@@ -450,6 +453,16 @@ export default function GestioneDipendentiUnificata() {
             )}
             {activeTab === 'veicoli' && (
               <TabVeicoli />
+            )}
+            {activeTab === 'tfr' && (
+              <Suspense fallback={
+                <div style={{ textAlign: 'center', padding: 40, color: '#94a3b8' }}>
+                  <div style={{ fontSize: 32 }}>⏳</div>
+                  <div>Caricamento TFR...</div>
+                </div>
+              }>
+                <TFRContent />
+              </Suspense>
             )}
 
             {/* Tab per dipendente */}

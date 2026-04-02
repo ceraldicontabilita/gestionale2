@@ -152,9 +152,10 @@ const router = createBrowserRouter([
       { path: "cedolini-calcolo/:nome/:dettaglio", element: <LazyPage><PagheHub /></LazyPage> },
       { path: "prima-nota-salari", element: <LazyPage><PagheHub /></LazyPage> },
       { path: "prima-nota-salari/:anno/:mese", element: <LazyPage><PagheHub /></LazyPage> },
-      { path: "tfr", element: <LazyPage><PagheHub /></LazyPage> },
-      { path: "tfr/:tab", element: <LazyPage><PagheHub /></LazyPage> },
-      { path: "tfr/:dipendente", element: <LazyPage><PagheHub /></LazyPage> },
+      // TFR → ora tab in /dipendenti/tfr
+      { path: "tfr", element: <Navigate to="/dipendenti/tfr" replace /> },
+      { path: "tfr/:tab", element: <Navigate to="/dipendenti/tfr" replace /> },
+      { path: "tfr/:dipendente", element: <Navigate to="/dipendenti/tfr" replace /> },
       
       // === VEICOLI/NOLEGGIO ===
       { path: "noleggio", element: <LazyPage><VeicoliHub /></LazyPage> },
@@ -191,32 +192,31 @@ const router = createBrowserRouter([
       { path: "contabilita/:sezione", element: <LazyPage><ContabilitaHub /></LazyPage> },
       { path: "contabilita-hub", element: <Navigate to="/contabilita" replace /> },
       
-      // === BILANCIO ===
-      { path: "bilancio", element: <LazyPage><BilancioHub /></LazyPage> },
-      { path: "bilancio/:tab", element: <LazyPage><BilancioHub /></LazyPage> },
-      { path: "bilancio/:anno", element: <LazyPage><BilancioHub /></LazyPage> },
-      { path: "bilancio-verifica", element: <LazyPage><BilancioHub /></LazyPage> },
-      { path: "partitario", element: <LazyPage><BilancioHub /></LazyPage> },
-      { path: "partitario/:tab", element: <LazyPage><BilancioHub /></LazyPage> },
-      { path: "budget-previsionale", element: <LazyPage><BilancioHub /></LazyPage> },
-      { path: "budget-previsionale/:tab", element: <LazyPage><BilancioHub /></LazyPage> },
-      
-      // === MUTUI ===
-      { path: "mutui", element: <LazyPage><Mutui /></LazyPage> },
-      
+      // === BILANCIO → tab in /contabilita/bilancio ===
+      { path: "bilancio", element: <Navigate to="/contabilita/bilancio" replace /> },
+      { path: "bilancio/:tab", element: <LazyPage><ContabilitaHub /></LazyPage> },
+      { path: "bilancio/:anno", element: <LazyPage><ContabilitaHub /></LazyPage> },
+      { path: "bilancio-verifica", element: <Navigate to="/contabilita/verifica" replace /> },
+      { path: "partitario", element: <Navigate to="/contabilita/bilancio" replace /> },
+      { path: "partitario/:tab", element: <LazyPage><ContabilitaHub /></LazyPage> },
+      { path: "budget-previsionale", element: <Navigate to="/contabilita/budget" replace /> },
+      { path: "budget-previsionale/:tab", element: <LazyPage><ContabilitaHub /></LazyPage> },
+
+      // === MUTUI → tab in /contabilita/mutui ===
+      { path: "mutui", element: <Navigate to="/contabilita/mutui" replace /> },
+
       // === CONTABILITÀ ===
-      { path: "contabilita-hub", element: <LazyPage><ContabilitaHub /></LazyPage> },
-      { path: "piano-dei-conti", element: <LazyPage><ContabilitaHub /></LazyPage> },
+      { path: "piano-dei-conti", element: <Navigate to="/contabilita/piano-conti" replace /> },
       { path: "piano-dei-conti/:tab", element: <LazyPage><ContabilitaHub /></LazyPage> },
       { path: "piano-dei-conti/:conto", element: <LazyPage><ContabilitaHub /></LazyPage> },
-      { path: "controllo-mensile", element: <LazyPage><ContabilitaHub /></LazyPage> },
+      { path: "controllo-mensile", element: <Navigate to="/contabilita/controllo" replace /> },
       { path: "controllo-mensile/:anno/:mese", element: <LazyPage><ContabilitaHub /></LazyPage> },
-      { path: "motore-contabile", element: <LazyPage><ContabilitaHub /></LazyPage> },
-      { path: "calendario-fiscale", element: <LazyPage><ContabilitaHub /></LazyPage> },
-      { path: "cespiti", element: <LazyPage><ContabilitaHub /></LazyPage> },
+      { path: "motore-contabile", element: <Navigate to="/contabilita/motore" replace /> },
+      { path: "calendario-fiscale", element: <Navigate to="/contabilita/calendario" replace /> },
+      { path: "cespiti", element: <Navigate to="/contabilita/cespiti" replace /> },
       { path: "cespiti/:tab", element: <LazyPage><ContabilitaHub /></LazyPage> },
       { path: "cespiti/:cespite", element: <LazyPage><ContabilitaHub /></LazyPage> },
-      { path: "finanziaria", element: <LazyPage><ContabilitaHub /></LazyPage> },
+      { path: "finanziaria", element: <Navigate to="/contabilita/finanziaria" replace /> },
       { path: "finanziaria/:anno", element: <LazyPage><ContabilitaHub /></LazyPage> },
       { path: "chiusura-esercizio", element: <LazyPage><ContabilitaHub /></LazyPage> },
       { path: "chiusura-esercizio/:anno", element: <LazyPage><ContabilitaHub /></LazyPage> },
@@ -255,26 +255,28 @@ const router = createBrowserRouter([
       { path: "todo", element: <LazyPage><ToDo /></LazyPage> },
       { path: "todo/:stato", element: <LazyPage><ToDo /></LazyPage> },
       
-      // === IMPORT DOCUMENTI (centralizzato) ===
-      { path: "import-documenti", element: <LazyPage><ImportDocumentiHub /></LazyPage> },
-      { path: "import-unificato", element: <LazyPage><ImportDocumentiHub /></LazyPage> },
-      { path: "import-unificato/:tipo", element: <LazyPage><ImportDocumentiHub /></LazyPage> },
-      { path: "import-export", element: <LazyPage><ImportDocumentiHub /></LazyPage> },
-      { path: "import-ai", element: <LazyPage><ImportDocumentiHub /></LazyPage> },
-      { path: "ai-parser", element: <LazyPage><ImportDocumentiHub /></LazyPage> },
-      { path: "ai-parser/:tipo", element: <LazyPage><ImportDocumentiHub /></LazyPage> },
-      { path: "lettura-documenti", element: <LazyPage><ImportDocumentiHub /></LazyPage> },
-      { path: "correzione-ai", element: <LazyPage><ImportDocumentiHub /></LazyPage> },
-      { path: "correzione-ai/:documento", element: <LazyPage><ImportDocumentiHub /></LazyPage> },
-      
+      // === IMPORT DOCUMENTI → tab in /documenti/import ===
+      { path: "import-documenti", element: <Navigate to="/documenti/import" replace /> },
+      { path: "import-unificato", element: <Navigate to="/documenti/import" replace /> },
+      { path: "import-unificato/:tipo", element: <LazyPage><DocumentiHub /></LazyPage> },
+      { path: "import-export", element: <Navigate to="/documenti/import" replace /> },
+      { path: "import-ai", element: <Navigate to="/documenti/import" replace /> },
+      { path: "ai-parser", element: <Navigate to="/documenti/import" replace /> },
+      { path: "ai-parser/:tipo", element: <LazyPage><DocumentiHub /></LazyPage> },
+      { path: "lettura-documenti", element: <Navigate to="/documenti/import" replace /> },
+      { path: "correzione-ai", element: <Navigate to="/documenti/correzione-ai" replace /> },
+      { path: "correzione-ai/:documento", element: <LazyPage><DocumentiHub /></LazyPage> },
+
       // === DOCUMENTI ===
       { path: "documenti", element: <LazyPage><DocumentiHub /></LazyPage> },
-      { path: "documenti/:tipo", element: <LazyPage><DocumentiHub /></LazyPage> },
-      { path: "documenti-email", element: <LazyPage><DocumentiHub /></LazyPage> },
-      { path: "da-rivedere", element: <LazyPage><DocumentiHub /></LazyPage> },
+      { path: "documenti/:tab", element: <LazyPage><DocumentiHub /></LazyPage> },
+      { path: "documenti-email", element: <Navigate to="/documenti" replace /> },
+      { path: "da-rivedere", element: <Navigate to="/documenti/da-rivedere" replace /> },
       { path: "da-rivedere/:stato", element: <LazyPage><DocumentiHub /></LazyPage> },
-      { path: "classificazione-email", element: <LazyPage><DocumentiHub /></LazyPage> },
+      { path: "classificazione-email", element: <Navigate to="/documenti/classificazione" replace /> },
       { path: "classificazione-email/:tab", element: <LazyPage><DocumentiHub /></LazyPage> },
+      { path: "documenti-da-rivedere", element: <Navigate to="/documenti/da-rivedere" replace /> },
+      { path: "classificazione-documenti", element: <Navigate to="/documenti/classificazione" replace /> },
       { path: "regole-categorizzazione", element: <Navigate to="/learning-machine/regole" replace /> },
       { path: "fornitori-learning", element: <Navigate to="/fornitori" replace /> },
       
