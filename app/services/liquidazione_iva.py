@@ -181,11 +181,10 @@ def compute_vat_liquidation_from_db(
         same_month = period_start <= op_date <= period_end and reg_date <= period_end
         
         # Deroga 15 giorni: fattura mese precedente registrata entro il 15
+        # Valida anche per gennaio (fatture di dicembre anno precedente)
         deroga_15 = (
             prev_start <= op_date <= prev_end
             and reg_date <= fifteenth
-            and prev_y == year
-            and month != 1
         )
         
         # Deroga 12 giorni
