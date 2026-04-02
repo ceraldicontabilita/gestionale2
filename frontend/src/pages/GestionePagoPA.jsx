@@ -46,7 +46,7 @@ export default function GestionePagoPA() {
 
   const fetchMovimentiBanca = useCallback(async () => {
     try {
-      const response = await api.get('/api/bank/movements?tipo=pagopa&limit=100');
+      const response = await api.get('/api/bank-statement/movements?tipo=pagopa&limit=100');
       setMovimentiBanca(response.data || []);
     } catch (error) {
       console.error('Errore fetch movimenti:', error);

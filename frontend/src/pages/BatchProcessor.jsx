@@ -276,7 +276,7 @@ const AUTO_TASKS = [
     description: 'Associa F24 in banca con quietanze nel sistema',
     icon: FileText,
     color: COLORS.primary,
-    endpoint: '/api/sync/riconcilia-f24-automatico',
+    endpoint: '/api/f24-riconciliazione/riconcilia-tutto',
     method: 'POST',
     autoRun: true
   },

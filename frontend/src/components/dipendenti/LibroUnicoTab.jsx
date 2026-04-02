@@ -64,7 +64,7 @@ const LibroUnicoTab = memo(function LibroUnicoTab({
 
   const handleExport = useCallback(async () => {
     try {
-      const response = await api.get(`/api/dipendenti/libro-unico/export?month_year=${monthYear}`, {
+      const response = await api.get(`/api/dipendenti/libro-unico/export-excel?month_year=${monthYear}`, {
         responseType: 'blob'
       });
       const blob = new Blob([response.data]);

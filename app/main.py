@@ -214,7 +214,7 @@ from app.routers import openapi_imprese
 # --- Core Routers (non modulari) ---
 from app.routers import (
     auth, cash, chart_of_accounts, notifications,
-    cash_register, settings as settings_router,
+    cash_register, settings as settings_base,
     config, search, ocr_assegni, portal,
     finanziaria, public_api,
     comparatore, gestione_riservata, commercialista, scadenze,
@@ -439,6 +439,7 @@ app.include_router(chart_of_accounts.router, prefix="/api/chart-of-accounts", ta
 app.include_router(notifications.router, prefix="/api/notifications", tags=["Notifications"])
 app.include_router(cash_register.router, prefix="/api/cash-register", tags=["Cash Register Operations"])
 app.include_router(settings_router.router, prefix="/api/settings", tags=["Settings"])
+app.include_router(settings_base.router, prefix="/api/settings", tags=["Settings Base"])
 app.include_router(config.router, prefix="/api/config", tags=["Config"])
 app.include_router(search.router, prefix="/api/search", tags=["Search"])
 app.include_router(ocr_assegni.router, prefix="/api/ocr-assegni", tags=["OCR Assegni"])

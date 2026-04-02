@@ -177,7 +177,7 @@ export function useFatture(filters = {}) {
   // Pay fattura
   const payFattura = useCallback(async (id, paymentData) => {
     try {
-      const res = await api.post(`/api/fatture/${id}/pay`, paymentData);
+      const res = await api.put(`/api/fatture/${id}/paga`, paymentData);
       await loadFatture();
       return { success: true, data: res.data };
     } catch (e) {

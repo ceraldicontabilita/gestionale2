@@ -138,7 +138,7 @@ export default function RiconciliazioneUnificata() {
   const eseguiAutoRiparazione = async () => {
     setAutoRepairRunning(true);
     try {
-      const res = await api.post('/api/analytics/auto-ricostruisci-dati');
+      const res = await api.post('/api/fatture-ricevute/auto-ricostruisci-dati');
       if (res.data.riconciliazioni_auto > 0 || res.data.f24_corretti > 0) {
         console.log('🔧 Auto-riparazione completata:', res.data);
         setAutoRepairStatus(res.data);
@@ -1319,7 +1319,7 @@ function F24Tab({ f24, onConfermaF24, processing, onLoadF24, f24Loading }) {
                         if (f.pdf_url) {
                           window.open(f.pdf_url, '_blank');
                         } else if (f.file_path) {
-                          window.open(`/api/files/download?path=${encodeURIComponent(f.file_path)}`, '_blank');
+                          window.open(`/api/download/${encodeURIComponent(f.file_path)}`, '_blank');
                         } else {
                           alert('PDF non disponibile. Carica il PDF F24 dalla sezione Import.');
                         }

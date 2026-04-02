@@ -350,7 +350,7 @@ export default function Admin() {
     
     setSyncLoading(true);
     try {
-      const r = await api.post("/api/sync/fatture-to-banca");
+      const r = await api.post("/api/sync/match-fatture-banca");
       alert(`Aggiornate ${r.data.updated} fatture`);
       await loadSyncStatus();
     } catch (e) {

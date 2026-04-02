@@ -26,7 +26,7 @@ export default function F24() {
   const eseguiAutoRiparazione = async () => {
     setAutoRepairRunning(true);
     try {
-      const res = await api.post('/api/analytics/auto-ricostruisci-dati');
+      const res = await api.post('/api/fatture-ricevute/auto-ricostruisci-dati');
       if (res.data.f24_corretti > 0 || res.data.riconciliazioni_auto > 0) {
         console.log('🔧 Auto-riparazione F24 completata:', res.data);
         setAutoRepairStatus(res.data);

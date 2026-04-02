@@ -59,7 +59,7 @@ export function useLibroUnico(selectedYear, selectedMonth) {
       const monthStr = String(selectedMonth).padStart(2, '0');
       const monthYear = `${selectedYear}-${monthStr}`;
       
-      const response = await api.get(`/api/dipendenti/libro-unico/export?month_year=${monthYear}`, {
+      const response = await api.get(`/api/dipendenti/libro-unico/export-excel?month_year=${monthYear}`, {
         responseType: 'blob'
       });
       

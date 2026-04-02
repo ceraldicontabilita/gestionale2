@@ -1410,7 +1410,7 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
                     </a>
                   ) : mov.f24_id ? (
                     <a
-                      href={`/api/f24/${mov.f24_id}/view`}
+                      href={`/api/f24/${mov.f24_id}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{

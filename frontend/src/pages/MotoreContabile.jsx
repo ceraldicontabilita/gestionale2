@@ -52,7 +52,7 @@ export default function MotoreContabile() {
   
   const fetchBilancioVerifica = async () => {
     try {
-      const res = await api.get(`/api/contabilita/bilancio-verifica?anno=${selectedYear}`);
+      const res = await api.get(`/api/contabilita-gestionale/bilancio-verifica?anno=${selectedYear}`);
       if (res.data?.success !== false) {
         setBilancioVerifica(res.data);
       }
