@@ -7,10 +7,8 @@ from fastapi import APIRouter, HTTPException, Body
 from datetime import datetime, timezone, timedelta
 import uuid
 import os
-from motor.motor_asyncio import AsyncIOMotorClient
 
-client = AsyncIOMotorClient(os.environ.get('MONGO_URL'))
-db = client[os.environ.get('DB_NAME')]
+from app.routers.tracciabilita.server import db
 
 router = APIRouter(prefix="/ricezione-merce", tags=["Ricezione Merce"])
 

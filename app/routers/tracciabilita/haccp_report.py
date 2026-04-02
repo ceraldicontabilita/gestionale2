@@ -4,7 +4,6 @@ Genera un PDF con: temperature positive, negative, sanificazione.
 """
 from fastapi import APIRouter, Query
 from fastapi.responses import StreamingResponse
-from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import io
 from datetime import datetime, timezone
@@ -22,9 +21,7 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 
 router = APIRouter(prefix="/haccp-report", tags=["HACCP Report"])
 
-MONGO_URL = os.environ.get("MONGO_URL")
-DB_NAME = os.environ.get("DB_NAME")
-db = AsyncIOMotorClient(MONGO_URL)[DB_NAME]
+from app.routers.tracciabilita.server import db
 
 # ─── Palette colori ───────────────────────────────────────────────────────────
 BLUE_DARK = colors.HexColor("#1e3a5f")

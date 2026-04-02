@@ -7,7 +7,7 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import HTMLResponse
 from datetime import datetime, timezone
-from db import database as db
+from app.routers.tracciabilita.server import db
 
 ROOT_DIR = Path(__file__).parent.parent
 

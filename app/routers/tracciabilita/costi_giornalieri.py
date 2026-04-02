@@ -8,7 +8,7 @@ from typing import List, Optional
 from datetime import datetime, timezone
 import uuid
 
-from routers.date_utils import oggi_iso as oggi_str
+from app.routers.tracciabilita.date_utils import oggi_iso as oggi_str
 from app.routers.tracciabilita.server import db
 
 router = APIRouter(prefix="/costi-giornalieri", tags=["Costi Giornalieri"])

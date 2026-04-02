@@ -11,7 +11,7 @@ import re
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
-from db import database as db
+from app.routers.tracciabilita.server import db
 
 router = APIRouter(prefix="/sconti-merce", tags=["Sconti Merce"])
 

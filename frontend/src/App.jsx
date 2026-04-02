@@ -89,7 +89,11 @@ export default function App() {
       try {
         const res = await api.get('/api/commercialista/alert-status');
         if (res.data.show_alert) {
-          setAlertCommercialista(res.data);
+          // Controlla se l'utente ha già chiuso questo avviso (per mese/anno)
+          const dismissKey = `alert_dismissed_${res.data.mese_pendente}_${res.data.anno_pendente}`;
+          if (!localStorage.getItem(dismissKey)) {
+            setAlertCommercialista(res.data);
+          }
         }
       } catch (e) {
         // Silently fail
@@ -236,11 +240,24 @@ export default function App() {
                   textDecoration: 'none',
                   fontSize: 13
                 }}
+                onClick={() => {
+                  if (alertCommercialista) {
+                    const dismissKey = `alert_dismissed_${alertCommercialista.mese_pendente}_${alertCommercialista.anno_pendente}`;
+                    localStorage.setItem(dismissKey, '1');
+                    setAlertCommercialista(null);
+                  }
+                }}
               >
                 Vai a Commercialista
               </NavLink>
               <button
-                onClick={() => setAlertCommercialista(null)}
+                onClick={() => {
+                  if (alertCommercialista) {
+                    const dismissKey = `alert_dismissed_${alertCommercialista.mese_pendente}_${alertCommercialista.anno_pendente}`;
+                    localStorage.setItem(dismissKey, '1');
+                  }
+                  setAlertCommercialista(null);
+                }}
                 style={{
                   background: 'transparent',
                   border: 'none',

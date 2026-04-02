@@ -5,12 +5,11 @@ GET /api/stampa/lotto/{id_o_numero_lotto} → HTML pronto per window.print()
 """
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import HTMLResponse
-from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import datetime, timezone
 import os
 
 router = APIRouter(prefix="/stampa", tags=["Stampa"])
-db = AsyncIOMotorClient(os.environ.get("MONGO_URL"))[os.environ.get("DB_NAME")]
+from app.routers.tracciabilita.server import db
 
 # ── Dizionario allergeni (Reg. UE 1169/2011) ─────────────────────────────────
 ALLERGENI_KW = {

@@ -10,7 +10,7 @@ import logging
 from datetime import datetime, timezone
 from typing import Optional, List
 from fastapi import APIRouter, HTTPException, Query
-from db import database as db
+from app.routers.tracciabilita.server import db
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/lotti-fornitori", tags=["Lotti Fornitori"])
