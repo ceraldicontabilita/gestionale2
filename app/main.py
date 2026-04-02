@@ -724,6 +724,12 @@ docs_path = "./docs"
 os.makedirs(docs_path, exist_ok=True)
 app.mount("/api/download", StaticFiles(directory=docs_path), name="download")
 
+# Mount mini-sito Tracciabilità (build React statica) sotto /api/tracciabilita
+_tracciabilita_static = os.path.join(os.path.dirname(__file__), "static", "tracciabilita")
+if os.path.isdir(_tracciabilita_static):
+    app.mount("/api/tracciabilita", StaticFiles(directory=_tracciabilita_static, html=True), name="tracciabilita")
+    logger.info("✅ Mini-sito Tracciabilità montato su /api/tracciabilita")
+
 
 if __name__ == "__main__":
     import uvicorn

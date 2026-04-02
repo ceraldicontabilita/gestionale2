@@ -350,3 +350,22 @@ Applicazione ERP full-stack italiana (React + FastAPI + MongoDB) per gestione az
 ### Bug Fix: Loop 30s pagina banca
 - **Root cause**: richiesta F24 in background (`cerca-f24`) prendeva ~35s e causava un re-render visivo della pagina al completamento
 - **Fix**: rimosso il caricamento automatico F24; aggiunto pulsante manuale "Carica F24 pendenti" nel tab F24 di `RiconciliazioneUnificata.jsx`
+
+## Sessione 2 Aprile 2026 (serale) — Integrazione Mini-Sito Tracciabilità
+
+### Obiettivo
+Integrare l'applicazione "Tracciabilità" (repo esterno) come mini-sito interno al gestionale ERP, senza navigazione verso domini esterni.
+
+### Implementazione
+1. **Backend**: 24 router tracciabilità (`/api/tr/*`) copiati da `/tmp/tracciabilita/backend/` e registrati in `main.py`
+2. **Build frontend tracciabilità**: `CI=false PUBLIC_URL=/api/tracciabilita yarn build` (253KB gzip)
+3. **File statici**: copiati in `/app/app/static/tracciabilita/`, montati in FastAPI su `/api/tracciabilita`
+4. **Pagina wrapper**: `TracciabilitaPage.jsx` — iframe + barra contestuale (barra blu scuro con titolo + "Apri in nuova scheda")
+5. **Route**: `/tracciabilita` aggiunta in `main.jsx` (lazy import)
+6. **TopNav**: pulsante "Tracciabilità" (NavLink interno) aggiunto direttamente in barra principale
+
+### Risultato
+- Clic su "Tracciabilità" nella navbar → apre il mini-sito HACCP dentro il gestionale, stesso dominio
+- Navbar del gestionale sempre visibile in cima
+- Il mini-sito ha: Dashboard, Fornitori, Ricette, Prodotti, Lotti, Ordini, Storico, Audit, Backup, Allergeni
+

@@ -82,6 +82,7 @@ const Mutui = lazy(() => import("./pages/Mutui.jsx"));
 const VerificaCoerenza = lazy(() => import("./pages/VerificaCoerenza.jsx"));
 const AgentiPage = lazy(() => import("./pages/Agenti.jsx"));
 const Portale = lazy(() => import("./pages/Portale.jsx"));
+const TracciabilitaPage = lazy(() => import("./pages/TracciabilitaPage.jsx"));
 
 const LazyPage = ({ children }) => (
   <Suspense fallback={<PageLoader />}>{children}</Suspense>
@@ -106,6 +107,9 @@ const router = createBrowserRouter([
       
       // === INSERIMENTO RAPIDO ===
       { path: "rapido", element: <LazyPage><InserimentoRapido /></LazyPage> },
+      
+      // === TRACCIABILITA' MINI-SITO ===
+      { path: "tracciabilita", element: <LazyPage><TracciabilitaPage /></LazyPage> },
       
       // === CICLO PASSIVO & VENDITE ===
       { path: "ciclo-passivo", element: <LazyPage><CicloPassivoHub /></LazyPage> },

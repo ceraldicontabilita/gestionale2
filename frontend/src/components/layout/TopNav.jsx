@@ -89,6 +89,16 @@ export default function TopNav() {
           </NavLink>
         ))}
         
+        {/* Pulsante Tracciabilità - mini-sito integrato */}
+        <NavLink
+          to="/tracciabilita"
+          className={({ isActive }) => `topnav-item ${isActive ? 'active' : ''}`}
+          data-testid="nav-tracciabilita"
+        >
+          <span className="topnav-icon">🔬</span>
+          <span className="topnav-label">Tracciabilità</span>
+        </NavLink>
+
         {/* Solo "Altro" ha dropdown con ritardo sul close */}
         <div 
           className={`topnav-dropdown ${isAltroActive ? 'active' : ''}`}
