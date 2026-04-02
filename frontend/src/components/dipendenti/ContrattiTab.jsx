@@ -76,7 +76,8 @@ const ContrattiTab = memo(function ContrattiTab() {
 
   const terminateMutation = useMutation({
     mutationFn: async (contrattoId) => {
-      await api.patch(`/api/dipendenti/contratti/${contrattoId}/termina`);
+      const oggi = new Date().toISOString().split('T')[0];
+      await api.post(`/api/dipendenti/contratti/${contrattoId}/termina?data_fine=${oggi}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.contratti.all });
@@ -87,7 +88,7 @@ const ContrattiTab = memo(function ContrattiTab() {
     mutationFn: async (file) => {
       const formData = new FormData();
       formData.append('file', file);
-      const res = await api.post('/api/dipendenti/contratti/import', formData, {
+      const res = await api.post('/api/dipendenti/contratti/import-excel', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       return res.data;
