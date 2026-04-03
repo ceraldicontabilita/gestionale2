@@ -195,3 +195,29 @@ Tutti registrati in `/api/cucina/` (cartella: `/app/app/routers/cucina/`):
 ### P2
 - Sicurezza auth backend (Cookies HTTP-Only)
 - Email integration fix (credenziali Gmail App Password scadute)
+
+
+---
+
+## Fix 2026-04-03 (sessione corrente)
+
+### Bug risolti
+1. **Dashboard Prossime Scadenze — Icona Vedi (404)**: `view-assoinvoice` cerca ora anche in `invoices` oltre a `indice_documenti`
+2. **Dashboard Prossime Scadenze — Pagamento non sparisce**: `setScadenzeData` era undefined in `ScadenzeWidget` (fuori scope); ora usa `paidIds` state locale — la scadenza sparisce immediatamente
+
+### Nuove funzionalità
+- **Scanner PagoPA Quietanze** (`/app/app/services/pagopa_scanner.py`):
+  - 3 mittenti: partenopay@ext.comune.napoli.it, noreply-checkout@ricevute.pagopa.it, notifica.pl.napoli@pec.it
+  - Cerca numero verbale nel CORPO dell'email (pattern B/A + 10-12 cifre)
+  - PDF allegato salvato o generato dal corpo con reportlab
+  - Endpoint: `POST /api/verbali-riconciliazione/scan-pagopa?days_back=N`
+  - Endpoint: `GET /api/verbali-riconciliazione/quietanze-verbale/{numero_verbale}`
+  - Endpoint: `GET /api/verbali-riconciliazione/quietanze-verbale/{numero_verbale}/pdf`
+- **Riconciliazione verbali migliorata**: cerca in body, note, oggetto, subject, items (non solo descrizione)
+
+### Task aggiornati
+- P0 Bottoni azione: risolto (ScadenzeWidget paidIds)
+- Passo 7 Widget Cucina: BACKLOG
+- Ciclo Passivo: BACKLOG
+- Email integration Gmail: OPERATIVA (credenziali valide in .env)
+- Sicurezza backend HTTP-Only: da fare
