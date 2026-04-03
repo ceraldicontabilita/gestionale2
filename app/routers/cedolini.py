@@ -354,11 +354,16 @@ async def calcola_stima_cedolino(input_data: CedolinoInput) -> CedolinoStima:
     """
     db = Database.get_db()
     
-    # Recupera dati dipendente
+    # Recupera dati dipendente — controlla prima 'employees' poi 'dipendenti'
     dipendente = await db["employees"].find_one(
         {"id": input_data.dipendente_id},
         {"_id": 0}
     )
+    if not dipendente:
+        dipendente = await db["dipendenti"].find_one(
+            {"id": input_data.dipendente_id},
+            {"_id": 0}
+        )
     
     if not dipendente:
         raise HTTPException(status_code=404, detail="Dipendente non trovato")
