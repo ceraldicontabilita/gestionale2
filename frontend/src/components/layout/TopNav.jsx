@@ -1,170 +1,411 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, memo } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Calendar, ChevronDown } from 'lucide-react';
+import {
+  LayoutDashboard, FileText, BookOpen, Building2,
+  Landmark, Users, FlaskConical, ChevronDown,
+  Bell, Calendar, Warehouse, UtensilsCrossed,
+  Settings, Wrench, FileBarChart, BookMarked, Car
+} from 'lucide-react';
 import { AnnoSelector } from '../../contexts/AnnoContext';
-import NotificationBell from '../NotificationBell';
-import { AgentiPanel } from '../AgentiPanel';
+import { COLORS } from '../../lib/utils';
 
-// Navigazione principale - link diretti (no dropdown tranne "Altro")
+/* ─── Costanti navigazione (definite fuori dal componente → nessuna ricreazione) ─── */
 const NAV_ITEMS = [
-  { to: '/', label: 'Dashboard', icon: '⊞' },
-  { to: '/fatture', label: 'Fatture', icon: '🧾' },
-  { to: '/prima-nota', label: 'Prima Nota', icon: '📒' },
-  { to: '/riconciliazione-unificata', label: 'Banca', icon: '🏦', dot: true },
-  { to: '/fisco', label: 'Fisco', icon: '📋' },
-  { to: '/fornitori', label: 'Fornitori', icon: '🏢' },
-  { to: '/dipendenti', label: 'HR', icon: '👥' },
+  { to: '/', label: 'Dashboard', Icon: LayoutDashboard },
+  { to: '/fatture', label: 'Fatture', Icon: FileText },
+  { to: '/prima-nota', label: 'Prima Nota', Icon: BookOpen },
+  { to: '/riconciliazione-unificata', label: 'Banca', Icon: Building2 },
+  { to: '/fisco', label: 'Fisco', Icon: Landmark },
+  { to: '/fornitori', label: 'Fornitori', Icon: Building2 },
+  { to: '/dipendenti', label: 'HR', Icon: Users },
+  { to: '/tracciabilita', label: 'Tracciabilità', Icon: FlaskConical },
 ];
 
-// Solo "Altro" ha dropdown perché ha molti items
 const ALTRO_ITEMS = [
-  { to: '/contabilita', label: 'Contabilità' },
-  { to: '/magazzino', label: 'Magazzino' },
-  { to: '/cucina', label: 'Cucina' },
-  { to: '/documenti', label: 'Documenti' },
-  { to: '/noleggio', label: 'Noleggio' },
-  { to: '/learning-machine', label: 'Learning' },
-  { to: '/strumenti', label: 'Strumenti' },
-  { to: '/admin', label: 'Admin' },
+  { to: '/contabilita', label: 'Contabilità', Icon: FileBarChart },
+  { to: '/magazzino', label: 'Magazzino', Icon: Warehouse },
+  { to: '/cucina', label: 'Cucina', Icon: UtensilsCrossed },
+  { to: '/documenti', label: 'Documenti', Icon: BookMarked },
+  { to: '/noleggio', label: 'Noleggio', Icon: Car },
+  { to: '/strumenti', label: 'Strumenti', Icon: Wrench },
+  { to: '/admin', label: 'Admin', Icon: Settings },
 ];
 
-export default function TopNav() {
-  const location = useLocation();
-  const [showAltro, setShowAltro] = useState(false);
-  const closeTimeoutRef = useRef(null);
-  
-  // Check if current path is in "Altro" section
-  const isAltroActive = ALTRO_ITEMS.some(item => 
-    location.pathname === item.to || location.pathname.startsWith(item.to)
-  );
+/* ─── Stili (definiti fuori → creati una volta sola) ─── */
+const S = {
+  nav: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 56,
+    zIndex: 1000,
+    display: 'flex',
+    alignItems: 'center',
+    background: COLORS.primary,
+    boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+    padding: '0 12px',
+    gap: 0,
+  },
+  brand: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    marginRight: 16,
+    flexShrink: 0,
+    textDecoration: 'none',
+  },
+  brandSquare: {
+    width: 32,
+    height: 32,
+    background: 'rgba(255,255,255,0.15)',
+    border: '1px solid rgba(255,255,255,0.3)',
+    borderRadius: 8,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontWeight: 800,
+    fontSize: 13,
+    color: '#fff',
+    letterSpacing: 0.5,
+  },
+  brandName: {
+    color: '#fff',
+    fontWeight: 700,
+    fontSize: 14,
+    letterSpacing: 0.3,
+    whiteSpace: 'nowrap',
+  },
+  items: {
+    display: 'flex',
+    alignItems: 'center',
+    flex: 1,
+    gap: 1,
+    overflowX: 'auto',
+    scrollbarWidth: 'none',
+  },
+  navItem: (isActive) => ({
+    display: 'flex',
+    alignItems: 'center',
+    gap: 5,
+    padding: '6px 10px',
+    borderRadius: 8,
+    background: isActive ? 'rgba(255,255,255,0.18)' : 'transparent',
+    color: isActive ? '#fff' : 'rgba(255,255,255,0.78)',
+    fontWeight: isActive ? 700 : 500,
+    fontSize: 13,
+    textDecoration: 'none',
+    whiteSpace: 'nowrap',
+    transition: 'background 0.15s, color 0.15s',
+    cursor: 'pointer',
+    border: 'none',
+    flexShrink: 0,
+  }),
+  dropdownWrap: {
+    position: 'relative',
+    flexShrink: 0,
+  },
+  dropdownMenu: {
+    position: 'absolute',
+    top: 'calc(100% + 8px)',
+    left: 0,
+    background: '#fff',
+    borderRadius: 10,
+    boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+    minWidth: 180,
+    padding: '6px 0',
+    zIndex: 2000,
+    animation: 'navDropIn 0.15s ease',
+  },
+  dropItem: (isActive) => ({
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    padding: '9px 16px',
+    color: isActive ? COLORS.primary : '#374151',
+    fontWeight: isActive ? 700 : 500,
+    fontSize: 13,
+    background: isActive ? '#f0f4ff' : 'transparent',
+    textDecoration: 'none',
+    transition: 'background 0.12s',
+    cursor: 'pointer',
+  }),
+  right: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    marginLeft: 'auto',
+    flexShrink: 0,
+  },
+  annoWrap: {
+    display: 'flex',
+    alignItems: 'center',
+    background: 'rgba(255,255,255,0.12)',
+    borderRadius: 8,
+    padding: '4px 10px',
+    gap: 6,
+    border: '1px solid rgba(255,255,255,0.2)',
+  },
+  annoLabel: {
+    fontSize: 11,
+    fontWeight: 700,
+    color: 'rgba(255,255,255,0.8)',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  avatar: {
+    width: 32,
+    height: 32,
+    borderRadius: '50%',
+    background: 'rgba(255,255,255,0.15)',
+    border: '1px solid rgba(255,255,255,0.3)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontWeight: 800,
+    fontSize: 12,
+    color: '#fff',
+    flexShrink: 0,
+  },
+};
 
-  // Apre immediatamente, chiude con ritardo di 200ms
-  const handleMouseEnter = useCallback(() => {
-    if (closeTimeoutRef.current) {
-      clearTimeout(closeTimeoutRef.current);
-      closeTimeoutRef.current = null;
-    }
-    setShowAltro(true);
+/* ─── Dropdown "Altro" — memoizzato separatamente per evitare re-render del nav ─── */
+const AltroDropdown = memo(function AltroDropdown({ isAltroActive }) {
+  const [open, setOpen] = useState(false);
+  const closeRef = useRef(null);
+
+  const onEnter = useCallback(() => {
+    if (closeRef.current) { clearTimeout(closeRef.current); closeRef.current = null; }
+    setOpen(true);
   }, []);
 
-  const handleMouseLeave = useCallback(() => {
-    closeTimeoutRef.current = setTimeout(() => {
-      setShowAltro(false);
-    }, 200); // 200ms di ritardo prima di chiudere
+  const onLeave = useCallback(() => {
+    closeRef.current = setTimeout(() => setOpen(false), 180);
   }, []);
 
   return (
-    <nav className="topnav-primary" data-testid="topnav-primary">
-      {/* Brand */}
-      <div className="topnav-brand">
-        <div className="brand-square">CG</div>
-        <span className="brand-name">Ceraldi ERP</span>
-      </div>
+    <div style={S.dropdownWrap} onMouseEnter={onEnter} onMouseLeave={onLeave}>
+      <button
+        style={S.navItem(isAltroActive)}
+        data-testid="nav-altro-btn"
+        aria-expanded={open}
+      >
+        <span style={{ fontSize: 13 }}>...</span>
+        <span>Altro</span>
+        <ChevronDown size={11} style={{ opacity: 0.7, marginLeft: 1 }} />
+      </button>
+      {open && (
+        <div style={S.dropdownMenu} data-testid="nav-altro-menu">
+          {ALTRO_ITEMS.map(({ to, label, Icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              style={({ isActive }) => S.dropItem(isActive)}
+              onClick={() => setOpen(false)}
+              data-testid={`nav-altro-${label.toLowerCase()}`}
+            >
+              <Icon size={14} />
+              {label}
+            </NavLink>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+});
 
-      {/* Navigation Items - Link diretti */}
-      <div className="topnav-items">
-        {NAV_ITEMS.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.to === '/'}
-            className={({ isActive }) => `topnav-item ${isActive ? 'active' : ''}`}
-            data-testid={`nav-${item.label.toLowerCase()}`}
-          >
-            <span className="topnav-icon">{item.icon}</span>
-            <span className="topnav-label">{item.label}</span>
-            {item.badge && <span className="topnav-badge">{item.badge}</span>}
-            {item.dot && <span className="topnav-dot" />}
-          </NavLink>
-        ))}
-        
-        {/* Pulsante Tracciabilità - mini-sito integrato */}
-        <NavLink
-          to="/tracciabilita"
-          className={({ isActive }) => `topnav-item ${isActive ? 'active' : ''}`}
-          data-testid="nav-tracciabilita"
-        >
-          <span className="topnav-icon">🔬</span>
-          <span className="topnav-label">Tracciabilità</span>
+/* ─── TopNav principale — React.memo per evitare re-render da parent ─── */
+const TopNav = memo(function TopNav() {
+  const location = useLocation();
+
+  const isAltroActive = ALTRO_ITEMS.some(
+    (item) => location.pathname === item.to || location.pathname.startsWith(item.to + '/')
+  );
+
+  return (
+    <>
+      {/* Stile globale per animazione dropdown — iniettato UNA volta */}
+      <style>{`
+        @keyframes navDropIn {
+          from { opacity: 0; transform: translateY(-6px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .topnav-link:hover {
+          background: rgba(255,255,255,0.12) !important;
+          color: #fff !important;
+        }
+        .topnav-drop-item:hover {
+          background: #f0f4ff !important;
+        }
+        /* scrollbar nascosta nella barra nav */
+        .topnav-items-scroll::-webkit-scrollbar { display: none; }
+      `}</style>
+
+      <nav style={S.nav} data-testid="topnav-primary">
+
+        {/* Brand */}
+        <NavLink to="/" style={S.brand} data-testid="nav-brand">
+          <div style={S.brandSquare}>CG</div>
+          <span style={S.brandName}>Ceraldi ERP</span>
         </NavLink>
 
-        {/* Solo "Altro" ha dropdown con ritardo sul close */}
-        <div 
-          className={`topnav-dropdown ${isAltroActive ? 'active' : ''}`}
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-        >
-          <button className={`topnav-item ${isAltroActive ? 'active' : ''}`}>
-            <span className="topnav-icon">⋯</span>
-            <span className="topnav-label">Altro</span>
-            <ChevronDown size={12} className="topnav-arrow" />
-          </button>
-          {showAltro && (
-            <div className="topnav-dropdown-menu topnav-dropdown-grid">
-              {ALTRO_ITEMS.map((item) => (
-                <NavLink 
-                  key={item.to}
-                  to={item.to}
-                  className={({ isActive }) => `topnav-dropdown-item ${isActive ? 'active' : ''}`}
-                  onClick={() => setShowAltro(false)}
-                >
-                  {item.label}
-                </NavLink>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+        {/* Link principali */}
+        <div style={S.items} className="topnav-items-scroll">
+          {NAV_ITEMS.map(({ to, label, Icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={to === '/'}
+              style={({ isActive }) => S.navItem(isActive)}
+              className="topnav-link"
+              data-testid={`nav-${label.toLowerCase().replace(' ', '-')}`}
+            >
+              <Icon size={14} />
+              <span>{label}</span>
+            </NavLink>
+          ))}
 
-      {/* Right Side - Utilities */}
-      <div className="topnav-right">
-        {/* Anno Selector - MOLTO VISIBILE */}
-        <div className="topnav-anno" data-testid="anno-selector" style={{
+          {/* Dropdown "Altro" */}
+          <AltroDropdown isAltroActive={isAltroActive} />
+        </div>
+
+        {/* Destra: Anno + Notifiche + Avatar */}
+        <div style={S.right}>
+          {/* Selettore Anno */}
+          <div style={S.annoWrap} data-testid="anno-selector">
+            <span style={S.annoLabel}>Anno</span>
+            <AnnoSelector style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#fff',
+              fontWeight: 700,
+              fontSize: 14,
+              cursor: 'pointer',
+              padding: '2px 4px',
+              outline: 'none',
+              minWidth: 52,
+            }} />
+          </div>
+
+          {/* Campana notifiche */}
+          <NotificationBellMinimal />
+
+          {/* Avatar utente */}
+          <div style={S.avatar} title="Ceraldi Group Admin">CG</div>
+        </div>
+      </nav>
+
+      {/* Spacer per compensare la navbar fixed */}
+      <div style={{ height: 56 }} />
+    </>
+  );
+});
+
+export default TopNav;
+
+/* ─── Campana notifiche minimale (senza polling) ─── */
+const NotificationBellMinimal = memo(function NotificationBellMinimal() {
+  const [count, setCount] = useState(0);
+  const [open, setOpen] = useState(false);
+  const [alerts, setAlerts] = useState([]);
+  const hasFetched = useRef(false);
+
+  // Fetch solo la prima volta che si apre, non ad ogni render
+  const handleOpen = useCallback(async () => {
+    setOpen((prev) => {
+      const next = !prev;
+      if (next && !hasFetched.current) {
+        hasFetched.current = true;
+        import('../../api').then(({ default: api }) => {
+          api.get('/api/alerts/lista?limit=15')
+            .then(r => {
+              setAlerts(r.data.alerts || []);
+              setCount(r.data.stats?.non_letti || 0);
+            })
+            .catch(() => {});
+        });
+      }
+      return next;
+    });
+  }, []);
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <button
+        onClick={handleOpen}
+        style={{
+          position: 'relative',
+          width: 34,
+          height: 34,
+          borderRadius: 8,
+          background: 'rgba(255,255,255,0.1)',
+          border: '1px solid rgba(255,255,255,0.2)',
           display: 'flex',
           alignItems: 'center',
-          background: '#dc2626',
-          borderRadius: 8,
-          padding: '6px 14px',
-          gap: 8,
-          boxShadow: '0 2px 8px rgba(220, 38, 38, 0.3)'
-        }}>
-          <span style={{ 
-            fontSize: 12, 
-            fontWeight: 800, 
-            color: 'white',
-            textTransform: 'uppercase',
-            letterSpacing: 0.5
-          }}>📅</span>
-          <AnnoSelector style={{ 
-            background: 'white',
-            border: 'none',
-            borderRadius: 6,
-            padding: '5px 12px',
-            fontSize: 16,
-            fontWeight: 800,
-            color: '#dc2626',
-            minWidth: 75,
-            cursor: 'pointer',
-            textAlign: 'center'
+          justifyContent: 'center',
+          cursor: 'pointer',
+          color: 'rgba(255,255,255,0.85)',
+          transition: 'background 0.15s',
+        }}
+        title="Notifiche"
+        data-testid="notification-bell-btn"
+      >
+        <Bell size={15} />
+        {count > 0 && (
+          <span style={{
+            position: 'absolute',
+            top: 4,
+            right: 4,
+            width: 7,
+            height: 7,
+            background: '#ef4444',
+            borderRadius: '50%',
+            border: '1px solid #1e3a5f',
           }} />
-        </div>
-        
-        <NotificationBell />
-        
-        <AgentiPanel />
-        
-        <button className="topnav-icon-btn" title="Calendario">
-          <Calendar size={15} />
-        </button>
-        
-        <div className="topnav-user">
-          <div className="topnav-avatar">CG</div>
-          <div className="topnav-user-info">
-            <div className="topnav-user-name">Ceraldi</div>
-            <div className="topnav-user-role">Admin</div>
+        )}
+      </button>
+
+      {open && (
+        <div style={{
+          position: 'absolute',
+          top: 'calc(100% + 8px)',
+          right: 0,
+          width: 300,
+          background: '#fff',
+          borderRadius: 10,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+          zIndex: 2000,
+          overflow: 'hidden',
+          animation: 'navDropIn 0.15s ease',
+        }} data-testid="notification-dropdown">
+          <div style={{ padding: '12px 16px', borderBottom: '1px solid #f3f4f6', fontWeight: 700, fontSize: 13, color: COLORS.primary }}>
+            Notifiche {count > 0 && <span style={{ color: '#ef4444' }}>({count})</span>}
           </div>
+          <div style={{ maxHeight: 320, overflowY: 'auto' }}>
+            {alerts.length === 0 ? (
+              <div style={{ padding: 20, textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>
+                Nessuna notifica
+              </div>
+            ) : alerts.slice(0, 8).map((a, i) => (
+              <div key={a.id || i} style={{
+                padding: '10px 16px',
+                borderBottom: '1px solid #f9fafb',
+                fontSize: 12,
+                color: a.letto ? '#9ca3af' : '#374151',
+                fontWeight: a.letto ? 400 : 600,
+              }}>
+                {a.titolo || a.messaggio || 'Notifica'}
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={() => setOpen(false)}
+            style={{ width: '100%', padding: '10px', background: '#f9fafb', border: 'none', cursor: 'pointer', fontSize: 12, color: '#6b7280', borderTop: '1px solid #f3f4f6' }}
+          >
+            Chiudi
+          </button>
         </div>
-      </div>
-    </nav>
+      )}
+    </div>
   );
-}
+});

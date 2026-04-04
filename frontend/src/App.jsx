@@ -4,6 +4,7 @@ import api, { setAuthToken } from "./api";
 import ErrorBoundary from "./components/ErrorBoundary";
 import TopNav from "./components/layout/TopNav";
 import SecondaryTabs from "./components/layout/SecondaryTabs";
+// AgentiPanel rimosso dal layout principale (aveva setInterval ogni 60s che causava re-render)
 import { NotificheScadenze } from "./components/NotificheScadenze";
 import { UploadProvider } from "./contexts/UploadContext";
 import { UploadStatusBar } from "./components/UploadStatusBar";
