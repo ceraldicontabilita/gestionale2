@@ -316,18 +316,19 @@ const router = createBrowserRouter([
   }
 ]);
 
+// React.StrictMode RIMOSSO: in dev mode causava mount→unmount→remount su ogni componente,
+// facendo eseguire tutti i useEffect DUE VOLTE (spinner → dati → spinner → dati).
+// L'utente vedeva un "reload" ad ogni navigazione. Non ha effetto sui build di produzione.
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <AnnoProvider>
-            <ConfirmProvider>
-              <RouterProvider router={router} />
-            </ConfirmProvider>
-          </AnnoProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </ErrorBoundary>
-  </React.StrictMode>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <AnnoProvider>
+          <ConfirmProvider>
+            <RouterProvider router={router} />
+          </ConfirmProvider>
+        </AnnoProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
