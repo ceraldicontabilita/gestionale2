@@ -22,7 +22,7 @@ const TAB_CONFIGS = {
     { to: '/fisco', label: 'Calcolo IVA' },
   ],
   '/dipendenti': [
-    { to: '/dipendenti', label: 'Anagrafica', exact: true },
+    { to: '/dipendenti', label: 'Dipendenti', exact: true },
     { to: '/cedolini', label: 'Cedolini' },
     { to: '/presenze', label: 'Presenze' },
     { to: '/tfr', label: 'TFR' },

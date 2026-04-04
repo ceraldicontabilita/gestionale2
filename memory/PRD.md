@@ -59,7 +59,10 @@ ERP full-stack (React + FastAPI + MongoDB) con gravi problemi di stabilità:
 - ✅ scheduler.py: 3 task aggiornati con `notify_data_change()` calls
 - ✅ 1 connessione WebSocket attiva verificata (`/api/realtime/status`)
 
-### HR Redesign (questa sessione - Apr 2026)
+### Fix Bug HR - cedolini.py (questa sessione - Apr 2026)
+- ✅ Bug critico: l'endpoint `/api/cedolini/dipendente/{id}` cercava in collection `employees` (31 doc, senza campo `id`) invece di `dipendenti` (34 doc) → fix con fallback
+- ✅ `GestioneDipendentiUnificata.jsx`: rimossi TEAM tab duplicati (Paghe/TFR), Presenze Team → "Batch Presenze"
+- ✅ SecondaryTabs: "Anagrafica" rinominato "Dipendenti" (elimina duplicazione visiva)
 - ✅ `GestioneDipendentiUnificata.jsx` ridisegnata: da 14 tab in 2 righe incoerenti → **5 tab Dipendente + 6 tab Team** in riga unica coerente con lib/utils.js
 - ✅ Rimossi tab con API 404 (`storico-ore`, `saldo-ferie` globali)
 - ✅ Nuovo tab `movimenti` unifica Bonifici + Acconti per dipendente

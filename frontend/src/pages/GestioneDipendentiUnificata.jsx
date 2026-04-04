@@ -35,14 +35,12 @@ const TABS_DIPENDENTE = [
   { id: 'giustificativi', label: 'Giustificativi' },
 ];
 
-// Tab globali (non richiedono dipendente selezionato)
+// Tab globali (non richiedono dipendente selezionato) — SENZA duplicati con SecondaryTabs
 const TABS_TEAM = [
-  { id: 'presenze-batch', label: 'Presenze Team' },
+  { id: 'presenze-batch', label: 'Batch Presenze' },
   { id: 'turni',          label: 'Turni' },
   { id: 'richieste',      label: 'Richieste', badge: true },
-  { id: 'paghe',          label: 'Paghe' },
   { id: 'veicoli',        label: 'Veicoli' },
-  { id: 'tfr',            label: 'TFR' },
 ];
 
 const TABS = [...TABS_DIPENDENTE, ...TABS_TEAM.map(t => ({ ...t, global: true }))];
@@ -491,21 +489,8 @@ export default function GestioneDipendentiUnificata() {
                 onRefresh={loadDipendenti}
               />
             )}
-            {activeTab === 'paghe' && (
-              <TabPaghe anno={anno} />
-            )}
             {activeTab === 'veicoli' && (
               <TabVeicoli />
-            )}
-            {activeTab === 'tfr' && (
-              <Suspense fallback={
-                <div style={{ textAlign: 'center', padding: 40, color: '#94a3b8' }}>
-                  <div style={{ fontSize: 32 }}>⏳</div>
-                  <div>Caricamento TFR...</div>
-                </div>
-              }>
-                <TFRContent />
-              </Suspense>
             )}
 
             {/* Tab per dipendente */}

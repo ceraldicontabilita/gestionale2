@@ -637,12 +637,15 @@ async def cedolini_dipendente(dipendente_id: str, anno: Optional[int] = None) ->
     """
     db = Database.get_db()
     
-    # Verifica dipendente
-    dipendente = await db["employees"].find_one({"id": dipendente_id}, {"_id": 0, "nome_completo": 1, "nome": 1})
+    # Verifica dipendente — cerca nella collection corretta
+    dipendente = await db["dipendenti"].find_one({"id": dipendente_id}, {"_id": 0, "nome_completo": 1, "nome": 1, "cognome": 1})
+    if not dipendente:
+        # Fallback alla collection legacy
+        dipendente = await db["employees"].find_one({"id": dipendente_id}, {"_id": 0, "nome_completo": 1, "nome": 1})
     if not dipendente:
         raise HTTPException(status_code=404, detail="Dipendente non trovato")
     
-    nome = dipendente.get("nome_completo") or dipendente.get("nome", "")
+    nome = dipendente.get("nome_completo") or (f"{dipendente.get('cognome','')} {dipendente.get('nome','')}".strip()) or dipendente.get("nome", "")
     
     # Query cedolini
     query = {"dipendente_id": dipendente_id}
@@ -723,7 +726,7 @@ async def riepilogo_mensile(anno: int, mese: int) -> Dict[str, Any]:
         
         # Aggiungi nota se ci sono cedolini con dati parziali
         cedolini_parziali = data.pop("cedolini_parziali", 0)
-        cedolini_completi = data.pop("cedolini_completi", 0)
+        data.pop("cedolini_completi", 0)  # non usato nel response
         
         response = {
             "anno": anno,
