@@ -44,23 +44,24 @@ async def lifespan(app: FastAPI):
     if not secrets_status.get('database'):
         logger.critical("⚠️ MONGODB_ATLAS_URI non configurata! Il database non funzionerà.")
     
-    # Avvia monitor email automatico (ogni 10 minuti)
-    try:
-        from app.services.email_monitor_service import start_monitor
-        db = Database.get_db()
-        if db is not None:
-            start_monitor(db, interval_seconds=600)  # 10 minuti
-            logger.info("📬 Monitor email avviato (ogni 10 minuti)")
-    except Exception as e:
-        logger.warning(f"Monitor email non avviato: {e}")
-    
-    # Avvia scheduler per task automatici (HACCP, Verbali, Gmail/Aruba)
-    try:
-        from app.scheduler import start_scheduler
-        start_scheduler()
-        logger.info("⏰ Scheduler avviato (HACCP, Verbali, Email)")
-    except Exception as e:
-        logger.warning(f"Scheduler non avviato: {e}")
+    # DISABILITATO: Monitor email automatico ogni 10 minuti
+    # Causa: tentativo IMAP con credenziali non valide blocca l'event loop FastAPI per ~30s
+    # (IMAP timeout default). Riabilitare solo dopo aver configurato credenziali valide.
+    # try:
+    #     from app.services.email_monitor_service import start_monitor
+    #     db = Database.get_db()
+    #     if db is not None:
+    #         start_monitor(db, interval_seconds=600)
+    # except Exception as e:
+    #     logger.warning(f"Monitor email non avviato: {e}")
+
+    # DISABILITATO: Scheduler HACCP/Verbali/Gmail ogni 10 minuti
+    # Stesso problema: IMAP blocca l'async event loop causando "reload" percepito dall'utente
+    # try:
+    #     from app.scheduler import start_scheduler
+    #     start_scheduler()
+    # except Exception as e:
+    #     logger.warning(f"Scheduler non avviato: {e}")
     
     logger.info("✅ Application startup complete")
     
