@@ -59,7 +59,16 @@ ERP full-stack (React + FastAPI + MongoDB) con gravi problemi di stabilità:
 - ✅ scheduler.py: 3 task aggiornati con `notify_data_change()` calls
 - ✅ 1 connessione WebSocket attiva verificata (`/api/realtime/status`)
 
-### UI Cucina (sessioni precedenti)
+### HR Redesign (questa sessione - Apr 2026)
+- ✅ `GestioneDipendentiUnificata.jsx` ridisegnata: da 14 tab in 2 righe incoerenti → **5 tab Dipendente + 6 tab Team** in riga unica coerente con lib/utils.js
+- ✅ Rimossi tab con API 404 (`storico-ore`, `saldo-ferie` globali)
+- ✅ Nuovo tab `movimenti` unifica Bonifici + Acconti per dipendente
+- ✅ Styling tab con COLORS.primary, separatori sezione, no emoji
+
+### Immagini Tracciabilità (questa sessione - Apr 2026)
+- ✅ Generate immagini AI per: Arancini Mix, Cipolline Siciliane, Iris Siciliane, Panzarotti
+- ✅ Salvate in `/app/app/static/tracciabilita/uploads/`
+- ✅ Aggiornato DB per 5 prodotti: Mix arancini, Cipolline, Iris, Panzarotti, Cornetto Classico
 - ✅ RicettarioAdmin.jsx, FoodCostAdmin.jsx, CatalogoOrdini.jsx, ProdottiVendita.jsx
 - ✅ Routers backend: /api/cucina/ricette, /food-cost/*, /prodotti-vendita/*, /ordini-fornitori/*
 - ✅ CucinaHub.jsx aggiornato, main.jsx routing configurato

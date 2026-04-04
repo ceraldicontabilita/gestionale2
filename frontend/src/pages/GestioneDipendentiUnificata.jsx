@@ -26,22 +26,26 @@ const TFRContent = lazy(() => import('./TFR.jsx'));
  * URL con tab: /dipendenti/anagrafica, /dipendenti/contratti, etc.
  */
 
-const TABS = [
-  { id: 'anagrafica', label: 'Anagrafica', icon: '👤' },
-  { id: 'giustificativi', label: 'Giustificativi', icon: '📋' },
-  { id: 'contratti', label: 'Contratti', icon: '📄' },
-  { id: 'retribuzione', label: 'Retribuzione', icon: '📋' },
-  { id: 'bonifici', label: 'Bonifici', icon: '🏦' },
-  { id: 'acconti', label: 'Acconti', icon: '📋' },
-  { id: 'presenze-batch', label: 'Presenze', icon: '📅', global: true },
-  { id: 'turni', label: 'Gestione Turni', icon: '👥', global: true },
-  { id: 'richieste', label: 'Richieste', icon: '📋', global: true, badge: true },
-  { id: 'storico-ore', label: 'Storico Ore', icon: '⏱️', global: true },
-  { id: 'saldo-ferie', label: 'Saldo Ferie', icon: '📅', global: true },
-  { id: 'paghe', label: 'Paghe', icon: '📋', global: true },
-  { id: 'veicoli', label: 'Veicoli', icon: '🚗', global: true },
-  { id: 'tfr', label: 'TFR', icon: '💰', global: true },
+// Tab per singolo dipendente
+const TABS_DIPENDENTE = [
+  { id: 'anagrafica',    label: 'Anagrafica' },
+  { id: 'contratti',    label: 'Contratti' },
+  { id: 'retribuzione', label: 'Retribuzione' },
+  { id: 'movimenti',    label: 'Bonifici & Acconti' },
+  { id: 'giustificativi', label: 'Giustificativi' },
 ];
+
+// Tab globali (non richiedono dipendente selezionato)
+const TABS_TEAM = [
+  { id: 'presenze-batch', label: 'Presenze Team' },
+  { id: 'turni',          label: 'Turni' },
+  { id: 'richieste',      label: 'Richieste', badge: true },
+  { id: 'paghe',          label: 'Paghe' },
+  { id: 'veicoli',        label: 'Veicoli' },
+  { id: 'tfr',            label: 'TFR' },
+];
+
+const TABS = [...TABS_DIPENDENTE, ...TABS_TEAM.map(t => ({ ...t, global: true }))];
 
 export default function GestioneDipendentiUnificata() {
   const { anno } = useAnnoGlobale();
@@ -82,7 +86,7 @@ export default function GestioneDipendentiUnificata() {
       navigate(`/dipendenti/${tabId}`);
     }
   };
-  
+
   // Aggiorna URL quando cambia subtab (categoria giustificativi)
   const handleSubtabChange = (subtabId) => {
     setActiveSubtab(subtabId);
@@ -188,6 +192,17 @@ export default function GestioneDipendentiUnificata() {
           const cedRes = await api.get(`/api/cedolini/dipendente/${selectedDip.id}?anno=${anno}`);
           setCedolini(Array.isArray(cedRes.data) ? cedRes.data : cedRes.data?.cedolini || []);
           break;
+          
+        case 'movimenti': {
+          const nomeDip = selectedDip.nome_completo || `${selectedDip.cognome || ''} ${selectedDip.nome || ''}`.trim();
+          const [bonRes, accRes] = await Promise.all([
+            api.get(`/api/archivio-bonifici/transfers?beneficiario=${encodeURIComponent(nomeDip)}`),
+            api.get(`/api/tfr/acconti/${selectedDip.id}`)
+          ]);
+          setBonifici(Array.isArray(bonRes.data) ? bonRes.data : []);
+          setAcconti(Array.isArray(accRes.data) ? accRes.data : accRes.data?.acconti || []);
+          break;
+        }
           
         case 'bonifici':
           // Cerca bonifici per nome dipendente (beneficiario)
@@ -359,56 +374,97 @@ export default function GestioneDipendentiUnificata() {
               </div>
             )}
             
-            {/* Tab bar — due righe, niente scrollbar */}
-            <div style={{ background: 'white', borderBottom: '1px solid #e5e7eb' }}>
-              {/* Riga 1: tab dipendente */}
-              <div style={{ display: 'flex', padding: '0 12px', gap: 0, borderBottom: '1px solid #f1f5f9' }}>
-                {TABS.filter(t => !t.global).map(tab => (
+          {/* Tab bar — UN'UNICA riga coerente, sezione dipendente vs team */}
+          <div style={{ borderBottom: `2px solid ${COLORS.border}` }}>
+            {/* Sezione: tabs per dipendente */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '0 16px',
+              gap: 0,
+              background: 'white',
+              overflowX: 'auto',
+            }}>
+              {/* Label sezione */}
+              <span style={{
+                fontSize: 10,
+                fontWeight: 700,
+                color: COLORS.textMuted,
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                paddingRight: 12,
+                borderRight: `1px solid ${COLORS.border}`,
+                marginRight: 8,
+                whiteSpace: 'nowrap'
+              }}>Dipendente</span>
+
+              {TABS_DIPENDENTE.map(tab => {
+                const isActive = activeTab === tab.id;
+                return (
                   <button
                     key={tab.id}
                     onClick={() => handleTabChange(tab.id)}
                     style={{
-                      padding: '9px 12px',
+                      padding: '12px 16px',
                       background: 'none',
                       border: 'none',
-                      borderBottom: activeTab === tab.id ? '3px solid #3b82f6' : '3px solid transparent',
-                      color: activeTab === tab.id ? '#3b82f6' : '#64748b',
-                      fontWeight: activeTab === tab.id ? 600 : 400,
+                      borderBottom: isActive ? `3px solid ${COLORS.primary}` : '3px solid transparent',
+                      color: isActive ? COLORS.primary : COLORS.textMuted,
+                      fontWeight: isActive ? 700 : 400,
                       cursor: 'pointer',
-                      fontSize: 11.5,
+                      fontSize: 13,
                       whiteSpace: 'nowrap',
-                      transition: 'all 0.15s',
-                      marginBottom: -1
+                      transition: 'color 0.15s, border-color 0.15s',
+                      marginBottom: -2,
                     }}
                   >
                     {tab.label}
                   </button>
-                ))}
-              </div>
-              {/* Riga 2: tab globali */}
-              <div style={{ display: 'flex', padding: '0 12px', gap: 0, background: '#fafbfc' }}>
-                {TABS.filter(t => t.global).map(tab => (
+                );
+              })}
+
+              {/* Separatore */}
+              <div style={{ flex: 1 }} />
+              <span style={{
+                fontSize: 10,
+                fontWeight: 700,
+                color: COLORS.textMuted,
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                paddingRight: 12,
+                paddingLeft: 12,
+                borderLeft: `1px solid ${COLORS.border}`,
+                whiteSpace: 'nowrap',
+              }}>Team</span>
+
+              {TABS_TEAM.map(tab => {
+                const isActive = activeTab === tab.id;
+                return (
                   <button
                     key={tab.id}
                     onClick={() => handleTabChange(tab.id)}
                     style={{
-                      padding: '8px 12px',
-                      background: activeTab === tab.id ? '#1e3a5f' : 'none',
+                      padding: '12px 14px',
+                      background: isActive ? COLORS.primary : 'none',
                       border: 'none',
-                      borderRadius: activeTab === tab.id ? '6px 6px 0 0' : 0,
-                      color: activeTab === tab.id ? 'white' : '#64748b',
-                      fontWeight: activeTab === tab.id ? 600 : 400,
+                      borderRadius: isActive ? '6px 6px 0 0' : 0,
+                      color: isActive ? 'white' : COLORS.textMuted,
+                      fontWeight: isActive ? 700 : 400,
                       cursor: 'pointer',
-                      fontSize: 11.5,
+                      fontSize: 12,
                       whiteSpace: 'nowrap',
                       transition: 'all 0.15s',
+                      marginBottom: -2,
                     }}
                   >
-                    {tab.id === 'richieste' ? `📋 Richieste (${richiestePending.length})` : tab.label}
+                    {tab.id === 'richieste'
+                      ? `Richieste${richiestePending.length > 0 ? ` (${richiestePending.length})` : ''}`
+                      : tab.label}
                   </button>
-                ))}
-              </div>
+                );
+              })}
             </div>
+          </div>
           </div>
 
           {/* Contenuto Tab */}
@@ -433,19 +489,6 @@ export default function GestioneDipendentiUnificata() {
               <TabRichieste 
                 richieste={richiestePending}
                 onRefresh={loadDipendenti}
-              />
-            )}
-            {activeTab === 'storico-ore' && (
-              <TabStoricoOre 
-                employees={allEmployees}
-                currentDate={currentDate}
-                setCurrentDate={setCurrentDate}
-              />
-            )}
-            {activeTab === 'saldo-ferie' && (
-              <TabSaldoFerie 
-                employees={allEmployees}
-                currentYear={currentDate.getFullYear()}
               />
             )}
             {activeTab === 'paghe' && (
@@ -511,6 +554,22 @@ export default function GestioneDipendentiUnificata() {
                         dipendente={selectedDip}
                         anno={anno}
                       />
+                    )}
+                    {/* Tab Movimenti = Bonifici + Acconti unificati */}
+                    {activeTab === 'movimenti' && (
+                      <>
+                        <TabBonifici 
+                          bonifici={bonifici}
+                          dipendente={selectedDip}
+                          onReload={loadTabData}
+                        />
+                        <div style={{ height: 24 }} />
+                        <TabAcconti 
+                          acconti={acconti}
+                          dipendente={selectedDip}
+                          onReload={loadTabData}
+                        />
+                      </>
                     )}
                     {activeTab === 'bonifici' && (
                       <TabBonifici 
