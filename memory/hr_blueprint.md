@@ -1,72 +1,121 @@
-# MEMORIA SEZIONE HR - Prima della cancellazione
-# Data: Aprile 2026
-# File originale: GestioneDipendentiUnificata.jsx (2183 righe — CANCELLATO)
+# Blueprint HR — Ceraldi ERP
+> Aggiornato: Aprile 2026 | Redesign completo completato
 
-## STRUTTURA ROUTE (main.jsx)
-- /dipendenti → GestioneDipendentiUnificata (CANCELLATA)
-- /dipendenti/:tab → stessa pagina
-- /presenze → DipendentiHub (presenze per dipendente)
-- /cedolini → PagheHub (buste paga + F24 globali)
-- /tfr → redirect a /dipendenti/tfr (ORA: si ricreerà /tfr diretto)
+---
 
-## SECONDARY TABS HR
-- "Dipendenti" → /dipendenti
-- "Cedolini" → /cedolini
-- "Presenze" → /presenze
-- "TFR" → /tfr
+## STRUTTURA ATTUALE (post-redesign Apr 2026)
+
+La vecchia `GestioneDipendentiUnificata.jsx` (2183 righe) è stata **eliminata**.
+Al suo posto: 4 pagine separate nella cartella `pages/hr/`.
+
+### Route HR
+```
+/dipendenti          → HRDipendenti.jsx      (anagrafica + dettaglio dipendente)
+/dipendenti/cedolini → HRCedolini.jsx        (buste paga + import Gmail)
+/dipendenti/presenze → HRPresenze.jsx        (calendario presenze)
+/dipendenti/tfr      → HRTFR.jsx             (gestione TFR e acconti)
+```
+
+### SecondaryTabs (componente di navigazione)
+```
+"Dipendenti"  → /dipendenti
+"Cedolini"    → /dipendenti/cedolini
+"Presenze"    → /dipendenti/presenze
+"TFR"         → /dipendenti/tfr
+```
+
+---
 
 ## API BACKEND USATE (tutte funzionanti ✓)
-- GET  /api/dipendenti                          → lista dipendenti (34 doc, collection "dipendenti")
-- GET  /api/dipendenti/{id}                     → singolo dipendente
-- PUT  /api/dipendenti/{id}                     → salva anagrafica
-- GET  /api/dipendenti/contratti?dipendente_id=  → contratti dipendente
-- GET  /api/cedolini/dipendente/{id}?anno=       → cedolini per dipendente (FIX: usa collection "dipendenti")
-- GET  /api/archivio-bonifici/transfers?beneficiario=  → bonifici per nome
-- GET  /api/tfr/acconti/{id}                    → acconti TFR dipendente
-- POST /api/tfr/acconti                          → nuovo acconto TFR
-- PUT  /api/tfr/acconti/{id}                    → modifica acconto TFR
-- DELETE /api/tfr/acconti/{id}                  → cancella acconto TFR
-- GET  /api/giustificativi/dipendente/{id}/giustificativi → giustificativi dipendente
-- GET  /api/giustificativi/dipendente/{id}/saldo-ferie    → saldo ferie
-- GET  /api/attendance/richieste-pending         → richieste assenza in attesa
-- PUT  /api/attendance/richiesta-assenza/{id}/approva   → approva richiesta
-- PUT  /api/attendance/richiesta-assenza/{id}/rifiuta   → rifiuta richiesta
-- POST /api/attendance/set-presenza              → inserisce presenza batch
-- GET  /api/attendance/ore-lavorate/{id}?mese=&anno= → storico ore (funziona con ID)
-- GET  /api/paghe/buste-paga?anno=               → buste paga globali (→ in /cedolini)
-- GET  /api/paghe/distinte-f24?anno=             → distinte F24 (→ in /cedolini)
-- GET  /api/noleggio/veicoli                    → lista veicoli (→ /veicoli/noleggio)
-- POST /api/noleggio/veicoli                    → nuovo veicolo
-- GET  /api/employees?limit=200                 → vecchia collection (31 doc) — usata in Presenze Batch, OK solo per presenze
 
-## CAMPI DIPENDENTE (collection "dipendenti")
-- id (UUID), nome, cognome, codice_fiscale, email, telefono
-- mansione, livello, tipo_contratto, data_assunzione
-- iban, banca, importo_mensile, importo_netto
+```
+GET  /api/dipendenti                              → lista 34 dipendenti
+GET  /api/dipendenti/{id}                         → singolo dipendente
+PUT  /api/dipendenti/{id}                         → salva anagrafica
+GET  /api/cedolini?anno=2026                      → cedolini per anno (tutte le fonti)
+GET  /api/cedolini/dipendente/{id}?anno=          → cedolini per dipendente
+POST /api/cedolini/import-gmail?since_days=180    → importa da Gmail (non bloccante)
+GET  /api/paghe/buste-paga?anno=                  → buste paga libro unico
+GET  /api/paghe/distinte-f24?anno=                → distinte F24
+GET  /api/tfr/acconti/{id}                        → acconti TFR dipendente
+POST /api/tfr/acconti                             → nuovo acconto TFR
+PUT  /api/tfr/acconti/{id}                        → modifica acconto TFR
+DELETE /api/tfr/acconti/{id}                      → cancella acconto TFR
+GET  /api/attendance/ore-lavorate/{id}?mese=&anno= → ore lavorate
+GET  /api/attendance/richieste-pending            → richieste assenza
+PUT  /api/attendance/richiesta-assenza/{id}/approva
+GET  /api/giustificativi/dipendente/{id}/saldo-ferie
+GET  /api/archivio-bonifici/transfers?beneficiario=
+```
 
-## STRUTTURA DATI CEDOLINI (collection "cedolini")
-- dipendente_id (UUID corrisponde a "dipendenti.id")
-- dipendente_nome, anno (int o str), mese (int o str)
-- lordo, netto, contributi, f24, pdf_url
+---
 
-## FUNZIONALITÀ DA REPLICARE NEL NUOVO DESIGN
-1. Lista dipendenti (sidebar) con ricerca
-2. Selezione dipendente → vista dettaglio con TAB:
-   a. Anagrafica: nome, CF, mansione, contratto, IBAN — con bottone Modifica/Salva
-   b. Contratti: lista contratti con date e importi
-   c. Retribuzione: cedolini per anno (con selettore anno 2023/2024/2025/2026)
-   d. Movimenti: bonifici + acconti TFR
-   e. Giustificativi: permessi, ferie, malattie con saldo ferie
-3. Vista team (SENZA tab separati - link ai propri hub):
-   - Batch Presenze: griglia tutti i dipendenti × giorni del mese
-   - Turni: gestione turni per mansione
-   - Richieste pending: approva/rifiuta con badge contatore
+## SCHEMA COLLECTION `dipendenti`
 
-## NOTE CRITICHE PER LA RICREAZIONE
-- Collection corretta: "dipendenti" (non "employees")
-- Design: SOLO CSS inline da lib/utils.js (COLORS, STYLES, SPACING) — NO Tailwind, NO Shadcn
-- NO icone emoji nel codice
-- Icone: lucide-react ONLY
-- Nessun tab che duplica le SecondaryTabs (Cedolini, Presenze, TFR già hanno propri hub)
-- Il selettore anno nella Retribuzione è necessario (anni cedolini: 2019-2026)
-- Batch Presenze usa collection "employees" per i turni/presenze (31 doc) — normale
+```json
+{
+  "id": "uuid",
+  "nome": "Mario",
+  "cognome": "Rossi",
+  "codice_fiscale": "RSSMRA80A01F839Y",
+  "email": "mario.rossi@example.com",
+  "telefono": "333...",
+  "mansione": "Pasticciere",
+  "livello": "3",
+  "tipo_contratto": "tempo_indeterminato",
+  "data_assunzione": "2019-01-15",
+  "iban": "IT60X0542811101000000123456",
+  "banca": "BPM",
+  "importo_mensile": 1800.00,
+  "importo_netto": 1406.00,
+  "in_carico": true
+}
+```
+
+**Collection corretta**: `dipendenti` (34 record). NON `employees` (31 record, è una copia per le presenze batch).
+
+---
+
+## SCHEMA CEDOLINO
+
+```json
+{
+  "id": "uuid",
+  "dipendente_id": "uuid (→ dipendenti.id)",
+  "dipendente_nome": "Mario Rossi",
+  "anno": 2026,
+  "mese": 1,
+  "lordo": 1800.00,
+  "netto": 1406.00,
+  "inps_azienda": 420.00,
+  "tfr": 135.00,
+  "costo_azienda": 2355.00,
+  "source": "gmail | cedolino_v2 | document_ai | pdf_upload",
+  "file_hash": "md5 (solo source=gmail)",
+  "filename": "Busta paga - Mario Rossi - Gennaio 2026.pdf",
+  "pagato": true
+}
+```
+
+---
+
+## IMPORT CEDOLINI DA GMAIL
+
+- **Endpoint**: `POST /api/cedolini/import-gmail?since_days=180`
+- **Funzione sincrona**: `_fetch_cedolini_gmail_sync()` in `routers/cedolini.py`
+- **Esecuzione**: `await asyncio.to_thread(...)` — NON blocca il server
+- **Deduplicazione**: `file_hash` (MD5 del file PDF)
+- **Parsing filename**: `_parse_filename_periodo("Busta paga - Nome - Aprile 2026.pdf")` → `mese=4, anno=2026`
+- **Stato**: 271 cedolini Gmail già importati e aggiornati con mese/anno (Apr 2026)
+
+---
+
+## REGOLE CRITICHE PER SVILUPPO HR
+
+1. Collection corretta: `dipendenti` (NON `employees`)
+2. Design: SOLO CSS inline da `lib/utils.js` — NO Tailwind, NO Shadcn
+3. Icone: lucide-react ONLY — NO emoji nel codice
+4. NO tab che duplicano le SecondaryTabs (Cedolini, Presenze, TFR hanno già i propri hub)
+5. Il selettore anno nella Retribuzione è necessario (anni cedolini: 2019-2026)
+6. Nessun early return che viola Rules of Hooks React — usare render condizionale
+7. IMAP sempre in `asyncio.to_thread()`
