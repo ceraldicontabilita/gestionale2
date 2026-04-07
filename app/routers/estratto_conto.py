@@ -1,5 +1,5 @@
 """
-Estratto Conto — Upload CSV BPM, parse, salva movimenti.
+Estratto Conto — Upload PDF BPM, parse, salva movimenti.
 Collection: estratto_conto_movimenti
 Prefix: /api/estratto-conto
 """
@@ -10,7 +10,7 @@ from typing import Optional
 import logging
 
 from app.database import get_database
-from app.parsers.estratto_conto_csv import parse_estratto_conto_csv
+from app.parsers.estratto_conto_csv import parse_estratto_conto_pdf_bytes
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -23,25 +23,22 @@ def _oid(doc):
     return doc
 
 
-@router.post("/upload-csv")
+@router.post("/upload-pdf")
 async def upload_estratto_conto(file: UploadFile = File(...), db: AsyncIOMotorDatabase = Depends(get_database)):
-    """Upload CSV estratto conto BPM, parsa e salva movimenti."""
+    """Upload PDF estratto conto BPM, parsa e salva movimenti."""
+    if not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(400, "Solo PDF")
     content = await file.read()
-    # Prova UTF-8, poi latin-1
-    for enc in ("utf-8", "latin-1", "cp1252"):
-        try:
-            csv_str = content.decode(enc)
-            break
-        except UnicodeDecodeError:
-            continue
-    else:
-        raise HTTPException(400, "Encoding non riconosciuto")
 
-    parsed = parse_estratto_conto_csv(csv_str)
-    if parsed.get("errore"):
-        raise HTTPException(400, parsed["errore"])
+    try:
+        parsed = parse_estratto_conto_pdf_bytes(content)
+    except Exception as e:
+        raise HTTPException(400, f"Errore parsing PDF: {e}")
 
-    movimenti = parsed["movimenti"]
+    movimenti = parsed.get("movimenti", [])
+    if not movimenti:
+        raise HTTPException(400, "Nessun movimento trovato nel PDF")
+
     importati = 0
     duplicati = 0
 
@@ -62,7 +59,16 @@ async def upload_estratto_conto(file: UploadFile = File(...), db: AsyncIOMotorDa
         "totale_entrate": parsed["totale_entrate"],
         "totale_uscite": parsed["totale_uscite"],
         "saldo_netto": parsed["saldo_netto"],
+        "saldo_iniziale": parsed.get("saldo_iniziale", 0),
+        "saldo_finale": parsed.get("saldo_finale", 0),
     }
+
+
+# Mantieni anche upload-csv per backward compat (accetta PDF)
+@router.post("/upload-csv")
+async def upload_estratto_conto_csv(file: UploadFile = File(...), db: AsyncIOMotorDatabase = Depends(get_database)):
+    """Alias /upload-pdf — BPM esporta PDF, non CSV."""
+    return await upload_estratto_conto(file=file, db=db)
 
 
 @router.get("")
