@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Users, Gavel, Home, FileText, Receipt, Landmark, FileCheck, CreditCard, Car } from 'lucide-react'
+import { Users, Gavel, Home, FileText, Receipt, Landmark, FileCheck, CreditCard, Car, Banknote } from 'lucide-react'
 import { colors, font } from '../lib/utils'
 
 const navStyle = {
@@ -32,7 +32,7 @@ const linkBase = {
   textDecoration: 'none',
   fontSize: 14,
   fontWeight: 500,
-  padding: '16px 16px',
+  padding: '16px 14px',
   display: 'flex',
   alignItems: 'center',
   gap: 6,
@@ -52,6 +52,7 @@ const links = [
   { to: '/fatture', label: 'Fatture', icon: FileText },
   { to: '/cedolini', label: 'Cedolini', icon: Receipt },
   { to: '/estratto-conto', label: 'Estratto Conto', icon: Landmark },
+  { to: '/distinte', label: 'Distinte', icon: Banknote },
   { to: '/f24', label: 'F24', icon: FileCheck },
   { to: '/corrispettivi', label: 'Corrispettivi', icon: CreditCard },
   { to: '/verbali', label: 'Verbali', icon: Car },
