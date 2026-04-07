@@ -10,6 +10,7 @@ import EstrattoConto from './pages/EstrattoConto'
 import F24Page from './pages/F24Page'
 import Corrispettivi from './pages/Corrispettivi'
 import Verbali from './pages/Verbali'
+import Distinte from './pages/Distinte'
 import { s } from './lib/utils'
 
 export default function App() {
@@ -29,6 +30,7 @@ export default function App() {
             <Route path="/f24" element={<F24Page />} />
             <Route path="/corrispettivi" element={<Corrispettivi />} />
             <Route path="/verbali" element={<Verbali />} />
+            <Route path="/distinte" element={<Distinte />} />
           </Routes>
         </div>
       </div>
