@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     BACKEND_PORT: int = 8001
 
     MONGODB_ATLAS_URI: Optional[str] = None
-    DB_NAME: str = "azienda_erp_db"
+    DB_NAME: str = "Gestionale"
     AZIENDA_ID: str = "b0295759-35ce-4b34-a6b4-f01b883234ad"
 
     AUTH_DISABLED: bool = True

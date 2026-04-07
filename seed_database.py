@@ -11,7 +11,7 @@ from pymongo.server_api import ServerApi
 from datetime import datetime
 
 URI = "mongodb+srv://Ceraldidatabase:Ceraldi1974.@cluster0.vofh7iz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-DB_NAME = "azienda_erp_db"
+DB_NAME = "Gestionale"
 
 print("Connecting to MongoDB Atlas...")
 client = MongoClient(URI, server_api=ServerApi("1"))

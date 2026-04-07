@@ -39,7 +39,7 @@ except Exception as e:
 # ─── 3. Select database and collection ────────────────────
 # Database: azienda_erp_db (same as Ceraldi ERP)
 # Collection: dipendenti (MAI usare "employees")
-db = client["azienda_erp_db"]
+db = client["Gestionale"]
 coll = db["_test_connection"]  # temporary test collection
 print(f"[3/6] Using database: {db.name}, collection: {coll.name}")
 
