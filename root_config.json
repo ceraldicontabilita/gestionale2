@@ -1,0 +1,6 @@
+{
+    "name": "gestionale-data-api",
+    "provider_region": "aws-us-east-1",
+    "deployment_model": "GLOBAL",
+    "environment": "production"
+}
