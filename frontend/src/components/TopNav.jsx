@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Users, Gavel, Home } from 'lucide-react'
+import { Users, Gavel, Home, FileText, Receipt, Landmark, FileCheck, CreditCard, Car } from 'lucide-react'
 import { colors, font } from '../lib/utils'
 
 const navStyle = {
@@ -11,6 +11,8 @@ const navStyle = {
   height: 54,
   fontFamily: font,
   gap: 0,
+  overflowX: 'auto',
+  whiteSpace: 'nowrap',
 }
 
 const logoStyle = {
@@ -47,6 +49,12 @@ const linkActive = {
 const links = [
   { to: '/dipendenti', label: 'Dipendenti', icon: Users },
   { to: '/pignoramenti', label: 'Pignoramenti', icon: Gavel },
+  { to: '/fatture', label: 'Fatture', icon: FileText },
+  { to: '/cedolini', label: 'Cedolini', icon: Receipt },
+  { to: '/estratto-conto', label: 'Estratto Conto', icon: Landmark },
+  { to: '/f24', label: 'F24', icon: FileCheck },
+  { to: '/corrispettivi', label: 'Corrispettivi', icon: CreditCard },
+  { to: '/verbali', label: 'Verbali', icon: Car },
 ]
 
 export default function TopNav() {
