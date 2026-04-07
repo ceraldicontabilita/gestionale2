@@ -1,0 +1,58 @@
+name: Test PEC Connection
+on:
+  workflow_dispatch:
+
+jobs:
+  test-pec:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test IMAP PEC Aruba
+        run: |
+          python3 << 'EOF'
+          import imaplib
+          import sys
+
+          HOST = "imaps.pec.aruba.it"
+          PORT = 993
+          USER = "fatturazioneceraldi@pec.it"
+          PASS = "L)9*kd5+78]?%LmF"
+
+          print(f"Connecting to {HOST}:{PORT}...")
+          try:
+              mail = imaplib.IMAP4_SSL(HOST, PORT)
+              print("SSL connection OK")
+          except Exception as e:
+              print(f"SSL connection FAILED: {e}")
+              sys.exit(1)
+
+          print(f"Logging in as {USER}...")
+          try:
+              mail.login(USER, PASS)
+              print("LOGIN OK!")
+          except Exception as e:
+              print(f"LOGIN FAILED: {e}")
+              sys.exit(1)
+
+          # List mailboxes
+          status, mailboxes = mail.list()
+          print(f"\nMailboxes ({status}):")
+          for mb in mailboxes[:10]:
+              print(f"  {mb.decode()}")
+
+          # Check INBOX
+          mail.select("INBOX")
+          status, messages = mail.search(None, "ALL")
+          total = len(messages[0].split()) if messages[0] else 0
+          print(f"\nINBOX: {total} messages")
+
+          # Show last 3 subjects
+          if total > 0:
+              ids = messages[0].split()
+              for mid in ids[-3:]:
+                  status, data = mail.fetch(mid, "(BODY[HEADER.FIELDS (FROM SUBJECT DATE)])")
+                  if data[0]:
+                      print(f"  {data[0][1].decode(errors='replace').strip()[:120]}")
+
+          mail.logout()
+          print("\nAll good! PEC credentials are correct.")
+          EOF
