@@ -12,6 +12,7 @@ from app.database import get_database
 from app.parsers.fattura_xml import parse_fattura_xml
 from app.parsers.corrispettivi_xml import parse_corrispettivo_xml
 from app.parsers.cedolino_zucchetti import parse_cedolino_pdf
+from app.parsers.presenze_zucchetti import parse_presenze_pdf, is_presenze_pdf
 from app.parsers.estratto_conto_bpm import parse_estratto_conto_pdf
 from app.parsers.distinta_bpm import parse_distinta_pdf
 from app.parsers.f24 import parse_f24_pdf
@@ -71,9 +72,15 @@ def _detect_type(filename: str, content: bytes) -> str:
         # F24 — pattern univoci
         if "MODELLO F24" in text_up or "CODICI TRIBUTO" in text_up or "SEZIONE ERARIO" in text_up:
             return "f24"
-        # Cedolino Zucchetti — pattern INAIL / Nr. progressivo / Aut. 301
-        if "AUT. 301" in text_up or "AUT. 299" in text_up or "NETTO IN BUSTA" in text_up \
-                or "NETTO DA PAGARE" in text_up or "TOTALE COMPETENZE" in text_up:
+        # Foglio presenze Aut.301 (deve venire PRIMA del cedolino)
+        if ("301" in text_up and "GIUSTIFICATIVI" in text_up and "GIORNO" in text_up
+                and "NETTODELMESE" not in text_up.replace(" ", "")
+                and "TOTALECOMPETENZE" not in text_up.replace(" ", "")):
+            return "presenze"
+        # Cedolino Zucchetti Aut.299
+        if "AUT. 299" in text_up or "NETTO IN BUSTA" in text_up \
+                or "NETTO DA PAGARE" in text_up or "TOTALE COMPETENZE" in text_up \
+                or "NETTODELMESE" in text_up.replace(" ", ""):
             return "cedolino"
         # Estratto conto BPM
         if "BANCO BPM" in text_up or "ESTRATTO CONTO" in text_up or "SALDO INIZIALE" in text_up \
@@ -100,6 +107,7 @@ TIPO_LABELS = {
     "distinta": "Distinta Pagamento BPM (PDF)",
     "f24": "Modello F24 (PDF)",
     "verbale": "Verbale / Bollo auto (PDF)",
+    "presenze":    "Foglio Presenze Aut.301 (PDF)",
     "sconosciuto": "Tipo non riconosciuto",
 }
 
@@ -291,6 +299,38 @@ async def _process(tipo: str, content: bytes, filename: str, db: AsyncIOMotorDat
         })
         await db["f24"].insert_one(parsed)
         return {"collection": "f24", "inserite": 1, "duplicate": 0, "n_tributi": n_tributi, "totale": totale}
+
+    elif tipo == "presenze":
+        try:
+            pres = parse_presenze_pdf(pdf_bytes=content)
+        except Exception as e:
+            return {"errore": f"Parsing PDF fallito: {e}"}
+
+        if pres is None:
+            return {"errore": "Nessun foglio presenze valido trovato"}
+
+        cf, mese, anno = pres.get("codice_fiscale"), pres.get("mese"), pres.get("anno")
+        if not cf or not mese or not anno:
+            return {"errore": "Dati incompleti nel foglio presenze"}
+
+        pres.update({"filename": filename, "imported_at": datetime.utcnow()})
+        result = await db["presenze"].update_one(
+            {"codice_fiscale": cf, "mese": mese, "anno": anno},
+            {"$set": pres, "$setOnInsert": {"created_at": datetime.utcnow()}},
+            upsert=True)
+
+        if pres.get("cessato") and pres.get("data_cessazione"):
+            await db["dipendenti"].update_one(
+                {"codice_fiscale": cf},
+                {"$set": {"stato": "cessato", "data_cessazione": pres["data_cessazione"], "updated_at": datetime.utcnow()}}
+            )
+
+        return {
+            "collection": "presenze", "inserite": 1 if result.upserted_id else 0,
+            "duplicate": 0 if result.upserted_id else 1,
+            "periodo": pres.get("periodo_label", ""),
+            "totali": pres.get("totali", {}),
+        }
 
     elif tipo == "verbale":
         try:
