@@ -43,7 +43,8 @@ async def upload_distinta(file: UploadFile = File(...), db: AsyncIOMotorDatabase
     for bon in bonifici:
         iban = bon.get("iban")
         if iban:
-            dip = await db["dipendenti"].find_one({"iban": iban})
+            # Cerca per iban_cedolino (scritto da cedolini.py) o iban (campo anagrafica)
+            dip = await db["dipendenti"].find_one({"$or": [{"iban_cedolino": iban}, {"iban": iban}]})
             if dip:
                 bon["dipendente_id"] = str(dip["_id"])
                 bon["dipendente_nome"] = f"{dip.get('cognome', '')} {dip.get('nome', '')}"
