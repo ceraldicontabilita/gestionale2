@@ -131,3 +131,87 @@ dipendenti: codice_fiscale, nome, cognome, stato, iban_cedolino (NON iban),
 - Testare omaggi Acquaviva con fatture reali
 - Verificare riconciliazione cedolini con estratto conto
 
+---
+
+## Chat 6 — continua: Audit completo codebase + OrdiniFornitore + ScontiMerce Omaggi
+
+### Nuove pagine (create in Chat 6)
+
+**frontend/src/pages/ScontiMerce.jsx** → /sconti-merce
+- Viste: Lista sconti, Mensile, Per Fornitore, Omaggi AQV
+- API ceraldiapp.it: /sconti-merce/* (lista, riepilogo, importa, valorizza)
+- Tab Omaggi: chiama /api/omaggi-acquaviva (backend locale gestionale2)
+- Filtro fornitori configurabile via localStorage (default: Acquaviva, Perfetti, Eureka, Kimbo)
+
+**frontend/src/pages/OrdiniFornitore.jsx** → /ordini
+- Vista Operatore: catalogo da ceraldiapp.it/api/ordini-fornitori/prodotti-suggeriti
+- Comparazione prezzi: /api/ordini/prezzi/{nome} (gestionale2, fuzzy match fatture_passive)
+- Modal prezzi: mostra tutti i fornitori ordinati per prezzo, marca il migliore
+- Vista Admin: lista ordini con filtro stato, espansione per fornitore, approva/invia/completato
+- Modal invio: genera testo email + WhatsApp, pulsanti "Apri in Mail" e "Apri WhatsApp"
+- CRUD: collection ordini_ceraldi (non ordini_fornitori di ceraldiapp.it)
+
+### Nuovi router backend (Chat 6)
+
+**app/routers/omaggi_acquaviva.py**
+- Endpoint: GET /api/omaggi-acquaviva?fornitore=acquaviva&soglia=10
+- Query su fatture_passive con campo CORRETTO: fornitore_denominazione
+- Righe prezzo=0 = omaggi; calcola pezzi/cartone da descrizione (regex)
+- Progressivo cumulativo tra ordini: cartoni si accumulano cross-fattura
+- Valore omaggio = pezzi x prezzo_pezzo_rif (da riga normale stessa fattura)
+
+**app/routers/ordini.py**
+- GET /api/ordini/prezzi/{nome_prodotto}: carica ultime 300 fatture, raggruppa per fornitore
+  (max 4 fatture recenti ciascuno), fuzzy match parole chiave (score >= 0.4)
+- POST/GET/PUT/DELETE /api/ordini → collection ordini_ceraldi
+- GET /api/ordini/{id}/testo-invio → cerca email in fornitori.anagrafica.email/.pec
+- Ordine route OK: /prezzi/{nome} dichiarato PRIMA di /{ordine_id} → no conflict
+
+### 7 bug fixati (audit codebase completo)
+
+| # | Gravita | File | Bug | Fix |
+|---|---------|------|-----|-----|
+| 1 | CRITICO | f24.py | /alert-duplicati crashava (NameError includi_scartati) | Aggiunto includi_scartati: bool = Query(False) |
+| 2 | CRITICO | ordini.py | Route conflict /prezzi/{nome} vs /{id} | Verificato: ordine gia corretto |
+| 3 | MEDIO | fatture.py | Upsert fornitori struttura flat (denominazione, partita_iva) | Riscritto con anagrafica.piva, anagrafica.ragione_sociale |
+| 4 | MEDIO | fornitori.py | import-xml scriveva numero_fattura e piva_fornitore | Corretti in numero, fornitore_piva, fornitore_denominazione |
+| 5 | BASSO | fornitori.py | /pagamento query su fornitore_id (inesistente in fatture_passive) | Usa fornitore_piva via lookup anagrafica.piva |
+| 6 | BASSO | alert_fiscali.py | db.get_collection() non e API Motor valida | Cambiato in db["avvisi_bonari"] |
+| 7 | BASSO | distinte.py | Riconcilia dipendenti su iban (non esiste) | Usa iban_cedolino con fallback su iban |
+
+### Audit 25 endpoint ceraldiapp.it — tutti verificati
+
+Verificato che tutti gli endpoint chiamati dalle 6 pagine HACCP+sconti esistono
+realmente nel repo tracciabilita (25/25 OK):
+- /temperature-positive|negative/scheda/{anno}/{n}
+- /sanificazione/scheda/{anno}/{mese}, /attrezzature, /giorno-completo, /apparecchi/{anno}, /export-pdf
+- /haccp/popola-sanificazione
+- /disinfestazione/scheda-annuale, /registra-intervento, /registra-monitoraggio, /export-pdf
+- /produzioni/per-oggi, /vendita-banco/oggi, /lotti, /acquaviva/magazzino-congelatore
+- /chiusure/giorno-non-produttivo/oggi, /lotti/{id}/consuma
+- /sconti-merce/* (lista, riepilogo/mensile, riepilogo/fornitori, prodotti-fornitore, importa, valorizza)
+- /ordini-fornitori/prodotti-suggeriti
+
+### Audit campi frontend (6 pagine create questa sessione)
+Nessun campo MongoDB sbagliato trovato. Il campo "numero_fattura" in ScontiMerce.jsx
+e omaggi_acquaviva.py e solo il nome nel JSON di risposta — il DB viene letto con fat.get("numero") (corretto).
+
+### Rotte App.jsx e TopNav.jsx aggiornate
+- /ordini → OrdiniFornitore (icona ShoppingBag)
+- /sconti-merce → ScontiMerce (icona Tag)
+- /haccp/dashboard → DashboardHACCP (icona LayoutDashboard)
+- /haccp/temperature → TemperatureHACCP (icona Thermometer)
+- /haccp/sanificazione → SanificazioneHACCP (icona Sparkles)
+- /haccp/disinfestazione → DisinfestazioneHACCP (icona Bug)
+
+### main.py — router registrati al 2026-04-08
+health, import_hub, mittenti, dipendenti, fatture, cedolini,
+estratto_conto, f24, f24_privati, corrispettivi, distinte, verbali,
+presenze, quietanze, alert_fiscali, tributi, learning, fornitori,
+omaggi_acquaviva, ordini
+
+### TODO prossima chat (Chat 7)
+- Portare rinomina inline colonne frigo/congelatore da TemperaturePositiveView originale
+- Testare omaggi Acquaviva con fatture reali (ceraldiapp.it attualmente 500)
+- Pagina tablet Cucina: operatori rosticceria/pasticceria → ceraldiapp.it/api/tablet/{reparto}
+- Verificare riconciliazione cedolini con estratto conto (categoria "stipendio")
