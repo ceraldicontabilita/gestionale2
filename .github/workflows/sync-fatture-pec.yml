@@ -1,0 +1,224 @@
+name: Sync Fatture PEC
+
+on:
+  schedule:
+    # Ogni giorno alle 08:00 e 14:00 ora italiana (UTC+2 = 06:00 e 12:00 UTC)
+    - cron: '0 6,12 * * 1-5'   # lunedì-venerdì
+    - cron: '0 8 * * 6'         # sabato mattina
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (non importa, mostra solo cosa troverebbe)'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install pymongo dnspython motor fastapi
+
+      - name: Sync fatture da PEC SDI
+        env:
+          MONGODB_ATLAS_URI: "mongodb+srv://Ceraldidatabase:Ceraldi1974.@cluster0.vofh7iz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+          DB_NAME: "Gestionale"
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+        run: |
+          python3 << 'PYEOF'
+          import imaplib
+          import email
+          import zipfile
+          import io
+          import hashlib
+          import sys
+          import os
+          import re
+          import xml.etree.ElementTree as ET
+          from datetime import datetime
+          from pymongo import MongoClient
+          from pymongo.server_api import ServerApi
+
+          DRY_RUN = os.getenv("DRY_RUN", "false").lower() == "true"
+          MONGODB_URI = os.getenv("MONGODB_ATLAS_URI")
+          DB_NAME = os.getenv("DB_NAME", "Gestionale")
+
+          PEC_HOST = "imaps.pec.aruba.it"
+          PEC_PORT = 993
+          PEC_USER = "fatturazioneceraldi@pec.it"
+          PEC_PASS = "L)9*kd5+78]?%LmF"
+
+          SDI_SENDERS = ["@pec.fatturapa.it"]
+
+          print(f"{'[DRY RUN] ' if DRY_RUN else ''}Sync fatture PEC SDI — {datetime.now().strftime('%d/%m/%Y %H:%M')}")
+
+          # ── MongoDB ──────────────────────────────────────────────────
+          client = MongoClient(MONGODB_URI, server_api=ServerApi("1"))
+          client.admin.command("ping")
+          db = client[DB_NAME]
+          print(f"MongoDB OK — db: {DB_NAME}")
+
+          # ── IMAP PEC ─────────────────────────────────────────────────
+          print(f"\nConnessione PEC: {PEC_HOST}:{PEC_PORT}...")
+          mail = imaplib.IMAP4_SSL(PEC_HOST, PEC_PORT)
+          mail.login(PEC_USER, PEC_PASS)
+          mail.select("INBOX")
+          print("Login PEC OK")
+
+          status, message_ids = mail.search(None, "UNSEEN")
+          ids = message_ids[0].split() if status == "OK" else []
+          print(f"Email non lette: {len(ids)}")
+
+          totale_inserite = 0
+          totale_duplicate = 0
+          totale_errori = 0
+
+          for mid in ids:
+              try:
+                  status, data = mail.fetch(mid, "(RFC822)")
+                  if status != "OK":
+                      continue
+                  msg = email.message_from_bytes(data[0][1])
+                  from_addr = str(msg.get("From", "")).lower()
+                  subject = str(msg.get("Subject", ""))
+
+                  if not any(sdi in from_addr for sdi in SDI_SENDERS):
+                      continue
+
+                  print(f"\nSDI: {subject[:60]}")
+
+                  for part in msg.walk():
+                      fname = str(part.get_filename() or "")
+                      payload = part.get_payload(decode=True)
+                      if not payload:
+                          continue
+
+                      xml_bytes = None
+                      if fname.lower().endswith(".zip"):
+                          try:
+                              with zipfile.ZipFile(io.BytesIO(payload)) as zf:
+                                  for n in zf.namelist():
+                                      if n.lower().endswith(".xml"):
+                                          xml_bytes = zf.read(n)
+                                          fname = n
+                          except Exception as e:
+                              print(f"  ZIP error: {e}")
+                      elif fname.lower().endswith((".xml", ".p7m")):
+                          xml_bytes = payload
+
+                      if not xml_bytes:
+                          continue
+
+                      # Parse XML fattura
+                      try:
+                          for enc in ("utf-8", "latin-1"):
+                              try:
+                                  xml_str = xml_bytes.decode(enc)
+                                  break
+                              except UnicodeDecodeError:
+                                  continue
+
+                          xml_clean = re.sub(r'\sxmlns[^"]*"[^"]*"', '', re.sub(r'<(/?)p:', r'<\1', xml_str))
+                          root = ET.fromstring(xml_clean)
+
+                          header = root.find(".//FatturaElettronicaHeader")
+                          cedente_el = header.find(".//CedentePrestatore") if header else None
+
+                          def _text(el, path, default=""):
+                              node = el.find(path) if el is not None else None
+                              return (node.text or "").strip() if node is not None else default
+
+                          piva = _text(cedente_el, ".//IdCodice")
+                          denominazione = _text(cedente_el, ".//Denominazione") or \
+                              f"{_text(cedente_el, './/Nome')} {_text(cedente_el, './/Cognome')}".strip()
+
+                          for body in root.findall(".//FatturaElettronicaBody"):
+                              dg = body.find(".//DatiGeneraliDocumento")
+                              numero = _text(dg, "Numero")
+                              data_ft = _text(dg, "Data")
+                              importo_str = _text(dg, "ImportoTotaleDocumento", "0")
+                              try:
+                                  importo = float(importo_str.replace(",", "."))
+                              except ValueError:
+                                  importo = 0.0
+
+                              dedup = hashlib.md5(f"{piva}|{numero}|{data_ft}".encode()).hexdigest()
+
+                              if db["fatture_passive"].find_one({"dedup_key": dedup}):
+                                  print(f"  DUP: {denominazione} n.{numero}")
+                                  totale_duplicate += 1
+                                  continue
+
+                              if DRY_RUN:
+                                  print(f"  [DRY] {denominazione} n.{numero} {data_ft} €{importo}")
+                              else:
+                                  anno = int(data_ft[:4]) if data_ft and len(data_ft) >= 4 else 0
+                                  doc = {
+                                      "fornitore_denominazione": denominazione,
+                                      "fornitore_piva": piva,
+                                      "numero": numero,
+                                      "data": data_ft,
+                                      "anno": anno,
+                                      "importo_totale": importo,
+                                      "imponibile": 0.0,
+                                      "iva": 0.0,
+                                      "dedup_key": dedup,
+                                      "stato": "da_confermare",
+                                      "source": "pec_auto",
+                                      "xml_filename": fname,
+                                      "created_at": datetime.utcnow(),
+                                  }
+                                  db["fatture_passive"].insert_one(doc)
+                                  # Upsert fornitore
+                                  if piva:
+                                      db["fornitori"].update_one(
+                                          {"partita_iva": piva},
+                                          {"$set": {"denominazione": denominazione, "partita_iva": piva, "updated_at": datetime.utcnow()},
+                                           "$setOnInsert": {"created_at": datetime.utcnow()}},
+                                          upsert=True
+                                      )
+                                  print(f"  ✓ {denominazione} n.{numero} {data_ft} €{importo}")
+                                  totale_inserite += 1
+
+                      except Exception as e:
+                          print(f"  ERRORE parse {fname}: {e}")
+                          totale_errori += 1
+
+                  # Marca come letta
+                  if not DRY_RUN:
+                      mail.store(mid, "+FLAGS", "\\Seen")
+
+              except Exception as e:
+                  print(f"Errore email {mid}: {e}")
+                  totale_errori += 1
+
+          mail.logout()
+
+          # Log in DB
+          if not DRY_RUN:
+              db["sync_log"].insert_one({
+                  "tipo": "pec_fatture",
+                  "timestamp": datetime.utcnow(),
+                  "email_processate": len(ids),
+                  "inserite": totale_inserite,
+                  "duplicate": totale_duplicate,
+                  "errori": totale_errori,
+                  "source": "github_action",
+              })
+
+          print(f"\n{'='*50}")
+          print(f"{'DRY RUN — ' if DRY_RUN else ''}COMPLETATO")
+          print(f"Inserite: {totale_inserite}")
+          print(f"Duplicate: {totale_duplicate}")
+          print(f"Errori: {totale_errori}")
+
+          client.close()
+          PYEOF
