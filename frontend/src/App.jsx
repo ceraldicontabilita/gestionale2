@@ -11,6 +11,7 @@ import F24Page from './pages/F24Page'
 import Corrispettivi from './pages/Corrispettivi'
 import Verbali from './pages/Verbali'
 import Distinte from './pages/Distinte'
+import ImportaDocumenti from './pages/ImportaDocumenti'
 import { s } from './lib/utils'
 
 export default function App() {
@@ -20,7 +21,8 @@ export default function App() {
         <TopNav />
         <div style={s.container}>
           <Routes>
-            <Route path="/" element={<Navigate to="/dipendenti" replace />} />
+            <Route path="/" element={<Navigate to="/importa" replace />} />
+            <Route path="/importa" element={<ImportaDocumenti />} />
             <Route path="/dipendenti" element={<Dipendenti />} />
             <Route path="/dipendenti/:id" element={<DettaglioDipendente />} />
             <Route path="/pignoramenti" element={<Pignoramenti />} />
