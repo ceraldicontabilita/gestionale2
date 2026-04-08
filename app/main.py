@@ -40,19 +40,23 @@ app.add_middleware(
 )
 
 # === ROUTERS ===
-from app.routers import dipendenti, health, fatture, cedolini, estratto_conto, f24, corrispettivi, distinte, verbali
-from app.routers import import_hub
+from app.routers import (
+    dipendenti, health, fatture, cedolini,
+    estratto_conto, f24, corrispettivi, distinte, verbali,
+    import_hub, mittenti,
+)
 
-app.include_router(health.router, prefix="/api", tags=["health"])
-app.include_router(import_hub.router, prefix="/api/import", tags=["import"])
-app.include_router(dipendenti.router, prefix="/api/dipendenti", tags=["dipendenti"])
-app.include_router(fatture.router, prefix="/api/fatture", tags=["fatture"])
-app.include_router(cedolini.router, prefix="/api/cedolini", tags=["cedolini"])
-app.include_router(estratto_conto.router, prefix="/api/estratto-conto", tags=["estratto-conto"])
-app.include_router(f24.router, prefix="/api/f24", tags=["f24"])
+app.include_router(health.router,        prefix="/api",             tags=["health"])
+app.include_router(import_hub.router,    prefix="/api/import",      tags=["import"])
+app.include_router(mittenti.router,      prefix="/api/mittenti",    tags=["mittenti"])
+app.include_router(dipendenti.router,    prefix="/api/dipendenti",  tags=["dipendenti"])
+app.include_router(fatture.router,       prefix="/api/fatture",     tags=["fatture"])
+app.include_router(cedolini.router,      prefix="/api/cedolini",    tags=["cedolini"])
+app.include_router(estratto_conto.router,prefix="/api/estratto-conto", tags=["estratto-conto"])
+app.include_router(f24.router,           prefix="/api/f24",         tags=["f24"])
 app.include_router(corrispettivi.router, prefix="/api/corrispettivi", tags=["corrispettivi"])
-app.include_router(distinte.router, prefix="/api/distinte", tags=["distinte"])
-app.include_router(verbali.router, prefix="/api/verbali", tags=["verbali"])
+app.include_router(distinte.router,      prefix="/api/distinte",    tags=["distinte"])
+app.include_router(verbali.router,       prefix="/api/verbali",     tags=["verbali"])
 
 # === STATIC FILES (React build) ===
 frontend_dist = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
