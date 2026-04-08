@@ -112,9 +112,10 @@ async def lista_f24(
     mese: int = None,
     sezione: str = None,
     codice_tributo: str = None,
+    includi_scartati: bool = False,
     db: AsyncIOMotorDatabase = Depends(get_database)
 ):
-    q = {"azienda_id": AZIENDA_ID}
+    q = {"azienda_id": AZIENDA_ID, "stato": {"$ne": "scartato"}} if not includi_scartati else {"azienda_id": AZIENDA_ID}
 
     if anno:
         q["scadenza"] = {"$regex": f"^{anno}"}
@@ -131,6 +132,226 @@ async def lista_f24(
     async for doc in cursor:
         docs.append(_oid(doc))
     return docs
+
+
+
+
+# ═══════════════════════════════════════════════════════
+# POST /{id}/scarta  — scarta un F24 (non verrà usato)
+# ═══════════════════════════════════════════════════════
+@router.post("/{fid}/scarta")
+async def scarta_f24(fid: str, body: dict, db: AsyncIOMotorDatabase = Depends(get_database)):
+    """
+    Scarta un F24 importato (da Gmail, upload manuale, ecc).
+    Motivi tipici:
+      - "F24 cumulativo, richiesta rateizzazione"
+      - "Importo errato, versione corretta in arrivo"
+      - "Doppio pagamento — primo F24 non andato a buon fine"
+      - "Ravvedimento integrativo — già contabilizzato"
+    Un F24 scartato:
+      - NON appare nel totale versato
+      - NON viene usato in riconciliazione estratto conto
+      - NON compare nella lista standard
+      - Rimane in DB con stato='scartato' per storico
+    """
+    motivo = body.get("motivo", "Scartato manualmente")
+    res = await db["f24"].update_one(
+        {"_id": ObjectId(fid)},
+        {"$set": {
+            "stato": "scartato",
+            "motivo_scarto": motivo,
+            "scartato_il": datetime.utcnow(),
+            "updated_at": datetime.utcnow(),
+        }}
+    )
+    if res.matched_count == 0:
+        raise HTTPException(404, "F24 non trovato")
+    return {"ok": True, "motivo": motivo}
+
+
+# ═══════════════════════════════════════════════════════
+# POST /{id}/ripristina  — annulla scarto
+# ═══════════════════════════════════════════════════════
+@router.post("/{fid}/ripristina")
+async def ripristina_f24(fid: str, db: AsyncIOMotorDatabase = Depends(get_database)):
+    """Riporta un F24 scartato allo stato 'pagato'."""
+    res = await db["f24"].update_one(
+        {"_id": ObjectId(fid), "stato": "scartato"},
+        {"$set": {"stato": "pagato", "updated_at": datetime.utcnow()},
+         "$unset": {"motivo_scarto": "", "scartato_il": ""}}
+    )
+    if res.matched_count == 0:
+        raise HTTPException(404, "F24 non trovato o non scartato")
+    return {"ok": True}
+
+
+# ═══════════════════════════════════════════════════════
+# GET /scartati  — lista F24 scartati
+# ═══════════════════════════════════════════════════════
+@router.get("/scartati")
+async def lista_scartati(anno: int = None, db: AsyncIOMotorDatabase = Depends(get_database)):
+    q = {"azienda_id": AZIENDA_ID, "stato": "scartato"}
+    if anno:
+        q["scadenza"] = {"$regex": f"^{anno}"}
+    cursor = db["f24"].find(q).sort("scartato_il", -1)
+    docs = []
+    async for doc in cursor:
+        docs.append(_oid(doc))
+    return docs
+
+
+# ═══════════════════════════════════════════════════════
+# POST /riconcilia  — riconcilia F24 con estratto conto
+# ═══════════════════════════════════════════════════════
+@router.post("/riconcilia")
+async def riconcilia_f24(body: dict, db: AsyncIOMotorDatabase = Depends(get_database)):
+    """
+    Riconcilia un F24 con un movimento dell'estratto conto.
+    
+    body: {
+      "f24_id": "...",                    # ID del F24
+      "estratto_conto_id": "...",         # ID del movimento EC
+      "importo_ec": 9216.12,              # importo trovato in EC
+      "data_valuta": "2025-02-17",        # data valuta EC
+      "note": "..."                       # note facoltative
+    }
+    
+    Logica:
+    - Se importo_ec == saldo_finale F24 → stato 'riconciliato' ✅
+    - Se importo_ec != saldo_finale F24 → stato 'discrepanza' ⚠️
+    - Se F24 è 'scartato' → errore, non riconciliabile
+    """
+    fid = body.get("f24_id")
+    importo_ec = body.get("importo_ec", 0)
+    ec_id = body.get("estratto_conto_id")
+    data_valuta = body.get("data_valuta")
+    note = body.get("note", "")
+
+    doc = await db["f24"].find_one({"_id": ObjectId(fid)})
+    if not doc:
+        raise HTTPException(404, "F24 non trovato")
+    if doc.get("stato") == "scartato":
+        raise HTTPException(400, "F24 scartato — non riconciliabile. Ripristinarlo prima se necessario.")
+
+    saldo = doc.get("saldo_finale", 0)
+    delta = round(abs(importo_ec - saldo), 2)
+    
+    if delta == 0:
+        stato_ric = "riconciliato"
+        esito = f"✅ Importo EC ({importo_ec}€) corrisponde al saldo F24 ({saldo}€)"
+    elif delta <= 0.05:
+        stato_ric = "riconciliato"  # tolleranza arrotondamenti
+        esito = f"✅ Riconciliato con arrotondamento (delta {delta}€)"
+    else:
+        stato_ric = "discrepanza"
+        esito = f"⚠️ Discrepanza: EC={importo_ec}€ vs F24={saldo}€ — delta={delta}€"
+
+    await db["f24"].update_one(
+        {"_id": ObjectId(fid)},
+        {"$set": {
+            "stato": stato_ric,
+            "riconciliazione": {
+                "estratto_conto_id": ec_id,
+                "importo_ec": importo_ec,
+                "data_valuta": data_valuta,
+                "delta": delta,
+                "esito": esito,
+                "note": note,
+                "riconciliato_il": datetime.utcnow(),
+            },
+            "updated_at": datetime.utcnow(),
+        }}
+    )
+    return {
+        "ok": True,
+        "stato": stato_ric,
+        "esito": esito,
+        "delta": delta,
+        "f24_id": fid,
+        "ec_id": ec_id,
+    }
+
+
+# ═══════════════════════════════════════════════════════
+# GET /alert-duplicati  — trova potenziali duplicati
+# ═══════════════════════════════════════════════════════
+@router.get("/alert-duplicati")
+async def alert_duplicati(db: AsyncIOMotorDatabase = Depends(get_database)):
+    """
+    Trova F24 che condividono stesso codice tributo + anno_rif.
+    Esclude i già scartati.
+    Restituisce gruppi con le possibili interpretazioni:
+      - DOPPIO_PAGAMENTO: stesso importo, stessa scadenza
+      - RAVVEDIMENTO_INTEGRATIVO: stesso tributo, importo diverso, scadenza diversa
+      - VERIFICA_BANCARIA: stesso importo ma scadenze diverse
+    """
+    pipeline = [
+        {"$match": {"azienda_id": AZIENDA_ID, "stato": {"$ne": "scartato"}} if not includi_scartati else {"azienda_id": AZIENDA_ID}},
+        {"$unwind": "$tributi_flat"},
+        {"$group": {
+            "_id": {
+                "codice": "$tributi_flat.codice_tributo",
+                "anno_rif": "$tributi_flat.anno_rif",
+                "sezione": "$tributi_flat.sezione",
+            },
+            "f24_ids": {"$addToSet": "$_id"},
+            "scadenze": {"$addToSet": "$scadenza"},
+            "importi": {"$addToSet": "$saldo_finale"},
+            "debiti": {"$addToSet": "$tributi_flat.debito"},
+            "count": {"$sum": 1},
+        }},
+        {"$match": {"count": {"$gt": 1}}},
+        {"$sort": {"_id.anno_rif": -1, "_id.codice": 1}},
+    ]
+
+    alerts = []
+    async for doc in db["f24"].aggregate(pipeline):
+        codice = doc["_id"]["codice"]
+        anno = doc["_id"]["anno_rif"]
+        sezione = doc["_id"]["sezione"]
+        scadenze = sorted([s for s in doc["scadenze"] if s])
+        importi = doc["importi"]
+        debiti = doc["debiti"]
+
+        # Classifica il tipo di anomalia
+        importi_unici = list(set(round(x, 2) for x in importi if x))
+        debiti_unici = list(set(round(x, 2) for x in debiti if x and x > 0))
+
+        if len(importi_unici) == 1 and len(scadenze) <= 1:
+            tipo = "DOPPIO_PAGAMENTO"
+            desc = f"Stesso importo ({importi_unici[0]}€) e stessa scadenza — possibile doppio pagamento"
+            urgenza = "alta"
+        elif len(importi_unici) == 1 and len(scadenze) > 1:
+            tipo = "VERIFICA_BANCARIA"
+            desc = f"Stesso importo ({importi_unici[0]}€) su scadenze diverse — verificare addebito bancario"
+            urgenza = "alta"
+        elif len(debiti_unici) > 1:
+            tipo = "RAVVEDIMENTO_INTEGRATIVO"
+            desc = f"Importi diversi ({', '.join(str(x)+'€' for x in sorted(debiti_unici))}) — probabile integrazione/rettifica"
+            urgenza = "bassa"
+        else:
+            tipo = "DA_VERIFICARE"
+            desc = "Stesso codice tributo/anno presente in più F24"
+            urgenza = "media"
+
+        alerts.append({
+            "codice_tributo": codice,
+            "anno_rif": anno,
+            "sezione": sezione,
+            "tipo": tipo,
+            "urgenza": urgenza,
+            "descrizione": desc,
+            "n_f24": doc["count"],
+            "scadenze": scadenze,
+            "importi_f24": importi_unici,
+            "f24_ids": [str(x) for x in doc["f24_ids"]],
+        })
+
+    return {
+        "totale_alert": len(alerts),
+        "alta_urgenza": sum(1 for a in alerts if a["urgenza"] == "alta"),
+        "alerts": alerts,
+    }
 
 
 # ═══════════════════════════════════════════════════════
