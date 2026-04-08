@@ -35,6 +35,7 @@ class Database:
             await db["fatture_passive"].create_index("dedup_key", unique=True, sparse=True)
             await db["fatture_passive"].create_index([("fornitore_piva", 1), ("data", -1)])
             await db["cedolini"].create_index([("codice_fiscale", 1), ("anno", -1), ("mese", -1)])
+            await db["presenze"].create_index([("codice_fiscale", 1), ("anno", -1), ("mese", -1)], unique=True, sparse=True)
             await db["estratto_conto_movimenti"].create_index("chiave", unique=True, sparse=True)
             await db["corrispettivi"].create_index("chiave", unique=True, sparse=True)
             await db["f24"].create_index("chiave", unique=True, sparse=True)
