@@ -276,10 +276,13 @@ async def riconcilia_f24(body: dict, db: AsyncIOMotorDatabase = Depends(get_data
 # GET /alert-duplicati  — trova potenziali duplicati
 # ═══════════════════════════════════════════════════════
 @router.get("/alert-duplicati")
-async def alert_duplicati(db: AsyncIOMotorDatabase = Depends(get_database)):
+async def alert_duplicati(
+    includi_scartati: bool = Query(False, description="Includi anche F24 scartati"),
+    db: AsyncIOMotorDatabase = Depends(get_database)
+):
     """
     Trova F24 che condividono stesso codice tributo + anno_rif.
-    Esclude i già scartati.
+    Esclude i già scartati (default).
     Restituisce gruppi con le possibili interpretazioni:
       - DOPPIO_PAGAMENTO: stesso importo, stessa scadenza
       - RAVVEDIMENTO_INTEGRATIVO: stesso tributo, importo diverso, scadenza diversa
