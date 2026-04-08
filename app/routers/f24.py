@@ -7,7 +7,8 @@ from fastapi import APIRouter, HTTPException, UploadFile, File, Depends
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from datetime import datetime
 from typing import Optional
-import hashlib, logging
+import hashlib
+import logging
 
 from app.database import get_database
 from app.parsers.f24 import parse_f24_pdf
@@ -27,26 +28,40 @@ async def upload_f24(file: UploadFile = File(...), db: AsyncIOMotorDatabase = De
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(400, "Solo PDF")
     content = await file.read()
-    parsed = parse_f24_pdf(pdf_bytes=content)
+
+    try:
+        parsed = parse_f24_pdf(pdf_bytes=content)
+    except Exception as e:
+        raise HTTPException(400, f"Errore parsing PDF: {e}")
+
     if parsed.get("errore"):
         raise HTTPException(400, parsed["errore"])
 
     data = parsed.get("data_versamento", "")
-    totale = parsed.get("totale_versato", 0)
+    totale = parsed.get("totale", 0)  # il parser ritorna 'totale', non 'totale_versato'
     chiave = hashlib.md5(f"{data}|{totale}".encode()).hexdigest()
 
     existing = await db["f24"].find_one({"chiave": chiave})
     if existing:
         return {"ok": True, "stato": "duplicato", "chiave": chiave}
 
+    # Calcola n_tributi dai campi reali del parser
+    n_tributi = (
+        len(parsed.get("sezione_erario", [])) +
+        len(parsed.get("sezione_inps", [])) +
+        len(parsed.get("sezione_regioni", [])) +
+        len(parsed.get("sezione_ici_imu", []))
+    )
+
     parsed["chiave"] = chiave
+    parsed["n_tributi"] = n_tributi
     parsed["filename"] = file.filename
     parsed["imported_at"] = datetime.utcnow()
     parsed["stato"] = "importato"
     parsed["riconciliato"] = False
     await db["f24"].insert_one(parsed)
 
-    return {"ok": True, "stato": "importato", "data": data, "totale": totale, "n_tributi": parsed["n_tributi"]}
+    return {"ok": True, "stato": "importato", "data": data, "totale": totale, "n_tributi": n_tributi}
 
 
 @router.get("")
