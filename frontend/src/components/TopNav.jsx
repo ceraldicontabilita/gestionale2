@@ -41,6 +41,7 @@ const links = [
   { to: '/f24-privati',            label: 'F24 Privati',     icon: Shield },
   { to: '/corrispettivi',          label: 'Corrispettivi',   icon: CreditCard },
   { to: '/verbali',                label: 'Verbali',         icon: Car },
+  { to: '/sconti-merce',         label: '🎁 Sconti',          icon: Tag },
   { to: '/haccp/dashboard',     label: '📊 Dashboard',       icon: LayoutDashboard },
   { to: '/haccp/temperature',      label: '🌡️ Temp',         icon: Thermometer },
   { to: '/haccp/sanificazione',    label: '✨ Sanif.',       icon: Sparkles },
