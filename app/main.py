@@ -44,7 +44,7 @@ from app.routers import (
     fornitori, learning, tributi, alert_fiscali, quietanze,
     dipendenti, health, fatture, cedolini,
     estratto_conto, f24, corrispettivi, distinte, verbali,
-    import_hub, mittenti, presenze, f24_privati
+    import_hub, mittenti, presenze, f24_privati, omaggi_acquaviva
 )
 
 app.include_router(health.router,            prefix="/api",                 tags=["health"])
@@ -65,6 +65,7 @@ app.include_router(alert_fiscali.router,     prefix="/api/alert-fiscali",   tags
 app.include_router(tributi.router,           prefix="/api/tributi",         tags=["tributi"])
 app.include_router(learning.router,          prefix="/api/learning",        tags=["learning"])
 app.include_router(fornitori.router,         prefix="/api/fornitori",       tags=["fornitori"])
+app.include_router(omaggi_acquaviva.router,                                      tags=["omaggi-acquaviva"])
 
 # === STATIC FILES (React build) ===
 frontend_dist = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
