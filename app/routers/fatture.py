@@ -99,14 +99,37 @@ async def _import_xml_bytes(
         inserite += 1
 
         if f["cedente"].get("partita_iva"):
+            # Upsert fornitore con struttura compatibile con fornitori.py (anagrafica nested)
+            piva_cede = f["cedente"]["partita_iva"]
             await db["fornitori"].update_one(
-                {"partita_iva": f["cedente"]["partita_iva"]},
+                {"$or": [
+                    {"anagrafica.piva": piva_cede},
+                    {"anagrafica.codice_fiscale": piva_cede},
+                ]},
                 {"$set": {
-                    "denominazione": f["cedente"]["denominazione"],
-                    "partita_iva": f["cedente"]["partita_iva"],
+                    "anagrafica.ragione_sociale": f["cedente"].get("denominazione", ""),
+                    "anagrafica.piva": piva_cede,
+                    "anagrafica.pec": f["cedente"].get("pec", ""),
                     "updated_at": datetime.utcnow(),
                 },
-                 "$setOnInsert": {"created_at": datetime.utcnow()}},
+                 "$setOnInsert": {
+                    "azienda_id": "b0295759-35ce-4b34-a6b4-f01b883234ad",
+                    "anagrafica": {
+                        "ragione_sociale": f["cedente"].get("denominazione", ""),
+                        "piva": piva_cede,
+                        "codice_fiscale": f["cedente"].get("codice_fiscale", piva_cede),
+                        "pec": f["cedente"].get("pec", ""),
+                        "regime_fiscale": f["cedente"].get("regime_fiscale", ""),
+                    },
+                    "schede_tecniche": {"urls_scraping": [], "pdf_tecnici": []},
+                    "prodotti": [],
+                    "storico_prezzi": [],
+                    "pagamento": {"metodo": "banca", "ereditato_automaticamente": True},
+                    "stato": "attivo",
+                    "note_interne": "",
+                    "tags": [],
+                    "created_at": datetime.utcnow(),
+                }},
                 upsert=True,
             )
 
