@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, User, Gavel, FileText, Download } from 'lucide-react'
 import { api } from '../lib/api'
-import { s, colors, statoBadge, formatEuro, statoLabel } from '../lib/utils'
+import { s, colors, shadow, statoBadge, formatEuro, statoLabel } from '../lib/utils'
+import TabPresenze from '../components/TabPresenze'
 
 export default function DettaglioDipendente() {
   const { id } = useParams()
@@ -10,6 +11,7 @@ export default function DettaglioDipendente() {
   const [dip, setDip] = useState(null)
   const [loading, setLoading] = useState(true)
   const [genLoading, setGenLoading] = useState(null)
+  const [activeTab, setActiveTab] = useState('info')
 
   const load = () => {
     setLoading(true)
@@ -70,8 +72,8 @@ export default function DettaglioDipendente() {
         <span style={statoBadge(dip.stato)}>{dip.stato}</span>
       </div>
 
-      {/* Info grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 20 }}>
+      {/* Tab: Info */}
+      {activeTab === 'info' && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, marginBottom: 20 }}>
         {[
           ['Stipendio', formatEuro(dip.importo_stipendio)],
           ['IBAN', dip.iban || '—'],
@@ -87,8 +89,41 @@ export default function DettaglioDipendente() {
         ))}
       </div>
 
-      {/* Pignoramenti */}
-      <div style={s.card}>
+      }</div>}
+
+      {/* Tab navigation */}
+      <div style={{
+        display: 'flex', gap: 4, marginBottom: 20,
+        background: colors.card, borderRadius: 14,
+        padding: 6, boxShadow: shadow.xs,
+        border: `1px solid ${colors.border}`,
+        width: 'fit-content',
+      }}>
+        {[
+          { id: 'info', label: 'Informazioni' },
+          { id: 'pignoramenti', label: `Pignoramenti (${pigs.length})` },
+          { id: 'presenze', label: 'Presenze' },
+        ].map(tab => (
+          <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
+            fontFamily: 'inherit', fontSize: 13, fontWeight: 600,
+            padding: '8px 18px', borderRadius: 10, border: 'none', cursor: 'pointer',
+            transition: 'all .15s',
+            background: activeTab === tab.id
+              ? `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryLight} 100%)`
+              : 'transparent',
+            color: activeTab === tab.id ? '#fff' : colors.textMuted,
+            boxShadow: activeTab === tab.id ? shadow.btn : 'none',
+          }}>{tab.label}</button>
+        ))}
+      </div>
+
+      {/* Tab: Presenze */}
+      {activeTab === 'presenze' && (
+        <TabPresenze codiceFiscale={dip.codice_fiscale} />
+      )}
+
+      {/* Tab: Pignoramenti */}
+      {activeTab === 'pignoramenti' && <div style={s.card}>
         <div style={{ ...s.flexBetween, marginBottom: 16 }}>
           <div style={{ ...s.flex, gap: 8 }}>
             <Gavel size={18} color={colors.primary} />
@@ -166,6 +201,6 @@ export default function DettaglioDipendente() {
           </div>
         )}
       </div>
-    </div>
+    </div>}
   )
 }
