@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { FileText, RefreshCw, Upload, AlertCircle, CheckCircle, Clock, Wifi } from 'lucide-react'
 import { s, colors, shadow, formatEuro } from '../lib/utils'
-import VisFattura from '../components/VisFattura'
+import FatturaViewer from '../components/FatturaViewer'
 
 const columns = [
   { key: 'data', label: 'Data' },
@@ -272,7 +272,7 @@ export default function Fatture() {
                         ))}
                         <td style={{ ...s.td, textAlign: 'right', width: 100 }}>
                           <button
-                            onClick={e => { e.stopPropagation(); setFatturaAperta(item._id) }}
+                            onClick={e => { e.stopPropagation(); setFatturaAperta({ id: item._id, data: item }) }}
                             style={{ ...s.btn, ...s.btnGhost, ...s.btnXSmall, fontSize: 11 }}
                           >
                             Visualizza
@@ -291,7 +291,7 @@ export default function Fatture() {
         @keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
       `}</style>
 
-      <VisFattura fatturaId={fatturaAperta} onClose={() => setFatturaAperta(null)} />
+      <FatturaViewer fatturaId={fatturaAperta?.id} fatturaData={fatturaAperta?.data} onClose={() => setFatturaAperta(null)} />
     </div>
   )
 }
