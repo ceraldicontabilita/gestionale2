@@ -2,7 +2,8 @@ import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import {
   Shield, Users, Gavel, Home, FileText, Receipt, Landmark,
-  FileCheck, CreditCard, Car, Banknote, Inbox, Mail, Building2
+  FileCheck, CreditCard, Car, Banknote, Inbox, Mail, Building2,
+  Thermometer, Sparkles, Bug
 } from 'lucide-react'
 import { colors, font } from '../lib/utils'
 
@@ -27,19 +28,22 @@ const linkSmall   = { ...linkBase, fontSize: 12, color: 'rgba(255,255,255,0.5)' 
 const linkSmallActive = { ...linkSmall, color: 'rgba(255,255,255,0.85)', borderBottom: `2px solid rgba(255,255,255,0.3)` }
 
 const links = [
-  { to: '/dipendenti',    label: 'Dipendenti',     icon: Users },
-  { to: '/pignoramenti',  label: 'Pignoramenti',   icon: Gavel },
-  { to: '/fatture',       label: 'Fatture',         icon: FileText },
-  { to: '/cedolini',      label: 'Cedolini',        icon: Receipt },
-  { to: '/estratto-conto',label: 'EC',              icon: Landmark },
-  { to: '/distinte',      label: 'Distinte',        icon: Banknote },
-  { to: '/alert-fiscali', label: '⚠️ Alert',        icon: Shield },
-  { to: '/tributi',       label: '🏠 Tributi',      icon: Home },
-  { to: '/fornitori',     label: '🏭 Fornitori',    icon: Building2 },
-  { to: '/f24',           label: 'F24',             icon: FileCheck },
-  { to: '/f24-privati',   label: 'F24 Privati',     icon: Shield },
-  { to: '/corrispettivi', label: 'Corrispettivi',   icon: CreditCard },
-  { to: '/verbali',       label: 'Verbali',         icon: Car },
+  { to: '/dipendenti',             label: 'Dipendenti',     icon: Users },
+  { to: '/pignoramenti',           label: 'Pignoramenti',   icon: Gavel },
+  { to: '/fatture',                label: 'Fatture',         icon: FileText },
+  { to: '/cedolini',               label: 'Cedolini',        icon: Receipt },
+  { to: '/estratto-conto',         label: 'EC',              icon: Landmark },
+  { to: '/distinte',               label: 'Distinte',        icon: Banknote },
+  { to: '/alert-fiscali',          label: '⚠️ Alert',        icon: Shield },
+  { to: '/tributi',                label: '🏠 Tributi',      icon: Home },
+  { to: '/fornitori',              label: '🏭 Fornitori',    icon: Building2 },
+  { to: '/f24',                    label: 'F24',             icon: FileCheck },
+  { to: '/f24-privati',            label: 'F24 Privati',     icon: Shield },
+  { to: '/corrispettivi',          label: 'Corrispettivi',   icon: CreditCard },
+  { to: '/verbali',                label: 'Verbali',         icon: Car },
+  { to: '/haccp/temperature',      label: '🌡️ Temp',         icon: Thermometer },
+  { to: '/haccp/sanificazione',    label: '✨ Sanif.',       icon: Sparkles },
+  { to: '/haccp/disinfestazione',  label: '🐀 Disinfest.',  icon: Bug },
 ]
 
 export default function TopNav() {
