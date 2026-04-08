@@ -3,14 +3,14 @@ Cedolini — Upload PDF buste paga, parse, salva, riconcilia.
 Collection: cedolini
 Prefix: /api/cedolini
 """
-from fastapi import APIRouter, HTTPException, UploadFile, File, Depends, Query
+from fastapi import APIRouter, HTTPException, UploadFile, File, Depends
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from datetime import datetime
 from typing import Optional
 import logging
 
 from app.database import get_database
-from app.parsers.cedolino_zucchetti import parse_cedolini_pdf
+from app.parsers.cedolino_zucchetti import parse_cedolino_pdf  # nome corretto (singolare)
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -30,7 +30,7 @@ async def upload_cedolini_pdf(file: UploadFile = File(...), db: AsyncIOMotorData
         raise HTTPException(400, "Solo PDF")
 
     content = await file.read()
-    cedolini = parse_cedolini_pdf(pdf_bytes=content)
+    cedolini = parse_cedolino_pdf(pdf_bytes=content)  # nome corretto
 
     if not cedolini:
         raise HTTPException(400, "Nessun cedolino trovato nel PDF")
@@ -45,7 +45,6 @@ async def upload_cedolini_pdf(file: UploadFile = File(...), db: AsyncIOMotorData
             risultati.append({"stato": "incompleto", "codice_fiscale": cf, "mese": mese, "anno": anno})
             continue
 
-        # Upsert per CF+mese+anno (non duplica mai)
         ced["filename"] = file.filename
         ced["imported_at"] = datetime.utcnow()
         ced["riconciliato"] = False
@@ -56,14 +55,12 @@ async def upload_cedolini_pdf(file: UploadFile = File(...), db: AsyncIOMotorData
             upsert=True,
         )
 
-        # Aggiorna/crea dipendente
         if cf:
             update = {"updated_at": datetime.utcnow(), "ultimo_cedolino": f"{mese}/{anno}"}
             if ced.get("netto"):
                 update["ultimo_netto"] = ced["netto"]
             if ced.get("iban"):
                 update["iban_cedolino"] = ced["iban"]
-
             await db["dipendenti"].update_one(
                 {"codice_fiscale": cf},
                 {"$set": update,
@@ -85,8 +82,11 @@ async def upload_cedolini_pdf(file: UploadFile = File(...), db: AsyncIOMotorData
             "netto": ced.get("netto"),
         })
 
-    return {"ok": True, "cedolini": risultati,
-            "n_importati": sum(1 for r in risultati if r["stato"] in ("importato", "aggiornato"))}
+    return {
+        "ok": True,
+        "cedolini": risultati,
+        "n_importati": sum(1 for r in risultati if r["stato"] in ("importato", "aggiornato")),
+    }
 
 
 @router.get("")
@@ -108,21 +108,16 @@ async def lista_cedolini(
 
 @router.post("/riconcilia")
 async def riconcilia_cedolini(db: AsyncIOMotorDatabase = Depends(get_database)):
-    """Riconcilia cedolini con movimenti estratto conto (stipendi)."""
+    """Riconcilia cedolini con movimenti estratto conto."""
     non_ric = await db[COLL].find({"riconciliato": False, "netto": {"$gt": 0}}).to_list(500)
     riconciliati = 0
-
     for ced in non_ric:
         netto = ced["netto"]
-        nome = f"{ced.get('cognome', '')} {ced.get('nome', '')}".upper()
-
-        # Cerca in estratto_conto_movimenti: stipendio con importo uguale ±2€
         mov = await db["estratto_conto_movimenti"].find_one({
             "categoria": "stipendio",
             "riconciliato": False,
             "importo": {"$gte": -(netto + 2), "$lte": -(netto - 2)},
         })
-
         if mov:
             await db[COLL].update_one(
                 {"_id": ced["_id"]},
@@ -133,5 +128,4 @@ async def riconcilia_cedolini(db: AsyncIOMotorDatabase = Depends(get_database)):
                 {"$set": {"riconciliato": True, "cedolino_cf": ced.get("codice_fiscale")}}
             )
             riconciliati += 1
-
     return {"ok": True, "riconciliati": riconciliati, "totale_non_riconciliati": len(non_ric) - riconciliati}
