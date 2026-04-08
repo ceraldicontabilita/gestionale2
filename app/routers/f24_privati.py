@@ -30,7 +30,7 @@ UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "uploads", "f24
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # Soggetti privati — importa da sorgente unica
-from app.privati_config import PRIVATI_CF, get_info_privato
+from app.privati_config import PRIVATI_CF
 # I dati anagrafici completi (indirizzo, data nascita) sono in MongoDB: privati_anagrafica
 PRIVATI_NOTI = {cf: {"nome": v["nome"]} for cf, v in PRIVATI_CF.items()}
 
