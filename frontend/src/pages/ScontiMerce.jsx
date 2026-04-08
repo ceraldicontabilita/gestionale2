@@ -6,7 +6,8 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import {
   Gift, Plus, Trash2, Edit, RefreshCw, Save, X,
-  Calendar, Building2, Settings, ChevronDown, ChevronUp, Check
+  Calendar, Building2, Settings, ChevronDown, ChevronUp, Check,
+  Award, TrendingUp, AlertCircle, Package
 } from 'lucide-react'
 import { s, colors, font, formatEuro } from '../lib/utils'
 
@@ -274,6 +275,10 @@ export default function ScontiMerce() {
   const [fornitoriFiltro, setFornitoriFiltro] = useState(loadFornitori())
   const [toast, setToast]                 = useState(null)
   const [importLog, setImportLog]         = useState(null)
+  // Dati omaggi Acquaviva
+  const [omaggi, setOmaggi]               = useState(null)
+  const [loadingOmaggi, setLoadingOmaggi] = useState(false)
+  const [soglia, setSoglia]               = useState(10)
 
   const mostraToast = (msg, tipo = 'success') => {
     setToast({ msg, tipo })
@@ -306,6 +311,17 @@ export default function ScontiMerce() {
   }, [filtroAnno, filtroMese])
 
   useEffect(() => { fetchSconti(); fetchRiepilogo() }, [fetchSconti, fetchRiepilogo])
+
+  const fetchOmaggi = async () => {
+    setLoadingOmaggi(true)
+    try {
+      const d = await fetch(`/api/omaggi-acquaviva?fornitore=acquaviva&soglia=${soglia}`).then(r => r.json())
+      setOmaggi(d)
+    } catch { mostraToast('Errore caricamento omaggi', 'danger') }
+    setLoadingOmaggi(false)
+  }
+
+  useEffect(() => { if (vista === 'omaggi') fetchOmaggi() }, [vista, soglia])
 
   // Carica prodotti fornitore selezionato nel form
   useEffect(() => {
@@ -535,10 +551,10 @@ export default function ScontiMerce() {
             <span style={s.caption}>Nascondi righe inutili</span>
           </label>
           <div style={{ marginLeft: 'auto', ...s.flex, gap: 4 }}>
-            {['lista', 'mensile', 'fornitori'].map(v => (
+            {['lista', 'mensile', 'fornitori', 'omaggi'].map(v => (
               <button key={v} onClick={() => setVista(v)}
                 style={{ ...s.btn, ...s.btnSmall, background: vista === v ? colors.primary : colors.bg, color: vista === v ? '#fff' : colors.textMuted, border: `1px solid ${vista === v ? colors.primary : colors.border}` }}>
-                {v === 'lista' ? 'Lista' : v === 'mensile' ? 'Mensile' : 'Per Fornitore'}
+                {v === 'lista' ? 'Lista' : v === 'mensile' ? 'Mensile' : v === 'fornitori' ? 'Per Fornitore' : '🎁 Omaggi AQV'}
               </button>
             ))}
           </div>
@@ -719,6 +735,174 @@ export default function ScontiMerce() {
               </tr></tfoot>
             )}
           </table>
+        </div>
+      )}
+
+
+      {/* VISTA OMAGGI ACQUAVIVA */}
+      {vista === 'omaggi' && (
+        <div>
+          {/* Configurazione soglia */}
+          <div style={{ ...s.card, marginBottom: 16 }}>
+            <div style={{ ...s.flexBetween, flexWrap: 'wrap', gap: 12 }}>
+              <div>
+                <h2 style={{ ...s.h2, margin: 0, ...s.flex, gap: 8 }}>
+                  <Award size={18} color={colors.success} /> Omaggi Acquaviva
+                </h2>
+                <p style={{ ...s.caption, marginTop: 4 }}>1 omaggio ogni {soglia} cartoni acquistati — progressivo cumulativo tra ordini</p>
+              </div>
+              <div style={{ ...s.flex, gap: 10 }}>
+                <div style={s.flex}>
+                  <label style={{ ...s.label, marginBottom: 0, marginRight: 8 }}>Soglia:</label>
+                  <select value={soglia} onChange={e => setSoglia(parseInt(e.target.value))} style={s.select}>
+                    {[5, 8, 10, 12, 15, 20].map(n => <option key={n} value={n}>{n} cartoni</option>)}
+                  </select>
+                </div>
+                <button onClick={fetchOmaggi} disabled={loadingOmaggi} style={{ ...s.btn, ...s.btnPrimary, ...s.btnSmall }}>
+                  <RefreshCw size={13} style={loadingOmaggi ? { animation: 'spin 1s linear infinite' } : {}} /> Calcola
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {loadingOmaggi && <div style={{ textAlign: 'center', padding: 40, color: colors.textMuted }}>Calcolo in corso...</div>}
+
+          {omaggi && !loadingOmaggi && (
+            <div>
+              {/* KPI principali */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12, marginBottom: 20 }}>
+                {[
+                  { label: 'Cartoni acquistati', val: omaggi.totale_cartoni_acquistati, color: colors.info },
+                  { label: 'Omaggi maturati', val: omaggi.totale_omaggi_maturati, color: colors.primary },
+                  { label: 'Omaggi ricevuti', val: omaggi.totale_omaggi_ricevuti, color: colors.success },
+                  { label: 'Nel ciclo corrente', val: `${omaggi.cartoni_nel_ciclo_corrente}/${soglia}`, color: colors.warning },
+                  { label: 'Valore omaggi', val: `€${omaggi.valore_totale_omaggi.toFixed(2)}`, color: colors.success, highlight: true },
+                ].map(k => (
+                  <div key={k.label} style={{ ...s.metricCard, background: k.highlight ? colors.successBg : colors.card }}>
+                    <div style={{ fontSize: 22, fontWeight: 900, color: k.color }}>{k.val}</div>
+                    <div style={s.caption}>{k.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Banner prossimo omaggio */}
+              <div style={{
+                ...s.card, marginBottom: 20,
+                background: omaggi.cartoni_mancanti_prossimo_omaggio <= 3 ? colors.successBg : colors.warningBg,
+                borderColor: omaggi.cartoni_mancanti_prossimo_omaggio <= 3 ? colors.success : colors.warning,
+              }}>
+                <div style={{ ...s.flex, gap: 12 }}>
+                  <TrendingUp size={20} color={omaggi.cartoni_mancanti_prossimo_omaggio <= 3 ? colors.success : colors.warning} />
+                  <div>
+                    <div style={{ fontWeight: 700, fontSize: 14 }}>
+                      {omaggi.cartoni_mancanti_prossimo_omaggio === 0
+                        ? '🎁 Omaggio disponibile!'
+                        : `Mancano ${omaggi.cartoni_mancanti_prossimo_omaggio} cartoni al prossimo omaggio`
+                      }
+                    </div>
+                    <div style={s.caption}>
+                      Ciclo corrente: {omaggi.cartoni_nel_ciclo_corrente} / {soglia} cartoni
+                      {' · '}
+                      Totale accumulati: {omaggi.totale_cartoni_acquistati}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Ordini */}
+              {omaggi.ordini.length === 0 ? (
+                <div style={{ ...s.card, textAlign: 'center', color: colors.textMuted, padding: 40 }}>
+                  <AlertCircle size={32} style={{ opacity: 0.3, margin: '0 auto 12px', display: 'block' }} />
+                  Nessuna fattura Acquaviva trovata nel database
+                </div>
+              ) : (
+                omaggi.ordini.map((ordine, idx) => (
+                  <div key={idx} style={{ ...s.card, marginBottom: 12 }}>
+                    {/* Header ordine */}
+                    <div style={{ ...s.flexBetween, marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+                      <div style={s.flex}>
+                        <Package size={15} color={colors.primary} style={{ marginRight: 8 }} />
+                        <span style={{ fontWeight: 700 }}>Fattura {ordine.numero_fattura}</span>
+                        <span style={{ ...s.caption, marginLeft: 10 }}>{ordine.data}</span>
+                      </div>
+                      <div style={{ ...s.flex, gap: 12 }}>
+                        <span style={s.badge(colors.infoText, colors.infoBg)}>{ordine.cartoni_acquistati} cartoni</span>
+                        {ordine.omaggi_ricevuti > 0 && (
+                          <span style={s.badge(colors.successText, colors.successBg)}>
+                            🎁 {ordine.omaggi_ricevuti} omaggio{ordine.omaggi_ricevuti > 1 ? 'i' : ''}
+                          </span>
+                        )}
+                        {ordine.valore_omaggi_stimato > 0 && (
+                          <span style={{ fontWeight: 700, color: colors.success }}>
+                            €{ordine.valore_omaggi_stimato.toFixed(2)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Progressivo */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: ordine.dettaglio_omaggi.length > 0 ? 12 : 0 }}>
+                      {[
+                        { label: 'Accumulati prima', val: ordine.progressivo.cartoni_accumulati_prima },
+                        { label: 'Accumulati dopo', val: ordine.progressivo.cartoni_accumulati_dopo },
+                        { label: 'Nel ciclo', val: `${ordine.progressivo.cartoni_nel_ciclo_corrente}/${soglia}` },
+                        { label: 'Mancano', val: ordine.progressivo.cartoni_mancanti_prossimo_omaggio,
+                          color: ordine.progressivo.cartoni_mancanti_prossimo_omaggio === 0 ? colors.success : colors.warning },
+                      ].map(k => (
+                        <div key={k.label} style={{ background: colors.bg, borderRadius: 8, padding: '8px 12px' }}>
+                          <div style={{ fontSize: 16, fontWeight: 700, color: k.color || colors.text }}>{k.val}</div>
+                          <div style={s.caption}>{k.label}</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Dettaglio omaggi ricevuti */}
+                    {ordine.dettaglio_omaggi.length > 0 && (
+                      <div style={{ borderTop: `1px solid ${colors.border}`, paddingTop: 10 }}>
+                        <div style={{ ...s.label, marginBottom: 8 }}>Omaggi ricevuti in questo ordine:</div>
+                        <table style={s.table}>
+                          <thead><tr>
+                            {['Prodotto', 'Cartoni omaggio', 'Pz/cartone', 'Pezzi totali', 'Prezzo/pz', 'Valore stimato'].map(h => (
+                              <th key={h} style={{ ...s.th, textAlign: h === 'Prodotto' ? 'left' : 'center' }}>{h}</th>
+                            ))}
+                          </tr></thead>
+                          <tbody>
+                            {ordine.dettaglio_omaggi.map((o, i) => (
+                              <tr key={i}>
+                                <td style={{ ...s.td, fontSize: 12 }}>{o.descrizione}</td>
+                                <td style={{ ...s.td, textAlign: 'center' }}>{o.cartoni_omaggio}</td>
+                                <td style={{ ...s.td, textAlign: 'center', color: colors.textMuted }}>
+                                  {o.pezzi_cartone ?? <span style={{ color: colors.warning }}>?</span>}
+                                </td>
+                                <td style={{ ...s.td, textAlign: 'center', fontWeight: 700 }}>
+                                  {o.pezzi_totali ?? '—'}
+                                </td>
+                                <td style={{ ...s.td, textAlign: 'center', color: colors.textMuted }}>
+                                  {o.prezzo_pezzo_rif > 0 ? `€${o.prezzo_pezzo_rif.toFixed(4)}` : '—'}
+                                </td>
+                                <td style={{ ...s.td, textAlign: 'right', fontWeight: 700, color: colors.success }}>
+                                  {o.valore_stimato > 0 ? `€${o.valore_stimato.toFixed(2)}` : '—'}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                        {ordine.dettaglio_omaggi.some(o => !o.pezzi_cartone) && (
+                          <p style={{ ...s.caption, color: colors.warning, marginTop: 6 }}>
+                            ⚠️ Alcuni prodotti non hanno pezzi/cartone rilevati dalla descrizione. Aggiungi il dato manualmente.
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {ordine.omaggi_ricevuti === 0 && (
+                      <div style={{ ...s.caption, color: colors.textLight, fontStyle: 'italic' }}>Nessun omaggio in questo ordine</div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
       )}
 
