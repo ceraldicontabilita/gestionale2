@@ -215,7 +215,6 @@ def _parse_erario_with_coords(page) -> list[dict]:
     for y_key in sorted(righe_y.keys()):
         row_words = sorted(righe_y[y_key], key=lambda w: w["x0"])
         texts = [w["text"] for w in row_words]
-        full = " ".join(texts)
         
         # Cerca riga con codice tributo 4 cifre
         cod_match = re.match(r"^(\d{4})$", texts[0]) if texts else None
@@ -240,7 +239,6 @@ def _parse_erario_with_coords(page) -> list[dict]:
         credito = 0.0
         
         # Cerca coppie (int, decimali) che formano importi
-        import_pattern = re.compile(r"^[\d\.]+$")
         
         # Raccogli tutti i token numerici con la loro X
         num_tokens = []
@@ -397,8 +395,8 @@ def parse_f24_pdf(pdf_bytes: bytes, filename: str = "") -> list[dict]:
                     "sezione": "INPS",
                     "codice_tributo": rigo["causale"],
                     "descrizione": CODICI_INPS.get(rigo["causale"], f"INPS {rigo['causale']}"),
-                    "mese_rif": rigo["da"][:2],
-                    "anno_rif": rigo["da"][-4:],
+                    "mese_ri": rigo["da"][:2],
+                    "anno_ri": rigo["da"][-4:],
                     "debito": debito, "credito": 0.0,
                 })
             
@@ -421,9 +419,9 @@ def parse_f24_pdf(pdf_bytes: bytes, filename: str = "") -> list[dict]:
                 doc["tributi_flat"].append({
                     "sezione": "REGIONI",
                     "codice_tributo": rigo["codice_tributo"],
-                    "descrizione": f"IRAP Campania reg.05",
-                    "mese_rif": rigo["mese_rif"],
-                    "anno_rif": rigo["anno_rif"],
+                    "descrizione": "IRAP Campania reg.05",
+                    "mese_ri": rigo["mese_rif"],
+                    "anno_ri": rigo["anno_rif"],
                     "debito": deb, "credito": cred,
                 })
             
@@ -448,8 +446,8 @@ def parse_f24_pdf(pdf_bytes: bytes, filename: str = "") -> list[dict]:
                     "sezione": "IMU",
                     "codice_tributo": rigo["codice_tributo"],
                     "descrizione": _desc_imu(rigo["codice_tributo"], ente),
-                    "mese_rif": rigo["mese_rif"],
-                    "anno_rif": rigo["anno_rif"],
+                    "mese_ri": rigo["mese_rif"],
+                    "anno_ri": rigo["anno_rif"],
                     "debito": deb, "credito": cred,
                 })
             
@@ -470,7 +468,7 @@ def parse_f24_pdf(pdf_bytes: bytes, filename: str = "") -> list[dict]:
                 doc["tributi_flat"].append({
                     "sezione": "INAIL", "codice_tributo": "INAIL",
                     "descrizione": "INAIL premi assicurativi",
-                    "mese_rif": None, "anno_rif": None,
+                    "mese_ri": None, "anno_rif": None,
                     "debito": deb, "credito": 0.0,
                 })
             
@@ -497,8 +495,6 @@ def _parse_erario_text(text: str) -> list[dict]:
     
     # Leggo i totali per capire quale importo è debito e quale è credito
     m_tot = re.search(r"TOTALE\s+A\s+([\d\.\s]+).*?([\d\.\s]+)\s*\+", erario_text, re.S)
-    totale_debito = _parse_euro(m_tot.group(1)) if m_tot else 0
-    totale_credito = _parse_euro(m_tot.group(2)) if m_tot else 0
     
     for m in re.finditer(
         r"(\d{4})\s+(\d{4})\s+(\d{4})\s+([\d\.\s]+)",
