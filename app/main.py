@@ -44,7 +44,8 @@ from app.routers import (
     dipendenti, health, fatture, cedolini,
     estratto_conto, f24, corrispettivi, distinte, verbali,
     import_hub, mittenti, presenze,
-)
+,
+    f24_privati)
 
 app.include_router(health.router,        prefix="/api",             tags=["health"])
 app.include_router(import_hub.router,    prefix="/api/import",      tags=["import"])
@@ -54,6 +55,7 @@ app.include_router(fatture.router,       prefix="/api/fatture",     tags=["fattu
 app.include_router(cedolini.router,      prefix="/api/cedolini",    tags=["cedolini"])
 app.include_router(estratto_conto.router,prefix="/api/estratto-conto", tags=["estratto-conto"])
 app.include_router(f24.router,           prefix="/api/f24",         tags=["f24"])
+    app.include_router(f24_privati.router,   prefix="/api/f24-privati",  tags=["f24-privati"])
 app.include_router(corrispettivi.router, prefix="/api/corrispettivi", tags=["corrispettivi"])
 app.include_router(distinte.router,      prefix="/api/distinte",    tags=["distinte"])
 app.include_router(verbali.router,       prefix="/api/verbali",     tags=["verbali"])
