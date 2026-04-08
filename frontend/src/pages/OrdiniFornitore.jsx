@@ -25,6 +25,7 @@ import {
 import { s, colors, font, formatEuro } from '../lib/utils'
 
 const API = '/api'
+const HACCP_API = 'https://ceraldiapp.it/api'
 
 const REPARTI = ['Pasticceria', 'Rosticceria', 'Bar', 'Deposito', 'Cucina']
 const STATI_COLOR = {
@@ -259,9 +260,20 @@ function VistaOperatore({ onOrdineSalvato }) {
   const fetchCatalogo = useCallback(async () => {
     setLoading(true)
     try {
-      const url = `${API}/ordini/catalogo${searchDebounced ? `?search=${encodeURIComponent(searchDebounced)}` : ''}`
+      const url = `${HACCP_API}/ordini-fornitori/prodotti-suggeriti?limit=700`
       const d = await fetch(url).then(r => r.json())
-      setCatalogo(d.prodotti || [])
+      // Adatta struttura: tracciabilita ritorna array piatto
+      const lista = (d || []).map(p => ({
+        nome: p.nome || p.nome_normalizzato || '',
+        fornitore_migliore: p.fornitore || '',
+        prezzo_migliore: p.prezzo_kg || 0,
+        unita: p.unita_confezione || 'kg',
+        peso_confezione: p.peso_confezione || 1,
+        foto_url: p.foto_url || null,
+        sotto_scorta: p.sotto_scorta || false,
+        fornitori: p.fornitore ? [{ fornitore: p.fornitore, prezzo_medio: p.prezzo_kg, unita_misura: p.unita_confezione || 'kg' }] : [],
+      }))
+      setCatalogo(lista)
     } catch {}
     setLoading(false)
   }, [searchDebounced])
@@ -366,7 +378,7 @@ function VistaOperatore({ onOrdineSalvato }) {
                   }}
                   onMouseEnter={e => e.currentTarget.style.borderColor = colors.primary}
                   onMouseLeave={e => e.currentTarget.style.borderColor = colors.border}
-                  onClick={() => aggiungiProdotto(prod.nome, prod.fornitori[0]?.unita_misura || 'kg')}
+                  onClick={() => aggiungiProdotto(prod.nome, prod.unita || 'kg', prod.peso_confezione || 1)}
                 >
                   <div style={{
                     width: 32, height: 32, borderRadius: 8, flexShrink: 0,
@@ -403,7 +415,7 @@ function VistaOperatore({ onOrdineSalvato }) {
                       </button>
                     )}
                     <button
-                      onClick={e => { e.stopPropagation(); aggiungiProdotto(prod.nome, prod.fornitori[0]?.unita_misura || 'kg') }}
+                      onClick={e => { e.stopPropagation(); aggiungiProdotto(prod.nome, prod.unita || 'kg', prod.peso_confezione || 1) }}
                       style={{ ...s.btn, ...s.btnPrimary, ...s.btnSmall, padding: '4px 10px' }}
                     >
                       <Plus size={14}/>
