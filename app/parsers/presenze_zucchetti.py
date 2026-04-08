@@ -41,7 +41,7 @@ Struttura documento MongoDB (collection: presenze):
 import re
 import logging
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import date
 
 logger = logging.getLogger(__name__)
 
@@ -196,7 +196,6 @@ def parse_presenze_pdf(pdf_path: str = None, pdf_bytes: bytes = None) -> Optiona
     giorni = []
     for y in sorted(righe.keys()):
         row = sorted(righe[y], key=lambda r: r[0])
-        tokens = [t for _, t in row]
 
         # Cerca giorno settimana nella riga
         gg_sett = None
@@ -245,8 +244,6 @@ def parse_presenze_pdf(pdf_path: str = None, pdf_bytes: bytes = None) -> Optiona
     # Pattern footer: "Ore ordinarie  93,20hm  AI  Ass.za ingiustif.  40,00hm  FE  Ferie  26,40hm"
     totali = {}
     legenda = {}
-
-    footer_match = re.findall(
         r'(?:Ore\s+ordinarie|([\w]+))\s+([\d,]+)hm(?:\s+([\w]+)\s+([^\d\n,]+?)(?=\s+[\d,]+hm|$))?',
         text
     )
