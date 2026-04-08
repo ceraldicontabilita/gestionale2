@@ -44,3 +44,34 @@ Prima di costruire: letti tutti e 4 i router backend (temperature_positive, temp
 - 66ec17d — feat: TemperatureHACCP.jsx
 - 1d12ece — feat: SanificazioneHACCP.jsx
 - 7648ce3 — feat: DisinfestazioneHACCP.jsx
+
+---
+
+## Chat 5 — continua: DashboardHACCP
+
+### Pagina aggiunta
+**frontend/src/pages/DashboardHACCP.jsx**
+Adattamento fedele di DashboardView.jsx del repo tracciabilita.
+
+**API chiamate (tutte su ceraldiapp.it):**
+- GET /produzioni/per-oggi → pezziProdPast, pezziProdCucina per reparto
+- GET /vendita-banco/oggi → aperte/chiuse, venduti/invenduti per reparto
+- GET /lotti?limit=300 → filtra scadenza ≤ 7 giorni, max 10 lotti
+- GET /acquaviva/magazzino-congelatore → saldo congelatore semilavorati Vandemoortele
+- GET /chiusure/giorno-non-produttivo/oggi → stato toggle produttivo/riposo
+- POST /chiusure/giorno-non-produttivo/oggi → setta stato
+- PATCH /lotti/{id}/consuma → marca lotto come consumato (con confirm window)
+
+**Funzionalità:**
+- Toggle "Giorno Produttivo / Giorno di Riposo"
+- 3 link rapidi tablet (rosticceria, pasticceria, vendita) → ceraldiapp.it
+- Alert lotti in scadenza prossimi 7 giorni con bottone consuma
+- Griglia 3 colonne × 6 righe (prodotti, al banco, in frigo, venduti, incasso pot., costo invenduto)
+- Popup magazzino semilavorati (entrate/uscite/saldo Vandemoortele)
+- Dettaglio banco espandibile al click su riga venduti
+- KPI archivio (link a ceraldiapp.it)
+- Lista produzioni di oggi
+
+**Modifiche file esistenti:**
+- App.jsx: route /haccp/dashboard
+- TopNav.jsx: link 📊 Dashboard + import LayoutDashboard
