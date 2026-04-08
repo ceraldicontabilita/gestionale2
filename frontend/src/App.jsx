@@ -35,6 +35,10 @@ export default function App() {
             <Route path="/cedolini" element={<Cedolini />} />
             <Route path="/estratto-conto" element={<EstrattoConto />} />
             <Route path="/f24" element={<F24Page />} />
+            <Route path="/f24-privati" element={<F24PrivatiPage />} />
+            <Route path="/alert-fiscali" element={<AlertFiscali />} />
+            <Route path="/tributi" element={<TributiPrivati />} />
+            <Route path="/fornitori" element={<Fornitori />} />
             <Route path="/corrispettivi" element={<Corrispettivi />} />
             <Route path="/verbali" element={<Verbali />} />
             <Route path="/distinte" element={<Distinte />} />
