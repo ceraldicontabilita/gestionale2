@@ -43,11 +43,9 @@ Endpoints:
   GET /api/alert-fiscali/f24-orfani   → F24 senza quietanza corrispondente
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from motor.motor_asyncio import AsyncIOMotorDatabase
-from datetime import datetime, date, timedelta
-from bson import ObjectId
-import calendar
+from datetime import datetime, date
 
 from app.database import get_database
 
@@ -223,7 +221,6 @@ async def _calcola_alert_inps(db) -> list:
     async for doc in cursor:
         # Controlla se ha quietanza abbinata
         ha_quietanza = bool(doc.get("riconciliazione_quietanza") or doc.get("f24_id"))
-        stato = doc.get("stato", "pagato")
 
         # Legge i periodi INPS
         for t in doc.get("tributi_flat", []):
