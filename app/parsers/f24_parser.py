@@ -366,7 +366,7 @@ def parse_f24_pdf(pdf_bytes: bytes, filename: str = "") -> list[dict]:
             # ── Sezione Erario con coordinate ─────────────────────
             try:
                 doc["sezione_erario"] = _parse_erario_with_coords(page)
-            except Exception as e:
+            except Exception:
                 # Fallback testo grezzo
                 doc["sezione_erario"] = _parse_erario_text(text)
             
