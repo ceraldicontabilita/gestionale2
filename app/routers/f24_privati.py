@@ -3,7 +3,7 @@ Router F24 Privati — Ceraldi ERP
 PREFIX: /api/f24-privati
 
 Gestisce F24 di persone fisiche NON appartenenti a Ceraldi Group S.R.L.
-Attualmente: CERALDI MICHELE (CF: CRLMHL50R01F352F)
+Soggetti: familiari del titolare — vedi app/privati_config.py
 Collection MongoDB: f24_privati (separata da f24 aziendale)
 
 Endpoints:
@@ -29,15 +29,10 @@ router = APIRouter(prefix="/api/f24-privati", tags=["F24 Privati"])
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "uploads", "f24_privati")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# Soggetti privati noti (non Ceraldi Group SRL)
-PRIVATI_NOTI = {
-    "CRLMHL50R01F352F": {
-        "nome": "Ceraldi Michele",
-        "data_nascita": "01/10/1950",
-        "comune_nascita": "Mondragone (CE)",
-        "domicilio": "Napoli NA, Piazza Nazionale 26",
-    }
-}
+# Soggetti privati — importa da sorgente unica
+from app.privati_config import PRIVATI_CF, is_privato, nome_da_cf, CF_AZIENDA
+# I dati anagrafici completi (indirizzo, data nascita) sono in MongoDB: privati_anagrafica
+PRIVATI_NOTI = {cf: {"nome": v["nome"]} for cf, v in PRIVATI_CF.items()}
 
 def _oid(doc):
     doc["_id"] = str(doc["_id"])
