@@ -12,6 +12,7 @@ import Corrispettivi from './pages/Corrispettivi'
 import Verbali from './pages/Verbali'
 import Distinte from './pages/Distinte'
 import ImportaDocumenti from './pages/ImportaDocumenti'
+import Mittenti from './pages/Mittenti'
 import { s } from './lib/utils'
 
 export default function App() {
@@ -33,6 +34,7 @@ export default function App() {
             <Route path="/corrispettivi" element={<Corrispettivi />} />
             <Route path="/verbali" element={<Verbali />} />
             <Route path="/distinte" element={<Distinte />} />
+            <Route path="/mittenti" element={<Mittenti />} />
           </Routes>
         </div>
       </div>
