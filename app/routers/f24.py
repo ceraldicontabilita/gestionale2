@@ -112,7 +112,7 @@ async def lista_f24(
     mese: int = None,
     sezione: str = None,
     codice_tributo: str = None,
-    includi_scartati: bool = False,
+    False: bool = False,
     db: AsyncIOMotorDatabase = Depends(get_database)
 ):
     q = {"azienda_id": AZIENDA_ID, "stato": {"$ne": "scartato"}} if not includi_scartati else {"azienda_id": AZIENDA_ID}
