@@ -13,6 +13,10 @@ import logging
 from app.database import get_database
 from app.parsers.fattura_xml import parse_fattura_xml
 from app.config import settings
+import os
+
+XML_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "uploads", "fatture_xml")
+os.makedirs(XML_DIR, exist_ok=True)
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -80,7 +84,18 @@ async def _import_xml_bytes(
             "pec_message_id": message_id,
             "created_at": datetime.utcnow(),
         }
-        await db["fatture_passive"].insert_one(doc)
+        result_ins = await db["fatture_passive"].insert_one(doc)
+        # Salva XML raw su disco per visualizzazione XSL
+        try:
+            xml_fname = f"{str(result_ins.inserted_id)}.xml"
+            with open(os.path.join(XML_DIR, xml_fname), "w", encoding="utf-8") as xf:
+                xf.write(xml_str)
+            await db["fatture_passive"].update_one(
+                {"_id": result_ins.inserted_id},
+                {"$set": {"xml_raw_path": xml_fname}}
+            )
+        except Exception as xe:
+            logger.warning(f"Salvataggio XML raw fallito: {xe}")
         inserite += 1
 
         if f["cedente"].get("partita_iva"):
@@ -276,6 +291,24 @@ async def get_sync_log(
 
 
 # ── DETTAGLIO FATTURA ──────────────────────────────────────────────────────
+
+@router.get("/{fatt_id}/xml-raw")
+async def get_fattura_xml_raw(fatt_id: str, db: AsyncIOMotorDatabase = Depends(get_database)):
+    """Restituisce l'XML raw per visualizzazione con foglio stile XSL."""
+    from fastapi.responses import Response
+    doc = await db["fatture_passive"].find_one({"_id": ObjectId(fatt_id)})
+    if not doc:
+        raise HTTPException(404, "Fattura non trovata")
+    xml_path = doc.get("xml_raw_path")
+    if xml_path:
+        full = os.path.join(XML_DIR, xml_path)
+        if os.path.exists(full):
+            with open(full, "r", encoding="utf-8") as f:
+                xml_content = f.read()
+            return Response(content=xml_content, media_type="application/xml",
+                          headers={"Access-Control-Allow-Origin": "*"})
+    raise HTTPException(404, "XML originale non disponibile")
+
 
 @router.get("/{fatt_id}")
 async def get_fattura(fatt_id: str, db: AsyncIOMotorDatabase = Depends(get_database)):
