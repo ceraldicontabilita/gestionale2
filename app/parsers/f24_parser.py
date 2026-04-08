@@ -29,71 +29,118 @@ except ImportError:
     HAS_PDFPLUMBER = False
 
 # ── Dizionari codici ─────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════
+# DIZIONARIO CODICI TRIBUTO ERARIO — Fonte: Agenzia delle Entrate
+# Aggiornato con tutti i codici trovati nei F24 Ceraldi Group SRL
+# Fonte ufficiale: agenziaentrate.gov.it (tabelle codici tributo)
+# ══════════════════════════════════════════════════════════════
 CODICI_ERARIO = {
-    # IRPEF ritenute
-    "1001": "IRPEF ritenute lavoro dipendente",
-    "1002": "IRPEF ritenute lavoro autonomo",
-    "1040": "IRPEF ritenute autonomi occasionali",
-    # IRES / IRPEF persone fisiche e società
-    "1301": "IRES acconto",
-    "1627": "IRES/IRPEF 2° acconto",
-    "1628": "IRES/IRPEF saldo",
-    "1629": "IRES/IRPEF 1° acconto",
-    "1631": "IRES/IRPEF saldo anno prec. (compensazione credito)",
-    "1668": "Interessi dilazione/rateazione",
-    "1990": "IRES imposta sostitutiva",
-    "1991": "IRES imposta sostitutiva — interessi",
-    "4034": "IRPEF 2° acconto persona fisica",
-    # Add. regionali e comunali
-    "1701": "Add. regionale IRPEF — ritenute dipendenti",
-    "1704": "Add. comunale IRPEF — ritenute dipendenti",
-    "1712": "Add. regionale IRPEF saldo",
-    "1713": "Add. comunale IRPEF saldo (ravvedimento)",
-    # IVA
-    "2001": "IVA liquidazione periodica",
-    "2003": "IVA versamento mensile",
-    "6001": "IVA mensile gennaio",
-    "6002": "IVA mensile febbraio",
-    "6003": "IVA mensile marzo",
-    "6004": "IVA mensile aprile",
-    "6005": "IVA mensile maggio",
-    "6006": "IVA mensile giugno",
-    "6007": "IVA mensile luglio",
-    "6008": "IVA mensile agosto",
-    "6009": "IVA mensile settembre",
-    "6010": "IVA mensile ottobre",
-    "6011": "IVA mensile novembre",
-    "6012": "IVA mensile dicembre",
-    "6099": "IVA credito annuale (compensazione)",
-    # IRAP
-    "3800": "IRAP",
-    "3801": "IRAP saldo",
-    "3813": "IRAP 2° acconto",
-    # Imposta di bollo
-    "2501": "Imposta di bollo — libri sociali",
+    # ── IRPEF Ritenute ──────────────────────────────────────
+    "1001": "IRPEF — ritenute su retribuzioni lavoro dipendente",
+    "1002": "IRPEF — ritenute su emolumenti arretrati",
+    "1004": "IRPEF — ritenute su redditi assimilati a lav. dipendente",
+    "1012": "IRPEF — ritenute su indennità cessazione rapporto lavoro",
+    "1019": "IRPEF — ritenuta 4% condominio sostituto imposta",
+    "1038": "IRPEF — ritenute su provvigioni (commissione, agenzia, mediazione)",
+    "1040": "IRPEF — ritenute su redditi lavoro autonomo/arti e professioni",
+    "1053": "IRPEF — imposta sostitutiva su compensi accessori lavoro dipendente",
+    # ── IRES / IRPEF Persone fisiche e società ────────────────
+    "1301": "IRES — acconto",
+    "1627": "IRES/IRPEF — 2° acconto",
+    "1628": "IRES/IRPEF — saldo",
+    "1629": "IRES/IRPEF — 1° acconto",
+    "1631": "IRES/IRPEF — saldo anno precedente (usato come credito in compensazione)",
+    "1668": "IRPEF/IRES — interessi da dilazione/rateazione",
+    "1990": "IRES — imposta sostitutiva",
+    "1991": "IRES — imposta sostitutiva interessi",
+    "4034": "IRPEF — 2° acconto persona fisica",
+    # ── Addizionali regionali e comunali ─────────────────────
+    "1701": "Addizionale regionale IRPEF — ritenute dipendenti (CREDITO)",
+    "1704": "Addizionale comunale IRPEF — ritenute dipendenti (CREDITO)",
+    "1712": "Addizionale regionale IRPEF — saldo",
+    "1713": "Addizionale comunale IRPEF — saldo/ravvedimento",
+    # ── IVA ──────────────────────────────────────────────────
+    "2001": "IVA — liquidazione periodica (F24 con elementi identificativi)",
+    "2003": "IVA — versamento mensile",
+    "6001": "IVA — mensile gennaio",
+    "6002": "IVA — mensile febbraio",
+    "6003": "IVA — mensile marzo",
+    "6004": "IVA — mensile aprile",
+    "6005": "IVA — mensile maggio",
+    "6006": "IVA — mensile giugno",
+    "6007": "IVA — mensile luglio",
+    "6008": "IVA — mensile agosto",
+    "6009": "IVA — mensile settembre",
+    "6010": "IVA — mensile ottobre",
+    "6011": "IVA — mensile novembre",
+    "6012": "IVA — mensile dicembre",
+    "6099": "IVA — credito annuale (compensazione)",
+    # ── Imposta di bollo ──────────────────────────────────────
+    "2501": "Imposta di bollo — versamento (libri sociali)",
     "2502": "Imposta di bollo — interessi ravvedimento",
     "2503": "Imposta di bollo — sanzione ravvedimento",
-    "8904": "Imposta di bollo",
-    "8918": "Imposta di bollo — libri e registri",
-    # Diritto CCIAA
-    "6494": "Diritto annuale CCIAA",
-    # Tasse e tributi vari
-    "7085": "Tassa vidimazione libri sociali",
+    "8904": "Imposta di bollo — versamento telematico",
+    "8918": "Imposta di bollo — su libri e registri (annuale)",
+    "8948": "Interessi ravvedimento su ritenute alla fonte",
+    # ── Ravvedimento operoso (sanzioni e interessi) ───────────
+    # Nella sezione REGIONI (IRAP):
+    # 1993 = interessi ravvedimento IRAP
+    # 8907 = sanzione ravvedimento IRAP
+    # Nella sezione ERARIO:
+    # 8906 = sanzione ravvedimento tributi erario
+    # 8948 = interessi ravvedimento ritenute
+    "8906": "Sanzione ravvedimento — tributi erario",
+    "8907": "Sanzione ravvedimento — IRAP (sezione Regioni)",
+    # ── Diritti e tasse ───────────────────────────────────────
+    "6494": "Diritto annuale CCIAA (Camera di Commercio)",
+    "7085": "Tassa annuale vidimazione libri sociali",
 }
+# ══════════════════════════════════════════════════════════════
+# CODICI IMU E ALTRI TRIBUTI LOCALI
+# Nella sezione IMU: il campo "Ravv./Acc./Saldo" indica il tipo:
+#   X = Acconto, blank con "Saldo" = Saldo, Ravv. = Ravvedimento
+# "Numero immobili" = numero fabbricati oggetto del tributo
+# "Codice ente/comune" = codice catastale comune (es. F839=Napoli)
+# ══════════════════════════════════════════════════════════════
 CODICI_IMU = {
-    "3832": "IMU abitazione principale",
-    "3847": "IMU tributo locale (acconto)",
-    "3848": "IMU tributo locale (saldo)",
-    "3850": "IMU terreni agricoli",
-    "3851": "IMU aree fabbricabili",
-    "3918": "IMU fabbricati altri (non abitazione principale)",
-    "3796": "IRAP credito compensazione",
-    "3797": "IMU credito compensazione",
+    # IMU fabbricati
+    "3912": "IMU — abitazione principale",
+    "3918": "IMU — fabbricati altri (non abitazione principale) — Comune Napoli F839",
+    "3916": "IMU — aree fabbricabili",
+    "3914": "IMU — terreni agricoli",
+    # IMU — codici vecchi (ante riforma 2020)
+    "3832": "IMU — abitazione principale (vecchio codice)",
+    "3847": "IMU — tributo locale acconto (vecchio codice)",
+    "3848": "IMU — tributo locale saldo (vecchio codice)",
+    "3850": "IMU — terreni agricoli (vecchio codice)",
+    "3851": "IMU — aree fabbricabili (vecchio codice)",
+    # Crediti compensazione
+    "3796": "IRAP — credito in compensazione (sezione Regioni)",
+    "3797": "IMU — credito in compensazione",
 }
+# ══════════════════════════════════════════════════════════════
+# CODICI SEZIONE REGIONI (IRAP e imposte regionali)
+# Codice regione: 01=Piemonte, 03=Lombardia, 05=Campania, ecc.
+# ══════════════════════════════════════════════════════════════
+CODICI_REGIONI = {
+    "3800": "IRAP — imposta",
+    "3801": "IRAP — saldo",
+    "3805": "IRAP — 1° acconto",
+    "3813": "IRAP — 2° acconto",
+    "1993": "IRAP — interessi da ravvedimento operoso",
+    "8907": "IRAP — sanzione da ravvedimento operoso",
+    "3796": "IRAP — credito in compensazione",
+}
+
+# ══════════════════════════════════════════════════════════════
+# CODICI INPS (causale contributo sezione INPS)
+# Tabella aggiornata: agenziaentrate.gov.it codici INPS ed enti
+# ══════════════════════════════════════════════════════════════
 CODICI_INPS = {
-    "CXX": "Contributi INPS dipendenti (sede)",
-    "DM10": "Contributi INPS DM10",
-    "F24": "INPS gestione separata",
+    "CXX": "Contributi INPS — dipendenti (sede territoriale)",
+    "DM10": "Contributi INPS — DM10 aziende",
+    "F24": "Contributi INPS — gestione separata",
+    "GPJA": "Contributi INPS — gestione separata professionisti",
 }
 ENTI_NOTI = {
     "F839": "Comune di Napoli (F839)",
@@ -451,7 +498,7 @@ def _parse_erario_text(text: str) -> list[dict]:
         if not importo: continue
         
         # Codici che compaiono tipicamente a credito in F24 Ceraldi
-        CODICI_TIPICAMENTE_CREDITO = {"1701", "1704", "1631", "3796", "3797"}
+        CODICI_TIPICAMENTE_CREDITO = {"1701", "1704", "1631", "3796", "3797", "6099"}
         if cod in CODICI_TIPICAMENTE_CREDITO:
             deb, cred = 0.0, importo
         else:
