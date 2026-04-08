@@ -41,7 +41,6 @@ Struttura documento MongoDB (collection: presenze):
 import re
 import logging
 from typing import Dict, Any, List, Optional
-from datetime import date
 
 logger = logging.getLogger(__name__)
 
