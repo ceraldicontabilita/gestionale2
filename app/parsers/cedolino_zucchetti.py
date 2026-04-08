@@ -455,25 +455,24 @@ def _parse_cedolino_page(page) -> Optional[Dict[str, Any]]:
     )
 
     # Fallback regex per addizionale comunale (F09130)
-    # Il layout Zucchetti mette il codice F09130 e il testo su y leggermente diversi
-    # causando problemi nel raggruppamento per riga; usiamo regex sul testo grezzo
+    # Layout Zucchetti testo grezzo:
+    #   "F09130 Addizionale comunale\nResiduo\n8,78\nNAPOLI\n8,78\n"
+    # Il primo importo è il residuo, il secondo (dopo NAPOLI) è la trattenuta
     if result["add_comunale"] == 0.0:
-        # Cerca pattern: F09130 ... importo (ultima colonna = trattenuta)
         m = re.search(
-            r'F09130[^\d\n]+(\d+,\d{2})[^\d\n]*(\d+,\d{2})',
+            r'F09130[^\n]+\nResiduo\n([\d,]+)\n[^\n]+\n([\d,]+)',
             text, re.I
         )
         if m:
-            # Il secondo importo è la trattenuta effettiva
             result["add_comunale"] = _parse_importo(m.group(2))
         else:
-            # Cerca "Addizionale comunale ... Residuo XX,XX XX,XX"
+            # Variante: tutto su una riga
             m = re.search(
-                r'Addizionale\s+comunale[^\n]*\n[^\n]*Residuo\s+[\d,]+\s+([\d,]+)',
+                r'F09130[^\d\n]+Residuo\s+([\d,]+)\s+([\d,]+)',
                 text, re.I
             )
             if m:
-                result["add_comunale"] = _parse_importo(m.group(1))
+                result["add_comunale"] = _parse_importo(m.group(2))
 
     result["dedup_key"] = f"{result['codice_fiscale']}_{result['mese']:02d}_{result['anno']}"
     return result
