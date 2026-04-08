@@ -18,6 +18,7 @@ import Distinte from './pages/Distinte'
 import ImportaDocumenti from './pages/ImportaDocumenti'
 import Mittenti from './pages/Mittenti'
 import DashboardHACCP from './pages/DashboardHACCP'
+import ScontiMerce from './pages/ScontiMerce'
 import TemperatureHACCP from './pages/TemperatureHACCP'
 import SanificazioneHACCP from './pages/SanificazioneHACCP'
 import DisinfestazioneHACCP from './pages/DisinfestazioneHACCP'
@@ -48,6 +49,7 @@ export default function App() {
             <Route path="/distinte" element={<Distinte />} />
             <Route path="/mittenti" element={<Mittenti />} />
             <Route path="/haccp/dashboard" element={<DashboardHACCP />} />
+            <Route path="/sconti-merce" element={<ScontiMerce />} />
             <Route path="/haccp/temperature" element={<TemperatureHACCP />} />
             <Route path="/haccp/sanificazione" element={<SanificazioneHACCP />} />
             <Route path="/haccp/disinfestazione" element={<DisinfestazioneHACCP />} />
