@@ -1,7 +1,10 @@
 import React from 'react'
-import { Shield, Link, useLocation } from 'react-router-dom'
-import { Shield, Users, Gavel, Home, FileText, Receipt, Landmark, FileCheck, CreditCard, Car, Banknote, Inbox, Mail } from 'lucide-react'
-import { Shield, colors, font } from '../lib/utils'
+import { Link, useLocation } from 'react-router-dom'
+import {
+  Shield, Users, Gavel, Home, FileText, Receipt, Landmark,
+  FileCheck, CreditCard, Car, Banknote, Inbox, Mail, Building2
+} from 'lucide-react'
+import { colors, font } from '../lib/utils'
 
 const navStyle = {
   background: colors.primary, padding: '0 20px', display: 'flex',
@@ -24,24 +27,24 @@ const linkSmall   = { ...linkBase, fontSize: 12, color: 'rgba(255,255,255,0.5)' 
 const linkSmallActive = { ...linkSmall, color: 'rgba(255,255,255,0.85)', borderBottom: `2px solid rgba(255,255,255,0.3)` }
 
 const links = [
-  { to: '/dipendenti', label: 'Dipendenti',    icon: Users },
-  { to: '/pignoramenti', label: 'Pignoramenti', icon: Gavel },
-  { to: '/fatture', label: 'Fatture',           icon: FileText },
-  { to: '/cedolini', label: 'Cedolini',         icon: Receipt },
-  { to: '/estratto-conto', label: 'EC',         icon: Landmark },
-  { to: '/distinte', label: 'Distinte',         icon: Banknote },
-  { to: '/alert-fiscali', label: '⚠️ Alert Fiscali', icon: Shield },
-  { to: '/tributi', label: '🏠 Tributi', icon: Home },
-  { to: '/fornitori', label: '🏭 Fornitori', icon: Building2 },
-  { to: '/f24', label: 'F24',                   icon: FileCheck },
-  { to: '/f24-privati', label: 'F24 Privati',       icon: Shield },
-  { to: '/corrispettivi', label: 'Corrispettivi', icon: CreditCard },
-  { to: '/verbali', label: 'Verbali',           icon: Car },
+  { to: '/dipendenti',    label: 'Dipendenti',     icon: Users },
+  { to: '/pignoramenti',  label: 'Pignoramenti',   icon: Gavel },
+  { to: '/fatture',       label: 'Fatture',         icon: FileText },
+  { to: '/cedolini',      label: 'Cedolini',        icon: Receipt },
+  { to: '/estratto-conto',label: 'EC',              icon: Landmark },
+  { to: '/distinte',      label: 'Distinte',        icon: Banknote },
+  { to: '/alert-fiscali', label: '⚠️ Alert',        icon: Shield },
+  { to: '/tributi',       label: '🏠 Tributi',      icon: Home },
+  { to: '/fornitori',     label: '🏭 Fornitori',    icon: Building2 },
+  { to: '/f24',           label: 'F24',             icon: FileCheck },
+  { to: '/f24-privati',   label: 'F24 Privati',     icon: Shield },
+  { to: '/corrispettivi', label: 'Corrispettivi',   icon: CreditCard },
+  { to: '/verbali',       label: 'Verbali',         icon: Car },
 ]
 
 export default function TopNav() {
   const loc = useLocation()
-  const isImporta = loc.pathname.startsWith('/importa')
+  const isImporta  = loc.pathname.startsWith('/importa')
   const isMittenti = loc.pathname.startsWith('/mittenti')
   return (
     <nav style={navStyle}>
