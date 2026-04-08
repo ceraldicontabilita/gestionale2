@@ -408,10 +408,13 @@ async def aggiorna_pagamento(
         {"$set": {"pagamento": pagamento, "updated_at": datetime.utcnow()}}
     )
 
-    # Propaga il metodo alle fatture future (aggiorna quelle non pagate)
-    await db["fatture_passive"].update_many(
-        {"fornitore_id": fid, "pagato": {"$ne": True}},
-        {"$set": {"metodo_pagamento": metodo}}
-    )
+    # Propaga il metodo pagamento alle fatture passive del fornitore (usa fornitore_piva)
+    doc_forn = await db["fornitori"].find_one({"_id": ObjectId(fid)}, {"anagrafica.piva": 1})
+    piva_forn = (doc_forn or {}).get("anagrafica", {}).get("piva", "")
+    if piva_forn:
+        await db["fatture_passive"].update_many(
+            {"fornitore_piva": piva_forn, "stato": {"$ne": "pagato"}},
+            {"$set": {"metodo_pagamento": metodo}}
+        )
 
     return {"ok": True, "metodo": metodo}
