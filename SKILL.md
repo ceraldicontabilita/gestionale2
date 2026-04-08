@@ -25,8 +25,16 @@ description: |
 - Mai file alias/wrapper — correggere sempre l'import nel file originale
 
 ## Persone fisiche note
-- Ceraldi Michele: CF `CRLMHL50R01F352F` — **familiare** (non titolare) — nato 01/10/1950 Mondragone CE
-- Ceraldi Antonietta: CF `CRLNNT75M55F352C` — familiare — nata 15/08/1975 Mondragone
+I dati anagrafici completi dei familiari sono in MongoDB (collection "privati_anagrafica")
+e accessibili SOLO dalla pagina /privati del gestionale.
+
+Per il routing automatico dei documenti importa sempre da `app/privati_config.py`:
+- `is_privato(cf)` → True/False
+- `collezione_da_cf(cf)` → collection MongoDB
+- `nome_da_cf(cf)` → nome display
+
+Regola: nessun CF, nome o dato personale dei familiari va scritto in codice sorgente
+o in questo file — tutto passa da privati_config.py e MongoDB.
 
 ## Codici tributo appresi (F24)
 
