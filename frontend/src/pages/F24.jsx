@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import {
   Upload, Search, FileText, CheckCircle, AlertTriangle,
   ChevronDown, ChevronUp, Download, RefreshCw, Calendar,
-  TrendingUp, Shield, Info, X, Printer
+  TrendingUp, Shield, Info, X, Printer, Trash2, RotateCcw, AlertCircle, Clock
 } from 'lucide-react'
 import { s, colors, shadow, formatEuro, font } from '../lib/utils'
 
@@ -269,7 +269,7 @@ function RicercaTributo() {
 }
 
 /* ── Riga F24 con espandibile ─────────────────────────────── */
-function RigaF24({ doc, onStampaPdf }) {
+function RigaF24({ doc, onScarta }) {
   const [espanso, setEspanso] = useState(false)
   const hasRavvedimento = doc.note_ravvedimento
 
@@ -376,22 +376,46 @@ export default function F24Page() {
   const [lista, setLista] = useState([])
   const [riepilogo, setRiepilogo] = useState(null)
   const [loading, setLoading] = useState(false)
-  const [tab, setTab] = useState('lista') // 'lista' | 'upload' | 'avvisi'
+  const [tab, setTab] = useState('lista')
+  const [alerts, setAlerts] = useState([])
+  const [alertCount, setAlertCount] = useState(0)
+  const [scartati, setScartati] = useState([])
+  const [modalScarto, setModalScarto] = useState(null)
+  const [motivoScarto, setMotivoScarto] = useState('')
 
   const carica = useCallback(async () => {
     setLoading(true)
-    const [l, r] = await Promise.all([
+    const [l, r, al, sc] = await Promise.all([
       fetch(`${API}?anno=${anno}`).then(r => r.json()),
       fetch(`${API}/riepilogo/${anno}`).then(r => r.json()),
+      fetch(`${API}/alert-duplicati`).then(r => r.json()).catch(() => ({ alerts: [], totale_alert: 0 })),
+      fetch(`${API}/scartati?anno=${anno}`).then(r => r.json()).catch(() => []),
     ])
     setLista(Array.isArray(l) ? l : [])
     setRiepilogo(r)
+    setAlerts(al.alerts || [])
+    setAlertCount(al.totale_alert || 0)
+    setScartati(Array.isArray(sc) ? sc : [])
     setLoading(false)
   }, [anno])
 
   useEffect(() => { carica() }, [carica])
 
   const MESI_LABEL = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic']
+
+  const doScarta = async () => {
+    if (!modalScarto) return
+    await fetch(`${API}/${modalScarto.id}/scarta`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ motivo: motivoScarto || 'Scartato manualmente' }),
+    })
+    setModalScarto(null); setMotivoScarto(''); carica()
+  }
+
+  const doRipristina = async (id) => {
+    await fetch(`${API}/${id}/ripristina`, { method: 'POST' })
+    carica()
+  }
 
   // Raggruppa per mese
   const listaPagina1 = lista.filter(d => (d.pagina || 1) === 1)
@@ -441,6 +465,8 @@ export default function F24Page() {
             { id: 'lista', label: `Lista F24 (${listaPagina1.length})` },
             { id: 'upload', label: 'Importa PDF' },
             { id: 'avvisi', label: '🔍 Ricerca avvisi' },
+            { id: 'alert', label: alertCount > 0 ? `⚠️ Alert (${alertCount})` : 'Alert' },
+            { id: 'scartati', label: 'Scartati' },
           ].map(t => (
             <button key={t.id} onClick={() => setTab(t.id)} style={{
               fontFamily: font, fontSize: 13, fontWeight: 600,
@@ -497,7 +523,7 @@ export default function F24Page() {
                 </thead>
                 <tbody>
                   {listaPagina1.map(doc => (
-                    <RigaF24 key={doc._id} doc={doc} />
+                    <RigaF24 key={doc._id} doc={doc} onScarta={(id, sc) => setModalScarto({ id, nome: sc })} />
                   ))}
                 </tbody>
                 <tfoot>
@@ -516,6 +542,161 @@ export default function F24Page() {
           )
         )}
       </div>
+
+      {/* ── Tab Alert duplicati ─────────────────────────────── */}
+      {tab === 'alert' && (
+        <div>
+          {alerts.length === 0 ? (
+            <div style={{ ...s.card, textAlign: 'center', padding: 40 }}>
+              <CheckCircle size={36} color={colors.success} style={{ marginBottom: 12 }} />
+              <div style={{ fontSize: 14, fontWeight: 600, color: colors.textMuted }}>
+                Nessun alert — tutti gli F24 sono unici
+              </div>
+            </div>
+          ) : alerts.map((al, i) => {
+            const urgColor = al.urgenza === 'alta' ? colors.danger : al.urgenza === 'media' ? colors.warning : colors.info
+            const urgBg = al.urgenza === 'alta' ? colors.dangerBg : al.urgenza === 'media' ? colors.warningBg : colors.infoBg
+            return (
+              <div key={i} style={{ ...s.card, borderLeft: `4px solid ${urgColor}`, marginBottom: 12 }}>
+                <div style={{ ...s.flexBetween, marginBottom: 8 }}>
+                  <div style={{ ...s.flex, ...s.gap8 }}>
+                    <AlertCircle size={16} color={urgColor} />
+                    <span style={{ fontWeight: 700, fontSize: 13, color: colors.text }}>
+                      {al.tipo.replace(/_/g,' ')}
+                    </span>
+                    <span style={{ ...s.badge(urgColor, urgBg), fontSize: 10 }}>{al.urgenza.toUpperCase()}</span>
+                  </div>
+                  <span style={{ fontSize: 11, color: colors.textMuted }}>
+                    Cod. <strong>{al.codice_tributo}</strong> / Anno <strong>{al.anno_rif}</strong>
+                  </span>
+                </div>
+                <div style={{ fontSize: 12, color: colors.textMuted, marginBottom: 10 }}>{al.descrizione}</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {al.scadenze.map((sc, j) => (
+                    <div key={j} style={{ ...s.flex, gap: 6, padding: '5px 10px',
+                      borderRadius: 8, background: colors.bg, border: `1px solid ${colors.border}`, fontSize: 12 }}>
+                      <Clock size={11} color={colors.textLight} />
+                      <span>{sc}</span>
+                      <button onClick={() => setModalScarto({ id: al.f24_ids[j], nome: sc })}
+                        style={{ ...s.btn, ...s.btnXSmall, background: colors.dangerBg, color: colors.dangerText,
+                          border: 'none', cursor: 'pointer', padding: '2px 8px', borderRadius: 4, fontSize: 11 }}>
+                        Scarta
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                {al.tipo === 'RAVVEDIMENTO_INTEGRATIVO' && (
+                  <div style={{ marginTop: 8, padding: '7px 12px', borderRadius: 8, background: colors.infoBg, fontSize: 12, color: colors.infoText }}>
+                    💡 Probabile integrazione — importi diversi sullo stesso tributo/anno. Verificare con commercialista prima di scartare.
+                  </div>
+                )}
+                {al.tipo === 'DOPPIO_PAGAMENTO' && (
+                  <div style={{ marginTop: 8, padding: '7px 12px', borderRadius: 8, background: colors.dangerBg, fontSize: 12, color: colors.dangerText }}>
+                    ⚠️ Stesso importo e stessa scadenza — verificare estratto conto. Se confermato scartare il duplicato.
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* ── Tab Scartati ─────────────────────────────────────── */}
+      {tab === 'scartati' && (
+        <div>
+          {scartati.length === 0 ? (
+            <div style={{ ...s.card, textAlign: 'center', padding: 40, color: colors.textLight }}>
+              Nessun F24 scartato per il {anno}
+            </div>
+          ) : (
+            <div style={s.cardNoPad}>
+              <table style={s.table}>
+                <thead>
+                  <tr>
+                    <th style={s.th}>Scadenza</th>
+                    <th style={s.th}>Motivo scarto</th>
+                    <th style={s.th}>Scartato il</th>
+                    <th style={{ ...s.th, textAlign: 'right' }}>Saldo</th>
+                    <th style={{ ...s.th, width: 110, textAlign: 'right' }}>Azioni</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {scartati.map(doc => (
+                    <tr key={doc._id} style={{ background: colors.dangerBg + '50' }}>
+                      <td style={s.td}>
+                        <span style={{ textDecoration: 'line-through', color: colors.textLight }}>{doc.scadenza}</span>
+                      </td>
+                      <td style={{ ...s.td, fontSize: 12, color: colors.dangerText }}>{doc.motivo_scarto || '—'}</td>
+                      <td style={{ ...s.td, fontSize: 12, color: colors.textMuted }}>
+                        {doc.scartato_il ? new Date(doc.scartato_il).toLocaleDateString('it-IT') : '—'}
+                      </td>
+                      <td style={{ ...s.td, textAlign: 'right', fontWeight: 700, color: colors.textLight, textDecoration: 'line-through' }}>
+                        {formatEuro(doc.saldo_finale)}
+                      </td>
+                      <td style={{ ...s.td, textAlign: 'right' }}>
+                        <button onClick={() => doRipristina(doc._id)}
+                          style={{ ...s.btn, ...s.btnXSmall, ...s.btnGhost, fontSize: 11 }}>
+                          <RotateCcw size={12} /> Ripristina
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Modale scarto ────────────────────────────────────── */}
+      {modalScarto && (
+        <>
+          <div onClick={() => setModalScarto(null)} style={{
+            position: 'fixed', inset: 0, zIndex: 2000,
+            background: 'rgba(30,27,75,0.5)', backdropFilter: 'blur(2px)',
+          }} />
+          <div style={{
+            position: 'fixed', top: '50%', left: '50%', zIndex: 2001,
+            transform: 'translate(-50%,-50%)',
+            background: colors.card, borderRadius: 20, padding: 28,
+            width: 'min(480px, 92vw)', boxShadow: shadow.lg,
+          }}>
+            <div style={{ ...s.flex, gap: 10, marginBottom: 16 }}>
+              <Trash2 size={22} color={colors.danger} />
+              <h2 style={{ ...s.h2, margin: 0, color: colors.danger }}>Scarta F24</h2>
+            </div>
+            <div style={{ fontSize: 13, color: colors.textMuted, marginBottom: 16, lineHeight: 1.6 }}>
+              Scadenza: <strong>{modalScarto.nome}</strong><br/>
+              Il documento rimane in archivio ma viene escluso da totali e riconciliazioni.
+              Ripristinabile in qualsiasi momento dalla tab "Scartati".
+            </div>
+            <div style={s.label}>Motivo scarto</div>
+            <select value={motivoScarto} onChange={e => setMotivoScarto(e.target.value)}
+              style={{ ...s.select, width: '100%', marginBottom: 8 }}>
+              <option value="">— Seleziona motivo —</option>
+              <option value="F24 cumulativo — richiesta rateizzazione al commercialista">F24 cumulativo — richiesta rateizzazione</option>
+              <option value="Importo errato — versione corretta in arrivo">Importo errato — versione corretta in arrivo</option>
+              <option value="Doppio pagamento — estratto conto verificato">Doppio pagamento — EC verificato</option>
+              <option value="Ravvedimento integrativo — già contabilizzato il principale">Ravvedimento integrativo — già contabilizzato</option>
+              <option value="F24 non andato a buon fine — rifatto con importo aggiornato">F24 non andato a buon fine — rifatto</option>
+              <option value="Scartato manualmente">Altro — scrivi sotto</option>
+            </select>
+            {motivoScarto === 'Scartato manualmente' && (
+              <input placeholder="Descrivi il motivo..." value={motivoScarto === 'Scartato manualmente' ? '' : motivoScarto}
+                onChange={e => setMotivoScarto(e.target.value)}
+                style={{ ...s.input, marginBottom: 8, fontSize: 13 }} />
+            )}
+            <div style={{ ...s.flex, gap: 8, justifyContent: 'flex-end', marginTop: 20 }}>
+              <button onClick={() => { setModalScarto(null); setMotivoScarto('') }}
+                style={{ ...s.btn, ...s.btnNeutral, ...s.btnSmall }}>Annulla</button>
+              <button onClick={doScarta} disabled={!motivoScarto}
+                style={{ ...s.btn, ...s.btnDanger, ...s.btnSmall, opacity: motivoScarto ? 1 : 0.5 }}>
+                <Trash2 size={13} /> Conferma scarto
+              </button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }
