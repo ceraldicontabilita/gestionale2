@@ -9,7 +9,7 @@ Scheda fornitore modulare con 5 tab:
   Tab 4: Listino prezzi / storico (da XML)
   Tab 5: Metodo di pagamento (manuale)
 
-REGOLA: collection si chiama "fornitori" (MAI "suppliers").
+REGOLA: collection si chiama "fornitori".
 """
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, BackgroundTasks, Query
