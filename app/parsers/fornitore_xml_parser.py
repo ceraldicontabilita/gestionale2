@@ -78,8 +78,6 @@ def parse_fornitore_da_xml(xml_content: bytes) -> Optional[dict]:
     # Contatti e SDI
     contatti = cedente.find("Contatti")
     pec = _text(contatti, "Email") if contatti else ""
-
-    cessionario = header.find("CessionarioCommittente")
     sdi = _text(header, ".//DatiTrasmissione/CodiceDestinatario")
 
     anagrafica = {
