@@ -85,3 +85,7 @@ frontend/node_modules/.cache/default-development/8.pack
 # Credentials file (non esporre in repo pubblici)
 memory/test_credentials.md
 backend/docs/mongo_backup_ceraldi_20260317_1626.zip
+-e 
+# Environment files
+*.env
+*.env.*
