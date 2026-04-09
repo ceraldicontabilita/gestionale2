@@ -330,3 +330,89 @@ Registro HACCP: `/api/tr/registro-lotti/{anno}/{mese}`
 3. Testare omaggi Acquaviva con fatture reali
 4. Verificare riconciliazione cedolini (categoria "stipendio" in estratto conto)
 
+---
+
+## Chat 7 — 2026-04-09 — Deploy + Autenticazione
+
+### Decisione deploy
+- Piattaforma scelta: Emergent.sh (app.emergent.sh)
+- Agente: E-2 "Approfondito e Tenace" (più stabile per progetti complessi)
+- Modalità: App Full Stack
+- Il repo privato ceraldicontabilita/gestionale2 viene importato
+  direttamente da Emergent tramite Personal Access Token GitHub
+- Emergent builda il frontend (npm run build in frontend/)
+  e serve tutto tramite FastAPI porta 8001
+- Dominio finale: da configurare dopo il build (dominio custom o emergent.sh)
+
+### Sistema autenticazione aggiunto
+Emergent aggiunge autenticazione multi-livello SOPRA il codice esistente.
+NON modifica nessun router o pagina esistente.
+
+LIVELLO 1 — ADMIN:
+- Username: ceraldi
+- Password: variabile ADMIN_PASSWORD (Environment Variables)
+- JWT durata 1 mese
+- Recupera password via email (ADMIN_EMAIL)
+- Accesso completo a tutto il gestionale
+
+LIVELLO 2 — OPERATORE TRACCIABILITÀ (PIN reparto):
+- Accesso solo a: /haccp/*, /ordini, /sconti-merce
+- PIN distinti per reparto (Environment Variables):
+  PIN_PASTICCERIA / PIN_ROSTICCERIA / PIN_EXTRA
+- JWT senza scadenza
+- Il sistema registra il reparto in ogni operazione
+
+LIVELLO 3 — OPERATORE (PIN personale):
+- PIN salvato come hash bcrypt nel campo "pin" di collection dipendenti
+- JWT senza scadenza
+- Accesso solo a 2 funzioni:
+  a) Scarico banco sera → POST ceraldiapp.it/api/vendita-banco/registra
+  b) Scarico magazzino → POST ceraldiapp.it/api/tablet/{reparto}
+- Interfaccia solo 2 pulsanti grandi, ottimizzata tablet
+
+SCHERMATA INIZIALE:
+- 3 pulsanti: Amministrazione / Tracciabilità / Operatore
+- Tracciabilità → scelta reparto → PIN reparto
+- Operatore → tastierino numerico PIN personale
+- Nome "Ceraldi Group" in alto
+
+### Dipendenti con PIN creati/aggiornati in MongoDB
+Collection: dipendenti, campo: pin (hash bcrypt)
+- Moscato     3456
+- Parisi      4567
+- Vespa       2345
+- Capezzuto   6789  (esisteva già — solo aggiornato pin)
+- Carotenuto  0987
+- Murolo      5432
+- Lisina      7654
+- Russo       8765
+- Viviana     4321
+- Guarino     6543
+- Taiano      3210
+- Kikko       9876
+
+### Log operatori
+Nuova collection MongoDB: log_operatori
+Campi: operatore, tipo_operazione, prodotto, quantita, reparto, data, ora
+Visibile solo all'admin con filtri e export CSV
+
+### Variabili d'ambiente Emergent (Environment Variables)
+NON nel codice, NON nel repo, solo nel pannello Emergent:
+MONGODB_ATLAS_URI, DB_NAME, ADMIN_PASSWORD, ADMIN_EMAIL,
+PEC_HOST, PEC_USER, PEC_PASSWORD, GMAIL_USER, GMAIL_APP_PASSWORD,
+ANTHROPIC_API_KEY, PIN_PASTICCERIA, PIN_ROSTICCERIA, PIN_EXTRA, SECRET_KEY
+
+### Sicurezza
+- Tutte le route /api/* protette tranne /api/health e /api/login
+- PIN salvati come hash bcrypt, confronto con bcrypt.verify()
+- Token JWT contiene: nome operatore, tipo accesso, timestamp
+- Credenziali MAI nel prompt o in chat — solo nel pannello Environment Variables
+- Dopo il deploy: revocare il token GitHub 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
+  e crearne uno nuovo in sola lettura
+
+### TODO prossima chat (Chat 8)
+- Pagina admin per gestire PIN dipendenti (modifica/reset)
+- Pagina tablet Cucina: GET ceraldiapp.it/api/tablet/{reparto}
+- Rinomina inline colonne frigo/congelatore in TemperatureHACCP.jsx
+- Portare online su dominio custom dopo build Emergent
+- Verificare riconciliazione cedolini con estratto conto
