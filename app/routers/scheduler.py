@@ -58,7 +58,12 @@ async def _job_pec():
         from app.services.pec_fatture_service import fetch_fatture_from_pec
         from app.parsers.fattura_xml import parse_fattura_xml
 
-        attachments = await fetch_fatture_from_pec(host, port, user, password, mark_seen=True)
+        attachments = await fetch_fatture_from_pec(
+            host, port, user, password,
+            mark_seen=True,
+            only_unread=True,
+            since_date=None,  # job regolare: solo non lette
+        )
         importate = duplicate = errori = 0
 
         for att in attachments:
@@ -338,6 +343,111 @@ async def run_haccp_now():
 async def run_prima_nota_now():
     result = await _job_prima_nota()
     return {"success": True, "result": result}
+
+
+@router.post("/import-pec-storico")
+async def import_pec_storico(
+    since: str = Query(default="01-Jan-2026", description="Data IMAP formato DD-Mon-YYYY"),
+    db: AsyncIOMotorDatabase = Depends(get_database),
+):
+    """
+    Import storico PEC: scarica TUTTE le email (lette e non lette)
+    dalla data indicata, estrae fatture XML SDI, importa in fatture_passive.
+    Non marca le email come lette.
+    """
+    import os
+
+    host = os.environ.get("PEC_IMAP_HOST", "imaps.pec.aruba.it")
+    port = int(os.environ.get("PEC_IMAP_PORT", "993"))
+    user = os.environ.get("PEC_USER", "fatturazioneceraldi@pec.it")
+    password = os.environ.get("PEC_PASSWORD", "")
+
+    if not password:
+        return {"error": "PEC_PASSWORD non configurata"}
+
+    from app.services.pec_fatture_service import fetch_fatture_from_pec
+    from app.parsers.fattura_xml import parse_fattura_xml
+
+    attachments = await fetch_fatture_from_pec(
+        host, port, user, password,
+        mark_seen=False,
+        only_unread=False,
+        since_date=since,
+    )
+
+    importate = duplicate = errori = 0
+    dettagli = []
+
+    for att in attachments:
+        try:
+            xml_bytes = att["xml_bytes"]
+            filename = att["filename"]
+
+            for enc in ("utf-8", "latin-1"):
+                try:
+                    xml_str = xml_bytes.decode(enc)
+                    break
+                except UnicodeDecodeError:
+                    continue
+            else:
+                errori += 1
+                continue
+
+            fatture = parse_fattura_xml(xml_str)
+            for f in fatture:
+                if await db["fatture_passive"].find_one({"dedup_key": f["dedup_key"]}):
+                    duplicate += 1
+                    continue
+                doc = {
+                    "fornitore_denominazione": f["cedente"].get("denominazione", ""),
+                    "fornitore_piva": f["cedente"].get("partita_iva", ""),
+                    "numero": f["numero"], "data": f["data"],
+                    "anno": int(f["data"][:4]) if f["data"] and len(f["data"]) >= 4 else 0,
+                    "tipo_documento": f["tipo_documento"],
+                    "importo_totale": f["importo_totale"],
+                    "imponibile": f["imponibile"], "iva": f["iva"],
+                    "causale": f["causale"], "linee": f["linee"],
+                    "riepilogo_iva": f["riepilogo_iva"],
+                    "pagamenti": f["pagamenti"],
+                    "dedup_key": f["dedup_key"],
+                    "stato": "da_confermare", "source": "pec_storico",
+                    "xml_filename": filename, "pec_subject": att.get("subject", ""),
+                    "created_at": datetime.utcnow(),
+                }
+                await db["fatture_passive"].insert_one(doc)
+                if f["cedente"].get("partita_iva"):
+                    await db["fornitori"].update_one(
+                        {"anagrafica.piva": f["cedente"]["partita_iva"]},
+                        {"$set": {"anagrafica.ragione_sociale": f["cedente"].get("denominazione", ""),
+                                  "anagrafica.piva": f["cedente"]["partita_iva"],
+                                  "updated_at": datetime.utcnow()},
+                         "$setOnInsert": {"created_at": datetime.utcnow()}},
+                        upsert=True)
+                importate += 1
+                dettagli.append({
+                    "file": filename,
+                    "fornitore": f["cedente"].get("denominazione", ""),
+                    "numero": f["numero"], "data": f["data"],
+                    "importo": f["importo_totale"],
+                })
+        except Exception as e:
+            errori += 1
+            dettagli.append({"file": att.get("filename", "?"), "errore": str(e)})
+
+    await db["scheduler_logs"].insert_one({
+        "job": "pec_import_storico", "timestamp": datetime.now(timezone.utc).isoformat(),
+        "success": True, "since": since, "email_trovate": len(attachments),
+        "importate": importate, "duplicate": duplicate, "errori": errori,
+    })
+
+    return {
+        "success": True, "since": since,
+        "email_sdi_trovate": len(attachments),
+        "fatture_importate": importate,
+        "duplicate": duplicate, "errori": errori,
+        "dettagli": dettagli[:50],
+    }
+
 
 @router.get("/logs")
 async def logs(limit: int = 50, job: Optional[str] = None,
