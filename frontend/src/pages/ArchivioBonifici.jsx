@@ -5,6 +5,7 @@ import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
 import { PageLayout } from '../components/PageLayout';
 import { useHashState } from '../hooks/useHashState';
+import { CopyLinkButton } from '../components/CopyLinkButton';
 
 const formatDate = formatDateIT;
 
@@ -639,7 +640,7 @@ export default function ArchivioBonifici() {
       </div>
 
       {/* TABS */}
-      <div style={{ display: 'flex', gap: 0, marginBottom: 0 }}>
+      <div style={{ display: 'flex', gap: 0, marginBottom: 0, alignItems: 'flex-end' }}>
         <button
           onClick={() => handleTabChange('da_associare')}
           style={{
@@ -657,7 +658,7 @@ export default function ArchivioBonifici() {
           }}
           data-testid="tab-da-associare"
         >
-          📋 Da Associare
+          Da Associare
           <span style={{
             background: activeTab === 'da_associare' ? 'rgba(255,255,255,0.2)' : '#e2e8f0',
             padding: '2px 8px',
@@ -696,6 +697,8 @@ export default function ArchivioBonifici() {
             {bonificiAssociati.length}
           </span>
         </button>
+        <div style={{ flex: 1 }} />
+        <CopyLinkButton style={{ marginBottom: 4 }} />
       </div>
 
       {/* Table */}

@@ -4,6 +4,7 @@ import api from '../api';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
 import { useHashState } from '../hooks/useHashState';
+import { CopyLinkButton } from '../components/CopyLinkButton';
 
 const MESI = [
   { value: '', label: 'Tutti i mesi' },
@@ -262,8 +263,9 @@ export default function ArchivioFatture() {
                   style={{ ...inputStyle, width: '100%', fontSize: 13 }}
                 />
               </div>
-              <div style={{ alignSelf: 'flex-end' }}>
-                <button onClick={fetchFatture} style={{ ...btnPrimary, fontSize: 13 }}>🔍 Cerca</button>
+              <div style={{ alignSelf: 'flex-end', display: 'flex', gap: 8 }}>
+                <button onClick={fetchFatture} style={{ ...btnPrimary, fontSize: 13 }}>Cerca</button>
+                <CopyLinkButton />
               </div>
             </div>
           </div>

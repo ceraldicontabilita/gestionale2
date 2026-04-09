@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useHashState } from '../hooks/useHashState';
+import { CopyLinkButton } from '../components/CopyLinkButton';
 import api from '../api';
 import { COLORS, STYLES, button, badge } from '../lib/utils';
 import { PageLayout, PageSection, PageEmpty, PageLoading } from '../components/PageLayout';
@@ -217,7 +218,7 @@ export default function AgentiPage() {
       )}
 
       {/* TAB BAR */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 16, background: '#f1f5f9', borderRadius: 10, padding: 4 }}>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 16, background: '#f1f5f9', borderRadius: 10, padding: 4, alignItems: 'center' }}>
         {TABS.map(t => (
           <button
             key={t.key}
@@ -238,6 +239,7 @@ export default function AgentiPage() {
             )}
           </button>
         ))}
+        <CopyLinkButton style={{ flexShrink: 0, marginLeft: 4 }} />
       </div>
 
       {/* CONTENUTO TAB */}

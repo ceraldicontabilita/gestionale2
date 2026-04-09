@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useHashState } from '../hooks/useHashState';
+import { CopyLinkButton } from '../components/CopyLinkButton';
 import { Link } from 'react-router-dom';
 import api from "../api";
 import { formatDateIT, formatEuro } from '../lib/utils';
@@ -249,6 +250,7 @@ export default function Corrispettivi() {
             title={`Elenco Corrispettivi (${corrispettivi.length})`}
             icon="📋"
             style={{ marginTop: 20, padding: 0 }}
+            actions={<CopyLinkButton />}
           >
             {corrispettivi.length === 0 ? (
               <div style={{ padding: 40 }}>
