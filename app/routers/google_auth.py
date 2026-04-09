@@ -4,6 +4,7 @@ Gestisce l'autenticazione tramite Google OAuth con Emergent Auth
 """
 import httpx
 import uuid
+import os
 from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, HTTPException, Response, Request, Cookie
 from fastapi.responses import JSONResponse
@@ -24,7 +25,10 @@ class UserResponse(BaseModel):
     picture: Optional[str] = None
 
 # Constants
-EMERGENT_AUTH_URL = "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data"
+EMERGENT_AUTH_URL = os.environ.get(
+    "EMERGENT_AUTH_URL",
+    "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data"
+)
 SESSION_EXPIRY_DAYS = 7
 
 
