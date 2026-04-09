@@ -1,40 +1,69 @@
-# Credenziali di Test — Ceraldi ERP
+# Credenziali Complete — Ceraldi ERP
 > Aggiornato: Aprile 2026
 
 ---
 
-## MongoDB Atlas
-- URI: `mongodb+srv://Ceraldidatabase:Accesso1974.@cluster0.vofh7iz.mongodb.net/`
-- Database: `azienda_erp_db`
+## 1. GitHub
+- Token: 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
+- Repo: github.com/ceraldicontabilita/gestionale2
+- Branch: main
 
 ---
 
-## Gmail IMAP/SMTP
-- Account: `ceraldigroupsrl@gmail.com`
-- App Password: `nugg fttp swvx djqd`
-- Host IMAP: `imap.gmail.com:993` (SSL)
-- Host SMTP: `smtp.gmail.com:587` (TLS)
-- Stato: **FUNZIONANTE** (Apr 2026)
+## 2. MongoDB Atlas
+- URI: mongodb+srv://Ceraldidatabase:Ceraldi1974@cluster0.vofh7iz.mongodb.net/?retryWrites=true&w=majority
+- Database: Gestionale
+- User: Ceraldidatabase
+- Password: Ceraldi1974
+- Cluster: cluster0.vofh7iz
+- Stato: PASSWORD DA AGGIORNARE SU ATLAS (AuthenticationFailed - Apr 2026)
 
 ---
 
-## Aruba PEC (Fatturazione Elettronica SDI)
-- Account: `fatturazioneceraldi@pec.it`
-- Password: `L)9*kd5+78]?%LmF`
-- Host: `imaps.pec.aruba.it:993`
-- Stato: configurato (scheduler non ancora riabilitato)
+## 3. PEC Aruba (Fatture SDI)
+- Email: fatturazioneceraldi@pec.it
+- Password: L)9*kd5+78]?%LmF
+- IMAP: imaps.pec.aruba.it:993
+- SMTP: smtps.pec.aruba.it:465
 
 ---
 
-## Auth App
-- Autenticazione: **DISABILITATA** (`AUTH_DISABLED=true`)
-- Nessun login richiesto per accedere all'app
-- JWT Secret: `your-super-secret-key-change-in-production-min-32-chars-long`
+## 4. Gmail
+- Email: ceraldigroupsrl@gmail.com
+- App Password: nugg fttp swvx djqd
+- IMAP: imap.gmail.com:993
+- SMTP: smtp.gmail.com:587
+- Stato: FUNZIONANTE
 
 ---
 
-## Note
-- L'app non richiede login — accesso diretto a tutte le sezioni
-- Per test API: usare `REACT_APP_BACKEND_URL` da `frontend/.env`
-- Cron Secret: `ceraldi2025xK9mQ3zP8nR`
-- AZIENDA_ID: `b0295759-35ce-4b34-a6b4-f01b883234ad`
+## 5. Admin ERP
+- Username: ceraldi
+- Password: Ceraldi2024!
+- JWT Secret: ceraldi-erp-secret-key-change-in-production-64-characters-long
+- Auth: DISABILITATA (AUTH_DISABLED=true) — accesso diretto senza login
+
+---
+
+## 6. PIN Tracciabilità (Reparti)
+- Pasticceria: 1234
+- Rosticceria: 5678
+- Extra: 9999
+
+---
+
+## 7. PIN Operatori (Dipendenti — campo: pin bcrypt in collection dipendenti)
+| Dipendente | PIN |
+|---|---|
+| Moscato | 3456 |
+| Parisi | 4567 |
+| Vespa | 2345 |
+| Capezzuto | 6789 |
+| Carotenuto | 0987 |
+| Murolo | 5432 |
+| Lisina | 7654 |
+| Russo | 8765 |
+| Viviana | 4321 |
+| Guarino | 6543 |
+| Taiano | 3210 |
+| Kikko | 9876 |
