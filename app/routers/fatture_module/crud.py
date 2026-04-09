@@ -13,6 +13,110 @@ from .common import COL_FORNITORI, COL_FATTURE_RICEVUTE, COL_DETTAGLIO_RIGHE, CO
 from .helpers import generate_invoice_html
 
 
+def _normalizza_da_invoices(doc: dict) -> dict:
+    """Mappa un documento della collection `invoices` nel formato unificato archivio."""
+    try:
+        importo_totale = float(doc.get("total_amount") or 0)
+    except (ValueError, TypeError):
+        importo_totale = 0.0
+    try:
+        imponibile = float(doc.get("taxable_amount") or 0)
+    except (ValueError, TypeError):
+        imponibile = 0.0
+    try:
+        iva = float(doc.get("vat_amount") or 0)
+    except (ValueError, TypeError):
+        iva = 0.0
+    if not imponibile and importo_totale > 0:
+        imponibile = round(importo_totale / 1.22, 2)
+        iva = round(importo_totale - imponibile, 2)
+
+    stato_raw = doc.get("stato", "importata")
+    pagato = bool(
+        doc.get("pagato")
+        or stato_raw in ("pagata", "paid")
+        or doc.get("payment_status") == "paid"
+    )
+    created_at = doc.get("imported_at")
+    if hasattr(created_at, "isoformat"):
+        created_at = created_at.isoformat()
+
+    return {
+        "id": doc.get("id", ""),
+        "numero_documento": doc.get("invoice_number"),
+        "data_documento": doc.get("invoice_date"),
+        "importo_totale": importo_totale,
+        "imponibile": imponibile,
+        "iva": iva,
+        "fornitore_ragione_sociale": doc.get("supplier_name") or doc.get("cedente_denominazione"),
+        "fornitore_partita_iva": doc.get("supplier_vat"),
+        "stato": "pagata" if pagato else stato_raw,
+        "metodo_pagamento": doc.get("payment_method"),
+        "metodo_pagamento_effettivo": doc.get("payment_method"),
+        "pagato": pagato,
+        "riconciliato": bool(doc.get("riconciliato")),
+        "prima_nota_cassa_id": doc.get("prima_nota_cassa_id"),
+        "prima_nota_banca_id": doc.get("prima_nota_banca_id"),
+        "has_pdf": False,
+        "email_associata": doc.get("email_from"),
+        "anno": doc.get("anno") or (int(doc["invoice_date"][:4]) if doc.get("invoice_date") else None),
+        "created_at": created_at,
+        "data_pagamento": doc.get("data_pagamento"),
+        "fonte": doc.get("fonte", "aruba_pec"),
+        "_xml_filename": doc.get("xml_filename"),   # usato solo per dedup
+    }
+
+
+def _normalizza_da_fatture_passive(doc: dict) -> dict:
+    """Mappa un documento della collection `fatture_passive` nel formato unificato archivio."""
+    try:
+        importo_totale = float(doc.get("importo_totale") or 0)
+    except (ValueError, TypeError):
+        importo_totale = 0.0
+    try:
+        imponibile = float(doc.get("imponibile") or 0)
+    except (ValueError, TypeError):
+        imponibile = 0.0
+    try:
+        iva = float(doc.get("iva") or 0)
+    except (ValueError, TypeError):
+        iva = 0.0
+    if not imponibile and importo_totale > 0:
+        imponibile = round(importo_totale / 1.22, 2)
+        iva = round(importo_totale - imponibile, 2)
+
+    stato_raw = doc.get("stato", "da_confermare")
+    pagato = bool(doc.get("pagato") or stato_raw == "pagata")
+    created_at = doc.get("created_at")
+    if hasattr(created_at, "isoformat"):
+        created_at = created_at.isoformat()
+
+    return {
+        "id": doc.get("dedup_key", ""),
+        "numero_documento": doc.get("numero"),
+        "data_documento": doc.get("data"),
+        "importo_totale": importo_totale,
+        "imponibile": imponibile,
+        "iva": iva,
+        "fornitore_ragione_sociale": doc.get("fornitore_denominazione"),
+        "fornitore_partita_iva": doc.get("fornitore_piva"),
+        "stato": "pagata" if pagato else stato_raw,
+        "metodo_pagamento": doc.get("metodo_pagamento"),
+        "metodo_pagamento_effettivo": doc.get("metodo_pagamento"),
+        "pagato": pagato,
+        "riconciliato": bool(doc.get("riconciliato")),
+        "prima_nota_cassa_id": doc.get("prima_nota_cassa_id"),
+        "prima_nota_banca_id": doc.get("prima_nota_banca_id"),
+        "has_pdf": False,
+        "email_associata": None,
+        "anno": doc.get("anno") or (int(doc["data"][:4]) if doc.get("data") else None),
+        "created_at": created_at,
+        "data_pagamento": doc.get("data_pagamento"),
+        "fonte": doc.get("source", "pec_auto"),
+        "_xml_filename": doc.get("xml_filename"),   # usato solo per dedup
+    }
+
+
 async def get_archivio_fatture(
     anno: Optional[int] = Query(None),
     mese: Optional[int] = Query(None),
@@ -20,101 +124,106 @@ async def get_archivio_fatture(
     fornitore_nome: Optional[str] = Query(None),
     stato: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
-    limit: int = Query(default=100, le=6000),
+    limit: int = Query(default=200, le=6000),
     skip: int = Query(default=0)
 ) -> Dict[str, Any]:
-    """Archivio Fatture Ricevute — legge da indice_documenti (tipo=fattura_ricevuta)."""
+    """
+    Archivio Fatture Ricevute — legge da ENTRAMBE le collection:
+      - invoices (111 doc: fatture XML da Aruba PEC, schema inglese)
+      - fatture_passive (73 doc: formato gestionale, schema italiano)
+    I risultati vengono unificati, deduplicati per xml_filename e ordinati per data.
+    Gli insert/upsert da upload XML restano su fatture_passive (invariati).
+    """
     db = Database.get_db()
 
-    # Filtro base: solo fatture ricevute
-    query: dict = {"tipo": "fattura_ricevuta"}
-
+    # ── Costruisci filtri per `invoices` ─────────────────────────────────────
+    q_inv: dict = {}
     if anno:
-        anno_start = f"{anno}-01-01"
-        anno_end = f"{anno}-12-31"
-        query["data"] = {"$gte": anno_start, "$lte": anno_end}
-
-    if mese and anno:
-        mese_str = str(mese).zfill(2)
-        last_day = calendar.monthrange(anno, mese)[1]
-        query["data"] = {
-            "$gte": f"{anno}-{mese_str}-01",
-            "$lte": f"{anno}-{mese_str}-{last_day:02d}"
-        }
-
+        q_inv["anno"] = anno
+        if mese:
+            mese_str = str(mese).zfill(2)
+            last_day = calendar.monthrange(anno, mese)[1]
+            q_inv["invoice_date"] = {
+                "$gte": f"{anno}-{mese_str}-01",
+                "$lte": f"{anno}-{mese_str}-{last_day:02d}"
+            }
     if fornitore_piva:
-        query["fornitore_piva"] = {"$regex": fornitore_piva.strip(), "$options": "i"}
-
+        q_inv["supplier_vat"] = {"$regex": fornitore_piva.strip(), "$options": "i"}
     if fornitore_nome:
-        query["fornitore"] = {"$regex": fornitore_nome.strip(), "$options": "i"}
-
+        q_inv["$or"] = [
+            {"supplier_name": {"$regex": fornitore_nome.strip(), "$options": "i"}},
+            {"cedente_denominazione": {"$regex": fornitore_nome.strip(), "$options": "i"}}
+        ]
+    if stato:
+        q_inv["stato"] = stato
     if search:
-        query["$or"] = [
+        q_inv["$or"] = [
+            {"invoice_number": {"$regex": search, "$options": "i"}},
+            {"supplier_name": {"$regex": search, "$options": "i"}},
+            {"supplier_vat": {"$regex": search, "$options": "i"}},
+        ]
+
+    # ── Costruisci filtri per `fatture_passive` ───────────────────────────────
+    q_fp: dict = {}
+    if anno:
+        q_fp["anno"] = anno
+        if mese:
+            mese_str = str(mese).zfill(2)
+            last_day = calendar.monthrange(anno, mese)[1]
+            q_fp["data"] = {
+                "$gte": f"{anno}-{mese_str}-01",
+                "$lte": f"{anno}-{mese_str}-{last_day:02d}"
+            }
+    if fornitore_piva:
+        q_fp["fornitore_piva"] = {"$regex": fornitore_piva.strip(), "$options": "i"}
+    if fornitore_nome:
+        q_fp["fornitore_denominazione"] = {"$regex": fornitore_nome.strip(), "$options": "i"}
+    if stato:
+        q_fp["stato"] = stato
+    if search:
+        q_fp["$or"] = [
             {"numero": {"$regex": search, "$options": "i"}},
-            {"fornitore": {"$regex": search, "$options": "i"}},
+            {"fornitore_denominazione": {"$regex": search, "$options": "i"}},
             {"fornitore_piva": {"$regex": search, "$options": "i"}},
         ]
 
-    projection = {
-        "_id": 0,
-        "id": 1, "tipo": 1,
-        "numero": 1, "data": 1,
-        "importo": 1,
-        "fornitore": 1, "fornitore_piva": 1,
-        "email_associata": 1, "pdf_associati": 1,
-        "updated_at": 1,
-        # Campi pagamento (aggiornati da paga_fattura_manuale)
-        "pagato": 1,
-        "status": 1,
-        "stato_pagamento": 1,
-        "riconciliato": 1,
-        "prima_nota_cassa_id": 1,
-        "prima_nota_banca_id": 1,
-        "metodo_pagamento": 1,
-        "metodo_pagamento_effettivo": 1,
-        "data_pagamento": 1,
+    # ── Esegui le query in parallelo ─────────────────────────────────────────
+    import asyncio as _asyncio
+    docs_inv_raw, docs_fp_raw = await _asyncio.gather(
+        db["invoices"].find(q_inv, {"_id": 0}).sort("invoice_date", -1).to_list(3000),
+        db["fatture_passive"].find(q_fp, {"_id": 0}).sort("data", -1).to_list(3000),
+    )
+
+    # ── Normalizza ────────────────────────────────────────────────────────────
+    normalized_inv = [_normalizza_da_invoices(d) for d in docs_inv_raw]
+    normalized_fp  = [_normalizza_da_fatture_passive(d) for d in docs_fp_raw]
+
+    # ── Deduplica: se stesso xml_filename in entrambe, preferisce invoices ───
+    xml_filenames_in_inv = {
+        d["_xml_filename"] for d in normalized_inv if d.get("_xml_filename")
     }
+    normalized_fp = [
+        d for d in normalized_fp
+        if not (d.get("_xml_filename") and d["_xml_filename"] in xml_filenames_in_inv)
+    ]
 
-    fatture = await db[COL_FATTURE_RICEVUTE].find(query, projection).sort(
-        "data", -1
-    ).skip(skip).limit(limit).to_list(limit)
+    # ── Unisci e ordina per data_documento decrescente ────────────────────────
+    all_fatture = normalized_inv + normalized_fp
+    all_fatture.sort(
+        key=lambda f: f.get("data_documento") or "",
+        reverse=True
+    )
 
-    total = await db[COL_FATTURE_RICEVUTE].count_documents(query)
+    # Rimuovi il campo interno di dedup prima di rispondere
+    for f in all_fatture:
+        f.pop("_xml_filename", None)
 
-    normalized = []
-    for f in fatture:
-        try:
-            importo_totale = float(f.get("importo") or 0)
-        except (ValueError, TypeError):
-            importo_totale = 0
-        imponibile = round(importo_totale / 1.22, 2) if importo_totale > 0 else 0
-        iva = round(importo_totale - imponibile, 2) if importo_totale > 0 else 0
-        # Determina stato pagamento dai campi reali nel DB
-        pagato = bool(f.get("pagato") or f.get("status") == "paid" or f.get("stato_pagamento") == "pagata")
-        normalized.append({
-            "id": f.get("id", ""),
-            "numero_documento": f.get("numero"),
-            "data_documento": f.get("data"),
-            "importo_totale": importo_totale,
-            "imponibile": imponibile,
-            "iva": iva,
-            "fornitore_ragione_sociale": f.get("fornitore"),
-            "fornitore_partita_iva": f.get("fornitore_piva"),
-            "stato": "pagata" if pagato else "importata",
-            "metodo_pagamento": f.get("metodo_pagamento_effettivo") or f.get("metodo_pagamento"),
-            "metodo_pagamento_effettivo": f.get("metodo_pagamento_effettivo") or f.get("metodo_pagamento"),
-            "pagato": pagato,
-            "riconciliato": bool(f.get("riconciliato")),
-            "prima_nota_cassa_id": f.get("prima_nota_cassa_id"),
-            "prima_nota_banca_id": f.get("prima_nota_banca_id"),
-            "has_pdf": bool(f.get("pdf_associati") and f.get("pdf_associati") != "[]"),
-            "email_associata": f.get("email_associata"),
-            "anno": int(str(f.get("data", ""))[:4]) if f.get("data") else None,
-            "created_at": f.get("updated_at"),
-            "data_pagamento": f.get("data_pagamento"),
-        })
+    total = len(all_fatture)
 
-    return {"fatture": normalized, "total": total, "limit": limit, "skip": skip}
+    # Applica paginazione
+    paginated = all_fatture[skip: skip + limit]
+
+    return {"fatture": paginated, "total": total, "limit": limit, "skip": skip}
 
 
 async def view_fattura_assoinvoice(fattura_id: str) -> HTMLResponse:
@@ -233,39 +342,56 @@ async def get_fornitori(
 
 
 async def get_statistiche(anno: Optional[int] = Query(None)) -> Dict[str, Any]:
-    """Statistiche fatture ricevute da indice_documenti."""
+    """
+    Statistiche fatture ricevute — legge da `invoices` (collection principale).
+    Tutti i 73 doc di fatture_passive sono già presenti in invoices (stesso xml_filename),
+    quindi invoices è la fonte unica per evitare duplicati.
+    """
     db = Database.get_db()
 
-    query: dict = {"tipo": "fattura_ricevuta"}
+    # Filtro per anno (invoices ha campo `anno` numerico e `invoice_date` ISO)
+    query: dict = {}
     if anno:
-        query["data"] = {"$gte": f"{anno}-01-01", "$lte": f"{anno}-12-31"}
+        query["anno"] = anno
 
-    pipeline = [
+    import asyncio as _asyncio
+    pipeline_inv = [
         {"$match": query},
         {"$group": {
             "_id": None,
             "totale_fatture": {"$sum": 1},
-            "importo_totale": {"$sum": {"$toDouble": {"$ifNull": ["$importo", "0"]}}},
-            "fornitori_unici": {"$addToSet": "$fornitore_piva"},
+            "importo_totale": {"$sum": {"$toDouble": {"$ifNull": ["$total_amount", 0]}}},
+            "fornitori_unici": {"$addToSet": "$supplier_vat"},
+            "pagate": {"$sum": {"$cond": [
+                {"$in": ["$stato", ["pagata", "paid"]]}, 1, 0
+            ]}},
+            "importo_pagato": {"$sum": {"$cond": [
+                {"$in": ["$stato", ["pagata", "paid"]]},
+                {"$toDouble": {"$ifNull": ["$total_amount", 0]}},
+                0
+            ]}},
         }}
     ]
-
-    result = await db[COL_FATTURE_RICEVUTE].aggregate(pipeline).to_list(1)
+    result = await db["invoices"].aggregate(pipeline_inv).to_list(1)
     stats = result[0] if result else {}
     stats.pop("_id", None)
 
     totale = stats.get("totale_fatture", 0)
     importo = round(stats.get("importo_totale", 0), 2)
     fornitori = len(stats.get("fornitori_unici", []))
+    pagate = stats.get("pagate", 0)
+    importo_pagato = round(stats.get("importo_pagato", 0), 2)
+    da_pagare = totale - pagate
+    importo_da_pagare = round(importo - importo_pagato, 2)
 
     return {
         "totale_fatture": totale,
         "importo_totale": importo,
         "totale_importo": importo,
-        "pagate": 0,
-        "importo_pagato": 0,
-        "da_pagare": totale,
-        "importo_da_pagare": importo,
+        "pagate": pagate,
+        "importo_pagato": importo_pagato,
+        "da_pagare": da_pagare,
+        "importo_da_pagare": importo_da_pagare,
         "fornitori_unici": fornitori,
         "fatture_anomale": 0,
         "anno": anno,

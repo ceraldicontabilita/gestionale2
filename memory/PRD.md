@@ -1,4 +1,6 @@
 # PRD — Ceraldi ERP
+<!-- Ultimo aggiornamento: 2026-04-09 -->
+<!-- FIX APPLICATI: Fatture (invoices+fatture_passive unificati), Estratto Conto (data_contabile_obj) -->
 > P.IVA: 04523831214 | Azienda: Ceraldi Group SRL | Aprile 2026
 
 ---

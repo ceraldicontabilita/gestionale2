@@ -622,68 +622,89 @@ async def get_movimenti(
 ) -> Dict[str, Any]:
     """
     Recupera i movimenti dell'estratto conto con filtri.
-    Ordinati per data decrescente.
-    Restituisce anche saldo_precedente (anni precedenti all'anno selezionato).
+    Ordinati per data_contabile_obj decrescente.
+    Usa data_contabile_obj (datetime) per i filtri di anno/mese.
     """
+    import calendar as _calendar
     db = Database.get_db()
-    
+
     query = {}
-    
+
     if anno:
-        # Filtra per anno nella data (formato ISO: YYYY-MM-DD)
-        query["data"] = {"$regex": f"^{anno}"}
+        # data_contabile_obj è un campo datetime — uso range di date
         if mese:
-            query["data"] = {"$regex": f"^{anno}-{mese:02d}"}
-    
+            last_day = _calendar.monthrange(anno, mese)[1]
+            query["data_contabile_obj"] = {
+                "$gte": datetime(anno, mese, 1),
+                "$lte": datetime(anno, mese, last_day, 23, 59, 59)
+            }
+        else:
+            query["data_contabile_obj"] = {
+                "$gte": datetime(anno, 1, 1),
+                "$lte": datetime(anno, 12, 31, 23, 59, 59)
+            }
+
     if categoria:
         query["categoria"] = {"$regex": categoria, "$options": "i"}
-    
+
     if fornitore:
         query["fornitore"] = {"$regex": fornitore, "$options": "i"}
-    
+
     if tipo:
         query["tipo"] = tipo
-    
+
     # Count totale
     total = await db["estratto_conto_movimenti"].count_documents(query)
-    
-    # Recupera movimenti
+
+    # Recupera movimenti — più recenti prima
     movimenti = await db["estratto_conto_movimenti"].find(
         query,
         {"_id": 0}
-    ).sort("data", 1).skip(offset).limit(limit).to_list(limit)
-    
+    ).sort("data_contabile_obj", -1).skip(offset).limit(limit).to_list(limit)
+
+    # Serializza i campi datetime per la risposta JSON
+    for m in movimenti:
+        if isinstance(m.get("data_contabile_obj"), datetime):
+            m["data_contabile_obj"] = m["data_contabile_obj"].strftime("%Y-%m-%d")
+        if isinstance(m.get("imported_at"), datetime):
+            m["imported_at"] = m["imported_at"].isoformat()
+        # Converti importo in float (arriva come stringa in alcuni doc)
+        try:
+            m["importo"] = float(m.get("importo", 0))
+        except (ValueError, TypeError):
+            m["importo"] = 0.0
+
     # Calcola totali anno selezionato
     pipeline = [
         {"$match": query},
         {"$group": {
             "_id": None,
-            "totale_entrate": {"$sum": {"$cond": [{"$eq": ["$tipo", "entrata"]}, {"$abs": "$importo"}, 0]}},
-            "totale_uscite": {"$sum": {"$cond": [{"$eq": ["$tipo", "uscita"]}, {"$abs": "$importo"}, 0]}}
+            "totale_entrate": {"$sum": {"$cond": [{"$eq": ["$tipo", "entrata"]}, {"$toDouble": "$importo"}, 0]}},
+            "totale_uscite": {"$sum": {"$cond": [{"$eq": ["$tipo", "uscita"]}, {"$toDouble": "$importo"}, 0]}}
         }}
     ]
     totali_result = await db["estratto_conto_movimenti"].aggregate(pipeline).to_list(1)
     totali = totali_result[0] if totali_result else {"totale_entrate": 0, "totale_uscite": 0}
-    
+
     # Calcola saldo_precedente (tutti gli anni precedenti a quello selezionato)
     saldo_precedente = 0.0
     if anno:
         pipeline_prec = [
-            {"$match": {"data": {"$lt": f"{anno}-01-01"}}},
+            {"$match": {"data_contabile_obj": {"$lt": datetime(anno, 1, 1)}}},
             {"$group": {
                 "_id": None,
-                "entrate": {"$sum": {"$cond": [{"$eq": ["$tipo", "entrata"]}, {"$abs": "$importo"}, 0]}},
-                "uscite": {"$sum": {"$cond": [{"$eq": ["$tipo", "uscita"]}, {"$abs": "$importo"}, 0]}}
+                "entrate": {"$sum": {"$cond": [{"$eq": ["$tipo", "entrata"]}, {"$toDouble": "$importo"}, 0]}},
+                "uscite": {"$sum": {"$cond": [{"$eq": ["$tipo", "uscita"]}, {"$toDouble": "$importo"}, 0]}}
             }}
         ]
         prec_result = await db["estratto_conto_movimenti"].aggregate(pipeline_prec).to_list(1)
         if prec_result:
             saldo_precedente = round(prec_result[0].get("entrate", 0) - prec_result[0].get("uscite", 0), 2)
-    
+
     totale_entrate = round(totali.get("totale_entrate", 0), 2)
     totale_uscite = round(totali.get("totale_uscite", 0), 2)
     saldo_anno = round(totale_entrate - totale_uscite, 2)
-    
+
     return {
         "movimenti": movimenti,
         "totale": total,
