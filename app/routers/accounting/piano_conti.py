@@ -505,6 +505,87 @@ async def aggiorna_saldo_conto(db, codice_conto: str, importo: float, tipo: str)
 
 # ============== MOVIMENTI CONTABILI ==============
 
+@router.get("/conto/{codice}/movimenti")
+@handle_errors
+async def get_movimenti_per_conto(
+    codice: str,
+    limit: int = 50,
+    anno: str = None,
+) -> Dict[str, Any]:
+    """
+    Ritorna i movimenti dell'estratto conto banca rilevanti per un dato conto.
+    Logica di mapping categoria→conto:
+      - categorie RICAVI   → tipo=entrata
+      - categorie COSTI    → tipo=uscita
+      - categorie ATTIVO   → tipo=entrata (accrediti)
+      - categorie PASSIVO  → tipo=uscita  (addebiti)
+    Filtra anche per keyword parziale sul nome del conto nella categoria estratto.
+    """
+    db = Database.get_db()
+
+    # Recupera il conto per sapere la categoria
+    conto = await db["piano_conti"].find_one({"codice": codice}, {"_id": 0})
+    if not conto:
+        raise HTTPException(status_code=404, detail=f"Conto {codice} non trovato")
+
+    cat = conto.get("categoria", "").lower()   # attivo / passivo / ricavi / costi / patrimonio
+    nome_conto = conto.get("nome", "")
+
+    # Determina il tipo di movimento atteso
+    tipo_map = {
+        "ricavi": "entrata",
+        "attivo": "entrata",
+        "costi": "uscita",
+        "passivo": "uscita",
+        "patrimonio": None,          # entrambi
+    }
+    tipo_atteso = tipo_map.get(cat)
+
+    query: dict = {}
+    if tipo_atteso:
+        query["tipo"] = tipo_atteso
+
+    # Filtro anno
+    if anno:
+        query["data"] = {"$gte": f"{anno}-01-01", "$lte": f"{anno}-12-31"}
+
+    # Keyword matching: cerca il nome del conto (o prime parole) nella categoria
+    keywords = [w for w in nome_conto.split() if len(w) > 3]
+    if keywords:
+        query["categoria"] = {"$regex": "|".join(keywords[:3]), "$options": "i"}
+
+    # Esegui query sull'estratto conto
+    movimenti = await db["estratto_conto_movimenti"].find(
+        query, {"_id": 0}
+    ).sort("data", -1).limit(limit).to_list(limit)
+
+    # Se keyword troppo stringente → fallback senza keyword ma con tipo
+    if not movimenti and tipo_atteso:
+        fallback_q = {"tipo": tipo_atteso}
+        if anno:
+            fallback_q["data"] = query["data"]
+        movimenti = await db["estratto_conto_movimenti"].find(
+            fallback_q, {"_id": 0}
+        ).sort("data", -1).limit(limit).to_list(limit)
+
+    # Prima nota banca (generico)
+    pn_banca = await db["prima_nota_banca"].find(
+        {} if not anno else {"data": {"$gte": f"{anno}-01-01", "$lte": f"{anno}-12-31"}},
+        {"_id": 0}
+    ).sort("data", -1).limit(20).to_list(20)
+
+    totale_movimenti = sum(m.get("importo", 0) for m in movimenti)
+
+    return {
+        "conto": conto,
+        "movimenti": movimenti,
+        "totale_movimenti": len(movimenti),
+        "totale_importo": round(totale_movimenti, 2),
+        "prima_nota_banca": pn_banca,
+        "keyword_usata": keywords[:3] if keywords else [],
+    }
+
+
 @router.get("/movimenti")
 @handle_errors
 async def get_movimenti_contabili(

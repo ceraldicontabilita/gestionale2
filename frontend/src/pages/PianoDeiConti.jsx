@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../api';
 import { formatEuro, STYLES, COLORS, button, badge } from '../lib/utils';
@@ -19,6 +19,24 @@ export default function PianoDeiConti() {
   const [regole, setRegole] = useState([]);
   const [bilancio, setBilancio] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Drawer dettaglio conto
+  const [selectedConto, setSelectedConto] = useState(null);
+  const [contoDetail, setContoDetail]     = useState(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+
+  const openContoDetail = useCallback(async (conto) => {
+    setSelectedConto(conto);
+    setContoDetail(null);
+    setLoadingDetail(true);
+    const annoCorrente = new Date().getFullYear();
+    try {
+      const res = await api.get(`/api/piano-conti/conto/${conto.codice}/movimenti?limit=40&anno=${annoCorrente}`);
+      setContoDetail(res.data);
+    } catch { /* mostra solo info base */ } finally { setLoadingDetail(false); }
+  }, []);
+
+  const closeDrawer = () => { setSelectedConto(null); setContoDetail(null); };
   // URL Tab Support
   const navigate = useNavigate();
   const location = useLocation();
@@ -266,12 +284,24 @@ export default function PianoDeiConti() {
                         </thead>
                         <tbody>
                           {grouped[key].map((conto, idx) => (
-                            <tr key={conto.id} style={{ 
-                              borderBottom: '1px solid #eee',
-                              background: idx % 2 === 0 ? 'white' : '#fafafa'
-                            }}>
+                            <tr
+                              key={conto.id}
+                              data-testid={`conto-row-${conto.codice}`}
+                              onClick={() => openContoDetail(conto)}
+                              style={{ 
+                                borderBottom: '1px solid #eee',
+                                background: selectedConto?.codice === conto.codice
+                                  ? cat.color + '18'
+                                  : idx % 2 === 0 ? 'white' : '#fafafa',
+                                cursor: 'pointer',
+                                transition: 'background 0.15s',
+                              }}
+                              onMouseEnter={e => { e.currentTarget.style.background = cat.color + '22'; }}
+                              onMouseLeave={e => { e.currentTarget.style.background = selectedConto?.codice === conto.codice ? cat.color + '18' : idx % 2 === 0 ? 'white' : '#fafafa'; }}
+                            >
                               <td style={{ padding: 10, fontFamily: 'monospace', fontWeight: 'bold' }}>
-                                {conto.codice}
+                                <span style={{ color: cat.color }}>{conto.codice}</span>
+                                <span style={{ color: '#bbb', marginLeft: 6, fontSize: 11 }}>›</span>
                               </td>
                               <td style={{ padding: 10 }}>{conto.nome}</td>
                               <td style={{ padding: 10, textAlign: 'center' }}>
@@ -559,6 +589,159 @@ export default function PianoDeiConti() {
         </div>
       )}
     </div>
+
+    {/* ─── DRAWER DETTAGLIO CONTO ─── */}
+    {selectedConto && (
+      <>
+        {/* Overlay semi-trasparente */}
+        <div
+          onClick={closeDrawer}
+          style={{
+            position: 'fixed', inset: 0,
+            background: 'rgba(0,0,0,0.35)',
+            zIndex: 1000,
+          }}
+        />
+
+        {/* Pannello laterale destro */}
+        <div
+          data-testid="conto-detail-drawer"
+          style={{
+            position: 'fixed', top: 0, right: 0,
+            width: 580, height: '100vh',
+            background: 'white',
+            boxShadow: '-4px 0 30px rgba(0,0,0,0.18)',
+            zIndex: 1001,
+            display: 'flex', flexDirection: 'column',
+            overflowY: 'auto',
+          }}
+        >
+          {/* Header */}
+          {(() => {
+            const catKey  = selectedConto.categoria?.toLowerCase().replace(' ', '_') || 'costi';
+            const catInfo = CATEGORIE[catKey] || { nome: selectedConto.categoria, color: '#607d8b', icon: '📄' };
+            return (
+              <>
+                <div style={{
+                  background: catInfo.color,
+                  padding: '20px 24px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                }}>
+                  <div>
+                    <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 12, marginBottom: 4 }}>
+                      {catInfo.icon} {catInfo.nome}
+                    </div>
+                    <div style={{ color: 'white', fontFamily: 'monospace', fontSize: 22, fontWeight: 'bold' }}>
+                      {selectedConto.codice}
+                    </div>
+                    <div style={{ color: 'rgba(255,255,255,0.9)', fontSize: 16, marginTop: 4 }}>
+                      {selectedConto.nome}
+                    </div>
+                  </div>
+                  <button
+                    onClick={closeDrawer}
+                    data-testid="close-conto-drawer"
+                    style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 8, cursor: 'pointer', color: 'white', fontSize: 20, padding: '4px 12px' }}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* Saldo + info */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 1, background: '#f0f0f0' }}>
+                  {[
+                    { label: 'Saldo', val: formatEuro(selectedConto.saldo || 0), color: (selectedConto.saldo || 0) >= 0 ? '#4caf50' : '#f44336' },
+                    { label: 'Natura', val: selectedConto.natura || '—', color: '#607d8b' },
+                    { label: 'Stato', val: selectedConto.attivo ? 'Attivo' : 'Inattivo', color: selectedConto.attivo ? '#4caf50' : '#999' },
+                  ].map(({ label, val, color }) => (
+                    <div key={label} style={{ background: 'white', padding: '14px 18px' }}>
+                      <div style={{ fontSize: 11, color: '#999', marginBottom: 4 }}>{label}</div>
+                      <div style={{ fontWeight: 'bold', color, fontSize: 16 }}>{val}</div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            );
+          })()}
+
+          {/* Corpo drawer: movimenti */}
+          <div style={{ flex: 1, padding: '18px 24px', overflowY: 'auto' }}>
+            {loadingDetail ? (
+              <div style={{ textAlign: 'center', padding: 40, color: '#999' }}>
+                Caricamento movimenti…
+              </div>
+            ) : contoDetail ? (
+              <>
+                {/* Riepilogo */}
+                <div style={{ display: 'flex', gap: 10, marginBottom: 18 }}>
+                  {[
+                    { label: 'Movimenti trovati', val: contoDetail.totale_movimenti },
+                    { label: 'Totale periodo', val: formatEuro(contoDetail.totale_importo) },
+                  ].map(({ label, val }) => (
+                    <div key={label} style={{ flex: 1, background: '#f8fafc', borderRadius: 8, padding: 12, textAlign: 'center' }}>
+                      <div style={{ fontSize: 11, color: '#999' }}>{label}</div>
+                      <div style={{ fontWeight: 'bold', fontSize: 18, marginTop: 4 }}>{val}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Tabella movimenti estratto conto */}
+                {contoDetail.movimenti?.length > 0 ? (
+                  <>
+                    <div style={{ fontWeight: 600, fontSize: 13, color: '#444', marginBottom: 8 }}>
+                      Movimenti bancari correlati ({new Date().getFullYear()})
+                    </div>
+                    <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                        <thead>
+                          <tr style={{ background: '#f8fafc' }}>
+                            <th style={{ padding: '8px 12px', textAlign: 'left', color: '#666', fontWeight: 600 }}>Data</th>
+                            <th style={{ padding: '8px 12px', textAlign: 'left', color: '#666', fontWeight: 600 }}>Descrizione</th>
+                            <th style={{ padding: '8px 12px', textAlign: 'right', color: '#666', fontWeight: 600 }}>Importo</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {contoDetail.movimenti.map((mov, i) => (
+                            <tr key={i} style={{ borderTop: '1px solid #f0f0f0', background: i % 2 === 0 ? 'white' : '#fafafa' }}>
+                              <td style={{ padding: '8px 12px', fontFamily: 'monospace', fontSize: 12, whiteSpace: 'nowrap' }}>
+                                {mov.data?.slice(0, 10)}
+                              </td>
+                              <td style={{ padding: '8px 12px', color: '#333', maxWidth: 250 }}>
+                                <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={mov.descrizione_originale || mov.descrizione}>
+                                  {(mov.descrizione_originale || mov.descrizione || '—').slice(0, 60)}
+                                </div>
+                                {mov.categoria && (
+                                  <div style={{ fontSize: 10, color: '#999', marginTop: 2 }}>{mov.categoria}</div>
+                                )}
+                              </td>
+                              <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 'bold',
+                                color: mov.tipo === 'entrata' ? '#4caf50' : '#f44336' }}>
+                                {mov.tipo === 'entrata' ? '+' : '-'}{formatEuro(mov.importo)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                ) : (
+                  <div style={{ textAlign: 'center', padding: 30, color: '#bbb', fontSize: 14 }}>
+                    Nessun movimento bancario trovato per questo conto nel {new Date().getFullYear()}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div style={{ textAlign: 'center', padding: 40, color: '#bbb' }}>
+                Nessun dettaglio disponibile
+              </div>
+            )}
+          </div>
+        </div>
+      </>
+    )}
+
     </PageLayout>
   );
 }
