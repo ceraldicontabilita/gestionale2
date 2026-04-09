@@ -33,8 +33,7 @@ from .salari import (
 from .sync import (
     registra_fattura_prima_nota, sync_corrispettivi_to_prima_nota,
     sync_corrispettivi_anno, sync_fatture_pagate, get_corrispettivi_sync_status,
-    import_prima_nota_batch, create_movimento_generico, collega_fatture_movimenti,
-    rebuild_prima_nota_cassa_da_corrispettivi
+    import_prima_nota_batch, create_movimento_generico, collega_fatture_movimenti
 )
 from .manutenzione import (
     fix_tipo_movimento_fatture, recalculate_all_balances, cleanup_orphan_movements,
@@ -61,7 +60,7 @@ router.add_api_route("/cassa/sync-corrispettivi", sync_corrispettivi_anno, metho
 router.add_api_route("/cassa/sync-fatture-pagate", sync_fatture_pagate, methods=["POST"])
 router.add_api_route("/cassa/verifica-entrate-corrispettivi", verifica_entrate_corrispettivi, methods=["GET"])
 router.add_api_route("/cassa/fix-corrispettivi-importo", fix_corrispettivi_importo, methods=["POST"])
-router.add_api_route("/cassa/rebuild-da-corrispettivi", rebuild_prima_nota_cassa_da_corrispettivi, methods=["POST"])
+# rebuild-da-corrispettivi rimosso
 
 # Banca - Statiche
 router.add_api_route("/banca", list_prima_nota_banca, methods=["GET"])
