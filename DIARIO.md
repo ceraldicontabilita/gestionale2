@@ -509,3 +509,96 @@ Importa → Dipendenti → Pignoramenti → Fatture → Cedolini → EC → Dist
 - Pagina admin gestione PIN dipendenti
 - Dominio custom dopo build Emergent
 - Verificare tutte le pagine sul deploy live
+
+---
+
+## Chat 8 — 2026-04-09
+
+### Problema iniziale
+ImportaDocumenti mostrava 25 file "Non riconosciuto" — crash TopNav per ShoppingBag/Tag non importati.
+
+### Fix applicati
+
+**Bug prefix doppio in main.py:**
+5 router avevano prefix sia interno (APIRouter(prefix="/api/xxx")) che in main.py → endpoint su /api/xxx/api/xxx/.
+Fix: rimosso prefix da main.py per alert_fiscali, f24, fornitori, learning, quietanze.
+
+**Bug import_hub.py:**
+- Upsert fornitori struttura flat → anagrafica.piva/ragione_sociale
+- Riconciliazione distinta iban → iban_cedolino con fallback
+
+**Bug DettaglioDipendente.jsx:**
+- JSX rotto: </div>} sbilanciato nel blocco pignoramenti
+
+**Endpoint mancanti per frontend:**
+- tr_sanificazione: /haccp/popola-sanificazione (alias) e /scheda/{anno}/{mese}/giorno-completo
+- tr_sconti: /prodotti-fornitore e /valorizza-da-fatture
+
+**Patch Chat 7 non applicate (applicate ora):**
+- EstrattoConto.jsx con 3 tab (Saldo/Stipendi/Movimenti)
+- estratto_conto.py con /stipendi e /riconcilia-stipendi
+- TabletCucina.jsx + route /tablet-cucina
+
+### Nuovi router backend (8 file)
+Copiati dal repo tracciabilita, adattati con Depends(get_database):
+- tr_temperature.py — frigo + congelatori
+- tr_sanificazione.py — attrezzature + apparecchi
+- tr_disinfestazione.py — ANTHIRAT CONTROL
+- tr_dashboard.py — produzioni/vendita/lotti/chiusure/acquaviva/tablet
+- tr_sconti.py — sconti merce
+- tr_ordini_fornitori.py — catalogo + CRUD ordini
+- prima_nota.py — cassa/banca/provvisoria (auto + manuale)
+- scheduler.py — PEC ogni ora, HACCP alle 02:00, prima nota alle 02:15
+
+### Nuove pagine frontend (3 file)
+- Tracciabilita.jsx — wrapper con 6 tab (Dashboard, Temperature, Sanificazione, Disinfestazione, Sconti, Ordini)
+- PrimaNota.jsx — 3 sezioni cassa/banca/provvisoria + form manuale
+- TabletCucina.jsx — dalla patch Chat 7
+
+### TopNav snellita
+Rimossi 6+ link HACCP separati, sostituiti con:
+- 📋 Tracciabilità (apre pagina con tab)
+- 📓 Prima Nota (dopo Distinte)
+
+### API locali (non più ceraldiapp.it)
+Tutte le pagine HACCP/sconti/ordini ora chiamano /api/tr/* locale.
+I link href a ceraldiapp.it (tablet, ricette, materie prime) restano come link esterni.
+
+### PEC Aruba
+- pec_fatture_service.py: aggiunto since_date e only_unread
+- scheduler.py: endpoint /import-pec-storico?since=01-Jan-2026
+- Password PEC configurata su Emergent, connessione OK
+- Endpoint import storico attende redeploy Emergent
+
+### Config aggiornato
+- config.py: aggiunti PEC_*, GMAIL_*, SCHEDULER_ENABLED
+- Variabili ambiente Emergent: PEC_PASSWORD=configurata
+
+### Cleanup
+Eliminati: claude-patches/ (4 cartelle), learning_hook.py, learning_seed.py, schemas/fornitore_schema.py
+
+### Router in main.py (28 totali)
+**Contabilità (20):** health, import_hub, mittenti, dipendenti, fatture, cedolini,
+estratto_conto, f24, f24_privati, corrispettivi, distinte, verbali,
+presenze, quietanze, alert_fiscali, tributi, learning, fornitori,
+omaggi_acquaviva, ordini
+
+**Nuovi (8):** prima_nota, tr_temperature, tr_sanificazione, tr_disinfestazione,
+tr_dashboard, tr_sconti, tr_ordini_fornitori, scheduler
+
+### Collections MongoDB usate
+**Contabilità:** dipendenti, fatture_passive, fornitori, cedolini, presenze,
+estratto_conto_movimenti, corrispettivi, f24, f24_privati, distinte_pagamento,
+verbali, tributi_azienda, tributi_privati, avvisi_bonari, ordini_ceraldi,
+mittenti_attendibili, quietanze, prima_nota, scheduler_logs, log_operatori
+
+**Tracciabilità:** temperature_positive, temperature_negative, sanificazione_schede,
+sanificazione_apparecchi, disinfestazione_annuale, produzioni, vendite_banco,
+lotti, chiusure_giornaliere, sconti_merce, ordini_fornitori, dizionario_prodotti,
+ricette, prodotti_vendita, fatture (formato vecchio tracciabilita)
+
+### TODO Chat 9
+- Verificare redeploy Emergent con tutti i fix
+- Lanciare import PEC storico dal 1 gennaio 2026
+- Pagina admin gestione PIN dipendenti
+- Dominio custom
