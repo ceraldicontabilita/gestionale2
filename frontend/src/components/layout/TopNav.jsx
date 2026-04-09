@@ -220,7 +220,7 @@ const TopNav = memo(function TopNav() {
   const location = useLocation();
 
   const isAltroActive = ALTRO_ITEMS.some(
-    (item) => location.pathname === item.to || location.pathname.startsWith(item.to + '/')
+    (item) => item.to && (location.pathname === item.to || location.pathname.startsWith(item.to + '/'))
   );
 
   return (
@@ -252,23 +252,39 @@ const TopNav = memo(function TopNav() {
 
         {/* Link principali */}
         <div style={S.items} className="topnav-items-scroll">
-          {NAV_ITEMS.map(({ to, label, Icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={to === '/'}
-              style={({ isActive }) => S.navItem(isActive)}
-              className="topnav-link"
-              data-testid={`nav-${label.toLowerCase().replace(' ', '-')}`}
-            >
-              <Icon size={14} />
-              <span>{label}</span>
-            </NavLink>
-          ))}
-
-          {/* Dropdown "Altro" */}
-          <AltroDropdown isAltroActive={isAltroActive} />
+          {NAV_ITEMS.map(({ to, href, label, Icon, external }) =>
+            external ? (
+              /* Link esterno (es. Tracciabilità → ceraldiapp.it) */
+              <a
+                key={label}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={S.navItem(false)}
+                className="topnav-link"
+                data-testid={`nav-${label.toLowerCase().replace(/\s+/g, '-')}`}
+              >
+                <Icon size={14} />
+                <span>{label}</span>
+              </a>
+            ) : (
+              <NavLink
+                key={to}
+                to={to}
+                end={to === '/'}
+                style={({ isActive }) => S.navItem(isActive)}
+                className="topnav-link"
+                data-testid={`nav-${label.toLowerCase().replace(/\s+/g, '-')}`}
+              >
+                <Icon size={14} />
+                <span>{label}</span>
+              </NavLink>
+            )
+          )}
         </div>
+
+        {/* Dropdown "Altro" — FUORI dal container overflow per non essere clippato */}
+        <AltroDropdown isAltroActive={isAltroActive} />
 
         {/* Destra: Anno + Notifiche + Avatar */}
         <div style={S.right}>
