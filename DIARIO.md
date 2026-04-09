@@ -602,3 +602,51 @@ ricette, prodotti_vendita, fatture (formato vecchio tracciabilita)
 - Lanciare import PEC storico dal 1 gennaio 2026
 - Pagina admin gestione PIN dipendenti
 - Dominio custom
+
+---
+
+## Chat 9 — 2026-04-09
+
+### Contesto
+Emergent lavora su **gestionale2** (branch main) — repo confermato come quello attivo.
+Deploy su Emergent.sh, backend FastAPI porta 8001, DB Atlas db=Gestionale.
+
+### Scoperta importante — Collection Atlas reali
+Il DB Atlas ha collection con nomi diversi da quelli attesi:
+- `invoices` — 111 documenti (fatture reali 2026, formato diverso da fatture_passive)
+- `fatture_passive` — 73 documenti (da upload XML gestionale, formato normalizzato)
+- `indice_documenti` — 0 documenti (vuota)
+- `estratto_conto_movimenti` — 14.834 documenti (campo data: datetime BSON `data_contabile_obj`, non stringa)
+
+### Fix P0 applicati da Emergent
+
+**Bug 1 — Fatture sempre vuote:**
+- Causa: router leggeva da `indice_documenti` (0 doc)
+- Fix: `get_archivio_fatture` ora legge da `invoices` + `fatture_passive` (deduplicati per xml_filename)
+- Risultato: 111 fatture visibili, €10.154 importo totale, 24 fornitori
+
+**Bug 2 — Statistiche fatture:**
+- Causa: `get_statistiche` leggeva da `indice_documenti`
+- Fix: migrata su `invoices`
+- Risultato: contatori corretti in UI
+
+**Bug 3 — Estratto Conto / Prima Nota Banca vuoti:**
+- Causa: filtro su campo `data` (inesistente) invece di `data_contabile_obj`
+- Fix: filtro cambiato con range datetime BSON su `data_contabile_obj`
+- Risultato: 733 movimenti 2026 visibili, saldo €37.195,37
+
+**Invariato:** insert/upsert da upload XML restano su `fatture_passive` (corretto)
+
+### Nota architettura collection
+- Lettura fatture: unifica `invoices` + `fatture_passive`
+- Scrittura fatture (upload XML): solo `fatture_passive`
+- Estratto conto: `data_contabile_obj` è datetime BSON, filtri con oggetti datetime non stringhe
+
+### TODO Chat 10
+- (P1) Widget Cucina in DashboardHub.jsx: 2 StatCard — "Ordini in attesa" + "Ricette da approvare"
+- (P2) Completare CicloPassivoAdmin.jsx
+- Fix App Password Gmail (non valida)
+- Import PEC storico dal 01/01/2026
+- Pagina admin gestione PIN dipendenti
+- Dominio custom
+
