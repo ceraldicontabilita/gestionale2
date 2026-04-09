@@ -18,7 +18,7 @@ const NAV_ITEMS = [
   { to: '/fisco', label: 'Fisco', Icon: Landmark },
   { to: '/fornitori', label: 'Fornitori', Icon: Building2 },
   { to: '/dipendenti', label: 'HR', Icon: Users },
-  { to: '/tracciabilita', label: 'Tracciabilità', Icon: FlaskConical },
+  { to: null, href: 'https://www.ceraldiapp.it', label: 'Tracciabilità', Icon: FlaskConical, external: true },
 ];
 
 const ALTRO_ITEMS = [
