@@ -21,12 +21,9 @@ const TAB_CONFIGS = {
     { to: '/cedolini', label: 'Cedolini' },
     { to: '/presenze', label: 'Presenze' },
     { to: '/tfr', label: 'TFR' },
-  ],  '/contabilita': [
-    { to: '/piano-dei-conti', label: 'Piano Conti' },
-    { to: '/bilancio', label: 'Bilancio' },
-    { to: '/cespiti', label: 'Cespiti' },
   ],
 };
+
 
 export default function SecondaryTabs() {
   const location = useLocation();
@@ -51,9 +48,6 @@ export default function SecondaryTabs() {
     }
     if (path.startsWith('/cedolini') || path.startsWith('/presenze') || path.startsWith('/attendance') || path.startsWith('/tfr')) {
       return TAB_CONFIGS['/dipendenti'];
-    }
-    if (path.startsWith('/bilancio') || path.startsWith('/piano-dei-conti') || path.startsWith('/cespiti')) {
-      return TAB_CONFIGS['/contabilita'];
     }
     if (path.startsWith('/archivio-bonifici') || path.startsWith('/gestione-assegni')) {
       return TAB_CONFIGS['/riconciliazione'];
