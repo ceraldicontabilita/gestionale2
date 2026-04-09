@@ -1,4 +1,4 @@
-"""Ceraldi ERP v2 - Main Application"""
+"""Ceraldi ERP v2 - Main Application — build 2026-04-09T08:50"""
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
