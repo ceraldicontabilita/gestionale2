@@ -267,6 +267,105 @@ def parse_fatturapa_xml(xml_content: bytes) -> Optional[Dict[str, Any]]:
         return None
 
 
+def _pec_fetch_xml_sync(
+    host: str, port: int, user: str, password: str, since_days: int = 90
+) -> List[Dict[str, Any]]:
+    """
+    Funzione SINCRONA pura per IMAP — gira in asyncio.to_thread().
+    NON contiene chiamate async, NON tocca MongoDB.
+    Restituisce lista di dict con i dati grezzi degli allegati XML/P7M trovati.
+    """
+    results = []
+    since_date = (datetime.now() - timedelta(days=since_days)).strftime("%d-%b-%Y")
+
+    try:
+        mail = imaplib.IMAP4_SSL(host, port)
+        mail.login(user, password)
+        mail.select("INBOX")
+
+        _, messages = mail.search(None, f'SINCE {since_date}')
+        email_ids = messages[0].split() if messages[0] else []
+        logger.info(f"[PEC] {len(email_ids)} email trovate dal {since_date}")
+
+        for eid in email_ids:
+            try:
+                _, msg_data = mail.fetch(eid, "(RFC822)")
+                if not msg_data or not msg_data[0]:
+                    continue
+                msg = email.message_from_bytes(msg_data[0][1])
+
+                from_addr = decode_mime_header(msg.get("From", ""))
+                subject   = decode_mime_header(msg.get("Subject", ""))
+
+                for part in msg.walk():
+                    content_type = part.get_content_type()
+                    filename = decode_mime_header(part.get_filename() or "")
+                    fname_lower = filename.lower()
+
+                    # Accetta .xml e .p7m (firma CAdES)
+                    is_xml = (
+                        fname_lower.endswith('.xml') or
+                        fname_lower.endswith('.p7m') or
+                        content_type in ('application/xml', 'text/xml', 'application/pkcs7-mime')
+                    )
+                    if not is_xml:
+                        continue
+
+                    # Salta file di metadati PEC (non fatture)
+                    if (fname_lower.endswith('_mt_001.xml') or
+                            fname_lower in ('daticert.xml', 'smime.p7s', 'postacert.eml')):
+                        continue
+
+                    payload = part.get_payload(decode=True)
+                    if not payload or len(payload) < 200:
+                        continue
+
+                    # Estrai XML da P7M (firma CAdES)
+                    xml_content = payload
+                    if fname_lower.endswith('.p7m'):
+                        xml_start = payload.find(b'<?xml')
+                        if xml_start == -1:
+                            for marker in [b'<p:FatturaElettronica', b'<FatturaElettronica',
+                                           b'<ns2:FatturaElettronica', b'<ns3:FatturaElettronica',
+                                           b'<P:FatturaElettronica']:
+                                idx = payload.find(marker)
+                                if idx >= 0:
+                                    xml_start = idx
+                                    break
+                        if xml_start == -1:
+                            logger.warning(f"[PEC] P7M senza XML: {filename}")
+                            continue
+                        xml_content = payload[xml_start:]
+                        for end_marker in [b'</p:FatturaElettronica>', b'</FatturaElettronica>',
+                                           b'</ns2:FatturaElettronica>', b'</ns3:FatturaElettronica>',
+                                           b'</P:FatturaElettronica>']:
+                            idx_end = xml_content.rfind(end_marker)
+                            if idx_end >= 0:
+                                xml_content = xml_content[:idx_end + len(end_marker)]
+                                break
+
+                    results.append({
+                        "filename":    filename,
+                        "xml_content": xml_content,
+                        "from_addr":   from_addr,
+                        "subject":     subject,
+                        "eid":         eid.decode() if isinstance(eid, bytes) else str(eid),
+                    })
+
+            except Exception as e:
+                logger.error(f"[PEC] Errore email {eid}: {e}")
+
+        mail.close()
+        mail.logout()
+
+    except imaplib.IMAP4.error as e:
+        logger.error(f"[PEC] Errore autenticazione IMAP: {e}")
+    except Exception as e:
+        logger.error(f"[PEC] Errore connessione: {e}")
+
+    return results
+
+
 async def download_pec_invoices(
     db,
     since_days: int = 30,
@@ -276,22 +375,13 @@ async def download_pec_invoices(
     password: str = None
 ) -> Dict[str, Any]:
     """
-    Scarica e processa le fatture XML dalla casella PEC Aruba.
-    Le credenziali vengono lette da MongoDB (pec_email_settings) con fallback a .env.
-
-    Args:
-        db: MongoDB database
-        since_days: Quanti giorni indietro cercare
-        host/port/user/password: Override credenziali esplicito (opzionale)
-
-    Returns:
-        Statistiche del download
+    Scarica e processa le fatture XML dalla PEC Aruba — NON bloccante.
+    La parte IMAP gira in asyncio.to_thread(); MongoDB è gestito async.
     """
-    # Recupera credenziali da MongoDB o .env
     creds = await get_pec_credentials(db)
-    _host = host or creds["host"]
-    _port = port or creds["port"]
-    _user = user or creds["user"]
+    _host     = host     or creds["host"]
+    _port     = port     or creds["port"]
+    _user     = user     or creds["user"]
     _password = password or creds["password"]
 
     stats = {
@@ -305,174 +395,97 @@ async def download_pec_invoices(
     }
 
     if not _user or not _password:
-        return {"success": False, "error": "Credenziali PEC non configurate (né in DB né in .env)", "stats": stats}
+        return {"success": False, "error": "Credenziali PEC non configurate", "stats": stats}
 
-    try:
-        logger.info(f"Connessione PEC: {_host}:{_port} come {_user}")
-        mail = imaplib.IMAP4_SSL(_host, _port)
-        mail.login(_user, _password)
-        mail.select("INBOX")
-        logger.info("Connessione PEC riuscita!")
+    # ── IMAP in thread separato (NON blocca l'event loop) ──────────────────
+    logger.info(f"[PEC] Avvio download {_user} (ultimi {since_days} giorni)")
+    raw_items = await asyncio.to_thread(
+        _pec_fetch_xml_sync, _host, _port, _user, _password, since_days
+    )
+    stats["xml_found"] = len(raw_items)
+    logger.info(f"[PEC] XML trovati: {len(raw_items)}")
 
-        since_date = (datetime.now() - timedelta(days=since_days)).strftime("%d-%b-%Y")
-        _, messages = mail.search(None, f'SINCE {since_date}')
-        email_ids = messages[0].split() if messages[0] else []
-        stats["emails_checked"] = len(email_ids)
+    # ── Elaborazione async (MongoDB) ────────────────────────────────────────
+    for item in raw_items:
+        try:
+            xml_content  = item["xml_content"]
+            filename     = item["filename"]
+            from_addr    = item["from_addr"]
+            subject      = item["subject"]
 
-        logger.info(f"Email PEC trovate: {len(email_ids)}")
+            content_hash = hashlib.md5(xml_content).hexdigest()
 
-        for eid in email_ids:
-            try:
-                _, msg_data = mail.fetch(eid, "(RFC822)")
-                if not msg_data or not msg_data[0]:
-                    continue
-                msg = email.message_from_bytes(msg_data[0][1])
+            existing = await db["invoices"].find_one(
+                {"xml_hash": content_hash}, {"_id": 0, "id": 1}
+            )
+            if existing:
+                stats["duplicates_skipped"] += 1
+                continue
 
-                from_addr = decode_mime_header(msg.get("From", ""))
-                subject = decode_mime_header(msg.get("Subject", ""))
-
-                # Processa tutte le email (PEC riceve anche non-SDI ma filtriamo per allegati XML)
-                for part in msg.walk():
-                    content_type = part.get_content_type()
-                    filename = decode_mime_header(part.get_filename() or "")
-
-                    # Accetta .xml e .p7m (XML firmato digitalmente)
-                    is_xml = (
-                        filename.lower().endswith('.xml') or
-                        filename.lower().endswith('.p7m') or
-                        content_type in ('application/xml', 'text/xml', 'application/pkcs7-mime')
-                    )
-
-                    if not is_xml:
-                        continue
-
-                    payload = part.get_payload(decode=True)
-                    if not payload or len(payload) < 200:
-                        continue
-
-                    # Salta file SDI non-fattura (metadata e certificazioni PEC)
-                    fname_lower = filename.lower()
-                    if (fname_lower.endswith('_mt_001.xml') or
-                        fname_lower == 'daticert.xml' or
-                        fname_lower == 'smime.p7s' or
-                        fname_lower == 'postacert.eml'):
-                        continue
-
-                    stats["xml_found"] += 1
-
-                    # Per file .p7m (firma CAdES), estrai il contenuto XML interno
-                    xml_content = payload
-                    if filename.lower().endswith('.p7m'):
-                        # Cerca il marker di inizio XML
-                        xml_start = payload.find(b'<?xml')
-                        if xml_start == -1:
-                            # Cerca apertura tag FatturaElettronica con qualsiasi namespace
-                            for marker in [b'<p:FatturaElettronica', b'<FatturaElettronica',
-                                           b'<ns2:FatturaElettronica', b'<ns3:FatturaElettronica',
-                                           b'<P:FatturaElettronica']:
-                                idx = payload.find(marker)
-                                if idx >= 0:
-                                    xml_start = idx
-                                    break
-                        if xml_start == -1:
-                            logger.warning(f"File .p7m senza XML leggibile: {filename}")
-                            stats["errors"] += 1
-                            continue
-                        
-                        # Cerca la fine del documento XML (tag di chiusura)
-                        xml_content = payload[xml_start:]
-                        for end_marker in [b'</p:FatturaElettronica>',
-                                           b'</FatturaElettronica>',
-                                           b'</ns2:FatturaElettronica>',
-                                           b'</ns3:FatturaElettronica>',
-                                           b'</P:FatturaElettronica>']:
-                            idx_end = xml_content.rfind(end_marker)
-                            if idx_end >= 0:
-                                xml_content = xml_content[:idx_end + len(end_marker)]
-                                break
-
-                    # Hash per deduplicazione
-                    content_hash = hashlib.md5(xml_content).hexdigest()
-
-                    # Controlla duplicato
-                    existing = await db["invoices"].find_one({"xml_hash": content_hash}, {"_id": 0, "id": 1})
-                    if existing:
-                        stats["duplicates_skipped"] += 1
-                        logger.debug(f"Duplicato saltato: {filename}")
-                        continue
-
-                    # Parsa il contenuto XML
-                    invoice_data = parse_fatturapa_xml(xml_content)
-                    if not invoice_data:
-                        logger.warning(f"Impossibile parsare XML: {filename}")
-                        stats["errors"] += 1
-                        continue
-
-                    # Salva il file XML fisicamente
-                    safe_name = re.sub(r'[^\w\-_.]', '_', filename) or f"fattura_{content_hash[:8]}.xml"
-                    file_path = os.path.join(UPLOAD_DIR, f"{uuid.uuid4().hex[:8]}_{safe_name}")
-                    with open(file_path, 'wb') as f:
-                        f.write(xml_content)
-
-                    # Costruisci documento da inserire in 'invoices'
-                    invoice_doc = {
-                        "id": str(uuid.uuid4()),
-                        "xml_hash": content_hash,
-                        "xml_filename": filename,
-                        "xml_file_path": file_path,
-                        "supplier_name": invoice_data["supplier_name"],
-                        "cedente_denominazione": invoice_data["supplier_name"],
-                        "supplier_vat": invoice_data["supplier_vat"],
-                        "supplier_cf": invoice_data["supplier_cf"],
-                        "invoice_number": invoice_data["invoice_number"],
-                        "invoice_date": invoice_data["invoice_date"],
-                        "due_date": invoice_data["due_date"],
-                        "total_amount": invoice_data["total_amount"],
-                        "taxable_amount": invoice_data["taxable_amount"],
-                        "vat_amount": invoice_data["vat_amount"],
-                        "vat_rate": invoice_data["vat_rate"],
-                        "currency": invoice_data["currency"],
-                        "document_type": invoice_data["document_type"],
-                        "payment_method": invoice_data["payment_method"],
-                        "payment_method_code": invoice_data["payment_method_code"],
-                        "iban": invoice_data["iban"],
-                        "descrizione": invoice_data["descrizione"],
-                        "stato": "importata",
-                        "fonte": "aruba_pec",
-                        "email_from": from_addr,
-                        "email_subject": subject,
-                        "pec_email_id": eid.decode() if isinstance(eid, bytes) else str(eid),
-                        "imported_at": datetime.now(timezone.utc).isoformat(),
-                        "anno": int(invoice_data["invoice_date"][:4]) if invoice_data.get("invoice_date") and len(invoice_data["invoice_date"]) >= 4 else datetime.now().year,
-                    }
-
-                    await db["invoices"].insert_one(invoice_doc.copy())
-                    stats["new_invoices"] += 1
-                    stats["inserted"].append({
-                        "fornitore": invoice_data["supplier_name"],
-                        "numero": invoice_data["invoice_number"],
-                        "data": invoice_data["invoice_date"],
-                        "importo": invoice_data["total_amount"],
-                        "metodo_pagamento": invoice_data["payment_method"],
-                    })
-                    logger.info(f"Fattura importata: {invoice_data['supplier_name']} | {invoice_data['invoice_number']} | €{invoice_data['total_amount']}")
-
-            except Exception as e:
-                logger.error(f"Errore processamento email PEC {eid}: {e}")
+            invoice_data = parse_fatturapa_xml(xml_content)
+            if not invoice_data:
+                logger.warning(f"[PEC] XML non parsabile: {filename}")
                 stats["errors"] += 1
+                continue
 
-        mail.close()
-        mail.logout()
-        logger.info(f"PEC completato: {stats['new_invoices']} nuove fatture, {stats['duplicates_skipped']} duplicati saltati")
+            # Salva file XML su disco
+            safe_name = re.sub(r'[^\w\-_.]', '_', filename) or f"fattura_{content_hash[:8]}.xml"
+            file_path = os.path.join(UPLOAD_DIR, f"{uuid.uuid4().hex[:8]}_{safe_name}")
+            with open(file_path, 'wb') as f:
+                f.write(xml_content)
 
-    except imaplib.IMAP4.error as e:
-        error_msg = str(e)
-        logger.error(f"Errore IMAP PEC: {error_msg}")
-        return {"success": False, "error": f"Errore autenticazione PEC: {error_msg}", "stats": stats}
-    except Exception as e:
-        logger.error(f"Errore connessione PEC: {e}")
-        return {"success": False, "error": str(e), "stats": stats}
+            anno = (
+                int(invoice_data["invoice_date"][:4])
+                if invoice_data.get("invoice_date") and len(invoice_data["invoice_date"]) >= 4
+                else datetime.now().year
+            )
 
+            invoice_doc = {
+                "id": str(uuid.uuid4()),
+                "xml_hash": content_hash,
+                "xml_filename": filename,
+                "xml_file_path": file_path,
+                "supplier_name": invoice_data["supplier_name"],
+                "cedente_denominazione": invoice_data["supplier_name"],
+                "supplier_vat": invoice_data["supplier_vat"],
+                "supplier_cf": invoice_data["supplier_cf"],
+                "invoice_number": invoice_data["invoice_number"],
+                "invoice_date": invoice_data["invoice_date"],
+                "due_date": invoice_data["due_date"],
+                "total_amount": invoice_data["total_amount"],
+                "taxable_amount": invoice_data["taxable_amount"],
+                "vat_amount": invoice_data["vat_amount"],
+                "vat_rate": invoice_data["vat_rate"],
+                "currency": invoice_data["currency"],
+                "document_type": invoice_data["document_type"],
+                "payment_method": invoice_data["payment_method"],
+                "payment_method_code": invoice_data["payment_method_code"],
+                "iban": invoice_data["iban"],
+                "descrizione": invoice_data["descrizione"],
+                "stato": "importata",
+                "fonte": "aruba_pec",
+                "email_from": from_addr,
+                "email_subject": subject,
+                "pec_email_id": item["eid"],
+                "imported_at": datetime.now(timezone.utc).isoformat(),
+                "anno": anno,
+            }
+
+            await db["invoices"].insert_one(invoice_doc)
+            stats["new_invoices"] += 1
+            stats["inserted"].append({
+                "fornitore": invoice_data["supplier_name"],
+                "numero": invoice_data["invoice_number"],
+                "data": invoice_data["invoice_date"],
+                "importo": invoice_data["total_amount"],
+            })
+            logger.info(f"[PEC] Fattura importata: {invoice_data['supplier_name']} | {invoice_data['invoice_number']} | €{invoice_data['total_amount']}")
+
+        except Exception as e:
+            logger.error(f"[PEC] Errore elaborazione {item.get('filename','?')}: {e}")
+            stats["errors"] += 1
+
+    logger.info(f"[PEC] Completato: {stats['new_invoices']} nuove, {stats['duplicates_skipped']} duplicati")
     return {"success": True, "stats": stats}
 
 
@@ -495,7 +508,7 @@ async def test_pec_connection(db=None, host: str = None, port: int = None, user:
 
     try:
         mail = imaplib.IMAP4_SSL(_host, _port)
-        result = mail.login(_user, _password)
+        mail.login(_user, _password)
         mail.select("INBOX")
         _, messages = mail.search(None, 'ALL')
         total = len(messages[0].split()) if messages[0] else 0
