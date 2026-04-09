@@ -89,6 +89,7 @@ const router = createBrowserRouter([
       { path: "ciclo-passivo", element: <LazyPage><CicloPassivoHub /></LazyPage> },
       { path: "ciclo-passivo/import", element: <LazyPage><CicloPassivoAdmin /></LazyPage> },
       { path: "fatture", element: <LazyPage><FattureHub /></LazyPage> },
+      { path: "fatture/import", element: <Navigate to="/documenti/import" replace /> },
       { path: "fatture/:tab", element: <LazyPage><FattureHub /></LazyPage> },
       { path: "fatture-ricevute", element: <Navigate to="/fatture" replace /> },
       { path: "fatture-ricevute/:fornitore", element: <Navigate to="/fatture" replace /> },

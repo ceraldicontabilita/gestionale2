@@ -25,113 +25,118 @@ router = APIRouter()
 
 async def ensure_supplier_exists(db, parsed_invoice: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Verifica se il fornitore esiste nel dizionario.
-    Se non esiste, lo crea automaticamente con i dati dalla fattura
-    e genera un alert per configurare il metodo di pagamento.
-    
-    Returns:
-        Dict con info fornitore e se è stato creato/alertato
+    Verifica se il fornitore esiste. Se sì, aggiorna i campi anagrafici mancanti.
+    Se non esiste, lo crea automaticamente con i dati dalla fattura XML.
     """
     supplier_vat = parsed_invoice.get("supplier_vat") or ""
     supplier_name = parsed_invoice.get("supplier_name") or "Fornitore Sconosciuto"
-    
+
     result = {
         "supplier_exists": False,
         "supplier_created": False,
+        "supplier_updated": False,
         "alert_created": False,
         "supplier_id": None,
         "metodo_pagamento": None
     }
-    
+
     if not supplier_vat:
         return result
-    
-    # Cerca fornitore esistente per P.IVA
+
+    # Cerca fornitore per P.IVA (supporta sia 'piva' che 'partita_iva' come field name)
     existing = await db[Collections.SUPPLIERS].find_one(
-        {"partita_iva": supplier_vat},
+        {"$or": [
+            {"partita_iva": supplier_vat},
+            {"piva": supplier_vat}
+        ]},
         {"_id": 0}
     )
-    
-    # Se non trovato per P.IVA, cerca per denominazione (potrebbe essere stato creato da Aruba)
+
+    # Se non trovato per P.IVA, cerca per denominazione/nome
     if not existing and supplier_name:
         import re as _re
         safe_name = _re.escape(supplier_name[:30])
         existing = await db[Collections.SUPPLIERS].find_one(
             {"$or": [
-                {"denominazione": {"$regex": f"^{safe_name}", "$options": "i"}},
-                {"ragione_sociale": {"$regex": f"^{safe_name}", "$options": "i"}}
+                {"nome": {"$regex": f"^{safe_name}", "$options": "i"}},
+                {"ragione_sociale": {"$regex": f"^{safe_name}", "$options": "i"}},
+                {"denominazione": {"$regex": f"^{safe_name}", "$options": "i"}}
             ]},
             {"_id": 0}
         )
-    
+
+    fornitore_data = parsed_invoice.get("fornitore") or {}
+
     if existing:
         result["supplier_exists"] = True
         result["supplier_id"] = existing.get("id")
         result["metodo_pagamento"] = existing.get("metodo_pagamento")
-        
-        # Se il fornitore esiste ma ha dati incompleti (creato da Aruba), aggiorna con dati XML
-        if existing.get("dati_incompleti") or not existing.get("partita_iva"):
-            fornitore_data = parsed_invoice.get("fornitore") or {}
-            update_data = {
-                "partita_iva": supplier_vat,
-                "codice_fiscale": fornitore_data.get("codice_fiscale", supplier_vat),
-                "indirizzo": fornitore_data.get("indirizzo", "") or existing.get("indirizzo", ""),
-                "cap": fornitore_data.get("cap", "") or existing.get("cap", ""),
-                "comune": fornitore_data.get("comune", "") or existing.get("comune", ""),
-                "provincia": fornitore_data.get("provincia", "") or existing.get("provincia", ""),
-                "nazione": fornitore_data.get("nazione", "IT"),
-                "telefono": fornitore_data.get("telefono", "") or existing.get("telefono", ""),
-                "email": fornitore_data.get("email", "") or existing.get("email", ""),
-                "pec": fornitore_data.get("pec", "") or existing.get("pec", ""),
-                "dati_incompleti": False,  # Ora i dati sono completi
-                "source": "merged_aruba_xml",
-                "updated_at": datetime.now(timezone.utc).isoformat(),
-                "note": f"Dati completati da fattura XML il {datetime.now(timezone.utc).strftime('%d/%m/%Y')}"
-            }
+
+        # Aggiorna SEMPRE i campi anagrafici mancanti (non sovrascrive quelli già compilati)
+        update_data = {}
+        field_map = {
+            "partita_iva": supplier_vat,
+            "piva": supplier_vat,
+            "nome": supplier_name,
+            "ragione_sociale": existing.get("ragione_sociale") or supplier_name,
+            "codice_fiscale": fornitore_data.get("codice_fiscale") or existing.get("codice_fiscale") or supplier_vat,
+            "indirizzo": fornitore_data.get("indirizzo") or existing.get("indirizzo") or "",
+            "cap": fornitore_data.get("cap") or existing.get("cap") or "",
+            "comune": fornitore_data.get("comune") or existing.get("comune") or "",
+            "provincia": fornitore_data.get("provincia") or existing.get("provincia") or "",
+            "nazione": fornitore_data.get("nazione") or existing.get("nazione") or "IT",
+        }
+        for field, value in field_map.items():
+            if value and not existing.get(field):
+                update_data[field] = value
+
+        if update_data:
+            update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+            update_data["dati_incompleti"] = False
             await db[Collections.SUPPLIERS].update_one(
                 {"id": existing["id"]},
                 {"$set": update_data}
             )
             result["supplier_updated"] = True
-            logger.info(f"Fornitore {supplier_name} aggiornato con dati XML")
-        
+            logger.info(f"Fornitore {supplier_name} aggiornato con dati XML: {list(update_data.keys())}")
+
         return result
-    
-    # Fornitore non esiste - CREALO
-    fornitore_data = parsed_invoice.get("fornitore") or {}
-    
+
+    # Fornitore non esiste — CREA
     new_supplier = {
         "id": str(uuid.uuid4()),
+        "nome": supplier_name,
         "ragione_sociale": supplier_name,
         "partita_iva": supplier_vat,
-        "codice_fiscale": fornitore_data.get("codice_fiscale", supplier_vat),
-        "indirizzo": fornitore_data.get("indirizzo", ""),
-        "cap": fornitore_data.get("cap", ""),
-        "comune": fornitore_data.get("comune", ""),
-        "provincia": fornitore_data.get("provincia", ""),
-        "nazione": fornitore_data.get("nazione", "IT"),
-        "metodo_pagamento": None,  # DA CONFIGURARE
+        "piva": supplier_vat,
+        "codice_fiscale": fornitore_data.get("codice_fiscale") or supplier_vat,
+        "indirizzo": fornitore_data.get("indirizzo") or "",
+        "cap": fornitore_data.get("cap") or "",
+        "comune": fornitore_data.get("comune") or "",
+        "provincia": fornitore_data.get("provincia") or "",
+        "nazione": fornitore_data.get("nazione") or "IT",
+        "metodo_pagamento": None,
         "giorni_pagamento": 30,
         "iban": "",
         "fatture_count": 1,
         "source": "auto_from_invoice",
+        "dati_incompleti": False,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "updated_at": datetime.now(timezone.utc).isoformat(),
-        "note": "Creato automaticamente da fattura - CONFIGURARE METODO PAGAMENTO"
+        "note": "Creato automaticamente da fattura — configurare metodo pagamento"
     }
-    
+
     await db[Collections.SUPPLIERS].insert_one(new_supplier.copy())
     result["supplier_created"] = True
     result["supplier_id"] = new_supplier["id"]
-    
     logger.info(f"Nuovo fornitore creato: {supplier_name} (P.IVA: {supplier_vat})")
-    
-    # Crea ALERT per metodo pagamento
+
+    # Alert per configurare il metodo di pagamento
     alert = {
         "id": str(uuid.uuid4()),
         "tipo": "fornitore_senza_metodo_pagamento",
         "titolo": f"Configura metodo pagamento per {supplier_name}",
-        "messaggio": f"Il fornitore {supplier_name} (P.IVA: {supplier_vat}) è stato aggiunto automaticamente. Configura il metodo di pagamento nel dizionario fornitori.",
+        "messaggio": f"{supplier_name} (P.IVA: {supplier_vat}) creato da fattura. Configura il metodo di pagamento.",
         "fornitore_id": new_supplier["id"],
         "fornitore_piva": supplier_vat,
         "fornitore_nome": supplier_name,
@@ -141,12 +146,9 @@ async def ensure_supplier_exists(db, parsed_invoice: Dict[str, Any]) -> Dict[str
         "created_at": datetime.now(timezone.utc).isoformat(),
         "link": f"/fornitori?piva={supplier_vat}"
     }
-    
     await db["alerts"].insert_one(alert.copy())
     result["alert_created"] = True
-    
-    logger.info(f"Alert creato per fornitore {supplier_name}")
-    
+
     return result
 
 

@@ -192,7 +192,7 @@ export default function ArchivioFatture() {
       if (fornitore) params.append('fornitore_piva', fornitore);
       if (stato) params.append('stato', stato);
       if (search) params.append('search', search);
-      params.append('limit', '100');
+      params.append('limit', '500');
       
       const res = await api.get(`/api/fatture-ricevute/archivio?${params.toString()}`);
       setFatture(res.data.fatture || res.data.items || []);
@@ -815,47 +815,103 @@ export default function ArchivioFatture() {
       )}
 
       {/* ==================== TAB: RICONCILIAZIONE ==================== */}
-      {activeTab === 'riconciliazione' && (
-        <div style={styles.splitView}>
-          {/* Colonna Sinistra: Scadenze */}
+      {activeTab === 'riconciliazione' && (() => {
+        const daPagare = fatture.filter(f => !f.pagato && f.stato !== 'pagata');
+        return (
           <div style={cardStyle}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span>📋</span> Scadenze da Riconciliare
+                <span>🔄</span> Fatture da Riconciliare
               </h3>
+              <span style={styles.badge('#f59e0b')}>{daPagare.length} fatture</span>
             </div>
-            <div style={{ overflowX: 'auto', maxHeight: 600 }}>
+            <div style={{ overflowX: 'auto' }}>
               {loading ? (
                 <div style={styles.emptyState}>Caricamento...</div>
-              ) : dashboard?.scadenze_aperte?.length > 0 ? (
+              ) : daPagare.length > 0 ? (
                 <table style={styles.table}>
                   <thead>
                     <tr>
-                      <th style={styles.th}>Scadenza</th>
+                      <th style={styles.th}>Data</th>
+                      <th style={styles.th}>Numero</th>
                       <th style={styles.th}>Fornitore</th>
                       <th style={styles.th}>Importo</th>
+                      <th style={styles.th}>Stato</th>
+                      <th style={styles.th}>Metodo</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {dashboard.scadenze_aperte.map((s) => (
-                      <tr 
-                        key={s.id}
-                        style={{
-                          cursor: 'pointer',
-                          ...(selectedScadenza?.id === s.id ? styles.rowSelected : {}),
-                          ...(isScadenzaPassata(s.data_scadenza) && selectedScadenza?.id !== s.id ? { background: '#fef3c7' } : {})
-                        }}
-                        onClick={() => handleSelectScadenza(s)}
-                        data-testid={`scadenza-row-${s.id}`}
-                      >
+                    {daPagare.map((f) => (
+                      <tr key={f.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                        <td style={styles.td}>{formatDate(f.data_documento)}</td>
+                        <td style={styles.td}><span style={{ fontFamily: 'monospace', fontSize: 13 }}>{f.numero_documento || '-'}</span></td>
+                        <td style={styles.td}>{f.fornitore_ragione_sociale || f.fornitore_denominazione || '-'}</td>
+                        <td style={styles.td}><strong style={{ color: '#dc2626' }}>{formatEuro(f.importo_totale)}</strong></td>
                         <td style={styles.td}>
-                          <strong>{formatDate(s.data_scadenza)}</strong>
-                          <br />
-                          <span style={{ fontSize: 12, color: '#64748b' }}>{s.numero_fattura}</span>
+                          <span style={styles.badge(f.stato === 'da_confermare' ? '#f59e0b' : '#94a3b8')}>
+                            {f.stato === 'da_confermare' ? 'Da confermare' : f.stato || '-'}
+                          </span>
                         </td>
-                        <td style={styles.td}>{s.fornitore_nome}</td>
+                        <td style={styles.td}>{f.metodo_pagamento || f.metodo_pagamento_effettivo || '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div style={styles.emptyState}>
+                  <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
+                  <p>Nessuna fattura da riconciliare per l'anno selezionato</p>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* ==================== TAB: STORICO ==================== */}
+      {activeTab === 'storico' && (() => {
+        const pagate = fatture.filter(f => f.pagato || f.stato === 'pagata');
+        return (
+          <div style={cardStyle}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span>✅</span> Storico Pagamenti Effettuati
+              </h3>
+              <span style={styles.badge('#10b981')}>{pagate.length} pagamenti</span>
+            </div>
+            <div style={{ overflowX: 'auto' }}>
+              {loading ? (
+                <div style={styles.emptyState}>Caricamento...</div>
+              ) : pagate.length > 0 ? (
+                <table style={styles.table}>
+                  <thead>
+                    <tr>
+                      <th style={styles.th}>Data</th>
+                      <th style={styles.th}>Numero</th>
+                      <th style={styles.th}>Fornitore</th>
+                      <th style={styles.th}>Importo</th>
+                      <th style={styles.th}>Metodo Pagamento</th>
+                      <th style={styles.th}>Riconciliato</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pagate.map((f) => (
+                      <tr key={f.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                        <td style={styles.td}>{formatDate(f.data_documento)}</td>
+                        <td style={styles.td}><span style={{ fontFamily: 'monospace', fontSize: 13 }}>{f.numero_documento || '-'}</span></td>
+                        <td style={styles.td}>{f.fornitore_ragione_sociale || f.fornitore_denominazione || '-'}</td>
+                        <td style={styles.td}><strong style={{ color: '#10b981' }}>{formatEuro(f.importo_totale)}</strong></td>
                         <td style={styles.td}>
-                          <strong style={{ color: '#dc2626' }}>{formatEuro(s.importo_totale)}</strong>
+                          <span style={styles.badge('#3b82f6')}>
+                            {f.metodo_pagamento_effettivo || f.metodo_pagamento || 'Bonifico'}
+                          </span>
+                        </td>
+                        <td style={styles.td}>
+                          {f.riconciliato || f.prima_nota_banca_id || f.prima_nota_cassa_id ? (
+                            <span style={styles.badge('#10b981')}>✓ Sì</span>
+                          ) : (
+                            <span style={styles.badge('#f59e0b')}>Manuale</span>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -863,149 +919,14 @@ export default function ArchivioFatture() {
                 </table>
               ) : (
                 <div style={styles.emptyState}>
-                  <p>Nessuna scadenza da riconciliare</p>
+                  <div style={{ fontSize: 48, marginBottom: 16 }}>📭</div>
+                  <p>Nessun pagamento registrato per l'anno selezionato</p>
                 </div>
               )}
             </div>
           </div>
-
-          {/* Colonna Destra: Movimenti Bancari Suggeriti */}
-          <div style={cardStyle}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
-              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span>🏦</span> Movimenti Bancari Suggeriti
-              </h3>
-            </div>
-            <div style={{ overflowX: 'auto', maxHeight: 600 }}>
-              {selectedScadenza ? (
-                <>
-                  <div style={{ padding: 16, background: '#eff6ff', borderBottom: '1px solid #e2e8f0' }}>
-                    <strong>Scadenza selezionata:</strong> {selectedScadenza.fornitore_nome} - {formatEuro(selectedScadenza.importo_totale)}
-                    <br />
-                    <span style={{ fontSize: 13, color: '#64748b' }}>Fatt. {selectedScadenza.numero_fattura} - Scade {formatDate(selectedScadenza.data_scadenza)}</span>
-                  </div>
-                  {loadingSuggerimenti ? (
-                    <div style={styles.emptyState}>Ricerca movimenti...</div>
-                  ) : suggerimenti.length > 0 ? (
-                    <table style={styles.table}>
-                      <thead>
-                        <tr>
-                          <th style={styles.th}>Data</th>
-                          <th style={styles.th}>Descrizione</th>
-                          <th style={styles.th}>Importo</th>
-                          <th style={styles.th}>Match</th>
-                          <th style={styles.th}></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {suggerimenti.map((m) => (
-                          <tr key={m.id}>
-                            <td style={styles.td}>{formatDate(m.data)}</td>
-                            <td style={styles.td}>
-                              <span style={{ fontSize: 13 }}>{m.descrizione || m.causale || '-'}</span>
-                            </td>
-                            <td style={styles.td}>
-                              <strong>{formatEuro(m.importo)}</strong>
-                              {m.diff_importo > 0 && (
-                                <span style={{ fontSize: 11, color: '#f59e0b', display: 'block' }}>
-                                  Diff: {formatEuro(m.diff_importo)}
-                                </span>
-                              )}
-                            </td>
-                            <td style={styles.td}>
-                              <span style={styles.badge(m.match_score < 50 ? '#10b981' : m.match_score < 200 ? '#f59e0b' : '#ef4444')}>
-                                {m.match_score < 50 ? '⭐ Ottimo' : m.match_score < 200 ? '🔸 Buono' : '⚠️ Incerto'}
-                              </span>
-                            </td>
-                            <td style={styles.td}>
-                              <button 
-                                style={styles.button('success')}
-                                onClick={() => handleMatchManuale(m.id)}
-                                disabled={processing}
-                                data-testid={`btn-match-${m.id}`}
-                              >
-                                ✓ Match
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  ) : (
-                    <div style={styles.emptyState}>
-                      <div style={{ fontSize: 48, marginBottom: 16 }}>🔍</div>
-                      <p>Nessun movimento bancario compatibile trovato</p>
-                      <p style={{ fontSize: 13, marginTop: 8 }}>Verifica che i movimenti bancari siano stati importati</p>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div style={styles.emptyState}>
-                  <div style={{ fontSize: 48, marginBottom: 16 }}>👈</div>
-                  <p>Seleziona una scadenza dalla lista a sinistra</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ==================== TAB: STORICO ==================== */}
-      {activeTab === 'storico' && (
-        <div style={cardStyle}>
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span>✅</span> Storico Pagamenti Effettuati
-            </h3>
-            <span style={styles.badge('#10b981')}>{dashboard?.scadenze_saldate?.length || 0} pagamenti</span>
-          </div>
-          <div style={{ overflowX: 'auto' }}>
-            {loading ? (
-              <div style={styles.emptyState}>Caricamento...</div>
-            ) : dashboard?.scadenze_saldate?.length > 0 ? (
-              <table style={styles.table}>
-                <thead>
-                  <tr>
-                    <th style={styles.th}>Data Pagamento</th>
-                    <th style={styles.th}>Fornitore</th>
-                    <th style={styles.th}>N. Fattura</th>
-                    <th style={styles.th}>Importo</th>
-                    <th style={styles.th}>Metodo</th>
-                    <th style={styles.th}>Riconciliato</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {dashboard.scadenze_saldate.map((s) => (
-                    <tr key={s.id}>
-                      <td style={styles.td}>{formatDate(s.data_pagamento)}</td>
-                      <td style={styles.td}>{s.fornitore_nome}</td>
-                      <td style={styles.td}>{s.numero_fattura}</td>
-                      <td style={styles.td}>
-                        <strong style={{ color: '#10b981' }}>{formatEuro(s.importo_totale)}</strong>
-                      </td>
-                      <td style={styles.td}>
-                        <span style={styles.badge('#3b82f6')}>{s.metodo_descrizione || s.metodo_pagamento}</span>
-                      </td>
-                      <td style={styles.td}>
-                        {s.riconciliato ? (
-                          <span style={styles.badge('#10b981')}>✓ Sì</span>
-                        ) : (
-                          <span style={styles.badge('#f59e0b')}>Manuale</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <div style={styles.emptyState}>
-                <div style={{ fontSize: 48, marginBottom: 16 }}>📭</div>
-                <p>Nessun pagamento registrato</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

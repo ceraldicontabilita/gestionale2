@@ -3,12 +3,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAnnoGlobale } from '../../contexts/AnnoContext';
 
 const ArchivioContent    = lazy(() => import('../ArchivioFattureRicevute.jsx'));
-const ImportContent      = lazy(() => import('../CicloPassivoAdmin.jsx'));
 const CorrispettiviContent = lazy(() => import('../Corrispettivi.jsx'));
 
 const TABS = [
   { id: 'archivio',       label: '📋 Archivio Fatture', color: '#3b82f6' },
-  { id: 'import',         label: '📥 Import / PEC',     color: '#8b5cf6' },
   { id: 'corrispettivi',  label: '🧾 Corrispettivi',    color: '#10b981' },
 ];
 
@@ -28,12 +26,7 @@ const Loading = () => (
 );
 
 const getTabFromPath = (pathname) => {
-  if (pathname.includes('/import') || pathname.includes('/ciclo-passivo/import')) return 'import';
   if (pathname.includes('/corrispettivi')) return 'corrispettivi';
-  if (pathname.includes('/fatture/')) {
-    const m = pathname.match(/\/fatture\/(\w[\w-]*)/);
-    if (m && TABS.find(t => t.id === m[1])) return m[1];
-  }
   return 'archivio';
 };
 
@@ -95,7 +88,6 @@ export default function FattureHub() {
         )}
         <Suspense fallback={<Loading />}>
           {activeTab === 'archivio'      && <ArchivioContent />}
-          {activeTab === 'import'        && <ImportContent />}
           {activeTab === 'corrispettivi' && <CorrispettiviContent />}
         </Suspense>
       </div>
