@@ -122,35 +122,67 @@ function PrimaNotaDesktop() {
         ecParams.append('mese', String(selectedMonth + 1));
       }
 
-      const [cassaRes, estrattoContoRes] = await Promise.all([
+      const [cassaRes, estrattoContoRes, bancaManRes] = await Promise.all([
         api.get(`/api/prima-nota/cassa?${params}`),
-        api.get(`/api/estratto-conto-movimenti/movimenti?${ecParams}`)
+        api.get(`/api/estratto-conto-movimenti/movimenti?${ecParams}`),
+        api.get(`/api/prima-nota/banca?${params}`)
       ]);
 
       setCassaData(cassaRes.data);
       
       // Trasforma i dati dell'estratto conto nel formato della Prima Nota Banca
       const ecData = estrattoContoRes.data;
-      const movimenti = (ecData.movimenti || []).map(m => ({
+      const movimentiEC = (ecData.movimenti || []).map(m => ({
         ...m,
         tipo: m.tipo || (m.importo >= 0 ? 'entrata' : 'uscita'),
         importo: Math.abs(m.importo || 0),
         descrizione: m.descrizione || m.descrizione_originale || '',
         categoria: m.categoria || 'Movimento bancario',
         fattura_id: m.fattura_id || m.dettagli_riconciliazione?.fattura_id || null,
-        bonifico_pdf_id: m.bonifico_pdf_id || null
+        bonifico_pdf_id: m.bonifico_pdf_id || null,
+        _source: 'estratto_conto'
       }));
+
+      // Aggiunge i movimenti manuali di prima_nota_banca (pagamenti fatture, etc.)
+      // che non sono già presenti nell'estratto conto (dedup per id)
+      const ecIds = new Set(movimentiEC.map(m => m.id));
+      const movimentiManualiRaw = (bancaManRes.data?.movimenti || [])
+        .filter(m => !ecIds.has(m.id))
+        .map(m => ({ ...m, _source: 'prima_nota_banca' }));
+
+      // Dedup INTERNO ai manuali: mantieni il record CON fattura_id quando c'è duplicato (stessa data+importo+tipo)
+      const seenManualiKeys = new Map();
+      for (const m of movimentiManualiRaw) {
+        const key = `${m.data}|${Math.round((m.importo || 0) * 100)}|${m.tipo}`;
+        const existing = seenManualiKeys.get(key);
+        if (!existing || (!existing.fattura_id && m.fattura_id)) {
+          seenManualiKeys.set(key, m);
+        }
+      }
+      const movimentiManuali = Array.from(seenManualiKeys.values());
+
+      // Dedup avanzato: rimuovi dall'estratto conto i record che corrispondono
+      // a un pagamento manuale (stessa data + stesso importo + stesso tipo)
+      // per evitare di mostrare la stessa transazione due volte
+      const manualiKeys = new Set(seenManualiKeys.keys());
+      const movimentiECDedup = movimentiEC.filter(m => {
+        const key = `${m.data}|${Math.round((m.importo || 0) * 100)}|${m.tipo}`;
+        return !manualiKeys.has(key);
+      });
+
+      // Unisci: prima i manuali (con fattura_id linkati), poi l'estratto conto deduppato
+      const movimentiUniti = [...movimentiManuali, ...movimentiECDedup];
       
       const saldoPrec = ecData.saldo_precedente || 0;
       const saldoAnno = (ecData.totale_entrate || 0) - (ecData.totale_uscite || 0);
       setBancaData({
-        movimenti: movimenti,
+        movimenti: movimentiUniti,
         saldo: ecData.saldo || saldoPrec + saldoAnno,
         saldo_anno: ecData.saldo_anno || saldoAnno,
         saldo_precedente: saldoPrec,
         totale_entrate: ecData.totale_entrate || 0,
         totale_uscite: ecData.totale_uscite || 0,
-        count: ecData.totale || movimenti.length
+        count: ecData.totale || movimentiUniti.length
       });
       
       // Aggiorna anni disponibili dopo caricamento
@@ -1452,7 +1484,17 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
 
       {movimenti.length === 0 && (
         <div style={{ padding: 40, textAlign: 'center', color: '#6b7280' }}>
-          {readOnly ? 'Nessun movimento nell\'estratto conto. Importa un file CSV dalla pagina Import/Export.' : 'Nessun movimento trovato'}
+          {readOnly 
+            ? 'Nessun movimento nell\'estratto conto. Importa un file CSV dalla pagina Import/Export.' 
+            : tipo === 'cassa'
+              ? <div>
+                  <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 8, color: '#374151' }}>Nessun movimento in Cassa</div>
+                  <div style={{ fontSize: 13, color: '#6b7280', maxWidth: 400, margin: '0 auto' }}>
+                    La cassa è vuota. Aggiungi movimenti tramite le <strong>Chiusure Giornaliere</strong> (Corrispettivo, POS, Versamento) oppure usa il pulsante <strong>Sync Fatture</strong> per importare le fatture pagate in contanti.
+                  </div>
+                </div>
+              : 'Nessun movimento trovato'
+          }
         </div>
       )}
 

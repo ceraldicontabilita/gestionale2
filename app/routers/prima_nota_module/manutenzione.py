@@ -3,6 +3,7 @@ Prima Nota Module - Manutenzione e Fix.
 Funzioni di fix, cleanup, recalculate per manutenzione dati.
 """
 from fastapi import HTTPException, Query
+from pydantic import BaseModel
 from typing import Dict, Optional, Any
 from datetime import datetime, timezone
 import uuid
@@ -10,6 +11,12 @@ import uuid
 from app.database import Database
 from .common import COLLECTION_PRIMA_NOTA_CASSA, COLLECTION_PRIMA_NOTA_BANCA, logger
 from .sync import determina_tipo_movimento_fattura
+
+
+class SpostaMovimentoRequest(BaseModel):
+    movimento_id: str
+    da: str
+    a: str
 
 
 async def fix_tipo_movimento_fatture() -> Dict:
@@ -328,34 +335,54 @@ async def fix_categories_and_duplicates(anno: Optional[int] = Query(None)) -> Di
     }
 
 
-async def sposta_movimento(
-    movimento_id: str,
-    da: str,
-    a: str
-) -> Dict:
+async def sposta_movimento(req: SpostaMovimentoRequest) -> Dict:
     """Sposta un movimento da cassa a banca o viceversa."""
     db = Database.get_db()
-    
+    movimento_id = req.movimento_id
+    da = req.da
+    a = req.a
+
     if da not in ["cassa", "banca"] or a not in ["cassa", "banca"]:
         raise HTTPException(status_code=400, detail="da/a devono essere 'cassa' o 'banca'")
-    
+
     if da == a:
         raise HTTPException(status_code=400, detail="Origine e destinazione uguali")
-    
+
     source_coll = COLLECTION_PRIMA_NOTA_CASSA if da == "cassa" else COLLECTION_PRIMA_NOTA_BANCA
     dest_coll = COLLECTION_PRIMA_NOTA_CASSA if a == "cassa" else COLLECTION_PRIMA_NOTA_BANCA
-    
+
+    # Cerca nella collection diretta
     mov = await db[source_coll].find_one({"id": movimento_id})
+
+    # Se non trovato in prima_nota_banca, cerca anche in estratto_conto_movimenti
+    # (la sezione Banca carica i dati dall'estratto conto)
+    if not mov and da == "banca":
+        mov = await db["estratto_conto_movimenti"].find_one({"id": movimento_id})
+        if mov:
+            # Il movimento è nell'estratto conto: copialo in prima_nota_cassa e rimuovilo dall'estratto conto
+            mov.pop("_id", None)
+            mov["moved_from"] = "banca_estratto_conto"
+            mov["moved_at"] = datetime.now(timezone.utc).isoformat()
+            mov["source"] = mov.get("source", "estratto_conto")
+            # Assicura che sia un'uscita (addebito) o entrata (accredito) coerente
+            await db[dest_coll].insert_one(mov)
+            await db["estratto_conto_movimenti"].delete_one({"id": movimento_id})
+            return {
+                "success": True,
+                "message": f"Movimento spostato da estratto conto banca a {a}",
+                "movimento_id": movimento_id
+            }
+
     if not mov:
-        raise HTTPException(status_code=404, detail=f"Movimento non trovato in {da}")
-    
+        raise HTTPException(status_code=404, detail=f"Movimento {movimento_id} non trovato in {da}")
+
     mov.pop("_id", None)
     mov["moved_from"] = da
     mov["moved_at"] = datetime.now(timezone.utc).isoformat()
-    
+
     await db[dest_coll].insert_one(mov)
     await db[source_coll].delete_one({"id": movimento_id})
-    
+
     return {
         "success": True,
         "message": f"Movimento spostato da {da} a {a}",

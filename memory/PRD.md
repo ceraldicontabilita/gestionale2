@@ -1,6 +1,6 @@
 # PRD — Ceraldi ERP
 <!-- Ultimo aggiornamento: 2026-04-09 -->
-<!-- FIX APPLICATI: Fatture (invoices+fatture_passive unificati), Estratto Conto (data_contabile_obj) -->
+<!-- FIX APPLICATI: Fatture (invoices+fatture_passive unificati), Estratto Conto (data_contabile_obj), Prima Nota 422+Dedup+Cassa -->
 > P.IVA: 04523831214 | Azienda: Ceraldi Group SRL | Aprile 2026
 
 ---
@@ -15,6 +15,29 @@ estratto conto bancario, prima nota, HACCP e dashboard direzionale.
 - Rispondi sempre in ITALIANO
 - Un blocco/passo alla volta, con save GitHub dopo ogni blocco
 - IMAP (`imaplib`) SEMPRE in `asyncio.to_thread()` — mai bloccare l'event loop
+
+---
+
+## FIX CRITICI APPLICATI (2026-04-09)
+
+### Prima Nota — Fix Bug 422 Sposta Movimento
+- **File**: `/app/app/routers/prima_nota_module/manutenzione.py`
+- **Fix**: Aggiunto `SpostaMovimentoRequest(BaseModel)` con campi `movimento_id, da, a`. L'endpoint `sposta_movimento` ora accetta JSON body (non più query params). Questa era la causa del 422.
+- **Extra**: `sposta_movimento` cerca ora anche in `estratto_conto_movimenti` quando `da='banca'` e il doc non è in `prima_nota_banca`.
+
+### Prima Nota — Fix Righe Duplicate in Banca
+- **File**: `/app/frontend/src/pages/PrimaNota.jsx`
+- **Fix**: La sezione Banca ora carica ENTRAMBI `estratto_conto_movimenti` e `prima_nota_banca`. Applica deduplicazione a 2 livelli:
+  1. Dedup INTERNO ai manuali: mantieni il record CON `fattura_id` quando c'è un duplicato (stessa data+importo+tipo)
+  2. Dedup manuali vs EC: rimuove dall'estratto conto i record già coperti da un pagamento manuale
+
+### Prima Nota — Fix Query Cassa (datetime vs string)
+- **File**: `/app/app/routers/prima_nota_module/cassa.py`
+- **Fix**: Rimosso confronto `datetime` oggetti con campi stringa MongoDB. Query ora usa solo stringhe ISO (YYYY-MM-DD).
+
+### Prima Nota — Messaggio Cassa Vuota
+- **File**: `/app/frontend/src/pages/PrimaNota.jsx`
+- **Fix**: Messaggio informativo quando cassa è vuota, con istruzioni su come aggiungere movimenti.
 
 ---
 
