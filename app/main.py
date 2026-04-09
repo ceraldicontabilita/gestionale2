@@ -55,13 +55,14 @@ async def lifespan(app: FastAPI):
     # except Exception as e:
     #     logger.warning(f"Monitor email non avviato: {e}")
 
-    # DISABILITATO: Scheduler HACCP/Verbali/Gmail ogni 10 minuti
-    # Stesso problema: IMAP blocca l'async event loop causando "reload" percepito dall'utente
-    # try:
-    #     from app.scheduler import start_scheduler
-    #     start_scheduler()
-    # except Exception as e:
-    #     logger.warning(f"Scheduler non avviato: {e}")
+    # Avvio Scheduler (PEC ogni ora, Gmail ogni 10min, F24 giornaliero)
+    # Il PEC usa asyncio.to_thread() quindi NON blocca l'event loop FastAPI
+    try:
+        from app.scheduler import start_scheduler
+        start_scheduler()
+        logger.info("⏰ Scheduler avviato (PEC ogni ora, Verbali ogni ora, F24 alle 8:00/14:00)")
+    except Exception as e:
+        logger.warning(f"Scheduler non avviato: {e}")
     
     logger.info("✅ Application startup complete")
     

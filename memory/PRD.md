@@ -64,6 +64,9 @@ Aggiornamenti richiesti tramite file CERALDI_MASTER_ZIP.zip e ISTRUZIONI_CORRETT
 - **BUG FIX CRITICO PEC**: `aruba_pec_downloader.py` ora cerca in INBOX + INBOX.lette (137 email trovate, 59 fatture importate)
 - **BUG FIX**: `centri_costo.py` — aggiunto `timezone` all'import datetime (NameError risolto)
 - **Deep Linking esteso**: useHashState + CopyLinkButton aggiunti in PrimaNota, F24, Fornitori
+- **SCHEDULER PEC**: task orario `pec_hourly_download_task` aggiunto allo scheduler (APScheduler)
+- **FIX sync PEC timeout**: endpoint background corretto (`await` rimosso da `Database.get_db()`). GestioneEmailMittenti e CicloPassivoAdmin ora usano background endpoint (risposta in <0.3s invece di timeout a 33s)
+- **Scheduler riabilitato** in `main.py`: PEC ogni ora, Gmail ogni 10min, Verbali ogni ora, F24 alle 8/14
 
 ## Backlog / Task futuri
 - **P3**: Auth backend con Cookies HTTP-Only

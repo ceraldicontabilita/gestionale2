@@ -86,9 +86,13 @@ export default function GestioneEmailMittenti() {
     setSyncing(true); setSyncResult(null);
     try {
       if (tab === 'pec') {
-        const res = await api.post('/api/email-download/pec/download-fatture-sync?since_days=180');
-        const s = res.data?.stats || {};
-        setSyncResult({ ok: true, msg: `PEC: ${s.xml_found ?? '?'} XML — ${s.new_invoices ?? '?'} fatture nuove` });
+        // Usa endpoint background per evitare timeout proxy (IMAP ~30-60s)
+        await api.post('/api/email-download/pec/download-fatture?since_days=90');
+        setSyncResult({
+          ok: true,
+          msg: 'PEC: download avviato — controlla tra 1-2 minuti nel sistema. ' +
+               'Il task automatico orario aggiorna le fatture in autonomia.'
+        });
       } else {
         const res = await api.post('/api/email-download/sync-email-now');
         setSyncResult({ ok: true, msg: res.data?.message || 'Sync Gmail completato' });

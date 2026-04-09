@@ -238,11 +238,19 @@ function TabPEC() {
     setLoading(true);
     setRisultato(null);
     try {
-      // Endpoint corretto: POST /api/email-download/pec/download-fatture-sync
-      const res = await api.post(`/api/email-download/pec/download-fatture-sync?since_days=${giorni}`);
-      setRisultato(res.data);
+      // Usa endpoint background per evitare timeout proxy (~33s > 30s limit)
+      await api.post(`/api/email-download/pec/download-fatture?since_days=${giorni}`);
+      setRisultato({
+        success: true,
+        stats: {
+          xml_found: '?',
+          new_invoices: '—',
+          duplicates_skipped: '—',
+          errors: 0,
+        },
+        message: `Download PEC avviato in background (ultimi ${giorni} giorni). Controlla tra 1-2 minuti nell'archivio fatture.`
+      });
       await checkStatus();
-      alert('✅ Download PEC completato');
     } catch (e) {
       alert('❌ Errore: ' + (e.response?.data?.detail || e.message));
     } finally {

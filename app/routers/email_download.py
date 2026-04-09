@@ -983,7 +983,7 @@ async def download_fatture_pec(
     Scarica e importa le fatture XML dalla casella PEC Aruba.
     Processa file .xml e .p7m (fatture firmate digitalmente).
     """
-    db = await Database.get_db()
+    db = Database.get_db()
 
     async def _run():
         from app.services.aruba_pec_downloader import download_pec_invoices
