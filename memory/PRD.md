@@ -2,7 +2,7 @@
 
 ## Problema Originale
 Applicazione ERP full-stack (React + FastAPI + MongoDB Atlas) per Ceraldi Caffè.
-Aggiornamenti richiesti dall'utente tramite file CERALDI_MASTER_ZIP.zip e ISTRUZIONI_CORRETTE_V2.md.
+Aggiornamenti richiesti tramite file CERALDI_MASTER_ZIP.zip e ISTRUZIONI_CORRETTE_V2.md.
 
 ## Regole Fondamentali
 - **Design system**: solo CSS inline con le costanti di `lib/utils.js`. Vietati Shadcn e Tailwind per le pagine gestionale.
@@ -14,14 +14,13 @@ Aggiornamenti richiesti dall'utente tramite file CERALDI_MASTER_ZIP.zip e ISTRUZ
 ```
 /app
 ├── app/
-│   ├── main.py                         # Router registrations
+│   ├── main.py
 │   ├── routers/
 │   │   ├── cucina/                     # Ricette, FoodCost, ProdottiVendita, OrdiniFornitori
 │   │   ├── invoices/corrispettivi.py   # Corrispettivi telematici
 │   │   ├── prima_nota_module/          # Prima Nota (Cassa + Banca)
 │   │   ├── suppliers_module/           # Anagrafica Fornitori
-│   │   ├── fatture_module/             # Fatture Ricevute
-│   │   └── ciclo_passivo_integrato.py  # Import XML → Magazzino → PN → Scadenziario
+│   │   └── fatture_module/             # Fatture Ricevute
 ├── frontend/src/
 │   ├── main.jsx                        # React Router routes
 │   ├── lib/utils.js                    # Design system (COLORS, STYLES, button, badge, ecc.)
@@ -29,15 +28,15 @@ Aggiornamenti richiesti dall'utente tramite file CERALDI_MASTER_ZIP.zip e ISTRUZ
 │   │   ├── Dashboard.jsx               # Dashboard principale (no widget cucina)
 │   │   ├── hub/FattureHub.jsx          # Hub fatture (ArchivioContent | CorrispettiviContent)
 │   │   ├── Corrispettivi.jsx           # Pagina corrispettivi (stato vuoto se no dati)
-│   │   ├── CicloPassivoAdmin.jsx       # Import XML/PEC + Fatture importate
-│   │   ├── hub/CicloPassivoHub.jsx     # Redirect → /ciclo-passivo/import
+│   │   ├── ArchivioFattureRicevute.jsx # Archivio fatture — singola vista pulita (no tab interni)
+│   │   ├── CicloPassivoAdmin.jsx       # File rimasto ma SENZA route attiva
 │   │   ├── RicettarioAdmin.jsx         # Gestione ricette cucina
 │   │   ├── FoodCostAdmin.jsx           # Gestione food cost
 │   │   ├── CatalogoOrdini.jsx          # Catalogo ordini cucina
 │   │   └── ProdottiVendita.jsx         # Prodotti vendita
 │   └── components/layout/
 │       ├── TopNav.jsx                  # Navigazione principale
-│       └── SecondaryTabs.jsx           # Tab secondari per sezione (es. /fatture → 4 tab)
+│       └── SecondaryTabs.jsx           # Tab secondari per sezione
 ```
 
 ## Cosa è stato implementato
@@ -47,28 +46,29 @@ Aggiornamenti richiesti dall'utente tramite file CERALDI_MASTER_ZIP.zip e ISTRUZ
 - Creazione router cucina: ricette.py, food_cost.py, prodotti_vendita.py, ordini_fornitori.py
 - Creazione UI: RicettarioAdmin, FoodCostAdmin, CatalogoOrdini, ProdottiVendita
 - Integrazione tab "Bozze" in OrdiniFornitori
-- Fix Prima Nota: errore 422 "Sposta movimento", deduplicazione Banca, query Cassa
+- Fix Prima Nota: errore 422, deduplicazione Banca, query Cassa
 - Fix Anagrafica Fornitori: piva vs partita_iva, card "Senza nome", filtro fatture
 - Popolamento automatico form Anagrafica da XML
 - Rimozione sezione Riconciliazione Unificata, /fatture/import, /previsioni-acquisti
 
 ### Sessione corrente (completato)
-- **Corrispettivi**: rimosso documento stub vuoto dal DB → pagina mostra correttamente stato vuoto
-- **FattureHub.jsx**: rimossi tab colorati ridondanti (già fatto in sessione precedente, verificato)
-- **SecondaryTabs**: aggiunto 4° tab "Import XML" (→ /ciclo-passivo/import) nella sezione Fatture
-- **CicloPassivoHub.jsx**: ora redireziona correttamente a /ciclo-passivo/import
-- **Widget Cucina Dashboard**: RIMOSSO (su richiesta utente — gestionale non include più tracciabilità/ricette)
+- **Corrispettivi**: rimosso stub vuoto dal DB → pagina mostra correttamente stato vuoto
+- **Widget Cucina Dashboard**: RIMOSSO (su richiesta — gestionale non include più tracciabilità/ricette)
+- **SecondaryTabs**: rimosso tab "Import XML" dalla sezione Fatture
+- **CicloPassivoHub.jsx**: rimosso redirect, route /ciclo-passivo → redirect a /fatture
+- **Route /ciclo-passivo/import**: ELIMINATA da main.jsx (import XML avviene solo da Import Documenti)
+- **ArchivioFattureRicevute.jsx**: eliminati tab interni (📋 Archivio, 🔄 Riconcilia, ✅ Storico)
+  - Rimossi stati e funzioni non necessari: dashboard, handlePayManual, handleMatchManuale, fetchDashboard, handleSelectScadenza, isScadenzaPassata, ecc.
+  - Pagina mostra direttamente: statistiche + filtri + tabella fatture con pulsanti Vedi/Cassa/Banca
 
 ## Backlog / Task futuri
 - **P2**: Integrazione Email IMAP — bloccata per App Password Gmail non valida (ceraldigroupsr@gmail.com)
 - **P3**: Auth backend con Cookies HTTP-Only
-- **P3**: Verifica Portale.jsx (già controllato: non usa Shadcn/Tailwind → OK)
 
 ## Key API Endpoints
 - `GET /api/corrispettivi?anno=YYYY` — lista corrispettivi
-- `GET /api/fatture-ricevute/archivio` — archivio fatture ricevute
-- `POST /api/ciclo-passivo/import-integrato` — import singolo XML
-- `POST /api/ciclo-passivo/import-integrato-batch` — import batch XML
+- `GET /api/fatture-ricevute/archivio` — archivio fatture ricevute (filtri: anno, mese, stato, fornitore_piva, search)
+- `GET /api/fatture-ricevute/statistiche` — stats fatture
+- `POST /api/fatture-ricevute/paga-manuale` — registra pagamento (cassa o banca)
 - `GET /api/cucina/ricette/stats` — statistiche ricette
-- `GET /api/cucina/ordini-fornitori/bozze/count` — conteggio bozze ordini
 - `POST /api/prima-nota/cassa` / `/banca` — movimenti prima nota

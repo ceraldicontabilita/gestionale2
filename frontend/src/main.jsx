@@ -23,8 +23,7 @@ const PageLoader = () => (
 
 // === HUB PAGES (consolidated) ===
 const DashboardHub = lazy(() => import("./pages/hub/DashboardHub.jsx"));
-const CicloPassivoHub = lazy(() => import("./pages/hub/CicloPassivoHub.jsx"));
-const CicloPassivoAdmin = lazy(() => import("./pages/CicloPassivoAdmin.jsx"));
+  // Ciclo Passivo hub rimosso - import avviene da Import Documenti
 const FornitoriHub = lazy(() => import("./pages/hub/FornitoriHub.jsx"));
 const PrimaNotaHub = lazy(() => import("./pages/hub/PrimaNotaHub.jsx"));
 const DipendentiHub = lazy(() => import("./pages/hr/HRPresenze.jsx"));
@@ -84,8 +83,7 @@ const router = createBrowserRouter([
       { path: "tracciabilita", element: <LazyPage><TracciabilitaPage /></LazyPage> },
       
       // === CICLO PASSIVO & VENDITE ===
-      { path: "ciclo-passivo", element: <LazyPage><CicloPassivoHub /></LazyPage> },
-      { path: "ciclo-passivo/import", element: <LazyPage><CicloPassivoAdmin /></LazyPage> },
+      { path: "ciclo-passivo", element: <Navigate to="/fatture" replace /> },
       { path: "fatture", element: <LazyPage><FattureHub /></LazyPage> },
       { path: "fatture/import", element: <Navigate to="/documenti/import" replace /> },
       { path: "fatture/:tab", element: <LazyPage><FattureHub /></LazyPage> },

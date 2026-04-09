@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
@@ -20,12 +20,6 @@ const MESI = [
   { value: '12', label: 'Dicembre' }
 ];
 
-// Tabs della pagina unificata - Scadenze rimosso (centralizzato in Dashboard)
-const TABS = [
-  { id: 'archivio', label: '📋 Archivio', desc: 'Lista e ricerca fatture' },
-  { id: 'riconciliazione', label: '🔄 Riconcilia', desc: 'Match con banca' },
-  { id: 'storico', label: '✅ Storico', desc: 'Pagamenti effettuati' },
-];
 
 // Stili inline (come da DESIGN_SYSTEM.md)
 const cardStyle = { background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', border: '1px solid #e5e7eb' };
@@ -88,98 +82,18 @@ export default function ArchivioFatture() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { anno } = useAnnoGlobale();
-  
-  // Tab attivo
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'archivio');
-  
+
   // Dati archivio
   const [fatture, setFatture] = useState([]);
   const [fornitori, setFornitori] = useState([]);
   const [statistiche, setStatistiche] = useState(null);
   const [loading, setLoading] = useState(true);
-  
-  // Dati per Scadenze e Riconciliazione
-  const [dashboard, setDashboard] = useState(null);
-  const [selectedScadenza, setSelectedScadenza] = useState(null);
-  const [suggerimenti, setSuggerimenti] = useState([]);
-  const [loadingSuggerimenti, setLoadingSuggerimenti] = useState(false);
-  const [processing, setProcessing] = useState(false);
-  
-  // Menu pagamento manuale
-  const [showPayMenu, setShowPayMenu] = useState(null); // ID della scadenza con menu aperto
-  const [payingScadenza, setPayingScadenza] = useState(null);
-  
-  // Ref per salvare posizione scroll
-  const scrollPositionRef = useRef(0);
-  
+
   // Filtri (anno viene dal contesto globale)
   const [mese, setMese] = useState(searchParams.get('mese') || '');
   const [fornitore, setFornitore] = useState(searchParams.get('fornitore') || searchParams.get('fornitore_piva') || '');
   const [stato, setStato] = useState(searchParams.get('stato') || '');
   const [search, setSearch] = useState(searchParams.get('search') || '');
-  
-  // Stato per auto-riparazione
-  const [autoRepairStatus, setAutoRepairStatus] = useState(null);
-  const [autoRepairRunning, setAutoRepairRunning] = useState(false);
-
-  // Funzione per pagare manualmente una scadenza (Cassa o Banca)
-  const handlePayManual = async (scadenza, metodo) => {
-    scrollPositionRef.current = window.scrollY; // Salva posizione
-    setShowPayMenu(null);
-    setPayingScadenza(scadenza.id);
-    try {
-      const dataPagamento = new Date().toISOString().slice(0, 10);
-      
-      // Registra il pagamento e crea movimento in Prima Nota
-      const res = await api.post('/api/fatture-ricevute/paga-manuale', {
-        fattura_id: scadenza.fattura_id,
-        scadenza_id: scadenza.id,
-        importo: scadenza.importo_totale,
-        metodo: metodo, // 'cassa' o 'banca'
-        data_pagamento: dataPagamento,
-        fornitore: scadenza.fornitore_nome,
-        numero_fattura: scadenza.numero_fattura
-      });
-      
-      // Ricarica dati
-      await fetchDashboard();
-      
-      // Ripristina posizione scroll
-      setTimeout(() => window.scrollTo({ top: scrollPositionRef.current, behavior: 'instant' }), 100);
-      
-    } catch (error) {
-      alert(`❌ Errore: ${error.response?.data?.detail || error.message}`);
-    } finally {
-      setPayingScadenza(null);
-      setShowPayMenu(null);
-    }
-  };
-
-  /**
-   * LOGICA INTELLIGENTE: Esegue auto-riparazione dei dati.
-   * DISABILITATA: Spostata in Admin per performance. Chiamare manualmente se necessario.
-   */
-  const eseguiAutoRiparazione = async () => {
-    setAutoRepairRunning(true);
-    try {
-      const res = await api.post('/api/fatture-ricevute/auto-ricostruisci-dati');
-      if (res.data.campi_corretti > 0 || res.data.duplicati_rimossi > 0 || res.data.fornitori_associati > 0) {
-        console.log('🔧 Auto-riparazione fatture completata:', res.data);
-        setAutoRepairStatus(res.data);
-        // Ricarica dati dopo riparazione
-        fetchFatture();
-      }
-    } catch (error) {
-      console.warn('Auto-riparazione fatture non riuscita:', error);
-    } finally {
-      setAutoRepairRunning(false);
-    }
-  };
-
-  useEffect(() => {
-    // RIMOSSO per performance - eseguiAutoRiparazione() ora solo manuale
-     
-  }, []);
 
   // ==================== FETCH FUNCTIONS ====================
   
@@ -221,17 +135,6 @@ export default function ArchivioFatture() {
     }
   };
 
-  const fetchDashboard = useCallback(async () => {
-    try {
-      const params = new URLSearchParams();
-      if (anno) params.append('anno', anno);
-      const res = await api.get(`/api/ciclo-passivo/dashboard-riconciliazione?${params}`);
-      setDashboard(res.data);
-    } catch (err) {
-      console.error('Errore caricamento dashboard:', err);
-    }
-  }, [anno]);
-
   // ==================== EFFECTS ====================
 
   useEffect(() => {
@@ -243,52 +146,6 @@ export default function ArchivioFatture() {
     fetchFornitori();
   }, []);
 
-  useEffect(() => {
-    // Carica dashboard quando si accede ai tab pipeline, scadenze, riconciliazione o storico
-    if (['import', 'scadenze', 'riconciliazione', 'storico'].includes(activeTab)) {
-      fetchDashboard();
-    }
-  }, [activeTab, fetchDashboard]);
-
-  // ==================== UPLOAD HANDLERS ====================
-
-  // ==================== RICONCILIAZIONE HANDLERS ====================
-
-  const loadSuggerimentiMatch = async (scadenzaId) => {
-    setLoadingSuggerimenti(true);
-    try {
-      const res = await api.get(`/api/ciclo-passivo/suggerimenti-match/${scadenzaId}`);
-      setSuggerimenti(res.data.suggerimenti || []);
-    } catch (e) {
-      console.error('Errore caricamento suggerimenti:', e);
-      setSuggerimenti([]);
-    } finally {
-      setLoadingSuggerimenti(false);
-    }
-  };
-
-  const handleSelectScadenza = (scadenza) => {
-    setSelectedScadenza(scadenza);
-    loadSuggerimentiMatch(scadenza.id);
-  };
-
-  const handleMatchManuale = async (transazioneId) => {
-    if (!selectedScadenza) return;
-    
-    setProcessing(true);
-    try {
-      await api.post(`/api/ciclo-passivo/match-manuale?scadenza_id=${selectedScadenza.id}&transazione_id=${transazioneId}`);
-      alert('✅ Riconciliazione completata con successo!');
-      setSelectedScadenza(null);
-      setSuggerimenti([]);
-      fetchDashboard();
-    } catch (e) {
-      alert(`Errore: ${e.response?.data?.detail || e.message}`);
-    } finally {
-      setProcessing(false);
-    }
-  };
-
   // ==================== HELPERS ====================
 
   // Usa formatEuro da utils.js (già importato)
@@ -296,13 +153,6 @@ export default function ArchivioFatture() {
   
   // Usa formatDateIT da utils.js
   const formatDate = formatDateIT;
-
-  const isScadenzaPassata = (dataScadenza) => {
-    if (!dataScadenza) return false;
-    try {
-      return new Date(dataScadenza) < new Date();
-    } catch { return false; }
-  };
 
   const getStatoBadge = (fattura) => {
     if (fattura.pagato) {
@@ -332,91 +182,35 @@ export default function ArchivioFatture() {
     return <span style={{ padding: '4px 10px', background: '#fef3c7', color: '#d97706', borderRadius: 6, fontSize: 12, fontWeight: '600' }}>Da pagare</span>;
   };
 
-  const stats = dashboard?.statistiche || {};
-
   // ==================== RENDER ====================
 
   return (
-    <div style={{ maxWidth: 1600, margin: '0 auto', position: 'relative', padding: '16px 0' }} data-testid="ciclo-passivo-unificato">
-      {/* Tabs */}
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ display: 'flex', gap: 4, borderBottom: '2px solid #e5e7eb', overflowX: 'auto', paddingBottom: 2 }}>
-          {TABS.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => {
-                setActiveTab(tab.id);
-                setSearchParams(prev => { prev.set('tab', tab.id); return prev; });
-              }}
-              style={{
-                padding: '12px 16px',
-                background: activeTab === tab.id ? '#3b82f6' : 'transparent',
-                color: activeTab === tab.id ? 'white' : '#64748b',
-                border: 'none',
-                borderRadius: '8px 8px 0 0',
-                cursor: 'pointer',
-                fontWeight: 600,
-                fontSize: 13,
-                whiteSpace: 'nowrap',
-                transition: 'all 0.2s'
-              }}
-              data-testid={`tab-${tab.id}`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
+    <div style={{ maxWidth: 1600, margin: '0 auto', position: 'relative', padding: '16px 0' }} data-testid="archivio-fatture-ricevute">
 
-      {/* Stats Cards (visibili in tutti i tab) */}
-      {dashboard && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 20 }}>
-          <div style={{ background: 'linear-gradient(135deg, #ef444415, #ef444408)', borderRadius: 12, padding: 16, border: '1px solid #ef444430' }}>
-            <div style={{ fontSize: 24, fontWeight: 'bold', color: '#ef4444' }}>{stats.num_scadenze_aperte || 0}</div>
-            <div style={{ fontSize: 12, color: '#64748b' }}>Scadenze Aperte</div>
+      {/* Statistiche */}
+      {statistiche && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 12, marginBottom: 20 }}>
+          <div style={{ ...cardStyle, textAlign: 'center', padding: 14 }}>
+            <div style={{ fontSize: 22, fontWeight: 'bold', color: '#1e3a5f' }}>{statistiche.totale_fatture}</div>
+            <div style={{ fontSize: 12, color: '#6b7280' }}>Fatture Totali</div>
           </div>
-          <div style={{ background: 'linear-gradient(135deg, #f59e0b15, #f59e0b08)', borderRadius: 12, padding: 16, border: '1px solid #f59e0b30' }}>
-            <div style={{ fontSize: 18, fontWeight: 'bold', color: '#f59e0b' }}>{formatEuro(stats.totale_debito_aperto || 0)}</div>
-            <div style={{ fontSize: 12, color: '#64748b' }}>Debito Aperto</div>
+          <div style={{ ...cardStyle, textAlign: 'center', padding: 14 }}>
+            <div style={{ fontSize: 18, fontWeight: 'bold', color: '#16a34a' }}>{formatCurrency(statistiche.totale_importo)}</div>
+            <div style={{ fontSize: 12, color: '#6b7280' }}>Importo Totale</div>
           </div>
-          <div style={{ background: 'linear-gradient(135deg, #10b98115, #10b98108)', borderRadius: 12, padding: 16, border: '1px solid #10b98130' }}>
-            <div style={{ fontSize: 24, fontWeight: 'bold', color: '#10b981' }}>{stats.num_scadenze_saldate || 0}</div>
-            <div style={{ fontSize: 12, color: '#64748b' }}>Scadenze Saldate</div>
+          <div style={{ ...cardStyle, textAlign: 'center', padding: 14 }}>
+            <div style={{ fontSize: 22, fontWeight: 'bold', color: '#2196f3' }}>{statistiche.fornitori_unici}</div>
+            <div style={{ fontSize: 12, color: '#6b7280' }}>Fornitori</div>
           </div>
-          <div style={{ background: 'linear-gradient(135deg, #3b82f615, #3b82f608)', borderRadius: 12, padding: 16, border: '1px solid #3b82f630' }}>
-            <div style={{ fontSize: 18, fontWeight: 'bold', color: '#3b82f6' }}>{formatEuro(stats.totale_pagato || 0)}</div>
-            <div style={{ fontSize: 12, color: '#64748b' }}>Totale Pagato</div>
+          <div style={{ ...cardStyle, textAlign: 'center', padding: 14 }}>
+            <div style={{ fontSize: 22, fontWeight: 'bold', color: statistiche.fatture_anomale > 0 ? '#dc2626' : '#16a34a' }}>{statistiche.fatture_anomale}</div>
+            <div style={{ fontSize: 12, color: '#6b7280' }}>Anomale</div>
           </div>
         </div>
       )}
 
-      {/* ==================== TAB: ARCHIVIO ==================== */}
-      {activeTab === 'archivio' && (
-        <>
-          {/* Statistiche */}
-          {statistiche && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 12, marginBottom: 20 }}>
-              <div style={{ ...cardStyle, textAlign: 'center', padding: 14 }}>
-                <div style={{ fontSize: 22, fontWeight: 'bold', color: '#1e3a5f' }}>{statistiche.totale_fatture}</div>
-                <div style={{ fontSize: 12, color: '#6b7280' }}>Fatture Totali</div>
-              </div>
-              <div style={{ ...cardStyle, textAlign: 'center', padding: 14 }}>
-                <div style={{ fontSize: 18, fontWeight: 'bold', color: '#16a34a' }}>{formatCurrency(statistiche.totale_importo)}</div>
-                <div style={{ fontSize: 12, color: '#6b7280' }}>Importo Totale</div>
-              </div>
-              <div style={{ ...cardStyle, textAlign: 'center', padding: 14 }}>
-                <div style={{ fontSize: 22, fontWeight: 'bold', color: '#2196f3' }}>{statistiche.fornitori_unici}</div>
-                <div style={{ fontSize: 12, color: '#6b7280' }}>Fornitori</div>
-              </div>
-              <div style={{ ...cardStyle, textAlign: 'center', padding: 14 }}>
-                <div style={{ fontSize: 22, fontWeight: 'bold', color: statistiche.fatture_anomale > 0 ? '#dc2626' : '#16a34a' }}>{statistiche.fatture_anomale}</div>
-                <div style={{ fontSize: 12, color: '#6b7280' }}>Anomale</div>
-              </div>
-            </div>
-          )}
-
-          {/* Filtri */}
-          <div style={{ ...cardStyle, marginBottom: 20 }}>
+      {/* Filtri */}
+      <div style={{ ...cardStyle, marginBottom: 20 }}>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
               <div>
                 <label style={{ fontSize: 11, color: '#6b7280', display: 'block', marginBottom: 4 }}>Anno</label>
@@ -648,285 +442,6 @@ export default function ArchivioFatture() {
               </div>
             )}
           </div>
-        </>
-      )}
-
-      {/* ==================== TAB: IMPORT XML INTEGRATO ==================== */}
-      {/* ==================== TAB: SCADENZE ==================== */}
-      {activeTab === 'scadenze' && (
-        <div style={cardStyle}>
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span>📅</span> Scadenze di Pagamento Aperte
-            </h3>
-            <span style={styles.badge('#ef4444')}>{dashboard?.scadenze_aperte?.length || 0} scadenze</span>
-          </div>
-          <div style={{ overflowX: 'auto' }}>
-            {loading ? (
-              <div style={styles.emptyState}>Caricamento...</div>
-            ) : dashboard?.scadenze_aperte?.length > 0 ? (
-              <table style={styles.table}>
-                <thead>
-                  <tr>
-                    <th style={styles.th}>Scadenza</th>
-                    <th style={styles.th}>Fornitore</th>
-                    <th style={styles.th}>N. Fattura</th>
-                    <th style={styles.th}>Importo</th>
-                    <th style={styles.th}>Metodo</th>
-                    <th style={styles.th}>Stato</th>
-                    <th style={styles.th}>Azioni</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {dashboard.scadenze_aperte.map((s) => (
-                    <tr key={s.id} style={isScadenzaPassata(s.data_scadenza) ? styles.rowHighlight : {}}>
-                      <td style={styles.td}>
-                        <strong>{formatDate(s.data_scadenza)}</strong>
-                        {isScadenzaPassata(s.data_scadenza) && (
-                          <span style={{ ...styles.badge('#ef4444'), marginLeft: 8 }}>Scaduta</span>
-                        )}
-                      </td>
-                      <td style={styles.td}>{s.fornitore_nome}</td>
-                      <td style={styles.td}>{s.numero_fattura}</td>
-                      <td style={styles.td}>
-                        <strong style={{ color: '#dc2626' }}>{formatEuro(s.importo_totale)}</strong>
-                      </td>
-                      <td style={styles.td}>
-                        <span style={styles.badge('#3b82f6')}>{s.metodo_descrizione || s.metodo_pagamento}</span>
-                      </td>
-                      <td style={styles.td}>
-                        <span style={styles.badge('#f59e0b')}>Da pagare</span>
-                      </td>
-                      <td style={styles.td}>
-                        <div style={{ display: 'flex', gap: 8, alignItems: 'center', position: 'relative' }}>
-                          {s.fattura_id && (
-                            <a 
-                              style={{ ...styles.button('secondary'), padding: '6px 10px', textDecoration: 'none' }}
-                              href={`/api/fatture-ricevute/fattura/${s.fattura_id}/view-assoinvoice`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              data-testid={`btn-pdf-scadenza-${s.id}`}
-                              title="Visualizza fattura"
-                            >
-                              📄
-                            </a>
-                          )}
-                          
-                          {/* Menu Paga Manuale */}
-                          <div style={{ position: 'relative' }}>
-                            <button 
-                              style={{
-                                ...styles.button('primary'),
-                                background: payingScadenza === s.id ? '#9ca3af' : '#10b981',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 4
-                              }}
-                              onClick={() => setShowPayMenu(showPayMenu === s.id ? null : s.id)}
-                              disabled={payingScadenza === s.id}
-                              data-testid={`btn-paga-${s.id}`}
-                            >
-                              {payingScadenza === s.id ? '⏳' : '💳'} Paga ▼
-                            </button>
-                            
-                            {/* Dropdown Menu */}
-                            {showPayMenu === s.id && (
-                              <div style={{
-                                position: 'absolute',
-                                top: '100%',
-                                left: 0,
-                                marginTop: 4,
-                                background: 'white',
-                                borderRadius: 8,
-                                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                                border: '1px solid #e2e8f0',
-                                zIndex: 100,
-                                minWidth: 140,
-                                overflow: 'hidden'
-                              }}>
-                                <button
-                                  onClick={() => handlePayManual(s, 'cassa')}
-                                  style={{
-                                    width: '100%',
-                                    padding: '10px 14px',
-                                    border: 'none',
-                                    background: 'white',
-                                    cursor: 'pointer',
-                                    textAlign: 'left',
-                                    fontSize: 13,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 8,
-                                    borderBottom: '1px solid #f1f5f9'
-                                  }}
-                                  onMouseOver={(e) => e.target.style.background = '#f0fdf4'}
-                                  onMouseOut={(e) => e.target.style.background = 'white'}
-                                >
-                                  💵 Paga con CASSA
-                                </button>
-                                <button
-                                  onClick={() => handlePayManual(s, 'banca')}
-                                  style={{
-                                    width: '100%',
-                                    padding: '10px 14px',
-                                    border: 'none',
-                                    background: 'white',
-                                    cursor: 'pointer',
-                                    textAlign: 'left',
-                                    fontSize: 13,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 8
-                                  }}
-                                  onMouseOver={(e) => e.target.style.background = '#dbeafe'}
-                                  onMouseOut={(e) => e.target.style.background = 'white'}
-                                >
-                                  🏦 Paga con BANCA
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                          
-                          <button 
-                            style={styles.button('primary')}
-                            onClick={() => {
-                              setActiveTab('riconciliazione');
-                              setSearchParams(prev => { prev.set('tab', 'riconciliazione'); return prev; });
-                              handleSelectScadenza(s);
-                            }}
-                            data-testid={`btn-riconcilia-${s.id}`}
-                          >
-                            🔗 Riconcilia
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <div style={styles.emptyState}>
-                <div style={{ fontSize: 48, marginBottom: 16 }}>🎉</div>
-                <p>Nessuna scadenza aperta</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ==================== TAB: RICONCILIAZIONE ==================== */}
-      {activeTab === 'riconciliazione' && (() => {
-        const daPagare = fatture.filter(f => !f.pagato && f.stato !== 'pagata');
-        return (
-          <div style={cardStyle}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span>🔄</span> Fatture da Riconciliare
-              </h3>
-              <span style={styles.badge('#f59e0b')}>{daPagare.length} fatture</span>
-            </div>
-            <div style={{ overflowX: 'auto' }}>
-              {loading ? (
-                <div style={styles.emptyState}>Caricamento...</div>
-              ) : daPagare.length > 0 ? (
-                <table style={styles.table}>
-                  <thead>
-                    <tr>
-                      <th style={styles.th}>Data</th>
-                      <th style={styles.th}>Numero</th>
-                      <th style={styles.th}>Fornitore</th>
-                      <th style={styles.th}>Importo</th>
-                      <th style={styles.th}>Stato</th>
-                      <th style={styles.th}>Metodo</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {daPagare.map((f) => (
-                      <tr key={f.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                        <td style={styles.td}>{formatDate(f.data_documento)}</td>
-                        <td style={styles.td}><span style={{ fontFamily: 'monospace', fontSize: 13 }}>{f.numero_documento || '-'}</span></td>
-                        <td style={styles.td}>{f.fornitore_ragione_sociale || f.fornitore_denominazione || '-'}</td>
-                        <td style={styles.td}><strong style={{ color: '#dc2626' }}>{formatEuro(f.importo_totale)}</strong></td>
-                        <td style={styles.td}>
-                          <span style={styles.badge(f.stato === 'da_confermare' ? '#f59e0b' : '#94a3b8')}>
-                            {f.stato === 'da_confermare' ? 'Da confermare' : f.stato || '-'}
-                          </span>
-                        </td>
-                        <td style={styles.td}>{f.metodo_pagamento || f.metodo_pagamento_effettivo || '-'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <div style={styles.emptyState}>
-                  <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
-                  <p>Nessuna fattura da riconciliare per l'anno selezionato</p>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      })()}
-
-      {/* ==================== TAB: STORICO ==================== */}
-      {activeTab === 'storico' && (() => {
-        const pagate = fatture.filter(f => f.pagato || f.stato === 'pagata');
-        return (
-          <div style={cardStyle}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span>✅</span> Storico Pagamenti Effettuati
-              </h3>
-              <span style={styles.badge('#10b981')}>{pagate.length} pagamenti</span>
-            </div>
-            <div style={{ overflowX: 'auto' }}>
-              {loading ? (
-                <div style={styles.emptyState}>Caricamento...</div>
-              ) : pagate.length > 0 ? (
-                <table style={styles.table}>
-                  <thead>
-                    <tr>
-                      <th style={styles.th}>Data</th>
-                      <th style={styles.th}>Numero</th>
-                      <th style={styles.th}>Fornitore</th>
-                      <th style={styles.th}>Importo</th>
-                      <th style={styles.th}>Metodo Pagamento</th>
-                      <th style={styles.th}>Riconciliato</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pagate.map((f) => (
-                      <tr key={f.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                        <td style={styles.td}>{formatDate(f.data_documento)}</td>
-                        <td style={styles.td}><span style={{ fontFamily: 'monospace', fontSize: 13 }}>{f.numero_documento || '-'}</span></td>
-                        <td style={styles.td}>{f.fornitore_ragione_sociale || f.fornitore_denominazione || '-'}</td>
-                        <td style={styles.td}><strong style={{ color: '#10b981' }}>{formatEuro(f.importo_totale)}</strong></td>
-                        <td style={styles.td}>
-                          <span style={styles.badge('#3b82f6')}>
-                            {f.metodo_pagamento_effettivo || f.metodo_pagamento || 'Bonifico'}
-                          </span>
-                        </td>
-                        <td style={styles.td}>
-                          {f.riconciliato || f.prima_nota_banca_id || f.prima_nota_cassa_id ? (
-                            <span style={styles.badge('#10b981')}>✓ Sì</span>
-                          ) : (
-                            <span style={styles.badge('#f59e0b')}>Manuale</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <div style={styles.emptyState}>
-                  <div style={{ fontSize: 48, marginBottom: 16 }}>📭</div>
-                  <p>Nessun pagamento registrato per l'anno selezionato</p>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      })()}
     </div>
   );
 }
