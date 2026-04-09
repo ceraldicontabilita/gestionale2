@@ -87,9 +87,8 @@ export default function DettaglioDipendente() {
             </div>
           </div>
         ))}
-      </div>
+      </div>}
 
-      }</div>}
 
       {/* Tab navigation */}
       <div style={{
@@ -200,7 +199,8 @@ export default function DettaglioDipendente() {
             </table>
           </div>
         )}
-      </div>
-    </div>}
+      </div>}
+
+    </div>
   )
 }
