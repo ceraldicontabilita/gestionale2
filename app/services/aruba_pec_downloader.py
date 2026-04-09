@@ -267,95 +267,133 @@ def parse_fatturapa_xml(xml_content: bytes) -> Optional[Dict[str, Any]]:
         return None
 
 
+def _pec_extract_xml_from_part(part, fname_lower: str, filename: str) -> Optional[bytes]:
+    """
+    Estrae il contenuto XML (grezzo o da .p7m) da una singola parte MIME.
+    Restituisce None se il file va saltato.
+    """
+    content_type = part.get_content_type()
+
+    # Accetta .xml e .p7m (firma CAdES)
+    is_xml = (
+        fname_lower.endswith('.xml') or
+        fname_lower.endswith('.p7m') or
+        content_type in ('application/xml', 'text/xml', 'application/pkcs7-mime')
+    )
+    if not is_xml:
+        return None
+
+    # Salta file di metadati PEC (non fatture)
+    if (fname_lower.endswith('_mt_001.xml') or
+            fname_lower in ('daticert.xml', 'smime.p7s', 'postacert.eml')):
+        return None
+
+    payload = part.get_payload(decode=True)
+    if not payload or len(payload) < 200:
+        return None
+
+    xml_content = payload
+    if fname_lower.endswith('.p7m'):
+        # Estrai XML da P7M (firma CAdES)
+        xml_start = payload.find(b'<?xml')
+        if xml_start == -1:
+            for marker in [b'<p:FatturaElettronica', b'<FatturaElettronica',
+                           b'<ns2:FatturaElettronica', b'<ns3:FatturaElettronica',
+                           b'<P:FatturaElettronica']:
+                idx = payload.find(marker)
+                if idx >= 0:
+                    xml_start = idx
+                    break
+        if xml_start == -1:
+            logger.warning(f"[PEC] P7M senza XML riconoscibile: {filename}")
+            return None
+        xml_content = payload[xml_start:]
+        for end_marker in [b'</p:FatturaElettronica>', b'</FatturaElettronica>',
+                           b'</ns2:FatturaElettronica>', b'</ns3:FatturaElettronica>',
+                           b'</P:FatturaElettronica>']:
+            idx_end = xml_content.rfind(end_marker)
+            if idx_end >= 0:
+                xml_content = xml_content[:idx_end + len(end_marker)]
+                break
+
+    return xml_content
+
+
 def _pec_fetch_xml_sync(
     host: str, port: int, user: str, password: str, since_days: int = 90
 ) -> List[Dict[str, Any]]:
     """
     Funzione SINCRONA pura per IMAP — gira in asyncio.to_thread().
     NON contiene chiamate async, NON tocca MongoDB.
+    Scansiona sia INBOX che INBOX.lette (email già lette) per le fatture SDI.
     Restituisce lista di dict con i dati grezzi degli allegati XML/P7M trovati.
     """
     results = []
     since_date = (datetime.now() - timedelta(days=since_days)).strftime("%d-%b-%Y")
 
+    # Cartelle da scansionare: INBOX (posta nuova) + INBOX.lette (già lette)
+    FOLDERS_TO_SCAN = ["INBOX", "INBOX.lette"]
+
     try:
         mail = imaplib.IMAP4_SSL(host, port)
         mail.login(user, password)
-        mail.select("INBOX")
 
-        _, messages = mail.search(None, f'SINCE {since_date}')
-        email_ids = messages[0].split() if messages[0] else []
-        logger.info(f"[PEC] {len(email_ids)} email trovate dal {since_date}")
+        seen_eids: set = set()  # evita doppi ID se stesso messaggio in due cartelle
 
-        for eid in email_ids:
+        for folder in FOLDERS_TO_SCAN:
             try:
-                _, msg_data = mail.fetch(eid, "(RFC822)")
-                if not msg_data or not msg_data[0]:
+                status, _ = mail.select(folder)
+                if status != "OK":
+                    logger.debug(f"[PEC] Cartella non accessibile: {folder}")
                     continue
-                msg = email.message_from_bytes(msg_data[0][1])
 
-                from_addr = decode_mime_header(msg.get("From", ""))
-                subject   = decode_mime_header(msg.get("Subject", ""))
+                _, messages = mail.search(None, f'SINCE {since_date}')
+                email_ids = messages[0].split() if messages[0] else []
+                logger.info(f"[PEC] {len(email_ids)} email in {folder} dal {since_date}")
 
-                for part in msg.walk():
-                    content_type = part.get_content_type()
-                    filename = decode_mime_header(part.get_filename() or "")
-                    fname_lower = filename.lower()
-
-                    # Accetta .xml e .p7m (firma CAdES)
-                    is_xml = (
-                        fname_lower.endswith('.xml') or
-                        fname_lower.endswith('.p7m') or
-                        content_type in ('application/xml', 'text/xml', 'application/pkcs7-mime')
-                    )
-                    if not is_xml:
+                for eid in email_ids:
+                    eid_str = eid.decode() if isinstance(eid, bytes) else str(eid)
+                    folder_key = f"{folder}:{eid_str}"
+                    if folder_key in seen_eids:
                         continue
+                    seen_eids.add(folder_key)
 
-                    # Salta file di metadati PEC (non fatture)
-                    if (fname_lower.endswith('_mt_001.xml') or
-                            fname_lower in ('daticert.xml', 'smime.p7s', 'postacert.eml')):
-                        continue
-
-                    payload = part.get_payload(decode=True)
-                    if not payload or len(payload) < 200:
-                        continue
-
-                    # Estrai XML da P7M (firma CAdES)
-                    xml_content = payload
-                    if fname_lower.endswith('.p7m'):
-                        xml_start = payload.find(b'<?xml')
-                        if xml_start == -1:
-                            for marker in [b'<p:FatturaElettronica', b'<FatturaElettronica',
-                                           b'<ns2:FatturaElettronica', b'<ns3:FatturaElettronica',
-                                           b'<P:FatturaElettronica']:
-                                idx = payload.find(marker)
-                                if idx >= 0:
-                                    xml_start = idx
-                                    break
-                        if xml_start == -1:
-                            logger.warning(f"[PEC] P7M senza XML: {filename}")
+                    try:
+                        _, msg_data = mail.fetch(eid, "(RFC822)")
+                        if not msg_data or not msg_data[0]:
                             continue
-                        xml_content = payload[xml_start:]
-                        for end_marker in [b'</p:FatturaElettronica>', b'</FatturaElettronica>',
-                                           b'</ns2:FatturaElettronica>', b'</ns3:FatturaElettronica>',
-                                           b'</P:FatturaElettronica>']:
-                            idx_end = xml_content.rfind(end_marker)
-                            if idx_end >= 0:
-                                xml_content = xml_content[:idx_end + len(end_marker)]
-                                break
+                        msg = email.message_from_bytes(msg_data[0][1])
 
-                    results.append({
-                        "filename":    filename,
-                        "xml_content": xml_content,
-                        "from_addr":   from_addr,
-                        "subject":     subject,
-                        "eid":         eid.decode() if isinstance(eid, bytes) else str(eid),
-                    })
+                        from_addr = decode_mime_header(msg.get("From", ""))
+                        subject   = decode_mime_header(msg.get("Subject", ""))
+
+                        for part in msg.walk():
+                            filename = decode_mime_header(part.get_filename() or "")
+                            if not filename:
+                                continue
+                            fname_lower = filename.lower()
+
+                            xml_content = _pec_extract_xml_from_part(part, fname_lower, filename)
+                            if xml_content is None:
+                                continue
+
+                            results.append({
+                                "filename":    filename,
+                                "xml_content": xml_content,
+                                "from_addr":   from_addr,
+                                "subject":     subject,
+                                "eid":         eid_str,
+                                "folder":      folder,
+                            })
+
+                    except Exception as e:
+                        logger.error(f"[PEC] Errore email {eid} in {folder}: {e}")
+
+                mail.close()
 
             except Exception as e:
-                logger.error(f"[PEC] Errore email {eid}: {e}")
+                logger.warning(f"[PEC] Errore cartella {folder}: {e}")
 
-        mail.close()
         mail.logout()
 
     except imaplib.IMAP4.error as e:
@@ -363,6 +401,7 @@ def _pec_fetch_xml_sync(
     except Exception as e:
         logger.error(f"[PEC] Errore connessione: {e}")
 
+    logger.info(f"[PEC] Totale XML trovati in tutte le cartelle: {len(results)}")
     return results
 
 

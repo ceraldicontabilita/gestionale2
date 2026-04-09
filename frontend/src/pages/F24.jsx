@@ -5,6 +5,7 @@ import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { ChevronDown, ChevronRight, Trash2, Edit, Eye, X } from "lucide-react";
 import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from "../lib/utils";
 import { PageLayout } from '../components/PageLayout';
+import { CopyLinkButton } from '../components/CopyLinkButton';
 
 export default function F24() {
   const { anno } = useAnnoGlobale();
@@ -301,24 +302,27 @@ export default function F24() {
       icon="📋"
       subtitle="Visualizzazione e gestione modelli F24"
       actions={
-        <button
-          onClick={() => { loadF24(); loadAlerts(); loadDashboard(); }}
-          data-testid="refresh-f24-btn"
-          style={{
-            padding: '10px 20px',
-            background: '#1e3a5f',
-            color: 'white',
-            border: 'none',
-            borderRadius: 8,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            fontWeight: 600
-          }}
-        >
-          🔄 Aggiorna
-        </button>
+        <>
+          <CopyLinkButton style={{ marginRight: 8 }} />
+          <button
+            onClick={() => { loadF24(); loadAlerts(); loadDashboard(); }}
+            data-testid="refresh-f24-btn"
+            style={{
+              padding: '10px 20px',
+              background: '#1e3a5f',
+              color: 'white',
+              border: 'none',
+              borderRadius: 8,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              fontWeight: 600
+            }}
+          >
+            🔄 Aggiorna
+          </button>
+        </>
       }
     >
       {/* Page Info Card */}

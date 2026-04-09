@@ -4,7 +4,7 @@ Sistema di contabilità analitica per bar-pasticceria
 """
 from fastapi import APIRouter, HTTPException, Query, Body
 from typing import Dict, Any, List, Optional
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from app.database import Database, Collections
 
 router = APIRouter()

@@ -6,6 +6,8 @@ import { useAnnoGlobale } from '../contexts/AnnoContext';
 import Portal from '../components/Portal';
 import { PageLayout } from '../components/PageLayout';
 import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
+import { useHashState } from '../hooks/useHashState';
+import { CopyLinkButton } from '../components/CopyLinkButton';
 import { 
   Search, Edit2, Trash2, Plus, FileText, Building2, 
   Phone, Mail, MapPin, CreditCard, AlertCircle, Check,
@@ -1038,8 +1040,15 @@ export default function Fornitori() {
   const navigate = useNavigate();
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [filterMetodo, setFilterMetodo] = useState('tutti');
+  
+  // Deep link: search e metodo sincronizzati con URL hash
+  // es: /fornitori#search=rossi&metodo=bonifico
+  const [hs, setHs] = useHashState({ search: '', metodo: 'tutti' });
+  const search = hs.search;
+  const setSearch = (v) => setHs('search', v);
+  const filterMetodo = hs.metodo || 'tutti';
+  const setFilterMetodo = (v) => setHs('metodo', v);
+
   const [filterIncomplete, setFilterIncomplete] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [currentSupplier, setCurrentSupplier] = useState(null);
@@ -1510,6 +1519,7 @@ export default function Fornitori() {
               />
               Solo incompleti
             </label>
+            <CopyLinkButton style={{ flexShrink: 0 }} />
           </div>
         </div>
 

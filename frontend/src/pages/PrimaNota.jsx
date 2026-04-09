@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import api from '../api';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
+import { useHashState } from '../hooks/useHashState';
+import { CopyLinkButton } from '../components/CopyLinkButton';
 
 /**
  * Prima Nota - Due sezioni separate: Cassa e Banca
@@ -35,17 +37,19 @@ function PrimaNotaDesktop() {
   // Anno selezionato viene dal context globale
   const [_availableYears, setAvailableYears] = useState([currentYear]);
   
-  // Sezione attiva
-  const [activeSection, setActiveSection] = useState('cassa');
+  // Deep link: sezione e mese sincronizzati con URL hash
+  // es: /prima-nota#sezione=banca&mese=3
+  const [hs, setHs] = useHashState({ sezione: 'cassa', mese: '' });
+  const activeSection = hs.sezione || 'cassa';
+  const setActiveSection = (v) => setHs('sezione', v);
+  const selectedMonth = hs.mese === '' ? null : parseInt(hs.mese, 10);
+  const setSelectedMonth = (v) => setHs('mese', v === null ? '' : String(v));
   
   // Data state
   const [cassaData, setCassaData] = useState({ movimenti: [], saldo: 0, totale_entrate: 0, totale_uscite: 0 });
   const [bancaData, setBancaData] = useState({ movimenti: [], saldo: 0, totale_entrate: 0, totale_uscite: 0 });
   const [loading, setLoading] = useState(true);
-  
-  // Filters - ora basati su mese (null = tutti i mesi)
-  const [selectedMonth, setSelectedMonth] = useState(null);
-  
+
   // Quick entry forms - CASSA
   const [corrispettivo, setCorrispettivo] = useState({ data: today, importo: '' });
   const [pos, setPos] = useState({ data: today, pos1: '', pos2: '', pos3: '' });
@@ -589,6 +593,7 @@ function PrimaNotaDesktop() {
           <span style={{ fontSize: 18 }}>🏦</span>
           BANCA {selectedYear}
         </button>
+        <CopyLinkButton style={{ flexShrink: 0 }} />
       </div>
 
       {/* ========== SEZIONE CASSA ========== */}

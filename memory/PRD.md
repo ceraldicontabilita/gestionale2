@@ -50,19 +50,22 @@ Aggiornamenti richiesti tramite file CERALDI_MASTER_ZIP.zip e ISTRUZIONI_CORRETT
 - Fix Anagrafica Fornitori: piva vs partita_iva, card "Senza nome", filtro fatture
 - Popolamento automatico form Anagrafica da XML
 - Rimozione sezione Riconciliazione Unificata, /fatture/import, /previsioni-acquisti
+- Deep Linking via useHashState.js (hook) + CopyLinkButton (componente)
+- Fix errore 409 duplicati corrispettivi COR10
+- Verifica credenziali IMAP Gmail e PEC
 
 ### Sessione corrente (completato)
 - **Corrispettivi**: rimosso stub vuoto dal DB → pagina mostra correttamente stato vuoto
-- **Widget Cucina Dashboard**: RIMOSSO (su richiesta — gestionale non include più tracciabilità/ricette)
+- **Widget Cucina Dashboard**: RIMOSSO
 - **SecondaryTabs**: rimosso tab "Import XML" dalla sezione Fatture
 - **CicloPassivoHub.jsx**: rimosso redirect, route /ciclo-passivo → redirect a /fatture
-- **Route /ciclo-passivo/import**: ELIMINATA da main.jsx (import XML avviene solo da Import Documenti)
-- **ArchivioFattureRicevute.jsx**: eliminati tab interni (📋 Archivio, 🔄 Riconcilia, ✅ Storico)
-  - Rimossi stati e funzioni non necessari: dashboard, handlePayManual, handleMatchManuale, fetchDashboard, handleSelectScadenza, isScadenzaPassata, ecc.
-  - Pagina mostra direttamente: statistiche + filtri + tabella fatture con pulsanti Vedi/Cassa/Banca
+- **Route /ciclo-passivo/import**: ELIMINATA da main.jsx
+- **ArchivioFattureRicevute.jsx**: eliminati tab interni
+- **BUG FIX CRITICO PEC**: `aruba_pec_downloader.py` ora cerca in INBOX + INBOX.lette (137 email trovate, 59 fatture importate)
+- **BUG FIX**: `centri_costo.py` — aggiunto `timezone` all'import datetime (NameError risolto)
+- **Deep Linking esteso**: useHashState + CopyLinkButton aggiunti in PrimaNota, F24, Fornitori
 
 ## Backlog / Task futuri
-- **P2**: Integrazione Email IMAP — bloccata per App Password Gmail non valida (ceraldigroupsr@gmail.com)
 - **P3**: Auth backend con Cookies HTTP-Only
 
 ## Key API Endpoints
