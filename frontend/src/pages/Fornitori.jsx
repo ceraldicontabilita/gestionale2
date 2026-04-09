@@ -575,9 +575,10 @@ function StatCard({ icon: Icon, label, value, color, bgColor }) {
 
 // Supplier Card con cambio rapido metodo
 function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices, onChangeMetodo, onSearchPiva, onShowFatturato, onShowSchedeTecniche, selectedYear }) {
-  const nome = supplier.ragione_sociale || supplier.denominazione || 'Senza nome';
-  const hasIncomplete = !supplier.partita_iva || !supplier.email;
-  const hasPiva = !!supplier.partita_iva;
+  const nome = supplier.ragione_sociale || supplier.denominazione || supplier.nome || supplier.name || 'Senza nome';
+  const piva = supplier.partita_iva || supplier.piva || null;
+  const hasIncomplete = !piva || !supplier.email;
+  const hasPiva = !!piva;
   const metodoKey = supplier.metodo_pagamento || 'bonifico';
   const metodo = getMetodo(metodoKey);
   const [showMetodoMenu, setShowMetodoMenu] = useState(false);
@@ -588,7 +589,7 @@ function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices, onChangeMeto
   const buttonRef = React.useRef(null);
   
   const handleShowFatturato = async () => {
-    if (!supplier.partita_iva) {
+    if (!piva) {
       alert('Questo fornitore non ha una Partita IVA');
       return;
     }
@@ -609,7 +610,7 @@ function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices, onChangeMeto
   };
 
   const handleSearchPiva = async () => {
-    if (!supplier.partita_iva) return;
+    if (!piva) return;
     setSearching(true);
     await onSearchPiva(supplier);
     setSearching(false);
@@ -687,9 +688,9 @@ function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices, onChangeMeto
               }}>
                 {nome}
               </div>
-              {supplier.partita_iva && (
+              {piva && (
                 <div style={{ fontSize: '12px', color: '#6b7280', fontFamily: 'monospace' }}>
-                  P.IVA {supplier.partita_iva}
+                  P.IVA {piva}
                 </div>
               )}
             </div>
@@ -1110,7 +1111,7 @@ export default function Fornitori() {
       const metodo = s.metodo_pagamento || 'bonifico';
       if (metodo !== filterMetodo) return false;
     }
-    if (filterIncomplete && s.partita_iva && s.email) return false;
+    if (filterIncomplete && (s.partita_iva || s.piva) && s.email) return false;
     return true;
   });
 
@@ -1161,7 +1162,7 @@ export default function Fornitori() {
   const handleDelete = async (id, forceDelete = false) => {
     if (!forceDelete) {
       const supplier = suppliers.find(s => s.id === id);
-      const nome = supplier?.ragione_sociale || supplier?.name || 'questo fornitore';
+      const nome = supplier?.ragione_sociale || supplier?.nome || supplier?.name || 'questo fornitore';
       if (!window.confirm(`Eliminare definitivamente "${nome}"?\n\nAttenzione: questa operazione non può essere annullata.`)) {
         return;
       }
@@ -1174,7 +1175,7 @@ export default function Fornitori() {
       const errorMsg = error.response?.data?.detail || error.response?.data?.message || error.message;
       if (error.response?.status === 400 && errorMsg.includes('fatture collegate')) {
         const supplier = suppliers.find(s => s.id === id);
-        const nome = supplier?.ragione_sociale || supplier?.name || 'questo fornitore';
+        const nome = supplier?.ragione_sociale || supplier?.nome || supplier?.name || 'questo fornitore';
         if (window.confirm(`"${nome}" ha fatture collegate. Eliminare comunque (eliminazione forzata)?`)) {
           handleDelete(id, true);
         }
@@ -1191,13 +1192,14 @@ export default function Fornitori() {
 
   // Ricerca dati azienda tramite Partita IVA
   const handleSearchPiva = async (supplier) => {
-    if (!supplier.partita_iva) {
+    const piva = supplier.partita_iva || supplier.piva;
+    if (!piva) {
       alert('Questo fornitore non ha una Partita IVA');
       return;
     }
     
     try {
-      const res = await api.get(`/api/suppliers/search-piva/${supplier.partita_iva}`);
+      const res = await api.get(`/api/suppliers/search-piva/${piva}`);
       const data = res.data;
       
       if (data.found) {
@@ -1799,7 +1801,7 @@ export default function Fornitori() {
                     📋 Estratto Fatture
                   </div>
                   <div style={{ fontSize: '14px', opacity: 0.9, marginTop: 4 }}>
-                    {estrattoModal.fornitore?.ragione_sociale || estrattoModal.fornitore?.denominazione}
+                    {estrattoModal.fornitore?.ragione_sociale || estrattoModal.fornitore?.nome || estrattoModal.fornitore?.denominazione}
                     {' • '}{estrattoModal.fornitore?.partita_iva}
                   </div>
                 </div>
@@ -2101,7 +2103,7 @@ export default function Fornitori() {
                       📋 Schede Tecniche Prodotti
                     </h2>
                     <p style={{ margin: '4px 0 0 0', fontSize: 13, opacity: 0.9 }}>
-                      {schedeTecnicheModal.fornitore?.ragione_sociale || schedeTecnicheModal.fornitore?.name}
+                      {schedeTecnicheModal.fornitore?.ragione_sociale || schedeTecnicheModal.fornitore?.nome || schedeTecnicheModal.fornitore?.name}
                     </p>
                   </div>
                   <button
