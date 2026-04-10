@@ -4,7 +4,7 @@ import {
   CheckCircle, XCircle, ToggleLeft, ToggleRight, Send
 } from 'lucide-react';
 import api from '../api';
-import { COLORS, STYLES, SPACING } from '../lib/utils', useIsMobile, RG, pagePad } from '../lib/utils';
+import { COLORS, STYLES, SPACING , useIsMobile, RG, pagePad } from '../lib/utils';
 
 const TIPI = ['fattura_xml', 'cedolino', 'pagopa', 'inps', 'inail', 'paypal', 'cartella_esattoriale', 'generico'];
 const CANALI = ['pec', 'gmail'];
