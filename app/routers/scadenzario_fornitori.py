@@ -9,7 +9,7 @@ from datetime import datetime, timezone, timedelta
 import logging
 
 from app.database import Database
-from app.routers.ciclo_passivo_integrato import cerca_match_bancario, esegui_riconciliazione
+from app.routers.fatture_module.ciclo_utils import cerca_match_bancario, esegui_riconciliazione
 from app.utils.error_handler import handle_errors
 
 router = APIRouter()

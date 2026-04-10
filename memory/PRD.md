@@ -19,7 +19,8 @@ Applicazione ERP full-stack (React + FastAPI + MongoDB Atlas) — **solo contabi
 │   │   ├── invoices/corrispettivi.py   # Corrispettivi telematici
 │   │   ├── prima_nota_module/          # Prima Nota (Cassa + Banca)
 │   │   ├── suppliers_module/           # Anagrafica Fornitori (usa collection "fornitori")
-│   │   ├── fatture_module/             # Fatture Ricevute
+│   │   ├── fatture_module/             # Fatture Ricevute + Import XML
+│   │   │   └── ciclo_utils.py          # Utility magazzino/scadenziario condivise
 │   │   ├── openapi_imprese.py          # Aggiornamento anagrafica da Camera di Commercio
 │   │   └── schede_tecniche.py          # Ricerca PDF schede tecniche (LLM + web + XML)
 ├── frontend/src/
@@ -30,7 +31,6 @@ Applicazione ERP full-stack (React + FastAPI + MongoDB Atlas) — **solo contabi
 │   │   ├── hub/FattureHub.jsx          # Hub fatture
 │   │   ├── Fornitori.jsx               # Anagrafica fornitori + OpenAPI + Schede Tecniche
 │   │   ├── ArchivioFattureRicevute.jsx # Archivio fatture (no tab interni)
-│   │   └── CicloPassivoAdmin.jsx       # File esistente ma senza route attiva (da implementare)
 │   └── components/layout/
 │       ├── TopNav.jsx                  # Navigazione principale
 │       └── SecondaryTabs.jsx           # Tab secondari per sezione
@@ -42,6 +42,9 @@ Applicazione ERP full-stack (React + FastAPI + MongoDB Atlas) — **solo contabi
 - FiscoHub, MotoreContabile, LiquidazioneIVA, RiconciliazioneF24, CodiciTributari, F24.jsx
 - Route `/archivio-fatture-ricevute` (duplicato → redirect a `/fatture`)
 - Tab "Escludi da Tracciabilità" dal form fornitori
+- **CicloPassivoAdmin.jsx** — modulo Ciclo Passivo rimosso (usa Import Documenti già esistente)
+- **ciclo_passivo_integrato.py** — router rimosso, funzioni utility spostate in `fatture_module/ciclo_utils.py`
+- Link "Import Fatture" dal menu Altro in TopNav
 
 ## Completato
 

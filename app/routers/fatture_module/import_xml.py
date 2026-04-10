@@ -10,7 +10,7 @@ import io
 
 from app.database import Database
 from app.parsers.fattura_elettronica_parser import parse_fattura_xml
-from app.routers.ciclo_passivo_integrato import (
+from app.routers.fatture_module.ciclo_utils import (
     crea_scadenza_pagamento,
     processa_carico_magazzino
 )

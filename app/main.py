@@ -195,8 +195,7 @@ from app.routers.fatture_module.api_tracciabilita import router as r_api_traccia
 # --- Sync Relazionale ---
 from app.routers import sync_relazionale
 
-# --- Ciclo Passivo Integrato ---
-from app.routers import ciclo_passivo_integrato
+# --- Ciclo Passivo Integrato --- RIMOSSO (usa Import Documenti)
 
 # --- Employees Module ---
 from app.routers.employees import (
@@ -413,9 +412,6 @@ except Exception as e:
     logging.getLogger(__name__).warning(f"Tracciabilita non caricata: {e}")
 # tracciabilita rimosso (Blocco J1)
 app.include_router(corrispettivi.router, prefix="/api/corrispettivi", tags=["Corrispettivi"])
-
-# --- Ciclo Passivo Integrato (XML → Magazzino → Prima Nota → Scadenziario → Riconciliazione) ---
-app.include_router(ciclo_passivo_integrato.router, prefix="/api/ciclo-passivo", tags=["Ciclo Passivo Integrato"])
 
 # --- Employees Module ---
 app.include_router(dipendenti.router, prefix="/api/dipendenti", tags=["Dipendenti"])

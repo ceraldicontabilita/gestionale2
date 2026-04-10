@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 import uuid
 
 from app.database import Database
-from app.routers.ciclo_passivo_integrato import COL_SCADENZIARIO
+from app.routers.fatture_module.ciclo_utils import COL_SCADENZIARIO
 from .common import COL_FORNITORI, COL_FATTURE_RICEVUTE, logger
 
 

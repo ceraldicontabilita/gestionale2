@@ -20,7 +20,6 @@ const NAV_ITEMS = [
 ];
 
 const ALTRO_ITEMS = [
-  { to: '/import-fatture', label: 'Import Fatture', Icon: Download },
   { to: '/contabilita', label: 'Contabilità', Icon: FileBarChart },
   { to: '/magazzino', label: 'Magazzino', Icon: Warehouse },
   { to: '/documenti', label: 'Documenti', Icon: BookMarked },
