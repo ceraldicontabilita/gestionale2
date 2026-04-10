@@ -144,7 +144,7 @@ add_exception_handlers(app)
 
 # --- F24 Module ---
 from app.routers.f24 import (
-    f24_main, f24_riconciliazione, f24_public, quietanze
+    f24_main, f24_riconciliazione, f24_public, quietanze, f24_gestione_avanzata
 )
 
 # --- Accounting Module ---
