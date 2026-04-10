@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api';
-import { COLORS, STYLES, button, badge } from '../lib/utils';
+import { COLORS, STYLES, button, badge , useIsMobile, RG, pagePad } from '../lib/utils';
 import { PageLayout } from '../components/PageLayout';
 
 const FORM_VUOTO = { nome: '', categoria: '', prezzo_netto: '', aliquota_iva: 10, costo_produzione: '', margine: '', attivo: true, note: '' };
 
 export default function ProdottiVendita() {
+  const isMobile = useIsMobile();
   const [prodotti, setProdotti] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errore, setErrore] = useState(null);
@@ -100,7 +101,7 @@ export default function ProdottiVendita() {
       {showForm && (
         <div style={{ ...STYLES.card, marginBottom: 16 }}>
           <h3 style={{ margin: '0 0 12px', color: COLORS.primary }}>{editId ? 'Modifica Prodotto' : 'Nuovo Prodotto'}</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: 12 }}>
             <div>
               <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 4 }}>Nome *</label>
               <input style={STYLES.input} value={form.nome} onChange={e => setForm(f => ({ ...f, nome: e.target.value }))} placeholder="Nome prodotto" />

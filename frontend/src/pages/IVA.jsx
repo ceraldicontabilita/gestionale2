@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import api from "../api";
-import { formatEuro, formatDateIT } from '../lib/utils';
+import { formatEuro, formatDateIT , useIsMobile, RG, pagePad } from '../lib/utils';
 import { useAnnoGlobale } from "../contexts/AnnoContext";
 import { PageLayout, PageSection, PageGrid, PageLoading } from '../components/PageLayout';
 import { Receipt, TrendingUp, TrendingDown, FileText, Calendar, Download } from 'lucide-react';
 
 export default function IVA() {
+  const isMobile = useIsMobile();
   const { anno: selectedYear } = useAnnoGlobale();
   const [loading, setLoading] = useState(true);
   const [todayData, setTodayData] = useState(null);
@@ -188,7 +189,7 @@ export default function IVA() {
                         <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Q{q}</h3>
                         <span style={{ ...getSaldoBadge(stato), padding: '4px 10px', borderRadius: 6, fontSize: 12, fontWeight: 600 }}>{stato}</span>
                       </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12, marginBottom: 16 }}>
                         <div><div style={{ fontSize: 11, color: '#6b7280' }}>Debito</div><div style={{ fontSize: 16, fontWeight: 700, color: '#ea580c' }}>{formatEuro(totDebito)}</div></div>
                         <div><div style={{ fontSize: 11, color: '#6b7280' }}>Credito</div><div style={{ fontSize: 16, fontWeight: 700, color: '#16a34a' }}>{formatEuro(totCredito)}</div></div>
                       </div>

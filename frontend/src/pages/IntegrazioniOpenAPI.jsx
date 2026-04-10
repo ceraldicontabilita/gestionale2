@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
-import { STYLES, COLORS, formatEuro, button, badge } from '../lib/utils';
+import { STYLES, COLORS, formatEuro, button, badge , useIsMobile, RG, pagePad } from '../lib/utils';
 import { PageLayout } from '../components/PageLayout';
 
 export default function IntegrazioniOpenAPI() {
+  const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [sdiStatus, setSdiStatus] = useState(null);
   const [xbrlStatus, setXbrlStatus] = useState(null);
@@ -300,7 +301,7 @@ export default function IntegrazioniOpenAPI() {
               {/* Form Richiesta */}
               <div style={cardStyle}>
                 <h4 style={{ margin: '0 0 16px' }}>📥 Richiedi Bilancio</h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 12, alignItems: 'end' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr auto', gap: 12, alignItems: 'end' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 4 }}>Partita IVA *</label>
                     <input 
@@ -417,7 +418,7 @@ export default function IntegrazioniOpenAPI() {
             <div>
               <div style={cardStyle}>
                 <h4 style={{ margin: '0 0 16px' }}>📊 Richiedi Bilancio XBRL</h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 12, alignItems: 'end' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr auto', gap: 12, alignItems: 'end' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6 }}>
                       Partita IVA *

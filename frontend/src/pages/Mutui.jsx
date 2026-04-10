@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
-import { formatEuro } from '../lib/utils';
+import { formatEuro , useIsMobile, RG, pagePad } from '../lib/utils';
 import { PageLayout, PageSection, PageLoading } from '../components/PageLayout';
 import { 
   Landmark, 
@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 
 export default function Mutui() {
+  const isMobile = useIsMobile();
   const { anno } = useAnnoGlobale();
   const [mutui, setMutui] = useState([]);
   const [stats, setStats] = useState(null);
@@ -111,7 +112,7 @@ export default function Mutui() {
         {stats && (
           <div style={{ 
             display: 'grid', 
-            gridTemplateColumns: 'repeat(4, 1fr)', 
+            gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', 
             gap: 16, 
             marginBottom: 24 
           }}>
@@ -254,7 +255,7 @@ export default function Mutui() {
                 {/* Stats Row */}
                 <div style={{ 
                   display: 'grid', 
-                  gridTemplateColumns: 'repeat(4, 1fr)', 
+                  gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', 
                   gap: 16, 
                   marginTop: 16,
                   paddingTop: 16,
@@ -420,7 +421,7 @@ export default function Mutui() {
                   {/* Riepilogo Importi */}
                   <div style={{ 
                     display: 'grid', 
-                    gridTemplateColumns: 'repeat(3, 1fr)', 
+                    gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', 
                     gap: 16, 
                     marginTop: 16 
                   }}>

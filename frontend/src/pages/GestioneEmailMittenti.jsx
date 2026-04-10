@@ -137,7 +137,7 @@ export default function GestioneEmailMittenti() {
       </div>
 
       {/* KPI */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: SPACING.lg, marginBottom: SPACING.xl }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4,1fr)', gap: SPACING.lg, marginBottom: SPACING.xl }}>
         {[
           { label: 'Totale', value: mittenti.length },
           { label: 'Attivi', value: attivi },
@@ -172,7 +172,7 @@ export default function GestioneEmailMittenti() {
           <h3 style={{ margin: `0 0 ${SPACING.lg}px`, fontSize: 14, fontWeight: 700, color: COLORS.primary }}>
             Nuovo mittente personalizzato
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 2fr auto', gap: SPACING.md, alignItems: 'end' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '2fr 1fr 1fr 2fr auto', gap: SPACING.md, alignItems: 'end' }}>
             {[
               { key: 'pattern', label: 'PATTERN', placeholder: 'es. @esempio.it' },
               null, null,

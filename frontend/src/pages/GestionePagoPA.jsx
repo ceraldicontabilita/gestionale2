@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
+import { formatEuro, formatDateIT, STYLES, COLORS, button, badge , useIsMobile, RG, pagePad } from '../lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -14,6 +14,7 @@ import { toast } from '../components/ui/sonner';
 import api from '../api';
 
 export default function GestionePagoPA() {
+  const isMobile = useIsMobile();
   const [ricevute, setRicevute] = useState([]);
   const [movimentiBanca, setMovimentiBanca] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -156,7 +157,7 @@ export default function GestionePagoPA() {
           boxShadow: '0 2px 8px rgba(0,0,0,0.08)', 
           marginBottom: 20 
         }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 12 }}>
             <div style={{ 
               background: 'white', 
               borderRadius: 8, 
@@ -237,7 +238,7 @@ export default function GestionePagoPA() {
           </p>
         </div>
         <div style={{ padding: 16 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 16 }}>
             {/* INPS */}
             <div style={{ padding: 16, borderRadius: 8, border: '2px solid #bfdbfe', background: '#eff6ff' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>

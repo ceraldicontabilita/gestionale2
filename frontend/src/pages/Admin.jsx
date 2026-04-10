@@ -549,7 +549,7 @@ export default function Admin() {
             {showNewForm && (
               <div style={{ marginTop: 20, borderTop: '1px solid #e2e8f0', paddingTop: 20 }}>
                 <h4 style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>➕ Nuovo Account Email</h4>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 12 }}>
                   <div>
                     <label style={{ fontSize: 11, fontWeight: 500, display: 'block', marginBottom: 4 }}>Nome Account</label>
                     <input 
@@ -639,7 +639,7 @@ export default function Admin() {
                 <h4 style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>
                   ✏️ Modifica Account: {editingAccount.nome}
                   {editingAccount.is_env_default && <span style={{ fontSize: 10, color: '#6b7280', marginLeft: 8 }}>(Email Principale da .env)</span>}
-                </h4>                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
+                </h4>                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 12 }}>
                   <div>
                     <label style={{ fontSize: 11, fontWeight: 500, display: 'block', marginBottom: 4 }}>Nome Account</label>
                     <input 
@@ -876,7 +876,7 @@ export default function Admin() {
             </div>
 
             {/* Lista per categoria */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 16 }}>
               {['generale', 'fatture', 'f24', 'buste_paga'].map(cat => (
                 <div key={cat} style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: 12 }}>
                   <h5 style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, textTransform: 'capitalize' }}>

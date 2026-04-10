@@ -6,7 +6,7 @@
  */
 import React, { useState, useEffect } from 'react';
 import api from '../api';
-import { formatEuro, formatDateIT } from '../lib/utils';
+import { formatEuro, formatDateIT , useIsMobile, RG, pagePad } from '../lib/utils';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { 
   CreditCard, AlertTriangle, CheckCircle, XCircle, 
@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 
 export default function CoerenzaPOSCorrispettivi() {
+  const isMobile = useIsMobile();
   const { anno } = useAnnoGlobale();
   const [loading, setLoading] = useState(true);
   const [dati, setDati] = useState(null);
@@ -107,7 +108,7 @@ export default function CoerenzaPOSCorrispettivi() {
       {dati?.riepilogo && (
         <div style={{ 
           display: 'grid', 
-          gridTemplateColumns: 'repeat(4, 1fr)', 
+          gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', 
           gap: 12, 
           marginBottom: 20 
         }}>

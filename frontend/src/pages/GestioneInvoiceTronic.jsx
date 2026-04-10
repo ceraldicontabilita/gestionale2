@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
+import { formatEuro, formatDateIT, STYLES, COLORS, button, badge , useIsMobile, RG, pagePad } from '../lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -14,6 +14,7 @@ import { toast } from '../components/ui/sonner';
 import api from '../api';
 
 export default function GestioneInvoiceTronic() {
+  const isMobile = useIsMobile();
   const [status, setStatus] = useState(null);
   const [fatture, setFatture] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -176,7 +177,7 @@ export default function GestioneInvoiceTronic() {
             <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#1f2937' }}>📡 Stato Connessione</h2>
           </div>
           <div style={{ padding: 16 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 16 }}>
               <div>
                 <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Ambiente</p>
                 <p style={{ fontWeight: 500, margin: 0 }}>{status.environment === 'sandbox' ? '🧪 Sandbox (Test)' : '🚀 Produzione'}</p>
@@ -223,7 +224,7 @@ export default function GestioneInvoiceTronic() {
         boxShadow: '0 2px 8px rgba(0,0,0,0.08)', 
         marginBottom: 20 
       }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 12 }}>
           <div style={{ 
             background: 'white', 
             borderRadius: 8, 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../api';
-import { formatEuro, STYLES, COLORS, button, badge } from '../lib/utils';
+import { formatEuro, STYLES, COLORS, button, badge , useIsMobile, RG, pagePad } from '../lib/utils';
 import { FileText } from 'lucide-react';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { PageLayout } from '../components/PageLayout';
@@ -31,9 +31,9 @@ const styles = {
     background: `linear-gradient(to bottom right, ${from}, ${to})`, borderRadius: 12, padding: 20
   }),
   row: { display: 'flex', alignItems: 'center', gap: 16 },
-  grid4: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 },
-  grid3: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 },
-  grid2: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 },
+  grid4: { display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 16 },
+  grid3: { display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 16 },
+  grid2: { display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 24 },
   label: { color: 'white', fontWeight: '500' },
   select: { background: '#334155', color: 'white', padding: '8px 16px', borderRadius: 8, border: '1px solid #475569' },
   statLabel: (color) => ({ color: color, fontSize: 14, marginBottom: 4 }),
@@ -55,6 +55,7 @@ const styles = {
 };
 
 export default function ContabilitaAvanzata() {
+  const isMobile = useIsMobile();
   const { anno: selectedYear } = useAnnoGlobale();
   const [imposte, setImposte] = useState(null);
   const [statistiche, setStatistiche] = useState(null);
@@ -301,7 +302,7 @@ export default function ContabilitaAvanzata() {
               <span style={{ fontSize: 20, fontWeight: 'bold', color: 'white' }}>UTILE/PERDITA DI ESERCIZIO</span>
               <span style={{ fontSize: 24, fontWeight: 'bold', color: bilancio.conto_economico.utile_ante_imposte >= 0 ? '#4ade80' : '#f87171' }}>{formatEuro(bilancio.conto_economico.utile_ante_imposte)}</span>
             </div>
-            <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16 }}>
               <div style={{ padding: 12, background: 'rgba(51, 65, 85, 0.5)', borderRadius: 8 }}><p style={{ color: '#94a3b8', fontSize: 12 }}>Costi deducibili IRES</p><p style={{ color: 'white', fontWeight: 'bold' }}>{formatEuro(bilancio.conto_economico.costi.totale_deducibile_ires)}</p></div>
               <div style={{ padding: 12, background: 'rgba(51, 65, 85, 0.5)', borderRadius: 8 }}><p style={{ color: '#94a3b8', fontSize: 12 }}>Costi deducibili IRAP</p><p style={{ color: 'white', fontWeight: 'bold' }}>{formatEuro(bilancio.conto_economico.costi.totale_deducibile_irap)}</p></div>
             </div>

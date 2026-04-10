@@ -152,7 +152,7 @@ export default function RiconciliazionePaypal() {
         </div>
 
         {/* Stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12, marginBottom: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(5, 1fr)', gap: 12, marginBottom: 20 }}>
           {[
             { label: 'Estratti Conto', value: dashboard?.total_statements, color: '#0070ba' },
             { label: 'Transazioni', value: dashboard?.total_transactions, color: '#6366f1' },
@@ -186,7 +186,7 @@ export default function RiconciliazionePaypal() {
 
         {/* Dashboard Tab */}
         {activeTab === 'dashboard' && dashboard && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16 }}>
             {/* Top Fornitori */}
             <div style={{ background: 'white', borderRadius: 10, padding: 16, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
               <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 12, color: '#1f2937' }}>Top Fornitori PayPal</h3>

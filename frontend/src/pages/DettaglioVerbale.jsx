@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../api";
-import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
+import { formatEuro, formatDateIT, STYLES, COLORS, button, badge , useIsMobile, RG, pagePad } from '../lib/utils';
 import { PageLayout } from '../components/PageLayout';
 
 export default function DettaglioVerbale() {
+  const isMobile = useIsMobile();
   const { numeroVerbale, prefisso, numero } = useParams();
   const navigate = useNavigate();
   const [verbale, setVerbale] = useState(null);
@@ -114,7 +115,7 @@ export default function DettaglioVerbale() {
           </div>
         </div>
         
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24, marginTop: 24 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 24, marginTop: 24 }}>
           <div>
             <div style={{ fontSize: 11, opacity: 0.7 }}>TARGA</div>
             <div style={{ fontSize: 18, fontWeight: 'bold', fontFamily: 'monospace' }}>{verbale?.targa || '-'}</div>
@@ -135,7 +136,7 @@ export default function DettaglioVerbale() {
       </div>
 
       {/* Corpo */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 24 }}>
         {/* Colonna Sinistra */}
         <div>
           {/* Dettagli Verbale */}

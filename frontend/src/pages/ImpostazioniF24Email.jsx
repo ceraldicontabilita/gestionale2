@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { PageLayout } from '../components/PageLayout';
-import { STYLES, COLORS, button } from '../lib/utils';
+import { STYLES, COLORS, button , useIsMobile, RG, pagePad } from '../lib/utils';
 import {
   Settings, Mail, Plus, Trash2, Save, RefreshCw, Play,
   Clock, CheckCircle, AlertCircle, Loader2
@@ -204,6 +204,7 @@ function GmailSettingsSection() {
 
 /* ===== PAGINA PRINCIPALE ===== */
 export default function ImpostazioniF24Email() {
+  const isMobile = useIsMobile();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [scanning, setScanning] = useState(false);
@@ -381,7 +382,7 @@ export default function ImpostazioniF24Email() {
             </div>
           </div>
           <div style={cardBodyStyle}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 12, marginBottom: 16 }}>
               <div style={statBoxStyle}>
                 <div style={{ fontSize: 11, color: '#64748b', marginBottom: 4 }}>Scansione Auto</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -425,7 +426,7 @@ export default function ImpostazioniF24Email() {
             </h3>
           </div>
           <div style={cardBodyStyle}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: 16 }}>
               <div>
                 <label style={labelStyle}>Intervallo scansione (minuti)</label>
                 <input
@@ -480,7 +481,7 @@ export default function ImpostazioniF24Email() {
             {showAddMittente && (
               <div style={{ marginBottom: 20, padding: 16, borderRadius: 10, background: '#eff6ff', border: '1px solid #bfdbfe' }}>
                 <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 12, color: '#1e40af' }}>Nuovo Mittente</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 10 }}>
                   <input
                     placeholder="Email mittente"
                     value={newMittente.email}

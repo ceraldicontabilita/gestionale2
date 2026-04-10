@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
-import { STYLES, COLORS, formatEuro } from '../lib/utils';
+import { STYLES, COLORS, formatEuro , useIsMobile, RG, pagePad } from '../lib/utils';
 import { ExternalLink, RefreshCw, CheckCircle, AlertTriangle, Clock, Package } from 'lucide-react';
 
 const CERALDIAPP_URL = 'https://ceraldiapp.it';
 
 export default function TracciabilitaPage() {
+  const isMobile = useIsMobile();
   const [sync, setSync]       = useState(null);
   const [oggi, setOggi]       = useState(null);
   const [loading, setLoading] = useState(true);
@@ -123,7 +124,7 @@ export default function TracciabilitaPage() {
             Caricamento...
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14 }}>
 
             {/* Ponte ERP */}
             <StatBox

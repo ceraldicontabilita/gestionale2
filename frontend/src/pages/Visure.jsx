@@ -117,7 +117,7 @@ export default function Visure() {
       </div>
 
       {/* Grid info */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 20 }}>
         {/* Indirizzo */}
         <div style={{ 
           padding: 16, 
@@ -175,7 +175,7 @@ export default function Visure() {
         <div style={{ 
           marginTop: 20, 
           display: 'grid', 
-          gridTemplateColumns: 'repeat(3, 1fr)', 
+          gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', 
           gap: 20 
         }}>
           {mappedData?.fatturato && (

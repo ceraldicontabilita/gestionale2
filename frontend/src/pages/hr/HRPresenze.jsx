@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Check, X, Clock } from 'lucide-react';
 import api from '../../api';
-import { COLORS } from '../../lib/utils';
+import { COLORS , useIsMobile, RG, pagePad } from '../../lib/utils';
 
 export default function HRPresenze() {
+  const isMobile = useIsMobile();
   const [richieste, setRichieste] = useState([]);
   const [dipendenti, setDipendenti] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -45,7 +46,7 @@ export default function HRPresenze() {
       <h1 style={{ margin: '0 0 24px', fontSize: 22, fontWeight: 700, color: COLORS.text }}>Presenze & Richieste</h1>
 
       {/* KPI */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 16, marginBottom: 24 }}>
         {[
           { label: 'Richieste in Attesa', value: richieste.filter(r => r.stato === 'pending' || !r.stato).length, icon: <Clock size={20} color={COLORS.primary} /> },
           { label: 'Dipendenti Attivi', value: dipendenti.length, icon: <Calendar size={20} color="#22c55e" /> },

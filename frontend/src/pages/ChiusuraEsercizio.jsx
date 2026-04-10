@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
-import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
+import { formatEuro, formatDateIT, STYLES, COLORS, button, badge , useIsMobile, RG, pagePad } from '../lib/utils';
 import { CheckCircle, AlertTriangle, XCircle, ChevronRight, RefreshCw, FileText, Calendar, TrendingUp, TrendingDown, Lock, Unlock } from 'lucide-react';
 import { PageLayout } from '../components/PageLayout';
 
 export default function ChiusuraEsercizio() {
+  const isMobile = useIsMobile();
   const { anno } = useAnnoGlobale();
   const [loading, setLoading] = useState(true);
   const [stato, setStato] = useState(null);
@@ -314,7 +315,7 @@ export default function ChiusuraEsercizio() {
         <StepIndicator number={4} title="Nuovo Esercizio" active={activeStep === 4} completed={false} />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 24 }}>
         {/* Left Column - Verifica */}
         <div>
           <div style={{

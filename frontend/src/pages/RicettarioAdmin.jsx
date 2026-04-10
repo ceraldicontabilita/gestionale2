@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api';
-import { COLORS, STYLES, button, badge } from '../lib/utils';
+import { COLORS, STYLES, button, badge , useIsMobile, RG, pagePad } from '../lib/utils';
 import { PageLayout } from '../components/PageLayout';
 
 export default function RicettarioAdmin() {
+  const isMobile = useIsMobile();
   const [ricette, setRicette] = useState([]);
   const [stats, setStats] = useState({ totale: 0, da_approvare: 0 });
   const [loading, setLoading] = useState(true);
@@ -73,7 +74,7 @@ export default function RicettarioAdmin() {
       {showForm && (
         <div style={{ ...STYLES.card, marginBottom: 16 }}>
           <h3 style={{ margin: '0 0 12px', color: COLORS.primary }}>Nuova Ricetta</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
             <div>
               <label style={{ fontSize: 13, fontWeight: 600, display: 'block', marginBottom: 4 }}>Nome *</label>
               <input style={STYLES.input} value={form.nome} onChange={e => setForm(f => ({ ...f, nome: e.target.value }))} placeholder="Es. Pasta al pomodoro" />
@@ -147,7 +148,7 @@ export default function RicettarioAdmin() {
               <h3 style={{ margin: 0, color: COLORS.primary }}>{selezionata.nome}</h3>
               <button style={{ ...button('secondary'), padding: '4px 10px', fontSize: 12 }} onClick={() => setSelezionata(null)}>✕</button>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 8, marginBottom: 12 }}>
               <div><strong>Reparto:</strong> {selezionata.reparto || '-'}</div>
               <div><strong>Porzioni:</strong> {selezionata.porzioni || 1}</div>
               <div><strong>Food Cost:</strong> €{(selezionata.food_cost || 0).toFixed(3)}</div>

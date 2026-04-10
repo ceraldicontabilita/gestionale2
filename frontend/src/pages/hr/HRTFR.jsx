@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2, AlertCircle } from 'lucide-react';
 import api from '../../api';
-import { COLORS } from '../../lib/utils';
+import { COLORS , useIsMobile, RG, pagePad } from '../../lib/utils';
 
 function formatEuro(v) {
   if (v == null || isNaN(v)) return '—';
@@ -13,6 +13,7 @@ function formatData(d) {
 }
 
 export default function HRTFR() {
+  const isMobile = useIsMobile();
   const [dipendenti, setDipendenti] = useState([]);
   const [selected, setSelected] = useState(null);
   const [situazione, setSituazione] = useState(null);
@@ -135,7 +136,7 @@ export default function HRTFR() {
             {showForm && (
               <div style={{ background: 'white', border: `1px solid ${COLORS.border}`, borderRadius: 10, padding: 20, marginBottom: 20 }}>
                 <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 16 }}>Nuovo Acconto TFR</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr', gap: 12, marginBottom: 16 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 2fr', gap: 12, marginBottom: 16 }}>
                   <div>
                     <label style={{ fontSize: 11, fontWeight: 600, color: COLORS.textMuted, display: 'block', marginBottom: 4 }}>IMPORTO (€) *</label>
                     <input type="number" value={form.importo} onChange={e => setForm(p => ({ ...p, importo: e.target.value }))} placeholder="0.00" style={{ width: '100%', padding: '8px 10px', border: `1px solid ${COLORS.border}`, borderRadius: 6, fontSize: 14, boxSizing: 'border-box' }} />
