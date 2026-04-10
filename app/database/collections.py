@@ -30,7 +30,7 @@ class Collections:
     CALENDARIO_FISCALE = "calendario_fiscale"
     
     # === DIPENDENTI ===
-    DIPENDENTI = "employees"  # Collection UNICA
+    DIPENDENTI = "dipendenti"  # Collection UNICA (regola assoluta - MAI "employees")
     CEDOLINI = "cedolini"
     CEDOLINI_PARSED = "cedolini_parsed"
     CEDOLINI_EMAIL_ATTACHMENTS = "cedolini_email_attachments"

@@ -42,8 +42,8 @@ COLL_CLIENTS = "clients"  # Da implementare
 # ===========================================
 
 # Anagrafica dipendenti
-COLL_EMPLOYEES = "employees"  # 34 docs - Collezione UNICA per dipendenti
-COLL_DIPENDENTI = "dipendenti"  # Alias italiano (deprecata, usare COLL_EMPLOYEES)
+COLL_EMPLOYEES = "dipendenti"  # Regola assoluta: MAI "employees". Era "employees", rinominato.
+COLL_DIPENDENTI = "dipendenti"  # Collection canonica (usa questa, identica a COLL_EMPLOYEES)
 # DEPRECATA: anagrafica_dipendenti - tutti i dati migrati in employees
 
 # Cedolini/Buste paga
