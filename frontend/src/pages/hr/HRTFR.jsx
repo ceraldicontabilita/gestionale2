@@ -164,7 +164,7 @@ export default function HRTFR() {
               <>
                 {/* KPI situazione */}
                 {!situazione.error && (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
                     {[
                       { label: 'TFR Maturato', value: formatEuro(situazione.tfr_maturato || situazione.montante) },
                       { label: 'Acconti Erogati', value: formatEuro(situazione.acconti_totali || situazione.totale_acconti) },

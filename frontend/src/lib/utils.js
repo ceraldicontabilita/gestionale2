@@ -1,3 +1,4 @@
+import React from 'react';
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge"
 
@@ -340,3 +341,50 @@ export const BORDER_RADIUS = {
   full: 9999
 };
 
+
+/* ---------- RESPONSIVE HELPERS ---------- */
+
+/**
+ * Hook per rilevare se siamo su mobile (<= 768px)
+ * Uso: const isMobile = useIsMobile();
+ */
+export function useIsMobile(breakpoint = 768) {
+  const [isMobile, setIsMobile] = React.useState(
+    () => typeof window !== 'undefined' && window.innerWidth <= breakpoint
+  );
+  React.useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth <= breakpoint);
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, [breakpoint]);
+  return isMobile;
+}
+
+/**
+ * Ritorna gridTemplateColumns responsive:
+ * - desktop: colonne specificate
+ * - mobile:  1 colonna
+ * Uso: gridTemplateColumns: rg(isMobile, 'repeat(3,1fr)')
+ */
+export function rg(isMobile, desktopCols) {
+  return isMobile ? '1fr' : desktopCols;
+}
+
+/**
+ * Stili grid responsive pronti
+ */
+export const RG = {
+  col2:  (m) => ({ display:'grid', gridTemplateColumns: m ? '1fr' : '1fr 1fr',          gap: 16 }),
+  col3:  (m) => ({ display:'grid', gridTemplateColumns: m ? '1fr' : 'repeat(3,1fr)',    gap: 16 }),
+  col4:  (m) => ({ display:'grid', gridTemplateColumns: m ? '1fr 1fr' : 'repeat(4,1fr)', gap: 12 }),
+  col24: (m) => ({ display:'grid', gridTemplateColumns: m ? '1fr' : '2fr 4fr',          gap: 16 }),
+  kpi:   (m) => ({ display:'grid', gridTemplateColumns: m ? '1fr 1fr' : 'repeat(4,1fr)', gap: 12 }),
+  form:  (m) => ({ display:'grid', gridTemplateColumns: m ? '1fr' : '1fr 1fr',          gap: 16 }),
+};
+
+/**
+ * Padding pagina responsive
+ */
+export function pagePad(isMobile) {
+  return isMobile ? '12px 16px' : '20px 24px';
+}

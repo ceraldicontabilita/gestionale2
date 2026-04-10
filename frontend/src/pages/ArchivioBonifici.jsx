@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import api from '../api';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
-import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
+import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils', useIsMobile, RG, pagePad } from '../lib/utils';
 import { PageLayout } from '../components/PageLayout';
 import { useHashState } from '../hooks/useHashState';
 import { CopyLinkButton } from '../components/CopyLinkButton';
@@ -10,6 +10,7 @@ import { CopyLinkButton } from '../components/CopyLinkButton';
 const formatDate = formatDateIT;
 
 export default function ArchivioBonifici() {
+  const isMobile = useIsMobile();
   const { anno } = useAnnoGlobale();
   const [transfers, setTransfers] = useState([]);
   const [summary, setSummary] = useState({});

@@ -145,7 +145,7 @@ export default function HRCedolini() {
       )}
 
       {/* KPI */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
         {[
           { label: 'Cedolini Totali', value: cedolini.length },
           { label: 'Da Gmail', value: daGmail, highlight: daGmail > 0 },

@@ -911,3 +911,65 @@ code {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* ─── RESPONSIVE GLOBALE — aggiunto Chat 8 ─────────────────────────────── */
+
+/* Tabelle: scroll orizzontale su mobile invece di overflow */
+@media (max-width: 768px) {
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+  }
+
+  /* Padding pagina ridotto */
+  .page-content {
+    padding: 8px !important;
+  }
+
+  /* Testo più piccolo nelle celle */
+  td, th {
+    font-size: 12px !important;
+    padding: 6px 8px !important;
+  }
+
+  /* Input full-width su mobile */
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  input[type="date"],
+  select,
+  textarea {
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Bottoni full-width su mobile quando isolati */
+  .btn-mobile-full {
+    width: 100% !important;
+    text-align: center !important;
+  }
+
+  /* Nascondi colonne non essenziali su mobile */
+  .hide-mobile {
+    display: none !important;
+  }
+
+  /* Stack flex su mobile */
+  .flex-mobile-col {
+    flex-direction: column !important;
+  }
+
+  /* Card padding ridotto */
+  .card-mobile {
+    padding: 12px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  td, th {
+    font-size: 11px !important;
+    padding: 4px 6px !important;
+  }
+}

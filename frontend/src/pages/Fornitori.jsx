@@ -5,7 +5,7 @@ import api from '../api';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
 import Portal from '../components/Portal';
 import { PageLayout } from '../components/PageLayout';
-import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
+import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils', useIsMobile, RG, pagePad } from '../lib/utils';
 import { useHashState } from '../hooks/useHashState';
 import { CopyLinkButton } from '../components/CopyLinkButton';
 import { 
@@ -301,7 +301,7 @@ function SupplierModal({ isOpen, onClose, supplier, onSave, saving }) {
             </div>
 
             {/* P.IVA e CF */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '12px' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>
                   Partita IVA
@@ -429,7 +429,7 @@ function SupplierModal({ isOpen, onClose, supplier, onSave, saving }) {
             </div>
 
             {/* Telefono, Email */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '12px' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>Telefono</label>
                 <input
@@ -451,7 +451,7 @@ function SupplierModal({ isOpen, onClose, supplier, onSave, saving }) {
             </div>
 
             {/* Metodo pagamento e giorni */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '12px' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>Metodo Pagamento</label>
                 <select
@@ -1083,6 +1083,7 @@ function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices, onChangeMeto
 }
 
 export default function Fornitori() {
+  const isMobile = useIsMobile();
   const { anno: selectedYear } = useAnnoGlobale();
   const navigate = useNavigate();
   const [suppliers, setSuppliers] = useState([]);
@@ -1769,7 +1770,7 @@ export default function Fornitori() {
                   </div>
 
                   {/* Stats Grid */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
                     <div style={{ background: '#f0fdf4', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
                       <div style={{ fontSize: '12px', color: '#16a34a' }}>Pagate</div>
                       <div style={{ fontSize: '20px', fontWeight: 700, color: '#15803d' }}>{fatturatoModal.data.fatture_pagate || 0}</div>

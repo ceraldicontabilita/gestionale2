@@ -262,7 +262,7 @@ export default function ClassificazioneDocumenti() {
           boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
           marginBottom: 20
         }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(5, 1fr)', gap: 12 }}>
             <div style={{
               background: 'white',
               borderRadius: 8,
@@ -360,7 +360,7 @@ export default function ClassificazioneDocumenti() {
               📧 Scansione Email
             </h3>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 16, marginBottom: 16 }}>
               <div>
                 <label style={{ display: 'block', fontSize: 14, color: '#6b7280', marginBottom: 4 }}>Cartella</label>
                 <select
@@ -435,7 +435,7 @@ export default function ClassificazioneDocumenti() {
               <div style={{ marginTop: 24, borderTop: '1px solid #e5e7eb', paddingTop: 16 }} data-testid="scan-results">
                 <h4 style={{ fontWeight: 500, marginBottom: 12 }}>Risultati Scansione</h4>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 16 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 12, marginBottom: 16 }}>
                   <div style={{ background: '#f9fafb', borderRadius: 8, padding: 12, textAlign: 'center' }}>
                     <div style={{ fontSize: 20, fontWeight: 'bold' }}>{scanResults.email_totali}</div>
                     <div style={{ fontSize: 12, color: '#6b7280' }}>Email Totali</div>
@@ -607,7 +607,7 @@ export default function ClassificazioneDocumenti() {
                 Mapping Sezioni Gestionale
               </h3>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 12 }}>
                 {Object.entries(stats.mapping_gestionale).map(([section, data]) => {
                   const sectionConfig = GESTIONALE_SECTIONS[section];
                   return (

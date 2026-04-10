@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../api';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
-import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
+import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils', useIsMobile, RG, pagePad } from '../lib/utils';
 import { useHashState } from '../hooks/useHashState';
 import { CopyLinkButton } from '../components/CopyLinkButton';
 
@@ -17,6 +17,7 @@ import { CopyLinkButton } from '../components/CopyLinkButton';
  * - Dati da estratto conto
  */
 export default function PrimaNota() {
+  const isMobile = useIsMobile();
   // La pagina è responsive e funziona sia su desktop che mobile
   return <PrimaNotaDesktop />;
 }
@@ -649,7 +650,7 @@ function PrimaNotaDesktop() {
                 </span>
               </summary>
               
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginTop: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 10, marginTop: 12 }}>
                 {/* Corrispettivo - Ultra compatto */}
                 <div style={{ background: 'white', borderRadius: 8, padding: 10, borderLeft: '3px solid #ff9800' }}>
                   <div style={{ fontSize: 11, fontWeight: 'bold', color: '#92400e', marginBottom: 6 }}>📊 Corrispettivo</div>
@@ -1648,7 +1649,7 @@ function EditMovimentoModal({ movimento, tipo, onClose, onSave }) {
         <form onSubmit={handleSubmit} style={{ padding: 24 }}>
           <div style={{ display: 'grid', gap: 16 }}>
             {/* Data e Tipo */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
               <div>
                 <label style={labelStyle}>Data</label>
                 <input

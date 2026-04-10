@@ -154,7 +154,7 @@ export default function IntegrazioniOpenAPI() {
 
         <div style={STYLES.pageContent}>
           {/* Status Cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, marginBottom: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 16, marginBottom: 24 }}>
             {/* SDI Status */}
             <div style={cardStyle}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -200,7 +200,7 @@ export default function IntegrazioniOpenAPI() {
           {/* Tab Content */}
           {activeTab === 'sdi' && (
             <div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
                 {/* Ricevi Fatture */}
                 <div style={cardStyle}>
                   <h4 style={{ margin: '0 0 12px', fontSize: 14 }}>📥 Ricevi Fatture</h4>

@@ -4,7 +4,7 @@ import {
   CheckCircle, XCircle, ToggleLeft, ToggleRight, Send
 } from 'lucide-react';
 import api from '../api';
-import { COLORS, STYLES, SPACING } from '../lib/utils';
+import { COLORS, STYLES, SPACING } from '../lib/utils', useIsMobile, RG, pagePad } from '../lib/utils';
 
 const TIPI = ['fattura_xml', 'cedolino', 'pagopa', 'inps', 'inail', 'paypal', 'cartella_esattoriale', 'generico'];
 const CANALI = ['pec', 'gmail'];
@@ -30,6 +30,7 @@ function TipoBadge({ tipo }) {
 }
 
 export default function GestioneEmailMittenti() {
+  const isMobile = useIsMobile();
   const [mittenti, setMittenti] = useState([]);
   const [loading, setLoading]   = useState(true);
   const [tab, setTab]           = useState('pec');

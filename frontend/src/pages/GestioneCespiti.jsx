@@ -16,9 +16,9 @@ const styles = {
   header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
   title: { fontSize: 18, fontWeight: 'bold', color: '#1e293b', display: 'flex', alignItems: 'center', gap: 8 },
   label: { fontSize: 11, fontWeight: '500', color: '#475569', marginBottom: 4, display: 'block' },
-  grid2: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 },
-  grid3: { display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 },
-  grid4: { display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 },
+  grid2: { display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 8 },
+  grid3: { display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 8 },
+  grid4: { display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 8 },
   card: { background: 'white', borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: 12 },
   cardContent: { padding: 8 },
   input: { height: 28, fontSize: 12 },
@@ -176,7 +176,7 @@ export default function GestioneCespiti() {
           </div>
           {showForm && (
             <div style={styles.formCard}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 8 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 8, marginBottom: 8 }}>
                 <div><label style={styles.label}>Descrizione*</label><Input value={nuovoCespite.descrizione} onChange={(e) => setNuovoCespite({...nuovoCespite, descrizione: e.target.value})} style={styles.input} placeholder="Es: Forno" /></div>
                 <div><label style={styles.label}>Categoria*</label>
                   <Select value={nuovoCespite.categoria} onValueChange={(v) => setNuovoCespite({...nuovoCespite, categoria: v})}>

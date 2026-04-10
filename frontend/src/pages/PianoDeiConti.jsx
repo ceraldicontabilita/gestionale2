@@ -537,7 +537,7 @@ export default function PianoDeiConti() {
                   Usa | per alternative (es. ENEL|EDISON per luce o gas)
                 </div>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 10 }}>
                 <div>
                   <label style={{ display: 'block', marginBottom: 5, fontWeight: 'bold', fontSize: 13 }}>
                     Conto DARE *
@@ -650,7 +650,7 @@ export default function PianoDeiConti() {
                 </div>
 
                 {/* Saldo + info */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 1, background: '#f0f0f0' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: 1, background: '#f0f0f0' }}>
                   {[
                     { label: 'Saldo', val: formatEuro(selectedConto.saldo || 0), color: (selectedConto.saldo || 0) >= 0 ? '#4caf50' : '#f44336' },
                     { label: 'Natura', val: selectedConto.natura || '—', color: '#607d8b' },

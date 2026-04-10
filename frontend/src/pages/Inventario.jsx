@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
-import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
+import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils', useIsMobile, RG, pagePad } from '../lib/utils';
 import { Package, Search, Plus, Trash2, Save, X, Check, Calculator, Archive } from 'lucide-react';
 import { PageLayout } from '../components/PageLayout';
 
 export default function Inventario() {
+  const isMobile = useIsMobile();
   const { anno } = useAnnoGlobale();
   const [inventari, setInventari] = useState([]);
   const [loading, setLoading] = useState(true);

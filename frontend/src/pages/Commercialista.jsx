@@ -897,7 +897,7 @@ export default function Commercialista() {
               </p>
             </div>
             <div style={{ padding: 20 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 15, marginBottom: 20 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 15, marginBottom: 20 }}>
                 <div style={{ background: '#e8f5e9', padding: 15, borderRadius: 8, textAlign: 'center' }}>
                   <div style={{ fontSize: 12, color: '#666' }}>Entrate</div>
                   <div style={{ fontSize: 18, fontWeight: 'bold', color: '#4caf50' }}>

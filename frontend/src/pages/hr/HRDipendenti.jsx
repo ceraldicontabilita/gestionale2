@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Search, Plus, User, Edit2, Save, X, ChevronRight } from 'lucide-react';
 import api from '../../api';
-import { COLORS, STYLES, SPACING } from '../../lib/utils';
+import { COLORS, STYLES, SPACING, useIsMobile, RG, pagePad } from '../../lib/utils';
 
 const TABS = [
   { id: 'anagrafica',   label: 'Anagrafica' },
@@ -77,7 +77,7 @@ function TabAnagrafica({ dip, onSaved }) {
         }
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 32px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 0 : '0 32px' }}>
         {field('Nome', 'nome')}
         {field('Cognome', 'cognome')}
         {field('Codice Fiscale', 'codice_fiscale')}
@@ -180,7 +180,7 @@ function TabCedolini({ dip }) {
 
       {!loading && cedolini.length > 0 && (
         <>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: 12, marginBottom: 24 }}>
             {[
               { label: 'Cedolini', value: data?.totale_cedolini },
               { label: 'Totale Lordo', value: formatEuro(data?.totale_lordo) },
@@ -287,7 +287,7 @@ function TabMovimenti({ dip }) {
 
         {showFormAcconto && (
           <div style={{ border: `1px solid ${COLORS.border}`, borderRadius: 8, padding: 16, marginBottom: 16, background: '#f8fafc' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 2fr', gap: 12, marginBottom: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 2fr', gap: 12, marginBottom: 12 }}>
               <div>
                 <label style={{ fontSize: 11, fontWeight: 600, color: COLORS.textMuted, display: 'block', marginBottom: 4 }}>IMPORTO (€)</label>
                 <input type="number" value={formAcconto.importo} onChange={e => setFormAcconto(p => ({ ...p, importo: e.target.value }))} placeholder="0.00" style={{ width: '100%', padding: '8px 10px', border: `1px solid ${COLORS.border}`, borderRadius: 6, fontSize: 14, boxSizing: 'border-box' }} />
@@ -370,7 +370,7 @@ function TabGiustificativi({ dip }) {
   return (
     <div>
       {saldo && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 24 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3, 1fr)', gap: 12, marginBottom: 24 }}>
           {[
             { label: 'Ferie Residue', value: `${saldo.ferie_residue ?? '—'} gg` },
             { label: 'Permessi Residui', value: `${saldo.permessi_residui ?? '—'} ore` },
@@ -405,6 +405,7 @@ function TabGiustificativi({ dip }) {
 
 // ─── Pagina principale ────────────────────────────────────────────────────────
 export default function HRDipendenti() {
+  const isMobile = useIsMobile();
   const { tab = 'anagrafica' } = useParams();
   const navigate = useNavigate();
 
@@ -442,7 +443,7 @@ export default function HRDipendenti() {
     <div style={{ height: 'calc(100vh - 110px)', display: 'flex', background: '#f8fafc' }}>
 
       {/* ── Sidebar lista dipendenti ── */}
-      <div style={{ width: 280, minWidth: 280, background: 'white', borderRight: `1px solid ${COLORS.border}`, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ width: isMobile ? '100%' : 280, minWidth: isMobile ? 'unset' : 280, background: 'white', borderRight: isMobile ? 'none' : `1px solid ${COLORS.border}`, borderBottom: isMobile ? `1px solid ${COLORS.border}` : 'none', display: 'flex', flexDirection: 'column' }}>
         {/* Header */}
         <div style={{ padding: '16px 16px 12px', borderBottom: `1px solid ${COLORS.border}` }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.text, marginBottom: 10 }}>

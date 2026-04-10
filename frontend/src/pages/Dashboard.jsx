@@ -309,7 +309,7 @@ export default function Dashboard() {
                 Caricamento...
               </div>
             ) : volumeRealeData ? (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 15 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 15 }}>
                 <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 8, padding: 16 }}>
                   <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, marginBottom: 4 }}>Fatturato Ufficiale</div>
                   <div style={{ color: 'white', fontSize: 20, fontWeight: 700 }}>{formatEuro(volumeRealeData.fatturato_ufficiale)}</div>
@@ -381,7 +381,7 @@ export default function Dashboard() {
             </span>
           </div>
           
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 10 }}>
             <div style={{ background: 'rgba(16,185,129,0.2)', borderRadius: 6, padding: 10, borderLeft: '3px solid #10b981' }}>
               <div style={{ fontSize: 10, opacity: 0.8 }}>RICAVI</div>
               <div style={{ fontSize: 16, fontWeight: 700 }}>{formatEuro(bilancioIstantaneo.ricavi?.totale || 0)}</div>
@@ -422,7 +422,7 @@ export default function Dashboard() {
             </Link>
           </div>
           
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 10 }}>
             <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 6, padding: 10 }}>
               <div style={{ fontSize: 10, opacity: 0.8 }}>Utile</div>
               <div style={{ fontSize: 16, fontWeight: 'bold' }}>{formatEuro(imposteData.utile_civilistico)}</div>
@@ -779,7 +779,7 @@ export default function Dashboard() {
                   {statoRiconciliazione.fatture.percentuale_pagate}%
                 </span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, fontSize: 13 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 10, fontSize: 13 }}>
                 <div>
                   <div style={{ color: '#6b7280' }}>Pagate</div>
                   <div style={{ fontWeight: 'bold', color: '#16a34a' }}>
@@ -809,7 +809,7 @@ export default function Dashboard() {
                   {statoRiconciliazione.salari.percentuale_riconciliati}%
                 </span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, fontSize: 13 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 10, fontSize: 13 }}>
                 <div>
                   <div style={{ color: '#6b7280' }}>Riconciliati</div>
                   <div style={{ fontWeight: 'bold', color: '#16a34a' }}>
@@ -867,7 +867,7 @@ export default function Dashboard() {
               </span>
             </div>
             
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 12 }}>
               {/* Fornitori */}
               <div style={{ background: 'white', borderRadius: 10, padding: 12, textAlign: 'center' }}>
                 <div style={{ fontSize: 11, color: '#6b7280', marginBottom: 4 }}>Fornitori</div>

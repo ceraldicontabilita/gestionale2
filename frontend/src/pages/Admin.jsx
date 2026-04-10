@@ -2,11 +2,12 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from "../api";
 import { useAnnoGlobale } from '../contexts/AnnoContext';
-import { STYLES, COLORS, button, badge, formatEuro } from '../lib/utils';
+import { STYLES, COLORS, button, badge, formatEuro , useIsMobile, RG, pagePad } from '../lib/utils';
 import { PageLayout } from '../components/PageLayout';
 import { useHashState } from '../hooks/useHashState';
 
 export default function Admin() {
+  const isMobile = useIsMobile();
   const { anno } = useAnnoGlobale();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -748,7 +749,7 @@ export default function Admin() {
             </p>
 
             {/* Campi fissi */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 12, marginBottom: 16 }}>
               <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 6, padding: '8px 12px' }}>
                 <div style={{ fontSize: 10, color: '#6b7280', marginBottom: 2, fontWeight: 500 }}>Email PEC</div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#1e293b' }}>

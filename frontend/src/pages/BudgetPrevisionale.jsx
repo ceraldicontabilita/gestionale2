@@ -391,7 +391,7 @@ export default function BudgetPrevisionale() {
                     return (
                       <div key={key} style={{ background: '#f8fafc', padding: 16, borderRadius: 12, border: '1px solid #e2e8f0' }}>
                         <div style={{ fontSize: 12, fontWeight: 600, color: '#475569', textTransform: 'uppercase', marginBottom: 12 }}>{key}</div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 8 }}>
                           <div>
                             <div style={{ fontSize: 11, color: '#94a3b8' }}>Budget</div>
                             <div style={{ fontSize: 18, fontWeight: 700, color: '#475569' }}>{formatEuro(t.budget)}</div>

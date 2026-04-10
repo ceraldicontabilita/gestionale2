@@ -14,7 +14,7 @@
 import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import api from '../api';
-import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
+import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils', useIsMobile, RG, pagePad } from '../lib/utils';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { 
   Brain, RefreshCw, CheckCircle, AlertCircle, Tag, ChevronRight, 
@@ -96,6 +96,7 @@ function LoadingSpinner({ text = 'Caricamento...' }) {
 // ============================================================
 
 export default function LearningMachine() {
+  const isMobile = useIsMobile();
   // === URL TAB NAVIGATION ===
   const navigate = useNavigate();
   const location = useLocation();
@@ -589,7 +590,7 @@ export default function LearningMachine() {
           </div>
 
           {/* Stats */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 16, marginBottom: 20 }}>
             <StatCard 
               icon={AlertCircle}
               label="Da Classificare"
@@ -616,7 +617,7 @@ export default function LearningMachine() {
           {fornitoriLoading ? (
             <LoadingSpinner />
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16 }}>
               {/* Lista fornitori non classificati */}
               <div style={{ background: 'white', borderRadius: 12, padding: 20, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
                 <h3 style={{ margin: '0 0 16px 0', fontSize: 16, fontWeight: 600, color: '#1e3a5f', display: 'flex', alignItems: 'center', gap: 8 }}>

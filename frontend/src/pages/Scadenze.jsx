@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
-import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
+import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils', useIsMobile, RG, pagePad } from '../lib/utils';
 import { PageLayout } from '../components/PageLayout';
 import InvoiceXMLViewer from '../components/InvoiceXMLViewer';
 
 export default function Scadenze() {
+  const isMobile = useIsMobile();
   const { anno } = useAnnoGlobale();
   const navigate = useNavigate();
   const [scadenze, setScadenze] = useState([]);
@@ -803,7 +804,7 @@ export default function Scadenze() {
                 />
               </div>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 15 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 15 }}>
                 <div>
                   <label style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: '500' }}>Tipo</label>
                   <select

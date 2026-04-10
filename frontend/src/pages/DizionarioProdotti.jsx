@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
+import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils', useIsMobile, RG, pagePad } from '../lib/utils';
 import api from '../api';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { Package, Search, AlertTriangle, Check, RefreshCw, Edit2, Save, X, ChevronDown, Database, Filter } from 'lucide-react';
 import { PageLayout } from '../components/PageLayout';
 
 export default function DizionarioProdotti() {
+  const isMobile = useIsMobile();
   const { anno } = useAnnoGlobale();
   const [prodotti, setProdotti] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -464,7 +465,7 @@ export default function DizionarioProdotti() {
               </div>
 
               {/* Grid dati fattura */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginBottom: '20px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: '12px', marginBottom: '20px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#64748b', marginBottom: '4px' }}>U.M.</label>
                   <div style={{ padding: '8px 10px', background: '#f8fafc', borderRadius: '6px', fontSize: '13px' }}>

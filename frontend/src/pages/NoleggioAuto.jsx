@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from "react";
 import api from "../api";
-import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
+import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils', useIsMobile, RG, pagePad } from '../lib/utils';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { PageLayout } from '../components/PageLayout';
 import { toast } from 'sonner';
 
 export default function NoleggioAuto() {
+  const isMobile = useIsMobile();
   // Usa anno globale come default, null = tutti gli anni
   const { anno } = useAnnoGlobale();
   const [annoFiltro, setAnnoFiltro] = useState(anno);
@@ -769,7 +770,7 @@ export default function NoleggioAuto() {
                 
                 {lookupResult && !lookupResult.error && (
                   <div style={{ fontSize: 12, marginTop: 8 }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 6 }}>
                       <div><strong>Marca:</strong> {lookupResult.campi_mappati?.marca || '-'}</div>
                       <div><strong>Modello:</strong> {lookupResult.campi_mappati?.modello || '-'}</div>
                       <div><strong>Anno:</strong> {lookupResult.campi_mappati?.anno_immatricolazione || '-'}</div>
@@ -875,7 +876,7 @@ export default function NoleggioAuto() {
               </div>
 
               {/* Contratto e Codice Cliente */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
                 <div>
                   <label style={{ display: 'block', fontSize: 12, fontWeight: '500', marginBottom: 4 }}>N° Contratto</label>
                   <input 
@@ -911,7 +912,7 @@ export default function NoleggioAuto() {
               </div>
 
               {/* Date Noleggio */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
                 <div>
                   <label style={{ display: 'block', fontSize: 12, fontWeight: '500', marginBottom: 4 }}>Inizio Noleggio</label>
                   <input 
@@ -1027,7 +1028,7 @@ export default function NoleggioAuto() {
                 </select>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
                 <div>
                   <label style={{ display: 'block', fontSize: 13, fontWeight: '500', marginBottom: 4 }}>Marca</label>
                   <input 

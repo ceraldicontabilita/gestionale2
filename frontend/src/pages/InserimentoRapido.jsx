@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
-import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
+import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils', useIsMobile, RG, pagePad } from '../lib/utils';
 import api from '../api';
 import { PageLayout } from '../components/PageLayout';
 import { 
@@ -37,7 +37,7 @@ const styles = {
   },
   grid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(2, 1fr)',
+    gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
     gap: '12px',
     marginBottom: '20px'
   },
@@ -203,6 +203,7 @@ const MENU_ITEMS = [
 ];
 
 export default function InserimentoRapido() {
+  const isMobile = useIsMobile();
   const { anno } = useAnnoGlobale();
   const navigate = useNavigate();
   const currentYear = new Date().getFullYear();
@@ -724,7 +725,7 @@ export default function InserimentoRapido() {
 
       <div style={styles.inputGroup}>
         <label style={styles.label}>Tipo</label>
-        <div style={{display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px'}}>
+        <div style={{display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: '8px'}}>
           {[
             { id: 'PRESENTE', label: 'Presente', color: '#22c55e' },
             { id: 'FERIE', label: 'Ferie', color: '#f59e0b' },

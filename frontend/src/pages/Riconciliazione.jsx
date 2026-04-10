@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from 'react-router-dom';
 import api from "../api";
-import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils';
+import { formatEuro, formatDateIT, STYLES, COLORS, button, badge } from '../lib/utils', useIsMobile, RG, pagePad } from '../lib/utils';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { PageLayout } from '../components/PageLayout';
 
@@ -166,6 +166,7 @@ const pageStyle = {
 };
 
 export default function Riconciliazione() {
+  const isMobile = useIsMobile();
   const { anno } = useAnnoGlobale();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);

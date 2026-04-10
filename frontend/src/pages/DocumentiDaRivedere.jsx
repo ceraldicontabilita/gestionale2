@@ -195,7 +195,7 @@ function DocumentRow({ doc, centriCosto, onClassify, classifying, getTypeColor, 
 
       {expanded && (
         <div style={{ padding: 16, background: '#f8fafc', borderTop: '1px solid #e2e8f0' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16, marginBottom: 16 }}>
             <div>
               <h4 style={{ margin: '0 0 8px 0', fontSize: 13, color: '#64748b' }}>Dati Estratti</h4>
               <div style={{ fontSize: 13 }}>
