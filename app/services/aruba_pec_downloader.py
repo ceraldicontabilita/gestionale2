@@ -267,10 +267,145 @@ def parse_fatturapa_xml(xml_content: bytes) -> Optional[Dict[str, Any]]:
         return None
 
 
+def _decode_p7m_openssl(payload: bytes) -> Optional[bytes]:
+    """
+    Decodifica un file P7M (PKCS#7/CMS signed) usando OpenSSL via subprocess.
+    Restituisce il contenuto XML decodificato o None se fallisce.
+    """
+    import subprocess
+    import tempfile
+
+    try:
+        # Scrivi il payload in un file temporaneo
+        with tempfile.NamedTemporaryFile(suffix='.p7m', delete=False) as tmp_in:
+            tmp_in.write(payload)
+            tmp_in_path = tmp_in.name
+
+        # Prova formato DER (più comune per fatture italiane)
+        for fmt in ['DER', 'PEM']:
+            try:
+                result = subprocess.run(
+                    ['openssl', 'cms', '-verify', '-noverify', '-inform', fmt, '-in', tmp_in_path],
+                    capture_output=True, timeout=10
+                )
+                if result.returncode == 0 and result.stdout and len(result.stdout) > 100:
+                    logger.info(f"[PEC] P7M decodificato con OpenSSL (formato {fmt})")
+                    return result.stdout
+            except subprocess.TimeoutExpired:
+                continue
+
+            # Prova anche con smime (vecchio formato)
+            try:
+                result = subprocess.run(
+                    ['openssl', 'smime', '-verify', '-noverify', '-inform', fmt, '-in', tmp_in_path],
+                    capture_output=True, timeout=10
+                )
+                if result.returncode == 0 and result.stdout and len(result.stdout) > 100:
+                    logger.info(f"[PEC] P7M decodificato con OpenSSL smime (formato {fmt})")
+                    return result.stdout
+            except subprocess.TimeoutExpired:
+                continue
+
+    except Exception as e:
+        logger.debug(f"[PEC] OpenSSL P7M decode fallito: {e}")
+    finally:
+        try:
+            os.unlink(tmp_in_path)
+        except Exception:
+            pass
+
+    return None
+
+
+def _decode_p7m_asn1(payload: bytes) -> Optional[bytes]:
+    """
+    Decodifica un file P7M usando asn1crypto per estrarre il contenuto firmato.
+    Gestisce sia SignedData che EnvelopedData.
+    """
+    try:
+        from asn1crypto import cms
+
+        content_info = cms.ContentInfo.load(payload)
+        content_type = content_info['content_type'].native
+
+        if content_type == 'signed_data':
+            signed_data = content_info['content']
+            encap_content = signed_data['encap_content_info']
+            content_bytes = encap_content['content'].native
+            if content_bytes and len(content_bytes) > 100:
+                logger.info("[PEC] P7M decodificato con asn1crypto (signed_data)")
+                return content_bytes
+
+        elif content_type == 'enveloped_data':
+            logger.warning("[PEC] P7M con EnvelopedData (crittografato) — non supportato senza chiave privata")
+            return None
+
+    except Exception as e:
+        logger.debug(f"[PEC] asn1crypto P7M decode fallito: {e}")
+
+    return None
+
+
+def _extract_xml_from_bytes(payload: bytes, filename: str) -> Optional[bytes]:
+    """
+    Cerca marcatori XML FatturaElettronica nel payload grezzo (fallback).
+    """
+    xml_start = payload.find(b'<?xml')
+    if xml_start == -1:
+        for marker in [b'<p:FatturaElettronica', b'<FatturaElettronica',
+                       b'<ns2:FatturaElettronica', b'<ns3:FatturaElettronica',
+                       b'<P:FatturaElettronica']:
+            idx = payload.find(marker)
+            if idx >= 0:
+                xml_start = idx
+                break
+    if xml_start == -1:
+        return None
+
+    xml_content = payload[xml_start:]
+    for end_marker in [b'</p:FatturaElettronica>', b'</FatturaElettronica>',
+                       b'</ns2:FatturaElettronica>', b'</ns3:FatturaElettronica>',
+                       b'</P:FatturaElettronica>']:
+        idx_end = xml_content.rfind(end_marker)
+        if idx_end >= 0:
+            xml_content = xml_content[:idx_end + len(end_marker)]
+            break
+
+    return xml_content
+
+
+def _decode_p7m(payload: bytes, filename: str) -> Optional[bytes]:
+    """
+    Decodifica P7M con 3 metodi in cascata:
+    1. OpenSSL (più affidabile per CAdES/CMS)
+    2. asn1crypto (puro Python, senza binari esterni)
+    3. Ricerca byte grezza (fallback per P7M semplici)
+    """
+    # Metodo 1: OpenSSL
+    result = _decode_p7m_openssl(payload)
+    if result:
+        return result
+
+    # Metodo 2: asn1crypto
+    result = _decode_p7m_asn1(payload)
+    if result:
+        return result
+
+    # Metodo 3: ricerca marcatori XML nel payload grezzo
+    result = _extract_xml_from_bytes(payload, filename)
+    if result:
+        logger.info(f"[PEC] P7M decodificato con ricerca byte: {filename}")
+        return result
+
+    logger.warning(f"[PEC] P7M non decodificabile con nessun metodo: {filename}")
+    return None
+
+
 def _pec_extract_xml_from_part(part, fname_lower: str, filename: str) -> Optional[bytes]:
     """
     Estrae il contenuto XML (grezzo o da .p7m) da una singola parte MIME.
     Restituisce None se il file va saltato.
+    Supporta P7M firmati digitalmente (CAdES) con decodifica completa.
     """
     content_type = part.get_content_type()
 
@@ -278,6 +413,7 @@ def _pec_extract_xml_from_part(part, fname_lower: str, filename: str) -> Optiona
     is_xml = (
         fname_lower.endswith('.xml') or
         fname_lower.endswith('.p7m') or
+        fname_lower.endswith('.xml.p7m') or
         content_type in ('application/xml', 'text/xml', 'application/pkcs7-mime')
     )
     if not is_xml:
@@ -293,28 +429,13 @@ def _pec_extract_xml_from_part(part, fname_lower: str, filename: str) -> Optiona
         return None
 
     xml_content = payload
+
     if fname_lower.endswith('.p7m'):
-        # Estrai XML da P7M (firma CAdES)
-        xml_start = payload.find(b'<?xml')
-        if xml_start == -1:
-            for marker in [b'<p:FatturaElettronica', b'<FatturaElettronica',
-                           b'<ns2:FatturaElettronica', b'<ns3:FatturaElettronica',
-                           b'<P:FatturaElettronica']:
-                idx = payload.find(marker)
-                if idx >= 0:
-                    xml_start = idx
-                    break
-        if xml_start == -1:
-            logger.warning(f"[PEC] P7M senza XML riconoscibile: {filename}")
+        # Decodifica P7M con metodi multipli (OpenSSL → asn1crypto → byte search)
+        decoded = _decode_p7m(payload, filename)
+        if decoded is None:
             return None
-        xml_content = payload[xml_start:]
-        for end_marker in [b'</p:FatturaElettronica>', b'</FatturaElettronica>',
-                           b'</ns2:FatturaElettronica>', b'</ns3:FatturaElettronica>',
-                           b'</P:FatturaElettronica>']:
-            idx_end = xml_content.rfind(end_marker)
-            if idx_end >= 0:
-                xml_content = xml_content[:idx_end + len(end_marker)]
-                break
+        xml_content = decoded
 
     return xml_content
 
