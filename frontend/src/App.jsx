@@ -148,8 +148,7 @@ export default function App() {
         {/* TOP NAVIGATION - Primary */}
         <TopNav />
 
-        {/* SECONDARY TABS - Context-sensitive */}
-        <SecondaryTabs />
+        {/* SECONDARY TABS rimossi */}
 
         {/* Mobile Bottom Navigation */}
         <nav className="mobile-nav-topnav" data-testid="mobile-nav">
