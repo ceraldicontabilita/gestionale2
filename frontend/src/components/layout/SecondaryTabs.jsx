@@ -7,9 +7,8 @@ const TAB_CONFIGS = {
     { to: '/', label: 'Riepilogo', exact: true },
   ],
   '/fatture': [
-    { to: '/fatture-ricevute', label: 'Fatture Ricevute' },
-    { to: '/corrispettivi', label: 'Corrispettivi' },
-    { to: '/archivio-fatture-ricevute', label: 'Archivio' },
+    { to: '/fatture', label: 'Fatture Ricevute', exact: true },
+    { to: '/fatture/corrispettivi', label: 'Corrispettivi' },
   ],
   '/riconciliazione': [
     { to: '/riconciliazione', label: 'Riconciliazione', exact: true },
@@ -43,7 +42,7 @@ export default function SecondaryTabs() {
     }
     
     // Check specific route patterns
-    if (path.startsWith('/fatture-ricevute') || path.startsWith('/corrispettivi') || path.startsWith('/archivio-fatture-ricevute')) {
+    if (path.startsWith('/fatture-ricevute') || path.startsWith('/corrispettivi')) {
       return TAB_CONFIGS['/fatture'];
     }
     if (path.startsWith('/cedolini') || path.startsWith('/presenze') || path.startsWith('/attendance') || path.startsWith('/tfr')) {

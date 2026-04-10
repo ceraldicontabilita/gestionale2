@@ -24,17 +24,13 @@ Aggiornamento gestionale ERP (React + FastAPI + MongoDB Atlas) seguendo ISTRUZIO
 - Drawer cliccabile Piano dei Conti con endpoint movimenti semantici
 
 ### Sessione corrente (Aprile 2026)
-- **Fix dati drawer Piano dei Conti**: logica semantica per conto
-  - Cassa (01.01.01) → `prima_nota`
-  - Banca (01.01.02) → `prima_nota_banca` (fallback: `movimenti_bancari`)
-  - Debiti Fornitori (02.01.*) → `fatture_passive`
-  - Costi (05.*) → `fatture_passive`
-  - Ricavi (04.*) → `corrispettivi`
-  - Campo `tipo` letto dal documento (non calcolato dall'importo)
-- **Fix reload tab hub**: pattern "mount-once, hide-with-CSS" su TUTTI gli hub
-  - `ContabilitaHub`, `CucinaHub`, `DocumentiHub`, `StrumentiHub`, `MagazzinoHub`
-  - `FattureHub`, `PrimaNotaHub`, `AdminHub`
-  - Nessun unmount/remount al cambio tab → nessun reload visivo
+- **Fix dati drawer Piano dei Conti**: logica semantica per conto (Cassa→prima_nota, Banca→prima_nota_banca, Debiti/Costi→fatture_passive, Ricavi→corrispettivi)
+- **Fix reload tab hub**: pattern "mount-once, hide-with-CSS" su tutti gli hub (ContabilitaHub, CucinaHub, DocumentiHub, StrumentiHub, MagazzinoHub, FattureHub, PrimaNotaHub, AdminHub)
+- **Pulizia navigazione**:
+  - Eliminato `/archivio-fatture-ricevute` (duplicato di Fatture) — ora redirect a `/fatture`
+  - Eliminato CucinaHub ovunque (frontend + backend) — non più pertinente per software contabile
+  - Rinominato "Noleggio" → "Noleggio Auto" nel menu Altro per chiarezza
+  - Rimosso tab "Archivio" secondario che puntava alla pagina duplicata
 
 ## Backlog Prioritizzato
 

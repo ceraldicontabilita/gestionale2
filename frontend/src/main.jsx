@@ -33,7 +33,6 @@ const HRTFR = lazy(() => import("./pages/hr/HRTFR.jsx"));
 const VeicoliHub = lazy(() => import("./pages/hub/VeicoliHub.jsx"));
 const ContabilitaHub = lazy(() => import("./pages/hub/ContabilitaHub.jsx"));
 const MagazzinoHub = lazy(() => import("./pages/hub/MagazzinoHub.jsx"));
-const CucinaHub = lazy(() => import("./pages/hub/CucinaHub.jsx"));
 const DocumentiHub = lazy(() => import("./pages/hub/DocumentiHub.jsx"));
 const StrumentiHub = lazy(() => import("./pages/hub/StrumentiHub.jsx"));
 const IntegrazioniHub = lazy(() => import("./pages/hub/IntegrazioniHub.jsx"));
@@ -89,7 +88,7 @@ const router = createBrowserRouter([
       { path: "fatture-ricevute", element: <Navigate to="/fatture" replace /> },
       { path: "fatture-ricevute/:fornitore", element: <Navigate to="/fatture" replace /> },
       { path: "fatture-ricevute/:fornitore/:fattura", element: <Navigate to="/fatture" replace /> },
-      { path: "archivio-fatture-ricevute", element: <LazyPage><FattureHub /></LazyPage> },
+      { path: "archivio-fatture-ricevute", element: <Navigate to="/fatture" replace /> },
       { path: "corrispettivi", element: <Navigate to="/fatture/corrispettivi" replace /> },
       { path: "corrispettivi/:anno/:mese", element: <LazyPage><FattureHub /></LazyPage> },
       
@@ -180,18 +179,17 @@ const router = createBrowserRouter([
       { path: "dizionario-articoli/:articolo", element: <LazyPage><MagazzinoHub /></LazyPage> },
       { path: "magazzino-dv", element: <Navigate to="/magazzino" replace /> },
       
-      // === CUCINA ===
-      { path: "cucina", element: <LazyPage><CucinaHub /></LazyPage> },
-      { path: "cucina/:tab", element: <LazyPage><CucinaHub /></LazyPage> },
-      // Redirect vecchi path cucina → /cucina/:tab
+      // === REDIRECT CUCINA → MAGAZZINO (la sezione cucina è stata rimossa) ===
+      { path: "cucina", element: <Navigate to="/magazzino" replace /> },
+      { path: "cucina/:tab", element: <Navigate to="/magazzino" replace /> },
+      { path: "ricettario", element: <Navigate to="/magazzino" replace /> },
+      { path: "ricettario/:tab", element: <Navigate to="/magazzino" replace /> },
       { path: "dizionario-prodotti", element: <Navigate to="/magazzino/prodotti" replace /> },
       { path: "dizionario-prodotti/:prodotto", element: <Navigate to="/magazzino/prodotti" replace /> },
       { path: "centri-costo", element: <Navigate to="/contabilita/centri-costo" replace /> },
       { path: "centri-costo/:centro", element: <Navigate to="/contabilita/centri-costo" replace /> },
       { path: "utile-obiettivo", element: <Navigate to="/contabilita/utile" replace /> },
       { path: "utile-obiettivo/:anno", element: <Navigate to="/contabilita/utile" replace /> },
-      { path: "ricettario", element: <Navigate to="/cucina/ricettario" replace /> },
-      { path: "ricettario/:tab", element: <Navigate to="/cucina/ricettario" replace /> },
       { path: "learning-machine", element: <LazyPage><LearningMachine /></LazyPage> },
       { path: "learning-machine/:tab", element: <LazyPage><LearningMachine /></LazyPage> },
       

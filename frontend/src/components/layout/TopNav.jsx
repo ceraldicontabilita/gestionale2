@@ -3,7 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, FileText, BookOpen, Building2,
   Users, FlaskConical, ChevronDown,
-  Bell, Calendar, Warehouse, UtensilsCrossed,
+  Bell, Calendar, Warehouse,
   Settings, Wrench, FileBarChart, BookMarked, Car
 } from 'lucide-react';
 import { AnnoSelector } from '../../contexts/AnnoContext';
@@ -22,9 +22,8 @@ const NAV_ITEMS = [
 const ALTRO_ITEMS = [
   { to: '/contabilita', label: 'Contabilità', Icon: FileBarChart },
   { to: '/magazzino', label: 'Magazzino', Icon: Warehouse },
-  { to: '/cucina', label: 'Cucina', Icon: UtensilsCrossed },
   { to: '/documenti', label: 'Documenti', Icon: BookMarked },
-  { to: '/noleggio', label: 'Noleggio', Icon: Car },
+  { to: '/noleggio', label: 'Noleggio Auto', Icon: Car },
   { to: '/gestione-email', label: 'Email', Icon: Settings },
   { to: '/strumenti', label: 'Strumenti', Icon: Wrench },
   { to: '/admin', label: 'Admin', Icon: Settings },

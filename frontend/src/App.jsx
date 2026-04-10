@@ -34,7 +34,6 @@ const ALL_NAV_ITEMS = [
   { to: "/mutui", label: "Mutui", icon: "🏦" },
   { to: "/contabilita-hub", label: "Contabilità", icon: "📈" },
   { to: "/magazzino", label: "Magazzino", icon: "📦" },
-  { to: "/cucina", label: "Cucina", icon: "🍳" },
   { to: "/scadenze", label: "Scadenze", icon: "🔔" },
   { to: "/todo", label: "To-Do", icon: "📝" },
   { to: "/import-documenti", label: "Import", icon: "📥" },
