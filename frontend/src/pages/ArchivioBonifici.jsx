@@ -719,7 +719,7 @@ export default function ArchivioBonifici() {
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1400, fontSize: 12 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
                 <tr style={{ background: activeTab === 'associati' ? '#16a34a' : '#1e3a5f', color: 'white' }}>
                   <th style={{ padding: 8, textAlign: 'center', width: 40 }}>✓</th>

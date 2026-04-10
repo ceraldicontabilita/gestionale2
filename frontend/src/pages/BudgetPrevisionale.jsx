@@ -306,7 +306,7 @@ export default function BudgetPrevisionale() {
               {/* Tabella Budget */}
               {budget?.voci?.length > 0 ? (
                 <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                     <thead>
                       <tr style={{ background: '#1e293b', color: 'white' }}>
                         <th style={{ padding: '10px 8px', textAlign: 'left' }}>Voce</th>
@@ -415,7 +415,7 @@ export default function BudgetPrevisionale() {
               {/* Tabella confronto voci */}
               {confronto.confronto_voci?.length > 0 && (
                 <div style={{ overflowX: 'auto', marginTop: 20 }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
                     <thead>
                       <tr style={{ background: '#1e293b', color: 'white' }}>
                         <th style={{ padding: '12px 8px', textAlign: 'left' }}>Voce</th>
@@ -473,7 +473,7 @@ export default function BudgetPrevisionale() {
           {activeTab === 'andamento' && confronto?.andamento_mensile && (
             <>
               <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                   <thead>
                     <tr style={{ background: '#1e293b', color: 'white' }}>
                       <th style={{ padding: '12px 8px', textAlign: 'left' }}>Mese</th>

@@ -368,8 +368,8 @@ export default function PianoDeiConti() {
             </ul>
           </div>
 
-          <div style={{ background: 'white', borderRadius: 12, overflow: 'hidden', border: '1px solid #e5e7eb' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <div style={{ background: 'white', borderRadius: 12, overflow: 'hidden', border: '1px solid #e5e7eb', overflowX: "auto" }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e5e7eb' }}>
                   <th style={{ padding: 12, textAlign: 'left' }}>Tipo</th>
@@ -701,8 +701,8 @@ export default function PianoDeiConti() {
                     <div style={{ fontWeight: 600, fontSize: 13, color: '#444', marginBottom: 8 }}>
                       Movimenti ({new Date().getFullYear()})
                     </div>
-                    <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden' }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                    <div style={{ border: '1px solid #e5e7eb', borderRadius: 8, overflow: 'hidden', overflowX: "auto" }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                         <thead>
                           <tr style={{ background: '#f8fafc' }}>
                             <th style={{ padding: '8px 12px', textAlign: 'left', color: '#666', fontWeight: 600 }}>Data</th>

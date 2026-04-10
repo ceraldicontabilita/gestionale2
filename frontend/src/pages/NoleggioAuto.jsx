@@ -507,7 +507,7 @@ export default function NoleggioAuto() {
 
                 {isOpen && (
                   <div style={{ marginTop: 8, overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                       <thead>
                         <tr style={{ background: '#f9fafb', borderBottom: '2px solid #e5e7eb' }}>
                           <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: '600' }}>Data</th>
@@ -647,7 +647,7 @@ export default function NoleggioAuto() {
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }} data-testid="noleggio-table">
+              <table style={{ width: '100%', borderCollapse: 'collapse' }} data-testid="noleggio-table">
               <thead>
                 <tr style={{ background: '#f9fafb', borderBottom: '2px solid #e5e7eb' }}>
                   <th style={{ padding: '12px 10px', textAlign: 'left', fontWeight: '600', fontSize: 12 }}>Targa</th>

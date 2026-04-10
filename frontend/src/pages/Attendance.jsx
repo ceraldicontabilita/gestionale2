@@ -1095,8 +1095,8 @@ export default function Attendance() {
           )}
 
           {/* Tabella Calendario - Layout compatto senza scroll */}
-          <div style={{ overflow: 'hidden' }}>
-            <table style={{ 
+          <div style={{ overflow: 'hidden', overflowX: "auto" }}>
+              <table style={{ 
               width: '100%', 
               borderCollapse: 'collapse',
               fontSize: 11,

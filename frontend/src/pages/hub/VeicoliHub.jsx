@@ -119,8 +119,12 @@ export default function VeicoliHub() {
               <VerbaliContent />
             </div>
           )}
-          {/* Costi: sempre leggero, ok rimontare */}
-          {activeTab === 'costi' && <RiepilogoCosti anno={anno} />}
+          {/* Costi: stesso pattern display:none */}
+          {loadedTabs.has('costi') && (
+            <div style={{ display: activeTab === 'costi' ? 'block' : 'none' }}>
+              <RiepilogoCosti anno={anno} />
+            </div>
+          )}
         </Suspense>
       </div>
     </div>

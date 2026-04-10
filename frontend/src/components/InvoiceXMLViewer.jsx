@@ -412,8 +412,8 @@ export default function InvoiceXMLViewer({ invoice: rawInvoice, onClose }) {
       </div>
 
       {/* Righe - compatto */}
-      <div style={{ background: 'white', borderRadius: 8, overflow: 'hidden', border: '1px solid #e0e0e0' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+      <div style={{ background: 'white', borderRadius: 8, overflow: 'hidden', border: '1px solid #e0e0e0', overflowX: "auto" }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
           <thead>
             <tr style={{ background: '#f5f5f5' }}>
               <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600 }}>Descrizione</th>
@@ -582,8 +582,8 @@ export default function InvoiceXMLViewer({ invoice: rawInvoice, onClose }) {
         }}>
           Dettaglio Beni e Servizi
         </div>
-        <div style={{ border: '1px solid #1e3a5f', borderTop: 'none', borderRadius: '0 0 6px 6px', overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+        <div style={{ border: '1px solid #1e3a5f', borderTop: 'none', borderRadius: '0 0 6px 6px', overflow: 'hidden', overflowX: "auto" }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
             <thead>
               <tr style={{ background: '#f0f4f8' }}>
                 <th style={{ padding: '10px', textAlign: 'center', fontWeight: 600, width: 40, borderRight: '1px solid #e0e0e0' }}>Nr.</th>
@@ -625,8 +625,8 @@ export default function InvoiceXMLViewer({ invoice: rawInvoice, onClose }) {
         }}>
           Riepilogo IVA
         </div>
-        <div style={{ border: '1px solid #455a64', borderTop: 'none', borderRadius: '0 0 6px 6px', overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+        <div style={{ border: '1px solid #455a64', borderTop: 'none', borderRadius: '0 0 6px 6px', overflow: 'hidden', overflowX: "auto" }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
             <thead>
               <tr style={{ background: '#f5f5f5' }}>
                 <th style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 600 }}>Aliquota</th>
@@ -809,8 +809,8 @@ export default function InvoiceXMLViewer({ invoice: rawInvoice, onClose }) {
         <div style={{ background: '#e0e0e0', padding: '5px 10px', fontWeight: 'bold', fontSize: 11, textTransform: 'uppercase', borderBottom: '1px solid #000' }}>
           2.2 Dati Beni / Servizi
         </div>
-        <div style={{ padding: 10 }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10 }}>
+        <div style={{ padding: 10, overflowX: "auto" }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10 }}>
             <thead>
               <tr>
                 <th style={{ background: '#e8e8e8', border: '1px solid #999', padding: 5, textAlign: 'left', fontSize: 9, textTransform: 'uppercase' }}>Nr.</th>
@@ -842,8 +842,8 @@ export default function InvoiceXMLViewer({ invoice: rawInvoice, onClose }) {
         <div style={{ background: '#e0e0e0', padding: '5px 10px', fontWeight: 'bold', fontSize: 11, textTransform: 'uppercase', borderBottom: '1px solid #000' }}>
           2.2.2 Dati Riepilogo
         </div>
-        <div style={{ padding: 10 }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10 }}>
+        <div style={{ padding: 10, overflowX: "auto" }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10 }}>
             <thead>
               <tr>
                 <th style={{ background: '#e8e8e8', border: '1px solid #999', padding: 5, fontSize: 9 }}>Aliquota IVA</th>

@@ -193,7 +193,8 @@ function TabCedolini({ dip }) {
             ))}
           </div>
 
-          <div style={{overflowX:'auto'}}><table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 480 }}>
+          <div style={{overflowX:'auto'}}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, }}>
             <thead>
               <tr style={{ background: '#f8fafc' }}>
                 {['Mese', 'Lordo', 'Netto', 'Contributi', 'Stato'].map(h => (
@@ -414,6 +415,7 @@ export default function HRDipendenti() {
   const [ricerca, setRicerca] = useState('');
   const [selected, setSelected] = useState(null);
   const [activeTab, setActiveTab] = useState(tab);
+  const [visitedTabs, setVisitedTabs] = useState(() => new Set([tab]));
 
   useEffect(() => {
     api.get('/api/dipendenti')
@@ -429,6 +431,7 @@ export default function HRDipendenti() {
 
   const handleTabChange = (t) => {
     setActiveTab(t);
+    setVisitedTabs(prev => new Set([...prev, t]));
     navigate(`/dipendenti/${t}`);
   };
 
@@ -543,13 +546,23 @@ export default function HRDipendenti() {
               ))}
             </div>
 
-            {/* Contenuto tab */}
+            {/* Contenuto tab — display:none preserva stato tra tab switch */}
             <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
-              {activeTab === 'anagrafica'     && <TabAnagrafica     dip={selected} onSaved={d => setSelected({ ...selected, ...d })} />}
-              {activeTab === 'contratti'      && <TabContratti      dip={selected} />}
-              {activeTab === 'cedolini'       && <TabCedolini       dip={selected} />}
-              {activeTab === 'movimenti'      && <TabMovimenti      dip={selected} />}
-              {activeTab === 'giustificativi' && <TabGiustificativi dip={selected} />}
+              <div style={{ display: activeTab === 'anagrafica' ? 'block' : 'none' }}>
+                {visitedTabs.has('anagrafica') && <TabAnagrafica dip={selected} onSaved={d => setSelected({ ...selected, ...d })} />}
+              </div>
+              <div style={{ display: activeTab === 'contratti' ? 'block' : 'none' }}>
+                {visitedTabs.has('contratti') && <TabContratti dip={selected} />}
+              </div>
+              <div style={{ display: activeTab === 'cedolini' ? 'block' : 'none' }}>
+                {visitedTabs.has('cedolini') && <TabCedolini dip={selected} />}
+              </div>
+              <div style={{ display: activeTab === 'movimenti' ? 'block' : 'none' }}>
+                {visitedTabs.has('movimenti') && <TabMovimenti dip={selected} />}
+              </div>
+              <div style={{ display: activeTab === 'giustificativi' ? 'block' : 'none' }}>
+                {visitedTabs.has('giustificativi') && <TabGiustificativi dip={selected} />}
+              </div>
             </div>
           </>
         )}

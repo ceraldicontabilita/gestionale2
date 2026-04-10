@@ -323,14 +323,12 @@ export default function Mutui() {
                   <h4 style={{ fontSize: 14, fontWeight: 600, color: '#374151', marginBottom: 12 }}>
                     Piano di Ammortamento ({mutuo.rate?.length || 0} rate)
                   </h4>
-                  <div style={{ 
-                    maxHeight: 400, 
+                  <div style={{ maxHeight: 400, 
                     overflowY: 'auto',
                     background: 'white',
                     borderRadius: 8,
-                    border: '1px solid #e5e7eb'
-                  }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                    border: '1px solid #e5e7eb', overflowX: "auto" }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                       <thead>
                         <tr style={{ background: '#f3f4f6' }}>
                           <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600 }}>N°</th>

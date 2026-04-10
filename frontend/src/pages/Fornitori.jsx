@@ -2018,7 +2018,7 @@ export default function Fornitori() {
 
                   {/* Tabella Fatture */}
                   <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                       <thead>
                         <tr style={{ background: '#f3f4f6' }}>
                           <th style={{ padding: '10px 12px', textAlign: 'left', fontWeight: 600 }}>Data</th>

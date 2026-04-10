@@ -434,7 +434,8 @@ export default function Riconciliazione() {
               </span>
             </div>
             <div style={{ maxHeight: '500px', overflow: 'auto' }}>
-              <div style={{overflowX:'auto'}}><table style={pageStyle.table}>
+              <div style={{overflowX:'auto'}}>
+              <table style={pageStyle.table}>
                 <thead>
                   <tr>
                     <th style={pageStyle.th}>Data</th>
@@ -488,7 +489,8 @@ export default function Riconciliazione() {
               </div>
             ) : (
               <div style={{ maxHeight: '500px', overflow: 'auto' }}>
-                <div style={{overflowX:'auto'}}><table style={pageStyle.table}>
+                <div style={{overflowX:'auto'}}>
+              <table style={pageStyle.table}>
                   <thead>
                     <tr>
                       <th style={pageStyle.th}>Fornitore</th>

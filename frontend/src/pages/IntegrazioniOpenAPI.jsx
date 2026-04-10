@@ -493,7 +493,7 @@ export default function IntegrazioniOpenAPI() {
                 <div style={cardStyle}>
                   <h4 style={{ margin: '0 0 16px' }}>📋 Richieste XBRL</h4>
                   <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                       <thead>
                         <tr style={{ background: '#f8fafc' }}>
                           <th style={{ padding: 10, textAlign: 'left', borderBottom: '1px solid #e2e8f0' }}>ID</th>

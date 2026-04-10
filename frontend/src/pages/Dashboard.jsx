@@ -1536,7 +1536,7 @@ function ScadenzeWidget({ scadenze }) {
       
       {/* Tabella scadenze */}
       <div style={{overflowX:'auto'}}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
         <thead>
           <tr style={{ borderBottom: '2px solid #e2e8f0', background: '#f8fafc' }}>
             <th style={{ padding: '6px 8px', textAlign: 'center', fontWeight: 600, fontSize: 10, color: '#64748b', textTransform: 'uppercase', width: 60 }}>Tipo</th>

@@ -136,7 +136,7 @@ export default function IVA() {
           {viewMode === "annual" && annualData && (
             <PageSection title={`Riepilogo IVA Annuale ${selectedYear}`} icon={<FileText size={16} />} style={{ marginTop: 20 }}>
               <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
                   <thead>
                     <tr style={{ borderBottom: "2px solid #e5e7eb", background: '#f9fafb' }}>
                       <th style={{ padding: '12px 16px', textAlign: 'left', fontWeight: 600 }}>Mese</th>

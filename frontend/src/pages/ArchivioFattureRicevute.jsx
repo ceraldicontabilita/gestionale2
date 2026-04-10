@@ -374,7 +374,7 @@ export default function ArchivioFatture() {
             ) : (
               // VISTA DESKTOP: tabella classica
               <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 4px', fontSize: 13 }}>
+              <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0 4px', fontSize: 13 }}>
                   <thead>
                     <tr style={{ background: '#f1f5f9' }}>
                       <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: '600', color: '#1e293b', borderRadius: '8px 0 0 8px' }}>Data</th>

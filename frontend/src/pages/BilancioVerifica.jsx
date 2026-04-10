@@ -216,7 +216,7 @@ export default function BilancioVerifica() {
 
           {/* Tabella principale */}
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
               <thead>
                 <tr style={{ background: '#1e293b', color: 'white' }}>
                   <th style={{ padding: '12px 8px', textAlign: 'left', width: 100 }}>Codice</th>

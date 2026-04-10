@@ -1273,7 +1273,7 @@ function MovementsTable({ movimenti, tipo, loading, formatEuro, formatDate, onDe
 
       {/* Table */}
       <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, minWidth: 700 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, }}>
           <thead>
             <tr style={{ background: '#f9fafb', borderBottom: '2px solid #e5e7eb' }}>
               <th style={{ padding: '8px 8px', textAlign: 'left', fontWeight: 600, fontSize: 11 }}>Data</th>

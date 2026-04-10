@@ -1543,7 +1543,7 @@ export default function GestioneAssegni() {
                   Questi assegni hanno un importo ma nessun beneficiario. Clicca "Associa" per collegare manualmente a una fattura.
                 </p>
                 <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                     <thead>
                       <tr style={{ background: '#fef3c7' }}>
                         <th style={{ padding: 10, textAlign: 'left' }}>Importo</th>
@@ -1616,11 +1616,11 @@ export default function GestioneAssegni() {
           {/* MOBILE CARDS VIEW */}
           <div className="md:hidden" style={{ display: 'block' }}>
             <style>{`
-              @media (min-width: 768px) {
+              @media (min-width: "100%"px) {
                 .mobile-cards-assegni { display: none !important; }
                 .desktop-table-assegni { display: block !important; }
               }
-              @media (max-width: 767px) {
+              @media (max-width: "100%"px) {
                 .mobile-cards-assegni { display: block !important; }
                 .desktop-table-assegni { display: none !important; }
               }
@@ -1769,7 +1769,7 @@ export default function GestioneAssegni() {
             </div>
 
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 700 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', }}>
                 <thead>
                   <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e5e7eb' }}>
                     <th style={{ padding: '10px 8px', textAlign: 'center', fontWeight: 600, fontSize: 12, width: 40 }}>

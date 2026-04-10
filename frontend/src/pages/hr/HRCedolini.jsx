@@ -204,7 +204,8 @@ export default function HRCedolini() {
                 </div>
               )
               : (
-                <div style={{overflowX:'auto'}}><table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 500 }}>
+                <div style={{overflowX:'auto'}}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, }}>
                   <thead>
                     <tr style={{ background: '#f8fafc' }}>
                       {['Dipendente / File', 'Mese', 'Lordo', 'Netto', 'Fonte', 'Stato'].map(h => (
@@ -246,7 +247,8 @@ export default function HRCedolini() {
             f24.length === 0
               ? <div style={{ padding: 40, textAlign: 'center', color: COLORS.textMuted }}>Nessuna distinta F24 per il {anno}</div>
               : (
-                <div style={{overflowX:'auto'}}><table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 500 }}>
+                <div style={{overflowX:'auto'}}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, }}>
                   <thead>
                     <tr style={{ background: '#f8fafc' }}>
                       {['Riferimento', 'Mese', 'Importo', 'Scadenza', 'Stato'].map(h => (

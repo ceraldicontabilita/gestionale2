@@ -394,7 +394,7 @@ export default function DizionarioArticoli() {
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 900 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', }}>
               <thead>
                 <tr style={{ background: '#1e3a5f', color: 'white' }}>
                   <th style={{ padding: 12, textAlign: 'left', width: '35%' }}>Descrizione</th>

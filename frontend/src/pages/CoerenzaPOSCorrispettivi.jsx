@@ -219,8 +219,8 @@ export default function CoerenzaPOSCorrispettivi() {
 
       {/* Tab Giornaliero */}
       {tab === 'giornaliero' && dati?.riepilogo_giornaliero && (
-        <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e2e8f0', overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+        <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e2e8f0', overflow: 'hidden', overflowX: "auto" }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ background: '#f8fafc' }}>
                 <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 600, color: '#64748b', fontSize: 11 }}>DATA</th>
@@ -265,8 +265,8 @@ export default function CoerenzaPOSCorrispettivi() {
 
       {/* Tab Mensile */}
       {tab === 'mensile' && riepilogoMensile?.mesi && (
-        <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e2e8f0', overflow: 'hidden' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+        <div style={{ background: 'white', borderRadius: 10, border: '1px solid #e2e8f0', overflow: 'hidden', overflowX: "auto" }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ background: '#f8fafc' }}>
                 <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 600, color: '#64748b', fontSize: 11 }}>MESE</th>

@@ -350,7 +350,7 @@ export default function OrdiniFornitori() {
 <head>
   <title>Ordine #${order.order_number}</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
+    body { font-family: Arial, sans-serif; padding: 40px; max-width: "100%"; margin: 0 auto; }
     .header { border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
     .company { font-size: 22px; font-weight: bold; color: #1e3a5f; }
     .info { color: #666; font-size: 12px; margin-top: 5px; }
@@ -595,7 +595,7 @@ export default function OrdiniFornitori() {
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
-            <table style={styles.table}>
+              <table style={styles.table}>
               <thead>
                 <tr>
                   <th style={styles.th}>N° Ordine</th>
@@ -908,7 +908,7 @@ export default function OrdiniFornitori() {
               </div>
             </div>
             
-            <div style={{ padding: 20 }}>
+            <div style={{ padding: 20, overflowX: "auto" }}>
               <table style={styles.table}>
                 <thead>
                   <tr>

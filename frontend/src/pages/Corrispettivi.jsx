@@ -221,7 +221,7 @@ export default function Corrispettivi() {
                     Riepilogo per Aliquota IVA
                   </h4>
                   <div style={{overflowX:'auto'}}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                     <thead>
                       <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
                         <th style={{ padding: 10, textAlign: 'left' }}>Aliquota</th>
@@ -268,7 +268,7 @@ export default function Corrispettivi() {
               </div>
             ) : (
               <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }} data-testid="corrispettivi-table">
+              <table style={{ width: '100%', borderCollapse: 'collapse' }} data-testid="corrispettivi-table">
                   <thead>
                     <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
                       <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, fontSize: 12, color: '#64748b' }}>DATA</th>

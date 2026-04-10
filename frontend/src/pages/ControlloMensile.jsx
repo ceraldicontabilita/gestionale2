@@ -810,7 +810,7 @@ export default function ControlloMensile() {
       {/* Year View - Monthly Table */}
       {viewMode === 'anno' && (
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }} data-testid="yearly-table">
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }} data-testid="yearly-table">
             <thead>
               <tr style={{ background: '#f8fafc' }}>
                 <th style={{ padding: 10, textAlign: 'left', borderBottom: '2px solid #e2e8f0' }}>Mese</th>
@@ -956,7 +956,7 @@ export default function ControlloMensile() {
       {/* Month View - Daily Table */}
       {viewMode === 'mese' && (
         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }} data-testid="monthly-table">
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }} data-testid="monthly-table">
             <thead>
               <tr style={{ background: '#f8fafc' }}>
                 <th style={{ padding: 12, textAlign: 'left', borderBottom: '2px solid #e2e8f0' }}>Data</th>

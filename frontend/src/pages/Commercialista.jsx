@@ -1253,7 +1253,7 @@ export default function Commercialista() {
         }}>
           <h3 style={{ margin: '0 0 15px 0', color: '#1e3a5f' }}>📋 Storico Invii</h3>
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e5e7eb' }}>
                   <th style={{ padding: 12, textAlign: 'left' }}>Data Invio</th>
