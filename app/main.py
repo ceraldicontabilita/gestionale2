@@ -581,7 +581,7 @@ app.include_router(configurazioni.router, prefix="/api/config", tags=["Configura
 from app.routers import websocket_realtime
 app.include_router(websocket_realtime.router, prefix="/api", tags=["WebSocket Real-time"])
 app.include_router(learning_machine.router, prefix="/api/learning-machine", tags=["Learning Machine"])
-app.include_router(learning_machine_cdc.router, prefix="/api", tags=["Learning Machine CDC"])
+app.include_router(learning_machine_cdc.router, prefix="/api", tags=["Learning Machine CDC"])  # path: /api/learning-cdc/*
 app.include_router(fornitori_learning.router, prefix="/api", tags=["Fornitori Learning"])
 
 # --- Learning Machine Universale ---
