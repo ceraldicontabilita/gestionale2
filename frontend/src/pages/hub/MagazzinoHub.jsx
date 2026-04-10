@@ -49,16 +49,27 @@ export default function MagazzinoHub() {
   const location  = useLocation();
   const [activeTab, setActiveTab] = useState(() => getTabFromPath(location.pathname));
   const [error, setError]         = useState(null);
+  const [visitedTabs, setVisitedTabs] = useState(() => new Set([getTabFromPath(location.pathname)]));
 
   useEffect(() => {
     const t = getTabFromPath(location.pathname);
-    if (t !== activeTab) setActiveTab(t);
+    setActiveTab(t);
+    setVisitedTabs(prev => { const n = new Set(prev); n.add(t); return n; });
   }, [location.pathname]);
 
   const handleTabChange = (tabId) => {
     setError(null);
     setActiveTab(tabId);
+    setVisitedTabs(prev => { const n = new Set(prev); n.add(tabId); return n; });
     navigate(tabId === 'giacenze' ? '/magazzino' : `/magazzino/${tabId}`);
+  };
+
+  const CONTENTS = {
+    'giacenze':   MagazzinoContent,
+    'inventario': InventarioContent,
+    'ricerca':    RicercaContent,
+    'articoli':   ArticoliContent,
+    'pos':        POSContent,
   };
 
   return (
@@ -88,20 +99,23 @@ export default function MagazzinoHub() {
         ))}
       </div>
 
-      {/* Tab Content */}
+      {/* Tab Content - mount-once pattern */}
       <div style={{ padding: '16px 24px' }}>
         {error && (
           <div style={{ padding: 16, background: '#fef2f2', borderRadius: 8, color: '#dc2626', marginBottom: 16 }}>
             Errore caricamento: {error}
           </div>
         )}
-        <Suspense fallback={<Loading />}>
-          {activeTab === 'giacenze'   && <MagazzinoContent />}
-          {activeTab === 'inventario' && <InventarioContent />}
-          {activeTab === 'ricerca'    && <RicercaContent />}
-          {activeTab === 'articoli'   && <ArticoliContent />}
-          {activeTab === 'pos'        && <POSContent />}
-        </Suspense>
+        {TABS.map(tab => {
+          const C = CONTENTS[tab.id];
+          return (
+            <div key={tab.id} style={{ display: activeTab === tab.id ? 'block' : 'none' }}>
+              <Suspense fallback={<Loading />}>
+                {visitedTabs.has(tab.id) && <C />}
+              </Suspense>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

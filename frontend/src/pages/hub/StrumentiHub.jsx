@@ -49,16 +49,27 @@ export default function StrumentiHub() {
   const location  = useLocation();
   const [activeTab, setActiveTab] = useState(() => getTabFromPath(location.pathname));
   const [error, setError]         = useState(null);
+  const [visitedTabs, setVisitedTabs] = useState(() => new Set([getTabFromPath(location.pathname)]));
 
   useEffect(() => {
     const t = getTabFromPath(location.pathname);
-    if (t !== activeTab) setActiveTab(t);
+    setActiveTab(t);
+    setVisitedTabs(prev => { const n = new Set(prev); n.add(t); return n; });
   }, [location.pathname]);
 
   const handleTabChange = (tabId) => {
     setError(null);
     setActiveTab(tabId);
+    setVisitedTabs(prev => { const n = new Set(prev); n.add(tabId); return n; });
     navigate(tabId === 'verifica' ? '/strumenti' : `/strumenti/${tabId}`);
+  };
+
+  const CONTENTS = {
+    'verifica':       VerificaContent,
+    'commercialista': CommercialistaContent,
+    'pianificazione': PianificazioneContent,
+    'email':          EmailContent,
+    'visure':         VisureContent,
   };
 
   return (
@@ -88,20 +99,23 @@ export default function StrumentiHub() {
         ))}
       </div>
 
-      {/* Tab Content */}
+      {/* Tab Content - mount-once pattern */}
       <div style={{ padding: '16px 24px' }}>
         {error && (
           <div style={{ padding: 16, background: '#fef2f2', borderRadius: 8, color: '#dc2626', marginBottom: 16 }}>
             Errore caricamento: {error}
           </div>
         )}
-        <Suspense fallback={<Loading />}>
-          {activeTab === 'verifica'       && <VerificaContent />}
-          {activeTab === 'commercialista' && <CommercialistaContent />}
-          {activeTab === 'pianificazione' && <PianificazioneContent />}
-          {activeTab === 'email'          && <EmailContent />}
-          {activeTab === 'visure'         && <VisureContent />}
-        </Suspense>
+        {TABS.map(tab => {
+          const C = CONTENTS[tab.id];
+          return (
+            <div key={tab.id} style={{ display: activeTab === tab.id ? 'block' : 'none' }}>
+              <Suspense fallback={<Loading />}>
+                {visitedTabs.has(tab.id) && <C />}
+              </Suspense>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

@@ -1,5 +1,70 @@
 # Ceraldi ERP — PRD
 
+## Problema originale
+Aggiornamento gestionale ERP (React + FastAPI + MongoDB Atlas) seguendo ISTRUZIONI_CORRETTE_V2.md e ISTRUZIONI_CICLO_PASSIVO.md. Design system rigido: solo CSS inline da `lib/utils.js`. **Vietato Tailwind e Shadcn.**
+
+## Architettura
+- **Backend**: FastAPI + Motor (MongoDB Atlas) — `azienda_erp_db` / DB: `Gestionale`
+- **Frontend**: React + Vite (porta 3000) — routing SPA con React Router v6
+- **Server entry**: `/app/backend/server.py` (NON cancellare)
+- **Design**: tutti gli stili inline, costanti in `/app/frontend/src/lib/utils.js`
+
+## Completato
+
+### Sprint 1-6 (sessioni precedenti)
+- Pulizia 34 file stub dal backend
+- Router cucina: `ricette.py`, `food_cost.py`, `prodotti_vendita.py`, `ordini_fornitori.py`
+- Pagine admin: `RicettarioAdmin`, `FoodCostAdmin`, `CatalogoOrdini`, `ProdottiVendita`
+- Tab "Bozze" in OrdiniFornitori
+- Fix bug lettura PEC (INBOX.lette)
+- Scheduler PEC ogni ora
+- Rimozione duplicati UI (FiscoHub, MotoreContabile, tab secondari)
+- Fix timezone in centri_costo.py e documenti.py
+- Ottimizzazione import CSV estratto conto (~2s)
+- Drawer cliccabile Piano dei Conti con endpoint movimenti semantici
+
+### Sessione corrente (Aprile 2026)
+- **Fix dati drawer Piano dei Conti**: logica semantica per conto
+  - Cassa (01.01.01) → `prima_nota`
+  - Banca (01.01.02) → `prima_nota_banca` (fallback: `movimenti_bancari`)
+  - Debiti Fornitori (02.01.*) → `fatture_passive`
+  - Costi (05.*) → `fatture_passive`
+  - Ricavi (04.*) → `corrispettivi`
+  - Campo `tipo` letto dal documento (non calcolato dall'importo)
+- **Fix reload tab hub**: pattern "mount-once, hide-with-CSS" su TUTTI gli hub
+  - `ContabilitaHub`, `CucinaHub`, `DocumentiHub`, `StrumentiHub`, `MagazzinoHub`
+  - `FattureHub`, `PrimaNotaHub`, `AdminHub`
+  - Nessun unmount/remount al cambio tab → nessun reload visivo
+
+## Backlog Prioritizzato
+
+### P0
+- (nessuno al momento)
+
+### P1
+- Passo 7 (ISTRUZIONI V2): Widget Cucina in DashboardHub — 2 StatCard (Ordini in attesa, Ricette da approvare)
+- Gestione Ciclo Passivo: `CicloPassivoAdmin.jsx` da ISTRUZIONI_CICLO_PASSIVO.md
+
+### P2
+- Verifica/fix Portale.jsx (potrebbe usare Tailwind/Shadcn)
+- Email PEC: nuova App Password per `ceraldigroupsr@gmail.com` (attualmente invalida)
+
+### P3
+- Autenticazione backend JWT con cookie HTTP-Only
+- Keep-alive per navigazione top-level (Dashboard → Fatture → etc.)
+
+## Note Tecniche
+- Backend collections reali: `prima_nota` (3), `prima_nota_banca` (21), `movimenti_bancari` (14834), `fatture_passive` (73), `corrispettivi` (25), `estratto_conto_movimenti` (25068)
+- Filtro anno: `prima_nota` usa campo `data` (YYYY-MM-DD), `fatture_passive` usa campo `anno` (int), `corrispettivi` usa campo `anno` (int)
+- Hub pattern: visitedTabs (Set) + display:none per tab inattivi
+
+## API Principali
+- `GET /api/piano-conti/conto/{codice}/movimenti?limit=40&anno=2026`
+- `GET /api/cucina/ricette`, `POST /api/cucina/ricette`
+- `GET /api/fatture-ricevute/archivio`
+- `POST /api/email-download/pec/download-fatture-sync`
+D
+
 ## Problema Originale
 Applicazione ERP full-stack (React + FastAPI + MongoDB Atlas) per Ceraldi Caffè.
 Aggiornamenti richiesti tramite file CERALDI_MASTER_ZIP.zip e ISTRUZIONI_CORRETTE_V2.md.

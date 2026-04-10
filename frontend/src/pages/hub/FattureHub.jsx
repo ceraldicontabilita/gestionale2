@@ -18,11 +18,27 @@ export default function FattureHub() {
   const location = useLocation();
   const isCorresp = location.pathname.includes('/corrispettivi');
 
+  // Mount-once: traccia quale vista è stata visitata
+  const [visitedCorresp, setVisitedCorresp] = useState(isCorresp);
+  const [visitedArchivio, setVisitedArchivio] = useState(!isCorresp);
+
+  useEffect(() => {
+    if (isCorresp) setVisitedCorresp(true);
+    else setVisitedArchivio(true);
+  }, [isCorresp]);
+
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc', padding: '16px 24px' }}>
-      <Suspense fallback={<Loading />}>
-        {isCorresp ? <CorrispettiviContent /> : <ArchivioContent />}
-      </Suspense>
+      <div style={{ display: isCorresp ? 'none' : 'block' }}>
+        <Suspense fallback={<Loading />}>
+          {visitedArchivio && <ArchivioContent />}
+        </Suspense>
+      </div>
+      <div style={{ display: isCorresp ? 'block' : 'none' }}>
+        <Suspense fallback={<Loading />}>
+          {visitedCorresp && <CorrispettiviContent />}
+        </Suspense>
+      </div>
     </div>
   );
 }

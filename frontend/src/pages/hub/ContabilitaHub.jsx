@@ -73,8 +73,13 @@ export default function ContabilitaHub() {
   const [hs, setHs] = useHashState({ tab: getTabFromPath(location.pathname) });
   const activeTab = getTabFromPath(location.pathname); // path ha la precedenza
 
+  // Traccia i tab visitati: una volta montato, il componente NON viene smontato
+  const [visitedTabs, setVisitedTabs] = useState(() => new Set([getTabFromPath(location.pathname)]));
+
   useEffect(() => {
-    setHs('tab', getTabFromPath(location.pathname));
+    const t = getTabFromPath(location.pathname);
+    setHs('tab', t);
+    setVisitedTabs(prev => { const n = new Set(prev); n.add(t); return n; });
   }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleTabChange = (tabId) => {
@@ -111,26 +116,32 @@ export default function ContabilitaHub() {
         ))}
       </div>
 
-      {/* Tab Content */}
+      {/* Tab Content - mount-once pattern: nessun reload al cambio tab */}
       <div style={{ padding: '16px 24px' }}>
         {error && (
           <div style={{ padding: 16, background: '#fef2f2', borderRadius: 8, color: '#dc2626', marginBottom: 16 }}>
             Errore: {error}
           </div>
         )}
-        <Suspense fallback={<Loading />}>
-          {activeTab === 'piano-conti' && <PianoContiContent />}
-          {activeTab === 'bilancio'    && <BilancioContent />}
-          {activeTab === 'verifica'    && <BilancioVerContent />}
-          {activeTab === 'controllo'   && <ControlloContent />}
-          {activeTab === 'calendario'  && <CalendarioContent />}
-          {activeTab === 'cespiti'     && <CespitiContent />}
-          {activeTab === 'finanziaria' && <FinanziariaContent />}
-          {activeTab === 'chiusura'    && <ChiusuraContent />}
-          {activeTab === 'budget'      && <BudgetContent />}
-          {activeTab === 'mutui'       && <MutuiContent />}
-          {activeTab === 'avanzata'    && <AvanzataContent />}
-        </Suspense>
+        {[
+          { id: 'piano-conti', C: PianoContiContent },
+          { id: 'bilancio',    C: BilancioContent },
+          { id: 'verifica',    C: BilancioVerContent },
+          { id: 'controllo',   C: ControlloContent },
+          { id: 'calendario',  C: CalendarioContent },
+          { id: 'cespiti',     C: CespitiContent },
+          { id: 'finanziaria', C: FinanziariaContent },
+          { id: 'chiusura',    C: ChiusuraContent },
+          { id: 'budget',      C: BudgetContent },
+          { id: 'mutui',       C: MutuiContent },
+          { id: 'avanzata',    C: AvanzataContent },
+        ].map(({ id, C }) => (
+          <div key={id} style={{ display: activeTab === id ? 'block' : 'none' }}>
+            <Suspense fallback={<Loading />}>
+              {visitedTabs.has(id) && <C />}
+            </Suspense>
+          </div>
+        ))}
       </div>
     </div>
   );

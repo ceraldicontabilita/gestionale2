@@ -55,14 +55,27 @@ export default function DocumentiHub() {
   const [hs, setHs] = useHashState({ tab: initTab });
   const activeTab = getTabFromPath(location.pathname); // path ha la precedenza
 
+  // Traccia tab visitati: mount-once pattern
+  const [visitedTabs, setVisitedTabs] = useState(() => new Set([initTab]));
+
   useEffect(() => {
-    setHs('tab', getTabFromPath(location.pathname));
+    const t = getTabFromPath(location.pathname);
+    setHs('tab', t);
+    setVisitedTabs(prev => { const n = new Set(prev); n.add(t); return n; });
   }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleTabChange = (tabId) => {
     setError(null);
     setHs('tab', tabId);
     navigate(tabId === 'archivio' ? '/documenti' : `/documenti/${tabId}`);
+  };
+
+  const CONTENTS = {
+    'archivio':        ArchivioContent,
+    'import':          ImportContent,
+    'da-rivedere':     DaRivedereContent,
+    'classificazione': ClassificazioneContent,
+    'correzione-ai':   CorrezioneAIContent,
   };
 
   return (
@@ -92,20 +105,23 @@ export default function DocumentiHub() {
         ))}
       </div>
 
-      {/* Tab Content */}
+      {/* Tab Content - mount-once pattern */}
       <div style={{ padding: '16px 24px' }}>
         {error && (
           <div style={{ padding: 16, background: '#fef2f2', borderRadius: 8, color: '#dc2626', marginBottom: 16 }}>
             Errore: {error}
           </div>
         )}
-        <Suspense fallback={<Loading />}>
-          {activeTab === 'archivio'        && <ArchivioContent />}
-          {activeTab === 'import'          && <ImportContent />}
-          {activeTab === 'da-rivedere'     && <DaRivedereContent />}
-          {activeTab === 'classificazione' && <ClassificazioneContent />}
-          {activeTab === 'correzione-ai'   && <CorrezioneAIContent />}
-        </Suspense>
+        {TABS.map(tab => {
+          const C = CONTENTS[tab.id];
+          return (
+            <div key={tab.id} style={{ display: activeTab === tab.id ? 'block' : 'none' }}>
+              <Suspense fallback={<Loading />}>
+                {visitedTabs.has(tab.id) && <C />}
+              </Suspense>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
 const AdminContent = lazy(() => import('../Admin.jsx'));
@@ -23,17 +23,31 @@ export default function AdminHub() {
   const location = useLocation();
   const path = location.pathname;
 
-  const getContent = () => {
-    if (path.includes('/batch-reprocessing')) return <BatchContent />;
-    if (path.includes('/batch-processor')) return <BatchProcContent />;
-    return <AdminContent />;
-  };
+  const isBatch = path.includes('/batch-reprocessing');
+  const isBatchProc = path.includes('/batch-processor');
+  const isAdmin = !isBatch && !isBatchProc;
+
+  const [visitedAdmin, setVisitedAdmin] = useState(isAdmin);
+  const [visitedBatch, setVisitedBatch] = useState(isBatch);
+  const [visitedBatchProc, setVisitedBatchProc] = useState(isBatchProc);
+
+  useEffect(() => {
+    if (isBatch) setVisitedBatch(true);
+    else if (isBatchProc) setVisitedBatchProc(true);
+    else setVisitedAdmin(true);
+  }, [isBatch, isBatchProc, isAdmin]);
 
   return (
     <div style={{ padding: '16px 24px', minHeight: '100vh', background: '#f8fafc' }}>
-      <Suspense fallback={<Loading />}>
-        {getContent()}
-      </Suspense>
+      <div style={{ display: isAdmin ? 'block' : 'none' }}>
+        <Suspense fallback={<Loading />}>{visitedAdmin && <AdminContent />}</Suspense>
+      </div>
+      <div style={{ display: isBatch ? 'block' : 'none' }}>
+        <Suspense fallback={<Loading />}>{visitedBatch && <BatchContent />}</Suspense>
+      </div>
+      <div style={{ display: isBatchProc ? 'block' : 'none' }}>
+        <Suspense fallback={<Loading />}>{visitedBatchProc && <BatchProcContent />}</Suspense>
+      </div>
     </div>
   );
 }

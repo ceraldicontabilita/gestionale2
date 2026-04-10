@@ -1,4 +1,4 @@
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
 const PrimaNotaContent = lazy(() => import('../PrimaNota.jsx'));
@@ -21,21 +21,29 @@ const Loading = () => (
 export default function PrimaNotaHub() {
   const location = useLocation();
   const path = location.pathname;
+  const isProvvisori = path.includes('provvisori') || path.includes('dati-provvisori');
 
-  // Determina quale contenuto mostrare
-  const getContent = () => {
-    if (path.includes('provvisori') || path.includes('dati-provvisori')) {
-      return <DatiProvvisoriContent />;
-    }
-    // Default: Prima Nota
-    return <PrimaNotaContent />;
-  };
+  // Mount-once: la vista viene montata al primo accesso e mantenuta
+  const [visitedProvvisori, setVisitedProvvisori] = useState(isProvvisori);
+  const [visitedPrimaNota, setVisitedPrimaNota] = useState(!isProvvisori);
+
+  useEffect(() => {
+    if (isProvvisori) setVisitedProvvisori(true);
+    else setVisitedPrimaNota(true);
+  }, [isProvvisori]);
 
   return (
     <div style={{ padding: '16px 24px', minHeight: '100vh', background: '#f8fafc' }}>
-      <Suspense fallback={<Loading />}>
-        {getContent()}
-      </Suspense>
+      <div style={{ display: isProvvisori ? 'none' : 'block' }}>
+        <Suspense fallback={<Loading />}>
+          {visitedPrimaNota && <PrimaNotaContent />}
+        </Suspense>
+      </div>
+      <div style={{ display: isProvvisori ? 'block' : 'none' }}>
+        <Suspense fallback={<Loading />}>
+          {visitedProvvisori && <DatiProvvisoriContent />}
+        </Suspense>
+      </div>
     </div>
   );
 }

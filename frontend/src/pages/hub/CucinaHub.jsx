@@ -33,28 +33,31 @@ export default function CucinaHub() {
   const { anno } = useAnnoGlobale();
   const navigate  = useNavigate();
   const { tab }   = useParams();
-  const [activeTab, setActiveTab] = useState(tab || 'ricettario');
+  const [activeTab, setActiveTab] = useState(tab && TABS.find(x => x.id === tab) ? tab : 'ricettario');
   const [error, setError] = useState(null);
+
+  // Traccia tab visitati: mount-once pattern
+  const [visitedTabs, setVisitedTabs] = useState(() => new Set([tab && TABS.find(x => x.id === tab) ? tab : 'ricettario']));
 
   // Sincronizza tab URL → stato
   useEffect(() => {
     const t = tab && TABS.find(x => x.id === tab) ? tab : 'ricettario';
-    if (t !== activeTab) setActiveTab(t);
+    setActiveTab(t);
+    setVisitedTabs(prev => { const n = new Set(prev); n.add(t); return n; });
   }, [tab]);
 
   const handleTabChange = (tabId) => {
     setError(null);
     setActiveTab(tabId);
+    setVisitedTabs(prev => { const n = new Set(prev); n.add(tabId); return n; });
     navigate(tabId === 'ricettario' ? '/cucina' : `/cucina/${tabId}`);
   };
 
-  const getContent = () => {
-    switch (activeTab) {
-      case 'food-cost':        return <FoodCostContent />;
-      case 'catalogo-ordini':  return <CatalogoContent />;
-      case 'prodotti-vendita': return <ProdottiContent />;
-      default:                 return <RicettarioContent />;
-    }
+  const CONTENTS = {
+    'ricettario':       RicettarioContent,
+    'food-cost':        FoodCostContent,
+    'catalogo-ordini':  CatalogoContent,
+    'prodotti-vendita': ProdottiContent,
   };
 
   return (
@@ -90,15 +93,22 @@ export default function CucinaHub() {
         ))}
       </div>
 
-      {/* Contenuto */}
+      {/* Contenuto - mount-once pattern */}
       {error && (
         <div style={{ margin: 16, padding: 12, background: '#fee2e2', color: '#dc2626', borderRadius: 8 }}>
           {error}
         </div>
       )}
-      <Suspense fallback={<Loading />}>
-        {getContent()}
-      </Suspense>
+      {TABS.map(t => {
+        const C = CONTENTS[t.id];
+        return (
+          <div key={t.id} style={{ display: activeTab === t.id ? 'block' : 'none' }}>
+            <Suspense fallback={<Loading />}>
+              {visitedTabs.has(t.id) && <C />}
+            </Suspense>
+          </div>
+        );
+      })}
     </div>
   );
 }
