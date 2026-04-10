@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import api from '../api';
+import { formatDateIT } from '../lib/utils';
 
 /* ─── Utility: estrae session_id dall'URL hash ─── */
 function getSessionIdFromHash() {
@@ -242,7 +243,7 @@ function FirmaModal({ contratto, onClose, onFirmato, token }) {
             Firma Documento
           </h3>
           <p style={{ margin: '4px 0 0', fontSize: 13, color: '#64748b' }}>
-            {contratto.tipo || contratto.nome || 'Contratto'} — {contratto.data_documento || ''}
+            {contratto.tipo || contratto.nome || 'Contratto'} — {contratto.data_documento ? formatDateIT(contratto.data_documento) : ''}
           </p>
         </div>
         <div style={{
@@ -807,7 +808,7 @@ export default function Portale() {
                         {c.tipo || c.nome || 'Documento'}
                       </div>
                       <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
-                        {c.data_documento || c.data || ''} — In attesa di firma
+                        {formatDateIT(c.data_documento || c.data || '')} — In attesa di firma
                       </div>
                     </div>
                     <button

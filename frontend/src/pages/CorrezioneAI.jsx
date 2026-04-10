@@ -325,7 +325,7 @@ export default function CorrezioneAI() {
                           </div>
                           <div>
                             <label className="text-xs text-gray-500">Data</label>
-                            <div className="font-medium">{selectedDoc.data_documento || 'N/D'}</div>
+                            <div className="font-medium">{selectedDoc.data_documento ? formatDateIT(selectedDoc.data_documento) : 'N/D'}</div>
                           </div>
                           <div>
                             <label className="text-xs text-gray-500">Importo</label>
@@ -346,7 +346,7 @@ export default function CorrezioneAI() {
                           </div>
                           <div>
                             <label className="text-xs text-gray-500">Data Pagamento</label>
-                            <div className="font-medium">{selectedDoc.data_pagamento || 'N/D'}</div>
+                            <div className="font-medium">{selectedDoc.data_pagamento ? formatDateIT(selectedDoc.data_pagamento) : 'N/D'}</div>
                           </div>
                         </div>
                         <div>

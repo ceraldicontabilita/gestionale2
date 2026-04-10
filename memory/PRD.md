@@ -129,6 +129,12 @@ Aggiornamenti richiesti tramite file CERALDI_MASTER_ZIP.zip e ISTRUZIONI_CORRETT
 - **Comune popolato**: lanciato bulk OpenAPI update sulla collection corretta → 44/45 fornitori ora hanno comune/indirizzo/provincia/CAP/PEC da Camera di Commercio
 - **UI Fornitori**: rimosso "Escludi da Tracciabilità" da form e card; "Dati Incompleti" ora conta fornitori senza comune (3) invece di senza email (45)
 
+### Sessione corrente - Dati Fornitore da XML + Schede Tecniche + Formati IT (Aprile 2026)
+- **Auto-populate da XML**: nuovo endpoint `POST /api/schede-tecniche/popola-fornitore/{id}` che estrae CedentePrestatore (telefono, email, indirizzo, comune, prov) dagli XML fatture
+- **Alert dati mancanti**: banner giallo nel modal modifica fornitore quando mancano email/telefono, con bottone "Cerca in fatture"
+- **Schede Tecniche - lista completa**: da 3 → 24 prodotti visibili (tutti gli XML, senza limite); stato "non_cercato" (🔍) per quelli non ancora cercati
+- **Formato italiano**: date in gg/mm/aaaa e valori in formato italiano in Fornitori.jsx, GestionePagoPA, DocumentiDaRivedere, CorrezioneAI, Portale.jsx
+
 ### Sessione corrente (completato)
 - **Corrispettivi**: rimosso stub vuoto dal DB → pagina mostra correttamente stato vuoto
 - **Widget Cucina Dashboard**: RIMOSSO

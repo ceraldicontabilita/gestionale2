@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
-import { formatEuro } from '../lib/utils';
+import { formatEuro, formatDateIT } from '../lib/utils';
 import { PageLayout, PageSection, PageGrid, PageLoading, PageEmpty } from '../components/PageLayout';
 import { AlertCircle, Brain, CheckCircle, Clock, Tag, Filter, RefreshCw, FileText, Building2, ChevronDown } from 'lucide-react';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
@@ -181,7 +181,7 @@ function DocumentRow({ doc, centriCosto, onClassify, classifying, getTypeColor, 
         </div>
         <div style={{ textAlign: 'right' }}>
           {doc.importo_totale && <span style={{ fontWeight: 600, color: '#1e293b' }}>{formatEuro(doc.importo_totale)}</span>}
-          {doc.data_documento && <p style={{ margin: 0, fontSize: 12, color: '#94a3b8' }}>{doc.data_documento}</p>}
+          {doc.data_documento && <p style={{ margin: 0, fontSize: 12, color: '#94a3b8' }}>{formatDateIT(doc.data_documento)}</p>}
         </div>
         <div>
           {doc.ai_parsing_error ? (

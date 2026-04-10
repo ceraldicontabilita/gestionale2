@@ -5,7 +5,12 @@ Router Schede Tecniche Prodotti
 - Scarica e archivia i PDF in MongoDB
 - Associa al fornitore corretto
 """
-import os, re, uuid, logging, httpx, xml.etree.ElementTree as ET
+import os
+import re
+import uuid
+import logging
+import httpx
+import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, List
@@ -86,7 +91,74 @@ async def _find_xml_for_fornitore(db, fornitore) -> List[Path]:
     if not paths and piva:
         paths = list(XML_DIR.glob(f"*{piva}*"))
 
-    return list(dict.fromkeys(paths))[:10]
+    return list(dict.fromkeys(paths))[:50]
+
+
+def _extract_cedente_from_xml(xml_path: Path) -> dict:
+    """
+    Estrae i dati del CedentePrestatore (fornitore) da un file XML FatturaPA.
+    Ritorna un dizionario con: ragione_sociale, partita_iva, codice_fiscale,
+    indirizzo, cap, comune, provincia, telefono, email
+    """
+    try:
+        tree = ET.parse(xml_path)
+        root = tree.getroot()
+
+        # Trova il blocco CedentePrestatore
+        cedente = None
+        for el in root.iter():
+            local = el.tag.split("}")[-1] if "}" in el.tag else el.tag
+            if local == "CedentePrestatore":
+                cedente = el
+                break
+
+        if cedente is None:
+            return {}
+
+        # Estrai tutti i campi testo del blocco
+        dati: dict = {}
+        for child in cedente.iter():
+            local = child.tag.split("}")[-1] if "}" in child.tag else child.tag
+            if child.text and child.text.strip():
+                dati[local] = child.text.strip()
+
+        result: dict = {}
+
+        # Nome azienda
+        if dati.get("Denominazione"):
+            result["ragione_sociale"] = dati["Denominazione"]
+            result["nome"] = dati["Denominazione"]
+        elif dati.get("Nome") and dati.get("Cognome"):
+            result["ragione_sociale"] = f"{dati['Cognome']} {dati['Nome']}"
+            result["nome"] = result["ragione_sociale"]
+
+        # P.IVA / CF
+        if dati.get("IdCodice"):
+            result["partita_iva"] = dati["IdCodice"]
+        if dati.get("CodiceFiscale"):
+            result["codice_fiscale"] = dati["CodiceFiscale"]
+
+        # Indirizzo
+        if dati.get("Indirizzo"):
+            result["indirizzo"] = dati["Indirizzo"]
+        if dati.get("CAP"):
+            result["cap"] = dati["CAP"]
+        if dati.get("Comune"):
+            result["comune"] = dati["Comune"]
+        if dati.get("Provincia"):
+            result["provincia"] = dati["Provincia"]
+
+        # Contatti
+        if dati.get("Telefono"):
+            result["telefono"] = dati["Telefono"]
+        if dati.get("Email"):
+            result["email"] = dati["Email"]
+
+        return result
+
+    except Exception as e:
+        logger.warning(f"Errore estrazione cedente da {xml_path}: {e}")
+        return {}
 
 
 async def _ai_find_scheda(prodotto: str, fornitore_nome: str = "") -> dict:
@@ -143,15 +215,6 @@ async def _cerca_pdf_su_sito(sito: str, prodotto_clean: str) -> Optional[str]:
         return None
     try:
         base_url = f"https://www.{sito}" if not sito.startswith("http") else sito
-        # Prova percorsi comuni per schede tecniche
-        percorsi = [
-            f"/schede-tecniche",
-            f"/prodotti/schede-tecniche",
-            f"/download/schede-tecniche",
-            f"/it/download",
-            f"/prodotti",
-            f"/technical-sheets",
-        ]
         async with httpx.AsyncClient(timeout=10, follow_redirects=True,
                                      headers={"User-Agent": "Mozilla/5.0 (compatible; Bot/1.0)"}) as client:
             # Prima prova homepage per capire la struttura
@@ -190,6 +253,61 @@ async def _download_pdf(url: str) -> Optional[bytes]:
     except Exception as e:
         logger.warning(f"Download PDF fallito da {url}: {e}")
     return None
+
+
+# ── ENDPOINT POPOLA FORNITORE DA XML ─────────────────────────────────────────
+
+@router.post("/popola-fornitore/{fornitore_id}")
+async def popola_fornitore_da_xml(fornitore_id: str):
+    """
+    Legge tutti i file XML delle fatture del fornitore ed estrae i dati anagrafici
+    dal blocco CedentePrestatore (telefono, email, indirizzo, comune, provincia...).
+    Aggiorna SOLO i campi mancanti (non sovrascrive dati esistenti).
+    """
+    db = Database.get_db()
+
+    fornitore = await db["fornitori"].find_one(
+        {"$or": [{"id": fornitore_id}, {"partita_iva": fornitore_id}]},
+        {"_id": 0}
+    )
+    if not fornitore:
+        raise HTTPException(status_code=404, detail="Fornitore non trovato")
+
+    xml_paths = await _find_xml_for_fornitore(db, fornitore)
+    if not xml_paths:
+        return {"success": False, "message": "Nessun file XML trovato per questo fornitore", "dati": {}}
+
+    dati_estratti: dict = {}
+    for xml_path in xml_paths:
+        cedente = _extract_cedente_from_xml(xml_path)
+        # Prendi il primo valore non vuoto trovato per ogni campo
+        for k, v in cedente.items():
+            if k not in dati_estratti and v:
+                dati_estratti[k] = v
+
+    if not dati_estratti:
+        return {"success": False, "message": "Nessun dato anagrafico trovato negli XML", "dati": {}}
+
+    # Aggiorna solo i campi che mancano nel fornitore
+    aggiornamenti = {}
+    for campo, valore in dati_estratti.items():
+        if not fornitore.get(campo) and valore:
+            aggiornamenti[campo] = valore
+
+    if aggiornamenti:
+        aggiornamenti["updated_at"] = datetime.now(timezone.utc).isoformat()
+        await db["fornitori"].update_one(
+            {"$or": [{"id": fornitore_id}, {"partita_iva": fornitore_id}]},
+            {"$set": aggiornamenti}
+        )
+
+    return {
+        "success": True,
+        "dati_estratti": dati_estratti,
+        "campi_aggiornati": list(aggiornamenti.keys()),
+        "xml_letti": len(xml_paths),
+        "message": f"Aggiornati {len(aggiornamenti)} campi da {len(xml_paths)} fatture XML"
+    }
 
 
 # ── ENDPOINT CERCA SCHEDE PER FORNITORE ─────────────────────────────────────
@@ -249,7 +367,7 @@ async def _esegui_ricerca(db, job_id: str, fornitore: dict, prodotti_manuali):
             prodotti = []
             for p in xml_paths:
                 prodotti.extend(_extract_products_from_xml(p))
-            prodotti = list(dict.fromkeys(prodotti))[:20]
+            prodotti = list(dict.fromkeys(prodotti))  # senza limite: tutti i prodotti dalle fatture
 
         await db["schede_tecniche_jobs"].update_one(
             {"job_id": job_id},
@@ -265,8 +383,8 @@ async def _esegui_ricerca(db, job_id: str, fornitore: dict, prodotti_manuali):
             )
             return
 
-        # 2. Per ogni prodotto: cerca PDF
-        for prodotto in prodotti[:15]:
+        # 2. Per ogni prodotto: cerca PDF (max 50)
+        for prodotto in prodotti[:50]:
             try:
                 # Controlla duplicati
                 esistente = await db["schede_tecniche"].find_one({
@@ -371,11 +489,58 @@ async def _esegui_ricerca(db, job_id: str, fornitore: dict, prodotti_manuali):
 
 @router.get("/fornitore/{fornitore_id}")
 async def get_schede_fornitore(fornitore_id: str):
+    """
+    Restituisce tutte le schede tecniche del fornitore già cercate (da DB)
+    UNITE a tutti i prodotti trovati negli XML non ancora cercati (stato: non_cercato).
+    """
     db = Database.get_db()
-    schede = await db["schede_tecniche"].find(
+
+    # 1. Schede già in DB per questo fornitore
+    schede_db = await db["schede_tecniche"].find(
         {"fornitore_id": fornitore_id},
         {"_id": 0, "pdf_data": 0}
-    ).sort("created_at", -1).to_list(100)
+    ).sort("created_at", -1).to_list(500)
+
+    # 2. Tutti i prodotti dagli XML (senza limite)
+    fornitore = await db["fornitori"].find_one(
+        {"$or": [{"id": fornitore_id}, {"partita_iva": fornitore_id}]},
+        {"_id": 0}
+    )
+
+    tutti_prodotti_xml: List[str] = []
+    if fornitore:
+        xml_paths = await _find_xml_for_fornitore(db, fornitore)
+        for p in xml_paths:
+            tutti_prodotti_xml.extend(_extract_products_from_xml(p))
+        tutti_prodotti_xml = list(dict.fromkeys(tutti_prodotti_xml))  # dedup, senza limite
+
+    # 3. Merge: mappa prodotto → scheda già cercata
+    schede_by_prodotto = {}
+    for s in schede_db:
+        key = (s.get("prodotto") or "").lower().strip()
+        if key:
+            schede_by_prodotto[key] = s
+
+    merged: List[dict] = []
+    prodotti_già_inclusi = set()
+
+    # Prima aggiungi tutte le schede già in DB (nell'ordine: trovate prima)
+    for s in schede_db:
+        merged.append(s)
+        key = (s.get("prodotto") or "").lower().strip()
+        prodotti_già_inclusi.add(key)
+
+    # Poi aggiungi i prodotti XML non ancora cercati
+    for prodotto in tutti_prodotti_xml:
+        key = prodotto.lower().strip()
+        if key and key not in prodotti_già_inclusi:
+            merged.append({
+                "prodotto": prodotto,
+                "prodotto_pulito": prodotto,
+                "stato": "non_cercato",
+                "fornitore_id": fornitore_id,
+            })
+            prodotti_già_inclusi.add(key)
 
     job = await db["schede_tecniche_jobs"].find_one(
         {"fornitore_id": fornitore_id},
@@ -385,9 +550,10 @@ async def get_schede_fornitore(fornitore_id: str):
 
     return {
         "fornitore_id": fornitore_id,
-        "schede": schede,
-        "totale": len(schede),
-        "trovate": sum(1 for s in schede if s.get("stato") in ("trovato", "url_trovato", "url_suggerito")),
+        "schede": merged,
+        "totale": len(merged),
+        "trovate": sum(1 for s in schede_db if s.get("stato") in ("trovato", "url_trovato", "url_suggerito")),
+        "da_cercare": len(merged) - len(schede_db),
         "job": job,
     }
 

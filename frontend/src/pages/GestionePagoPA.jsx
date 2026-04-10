@@ -462,7 +462,7 @@ export default function GestionePagoPA() {
                   {ricevuteFiltrate.map((ricevuta, idx) => (
                     <tr key={ricevuta._id || idx} style={{ borderBottom: '1px solid #e5e7eb' }}>
                       <td style={{ padding: '12px 16px' }}>
-                        📅 {ricevuta.data_pagamento || '-'}
+                        📅 {ricevuta.data_pagamento ? formatDateIT(ricevuta.data_pagamento) : '-'}
                       </td>
                       <td style={{ padding: '12px 16px', fontFamily: 'monospace', fontSize: 13 }}>
                         {ricevuta.codice_cbill || '-'}

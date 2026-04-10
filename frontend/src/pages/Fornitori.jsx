@@ -76,11 +76,12 @@ function SupplierModal({ isOpen, onClose, supplier, onSave, saving }) {
   const [form, setForm] = useState(emptySupplier);
   const [loadingOpenAPI, setLoadingOpenAPI] = useState(false);
   const [openAPIError, setOpenAPIError] = useState(null);
+  const [loadingXML, setLoadingXML] = useState(false);
+  const [xmlMsg, setXmlMsg] = useState(null);
   const isNew = !supplier?.id;
   
   useEffect(() => {
     if (isOpen && supplier) {
-      // Mappa i campi DB (nome, piva) sui campi del form (ragione_sociale, partita_iva)
       setForm({
         ...emptySupplier,
         ...supplier,
@@ -91,6 +92,7 @@ function SupplierModal({ isOpen, onClose, supplier, onSave, saving }) {
       setForm(emptySupplier);
     }
     setOpenAPIError(null);
+    setXmlMsg(null);
   }, [isOpen, supplier]);
   
   const handleChange = (field, value) => {
@@ -132,6 +134,38 @@ function SupplierModal({ isOpen, onClose, supplier, onSave, saving }) {
     }
   };
   
+  // Popola dati mancanti dagli XML delle fatture
+  const handlePopolaDaXml = async () => {
+    const fId = supplier?.id || form.partita_iva;
+    if (!fId) return;
+    setLoadingXML(true);
+    setXmlMsg(null);
+    try {
+      const res = await api.post(`/api/schede-tecniche/popola-fornitore/${fId}`);
+      const d = res.data;
+      if (d.success && d.dati_estratti) {
+        const dati = d.dati_estratti;
+        setForm(prev => ({
+          ...prev,
+          telefono:  dati.telefono  || prev.telefono,
+          email:     dati.email     || prev.email,
+          indirizzo: dati.indirizzo || prev.indirizzo,
+          cap:       dati.cap       || prev.cap,
+          comune:    dati.comune    || prev.comune,
+          provincia: dati.provincia || prev.provincia,
+          ragione_sociale: dati.ragione_sociale || prev.ragione_sociale,
+        }));
+        setXmlMsg(`Estratti da ${d.xml_letti} fatture: ${d.campi_aggiornati.join(', ') || 'nessun campo nuovo'}`);
+      } else {
+        setXmlMsg(d.message || 'Nessun dato trovato negli XML');
+      }
+    } catch (err) {
+      setXmlMsg('Errore nel leggere le fatture XML del fornitore');
+    } finally {
+      setLoadingXML(false);
+    }
+  };
+
   const handleSubmit = () => {
     if (!form.ragione_sociale) {
       alert('Inserisci la ragione sociale');
@@ -197,7 +231,55 @@ function SupplierModal({ isOpen, onClose, supplier, onSave, saving }) {
         {/* Form */}
         <div style={{ padding: '24px', overflowY: 'auto', maxHeight: 'calc(85vh - 140px)' }}>
           <div style={{ display: 'grid', gap: '16px' }}>
-            {/* Ragione Sociale */}
+
+            {/* Alert dati mancanti */}
+            {!isNew && (!form.email || !form.telefono) && (
+              <div style={{
+                padding: '12px 16px',
+                background: '#fffbeb',
+                border: '1px solid #fbbf24',
+                borderRadius: '10px',
+                display: 'flex',
+                alignItems: 'flex-start',
+                justifyContent: 'space-between',
+                gap: '12px'
+              }}>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', flex: 1 }}>
+                  <AlertCircle size={18} color="#d97706" style={{ flexShrink: 0, marginTop: 2 }} />
+                  <div>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#92400e', marginBottom: '2px' }}>
+                      Dati mancanti: {[!form.email && 'Email', !form.telefono && 'Telefono'].filter(Boolean).join(', ')}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#b45309' }}>
+                      Compilare manualmente o usa "Cerca in fatture" per leggere dagli XML
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handlePopolaDaXml}
+                  disabled={loadingXML}
+                  style={{
+                    padding: '6px 12px', background: '#d97706', color: 'white',
+                    border: 'none', borderRadius: '6px', fontSize: '12px',
+                    fontWeight: 600, cursor: loadingXML ? 'wait' : 'pointer',
+                    whiteSpace: 'nowrap', flexShrink: 0, opacity: loadingXML ? 0.7 : 1
+                  }}
+                >
+                  {loadingXML ? 'Ricerca...' : 'Cerca in fatture'}
+                </button>
+              </div>
+            )}
+
+            {/* Messaggio esito lettura XML */}
+            {xmlMsg && (
+              <div style={{
+                padding: '10px 14px', background: '#f0fdf4', border: '1px solid #86efac',
+                borderRadius: '8px', fontSize: '12px', color: '#166534'
+              }}>
+                {xmlMsg}
+              </div>
+            )}
             <div>
               <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#374151', marginBottom: '6px' }}>
                 Ragione Sociale *
@@ -560,7 +642,7 @@ function StatCard({ icon: Icon, label, value, color, bgColor }) {
 function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices, onChangeMetodo, onSearchPiva, onShowFatturato, onShowSchedeTecniche, selectedYear }) {
   const nome = supplier.ragione_sociale || supplier.denominazione || supplier.nome || supplier.name || 'Senza nome';
   const piva = supplier.partita_iva || supplier.piva || null;
-  const hasIncomplete = !piva || !supplier.email;
+  const hasIncomplete = !piva || !supplier.comune || !supplier.email || !supplier.telefono;
   const hasPiva = !!piva;
   const metodoKey = supplier.metodo_pagamento || 'bonifico';
   const metodo = getMetodo(metodoKey);
@@ -1306,7 +1388,8 @@ export default function Fornitori() {
         ...prev,
         schede: res.data.schede || [],
         loading: false,
-        trovate: res.data.trovate || 0
+        trovate: res.data.trovate || 0,
+        da_cercare: res.data.da_cercare || 0
       }));
       if (res.data.job) setSchedeTecnicheJob(res.data.job);
     } catch (error) {
@@ -1335,7 +1418,8 @@ export default function Fornitori() {
             setSchedeTecnicheModal(prev => ({
               ...prev,
               schede: schedeRes.data.schede || [],
-              trovate: schedeRes.data.trovate || 0
+              trovate: schedeRes.data.trovate || 0,
+              da_cercare: schedeRes.data.da_cercare || 0
             }));
           }
         } catch (e) { clearInterval(poll); }
@@ -1949,7 +2033,7 @@ export default function Fornitori() {
                       <tbody>
                         {(estrattoModal.data.estratto || []).map((f, idx) => (
                           <tr key={f.id || idx} style={{ borderBottom: '1px solid #e5e7eb', background: f.is_nota_credito ? '#fef2f2' : (idx % 2 === 0 ? 'white' : '#f9fafb') }}>
-                            <td style={{ padding: '10px 12px' }}>{f.data}</td>
+                            <td style={{ padding: '10px 12px' }}>{formatDateIT(f.data)}</td>
                             <td style={{ padding: '10px 12px', fontWeight: 500 }}>{f.numero}</td>
                             <td style={{ padding: '10px 12px' }}>
                               {f.is_nota_credito ? (
@@ -2135,8 +2219,11 @@ export default function Fornitori() {
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                       <span style={{ fontSize: 13, color: '#6b7280' }}>
-                        {schedeTecnicheModal.schede.length} prodotti analizzati •{' '}
+                        {schedeTecnicheModal.schede.length} prodotti •{' '}
                         <strong style={{ color: '#16a34a' }}>{schedeTecnicheModal.trovate || 0} schede trovate</strong>
+                        {(schedeTecnicheModal.da_cercare || 0) > 0 && (
+                          <span style={{ color: '#9ca3af' }}> • {schedeTecnicheModal.da_cercare} da cercare</span>
+                        )}
                       </span>
                       <button
                         onClick={handleCercaSchedeTecniche}
@@ -2153,8 +2240,8 @@ export default function Fornitori() {
                           border: `1px solid ${scheda.stato === 'trovato' ? '#86efac' : scheda.stato === 'url_trovato' ? '#fde68a' : '#e5e7eb'}`,
                           display: 'flex', alignItems: 'flex-start', gap: 14
                         }}>
-                          <div style={{ width: 40, height: 40, borderRadius: 8, flexShrink: 0, background: scheda.stato === 'trovato' ? '#dcfce7' : scheda.stato === 'url_trovato' ? '#fef3c7' : scheda.stato === 'url_suggerito' ? '#e0e7ff' : '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
-                            {scheda.stato === 'trovato' ? '✅' : scheda.stato === 'url_trovato' ? '🔗' : scheda.stato === 'url_suggerito' ? '💡' : '❌'}
+                          <div style={{ width: 40, height: 40, borderRadius: 8, flexShrink: 0, background: scheda.stato === 'trovato' ? '#dcfce7' : scheda.stato === 'url_trovato' ? '#fef3c7' : scheda.stato === 'url_suggerito' ? '#e0e7ff' : scheda.stato === 'non_cercato' ? '#f3f4f6' : '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
+                            {scheda.stato === 'trovato' ? '✅' : scheda.stato === 'url_trovato' ? '🔗' : scheda.stato === 'url_suggerito' ? '💡' : scheda.stato === 'non_cercato' ? '🔍' : '❌'}
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontWeight: 600, fontSize: 14, color: '#1e3a5f', marginBottom: 3 }}>
@@ -2167,6 +2254,7 @@ export default function Fornitori() {
                               {scheda.stato === 'url_trovato' && 'URL trovato (PDF non scaricabile direttamente)'}
                               {scheda.stato === 'url_suggerito' && 'URL suggerito da AI — verifica manuale'}
                               {scheda.stato === 'non_trovato' && 'Scheda non trovata online'}
+                              {scheda.stato === 'non_cercato' && 'Non ancora cercato — clicca "Cerca automaticamente"'}
                             </div>
                           </div>
                           {(scheda.stato === 'trovato' || scheda.stato === 'url_trovato' || scheda.stato === 'url_suggerito') && (
