@@ -451,7 +451,6 @@ export default function Admin() {
         <button onClick={() => handleTabChange('sync')} style={tabStyle(activeTab === 'sync')}>🔄 Sincronizzazione</button>
         <button onClick={() => handleTabChange('manutenzione')} style={tabStyle(activeTab === 'manutenzione')}>🔧 Manutenzione</button>
         <button onClick={() => handleTabChange('export')} style={tabStyle(activeTab === 'export')}>📥 Esportazioni</button>
-        <button onClick={() => { window.location.href = '/admin/pin'; }} style={tabStyle(false)}>🔐 PIN Operatori</button>
       </div>
 
       {/* TAB EMAIL */}
