@@ -2,12 +2,15 @@
 Router Schede Tecniche Prodotti
 - Legge le fatture XML per estrarre prodotti del fornitore
 - Cerca sul web le schede tecniche ufficiali (PDF)
+- Scansiona email Gmail per allegati PDF dei fornitori
 - Scarica e archivia i PDF in MongoDB
 - Associa al fornitore corretto
 """
 import os
 import re
 import uuid
+import email
+import imaplib
 import logging
 import httpx
 import xml.etree.ElementTree as ET
@@ -26,8 +29,11 @@ from duckduckgo_search import DDGS
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/schede-tecniche", tags=["Schede Tecniche"])
 
-EMERGENT_KEY = os.environ.get("EMERGENT_LLM_KEY", "")
-XML_DIR      = Path("/app/app/uploads/pec_xml")
+EMERGENT_KEY  = os.environ.get("EMERGENT_LLM_KEY", "")
+IMAP_HOST     = os.environ.get("IMAP_HOST", "imap.gmail.com")
+IMAP_USER     = os.environ.get("IMAP_USER", "")
+IMAP_PASSWORD = os.environ.get("IMAP_PASSWORD", "")
+XML_DIR       = Path("/app/app/uploads/pec_xml")
 
 # ── Namespace FatturaPA ──────────────────────────────────────────────────────
 
@@ -255,7 +261,58 @@ async def _download_pdf(url: str) -> Optional[bytes]:
     return None
 
 
-# ── ENDPOINT POPOLA FORNITORE DA XML ─────────────────────────────────────────
+def _scan_gmail_for_scheda(fornitore_nome: str, prodotto: str) -> Optional[bytes]:
+    """
+    Scansiona la casella Gmail alla ricerca di allegati PDF che
+    potrebbero essere schede tecniche per il prodotto indicato.
+    Cerca email con oggetto/mittente contenente il nome fornitore
+    e allegati PDF con nome simile al prodotto.
+    Ritorna i bytes del primo PDF trovato, oppure None.
+    """
+    if not IMAP_USER or not IMAP_PASSWORD:
+        return None
+    try:
+        mail = imaplib.IMAP4_SSL(IMAP_HOST, 993)
+        mail.login(IMAP_USER, IMAP_PASSWORD)
+        mail.select("INBOX")
+
+        # Cerca email con parola chiave del fornitore o "scheda tecnica"
+        parole = [
+            fornitore_nome.split()[0][:12].upper(),  # prima parola nome fornitore
+            "scheda tecnica",
+            "technical sheet",
+        ]
+        pdf_trovato = None
+        for parola in parole:
+            status, msg_ids = mail.search(None, f'SUBJECT "{parola}"')
+            if status != "OK":
+                continue
+            ids = msg_ids[0].split()[-20:]  # ultimi 20
+            for mid in reversed(ids):
+                _, msg_data = mail.fetch(mid, "(RFC822)")
+                msg = email.message_from_bytes(msg_data[0][1])
+                for part in msg.walk():
+                    ctype = part.get_content_type()
+                    fname = (part.get_filename() or "").lower()
+                    if ctype == "application/pdf" or fname.endswith(".pdf"):
+                        # Verifica somiglianza nome prodotto
+                        parole_prod = [w.lower() for w in re.split(r"[\s_\-]+", prodotto) if len(w) > 3]
+                        if any(p in fname for p in parole_prod) or not parole_prod:
+                            pdf_trovato = part.get_payload(decode=True)
+                            break
+                if pdf_trovato:
+                    break
+            if pdf_trovato:
+                break
+
+        mail.logout()
+        return pdf_trovato
+    except Exception as e:
+        logger.warning(f"Errore scansione Gmail per scheda tecnica: {e}")
+        return None
+
+
+
 
 @router.post("/popola-fornitore/{fornitore_id}")
 async def popola_fornitore_da_xml(fornitore_id: str):
@@ -458,6 +515,21 @@ async def _esegui_ricerca(db, job_id: str, fornitore: dict, prodotti_manuali):
                     scheda["stato"] = "url_suggerito"
                     scheda["url_fonte"] = url_probabile
                     scheda["nome_file"] = url_probabile.split("/")[-1][:100]
+
+                # Prova 3: scansione email Gmail (inbox fornitore)
+                if not pdf_url and IMAP_USER and IMAP_PASSWORD:
+                    fornitore_nome_str = fornitore.get("ragione_sociale") or fornitore.get("nome", "")
+                    gmail_pdf = _scan_gmail_for_scheda(fornitore_nome_str, prodotto)
+                    if gmail_pdf:
+                        from bson import Binary
+                        scheda["pdf_data"] = Binary(gmail_pdf)
+                        scheda["nome_file"] = f"{nome_clean[:40]}_email.pdf"
+                        scheda["dimensione_bytes"] = len(gmail_pdf)
+                        scheda["stato"] = "trovato"
+                        scheda["fonte_tipo"] = "email"
+                        schede_trovate += 1
+                        await db["schede_tecniche"].insert_one(scheda)
+                        continue  # vai al prossimo prodotto
 
                 await db["schede_tecniche"].insert_one(scheda)
 

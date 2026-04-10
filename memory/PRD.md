@@ -1,13 +1,47 @@
 # Ceraldi ERP — PRD
 
 ## Problema originale
-Aggiornamento gestionale ERP (React + FastAPI + MongoDB Atlas) seguendo ISTRUZIONI_CORRETTE_V2.md e ISTRUZIONI_CICLO_PASSIVO.md. Design system rigido: solo CSS inline da `lib/utils.js`. **Vietato Tailwind e Shadcn.**
+Applicazione ERP full-stack (React + FastAPI + MongoDB Atlas) — **solo contabilità**, gestione fornitori, HR, prima nota, fatture SDI. Design system rigido: solo CSS inline da `lib/utils.js`. **Vietato Tailwind e Shadcn.**
 
 ## Architettura
-- **Backend**: FastAPI + Motor (MongoDB Atlas) — `azienda_erp_db` / DB: `Gestionale`
+- **Backend**: FastAPI + Motor (MongoDB Atlas) — DB: `azienda_erp_db` (`Gestionale`)
 - **Frontend**: React + Vite (porta 3000) — routing SPA con React Router v6
-- **Server entry**: `/app/backend/server.py` (NON cancellare)
+- **Server entry**: `/app/backend/server.py` (NON cancellare — è il punto di avvio Supervisor)
 - **Design**: tutti gli stili inline, costanti in `/app/frontend/src/lib/utils.js`
+- **Collection fornitori**: `fornitori` (168 doc) — `Collections.SUPPLIERS = "fornitori"` ← collection CANONICA
+- **Collection suppliers**: 53 doc — NON usata dal modulo principale (residuo, ignorare)
+
+```
+/app
+├── app/
+│   ├── main.py
+│   ├── routers/
+│   │   ├── invoices/corrispettivi.py   # Corrispettivi telematici
+│   │   ├── prima_nota_module/          # Prima Nota (Cassa + Banca)
+│   │   ├── suppliers_module/           # Anagrafica Fornitori (usa collection "fornitori")
+│   │   ├── fatture_module/             # Fatture Ricevute
+│   │   ├── openapi_imprese.py          # Aggiornamento anagrafica da Camera di Commercio
+│   │   └── schede_tecniche.py          # Ricerca PDF schede tecniche (LLM + web + XML)
+├── frontend/src/
+│   ├── main.jsx                        # React Router routes
+│   ├── lib/utils.js                    # Design system (COLORS, STYLES, button, badge, ecc.)
+│   ├── pages/
+│   │   ├── Dashboard.jsx               # Dashboard principale
+│   │   ├── hub/FattureHub.jsx          # Hub fatture
+│   │   ├── Fornitori.jsx               # Anagrafica fornitori + OpenAPI + Schede Tecniche
+│   │   ├── ArchivioFattureRicevute.jsx # Archivio fatture (no tab interni)
+│   │   └── CicloPassivoAdmin.jsx       # File esistente ma senza route attiva (da implementare)
+│   └── components/layout/
+│       ├── TopNav.jsx                  # Navigazione principale
+│       └── SecondaryTabs.jsx           # Tab secondari per sezione
+```
+
+## ⚠️ COSE RIMOSSE (da non reintrodurre)
+- Modulo Cucina (router cucina/, RicettarioAdmin, FoodCostAdmin, CatalogoOrdini, ProdottiVendita)
+- Widget Cucina in Dashboard
+- FiscoHub, MotoreContabile, LiquidazioneIVA, RiconciliazioneF24, CodiciTributari, F24.jsx
+- Route `/archivio-fatture-ricevute` (duplicato → redirect a `/fatture`)
+- Tab "Escludi da Tracciabilità" dal form fornitori
 
 ## Completato
 
@@ -34,20 +68,21 @@ Aggiornamento gestionale ERP (React + FastAPI + MongoDB Atlas) seguendo ISTRUZIO
 
 ## Backlog Prioritizzato
 
-### P0
-- (nessuno al momento)
+### P0 — Nessuno al momento
 
-### P1
-- Passo 7 (ISTRUZIONI V2): Widget Cucina in DashboardHub — 2 StatCard (Ordini in attesa, Ricette da approvare)
-- Gestione Ciclo Passivo: `CicloPassivoAdmin.jsx` da ISTRUZIONI_CICLO_PASSIVO.md
+### P1 — Alta priorità
+- **Gestione Ciclo Passivo**: implementare `CicloPassivoAdmin.jsx` da `ISTRUZIONI_CICLO_PASSIVO.md`
+- **Schede Tecniche via Gmail IMAP** (SBLOCCATO Apr 2026 — password funzionante): scansiona inbox Gmail per allegati PDF dai fornitori e li salva come schede tecniche
 
-### P2
-- Verifica/fix Portale.jsx (potrebbe usare Tailwind/Shadcn)
-- Email PEC: nuova App Password per `ceraldigroupsr@gmail.com` (attualmente invalida)
+### P2 — Media priorità
+- Verifica/fix `Portale.jsx` (potrebbe ancora usare Tailwind/Shadcn)
+- Cleanup DB: rimuovere o consolidare collection `suppliers` (53 doc) duplicata con `fornitori`
+- Scheduler aggiornamento automatico OpenAPI (1x/giorno aggiorna anagrafica fornitori)
+- Dipendenti: consolidare `dipendenti` (34) + `employees` (31) in un'unica collection
 
-### P3
-- Autenticazione backend JWT con cookie HTTP-Only
-- Keep-alive per navigazione top-level (Dashboard → Fatture → etc.)
+### P3 — Bassa priorità
+- Auth backend JWT con cookie HTTP-Only
+- Notifiche push quando job schede tecniche completo
 
 ## Note Tecniche
 - Backend collections reali: `prima_nota` (3), `prima_nota_banca` (21), `movimenti_bancari` (14834), `fatture_passive` (73), `corrispettivi` (25), `estratto_conto_movimenti` (25068)
@@ -159,8 +194,12 @@ Aggiornamenti richiesti tramite file CERALDI_MASTER_ZIP.zip e ISTRUZIONI_CORRETT
 
 ## Key API Endpoints
 - `GET /api/corrispettivi?anno=YYYY` — lista corrispettivi
-- `GET /api/fatture-ricevute/archivio` — archivio fatture ricevute (filtri: anno, mese, stato, fornitore_piva, search)
+- `GET /api/fatture-ricevute/archivio` — archivio fatture ricevute
 - `GET /api/fatture-ricevute/statistiche` — stats fatture
-- `POST /api/fatture-ricevute/paga-manuale` — registra pagamento (cassa o banca)
-- `GET /api/cucina/ricette/stats` — statistiche ricette
+- `POST /api/fatture-ricevute/paga-manuale` — registra pagamento
 - `POST /api/prima-nota/cassa` / `/banca` — movimenti prima nota
+- `GET /api/openapi-imprese/status` — verifica token OpenAPI
+- `POST /api/openapi-imprese/aggiorna-bulk` — aggiorna tutti i fornitori da Camera di Commercio
+- `POST /api/schede-tecniche/cerca/{fornitore_id}` — avvia job ricerca PDF schede tecniche
+- `POST /api/schede-tecniche/popola-fornitore/{id}` — popola dati fornitore dagli XML fatture
+- `GET /api/schede-tecniche/fornitore/{id}` — tutti i prodotti del fornitore (DB + XML non cercati)
