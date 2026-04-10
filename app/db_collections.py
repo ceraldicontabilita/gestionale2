@@ -209,7 +209,7 @@ COLL_DOCUMENTS_INBOX = "documents_inbox"  # 803 docs
 COLL_DOCUMENTS_CLASSIFIED = "documents_classified"
 COLL_DOCUMENTI_CLASSIFICATI = "documenti_classificati"  # 1967 docs
 COLL_DOCUMENTI_NON_ASSOCIATI = "documenti_non_associati"  # 285 docs
-COLL_INDICE_DOCUMENTI = "indice_documenti"  # 3815 docs
+COLL_INDICE_DOCUMENTI = "indice_documenti"  # DEPRECATA - dati migrati in invoices. Tenere per email_reconciliation index
 COLL_EXTRACTED_DOCUMENTS = "extracted_documents"
 COLL_PORTAL_DOCUMENTS = "portal_documents"
 
