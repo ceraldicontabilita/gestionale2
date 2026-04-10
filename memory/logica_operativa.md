@@ -305,27 +305,19 @@ GET  /api/paghe/distinte-f24?anno=           → distinte F24
 
 ---
 
-## 11. CUCINA / FOOD COST
+## 11. NOTE SUI FILE MEMORY OBSOLETI
 
-### 11.1 Router Backend (`/api/cucina/`)
-| Endpoint | Descrizione |
-|---|---|
-| `/api/cucina/ricette` | CRUD ricette |
-| `/api/cucina/food-cost/*` | Calcoli food cost |
-| `/api/cucina/prodotti-vendita/*` | Prodotti vendita |
-| `/api/cucina/ordini-fornitori/*` | Ordini fornitori cucina |
+### 11.1 Cucina / Food Cost — RIMOSSO (Aprile 2026)
+Il modulo Cucina è stato eliminato completamente (frontend + backend).
+L'app è esclusivamente un sistema di **contabilità e gestione ERP**.
+- Router backend `/api/cucina/*` → **ELIMINATI**
+- Pagine frontend CucinaHub, RicettarioAdmin, FoodCostAdmin → **ELIMINATE**
+- Collections `ricette`, `prodotti_vendita` → ancora nel DB ma non più usate
 
-### 11.2 Collections
-| Collection | Record |
-|---|---|
-| `ricette` | 207 |
-| `prodotti_vendita` | 565 |
-
-### 11.3 Pagine Frontend
-- `/cucina/ricettario` → `RicettarioAdmin.jsx`
-- `/cucina/food-cost` → `FoodCostAdmin.jsx`
-- `/cucina/catalogo` → `CatalogoOrdini.jsx`
-- `/cucina/prodotti-vendita` → `ProdottiVendita.jsx`
+### 11.2 Collection Canonica Fornitori
+- `fornitori` (168 doc) → collection canonica usata da `suppliers_module` (`Collections.SUPPLIERS = "fornitori"`)
+- `suppliers` (53 doc) → collection NON usata dall'app principale (residuo sessioni precedenti)
+- **Regola**: tutti i router che leggono/scrivono dati fornitori usano `db["fornitori"]`
 
 ---
 
