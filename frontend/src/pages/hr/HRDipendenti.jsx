@@ -26,6 +26,7 @@ function formatData(d) {
 
 // ─── Anagrafica ───────────────────────────────────────────────────────────────
 function TabAnagrafica({ dip, onSaved }) {
+  const isMobile = useIsMobile();
   const [edit, setEdit] = useState(false);
   const [form, setForm] = useState({ ...dip });
   const [saving, setSaving] = useState(false);
@@ -141,6 +142,7 @@ function TabContratti({ dip }) {
 
 // ─── Cedolini ─────────────────────────────────────────────────────────────────
 function TabCedolini({ dip }) {
+  const isMobile = useIsMobile();
   const [anno, setAnno] = useState(ANNO_CORRENTE);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -226,6 +228,7 @@ function TabCedolini({ dip }) {
 
 // ─── Movimenti ────────────────────────────────────────────────────────────────
 function TabMovimenti({ dip }) {
+  const isMobile = useIsMobile();
   const [bonifici, setBonifici] = useState([]);
   const [acconti, setAcconti] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -347,6 +350,7 @@ function TabMovimenti({ dip }) {
 
 // ─── Giustificativi ───────────────────────────────────────────────────────────
 function TabGiustificativi({ dip }) {
+  const isMobile = useIsMobile();
   const [giustificativi, setGiustificativi] = useState([]);
   const [saldo, setSaldo] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -477,7 +481,11 @@ export default function HRDipendenti() {
               <div
                 key={d.id}
                 data-testid={`dip-${d.id}`}
-                onClick={() => setSelected(d)}
+                onClick={() => {
+                  setSelected(d);
+                  setActiveTab('anagrafica');
+                  setVisitedTabs(new Set(['anagrafica']));
+                }}
                 style={{
                   padding: '10px 16px',
                   cursor: 'pointer',
@@ -546,22 +554,22 @@ export default function HRDipendenti() {
               ))}
             </div>
 
-            {/* Contenuto tab — display:none preserva stato tra tab switch */}
+            {/* Contenuto tab — display:none preserva stato tra tab switch, key={id} rimonta su cambio dipendente */}
             <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
               <div style={{ display: activeTab === 'anagrafica' ? 'block' : 'none' }}>
-                {visitedTabs.has('anagrafica') && <TabAnagrafica dip={selected} onSaved={d => setSelected({ ...selected, ...d })} />}
+                {visitedTabs.has('anagrafica') && <TabAnagrafica key={selected?.id + '-a'} dip={selected} onSaved={d => setSelected({ ...selected, ...d })} />}
               </div>
               <div style={{ display: activeTab === 'contratti' ? 'block' : 'none' }}>
-                {visitedTabs.has('contratti') && <TabContratti dip={selected} />}
+                {visitedTabs.has('contratti') && <TabContratti key={selected?.id + '-c'} dip={selected} />}
               </div>
               <div style={{ display: activeTab === 'cedolini' ? 'block' : 'none' }}>
-                {visitedTabs.has('cedolini') && <TabCedolini dip={selected} />}
+                {visitedTabs.has('cedolini') && <TabCedolini key={selected?.id + '-ced'} dip={selected} />}
               </div>
               <div style={{ display: activeTab === 'movimenti' ? 'block' : 'none' }}>
-                {visitedTabs.has('movimenti') && <TabMovimenti dip={selected} />}
+                {visitedTabs.has('movimenti') && <TabMovimenti key={selected?.id + '-m'} dip={selected} />}
               </div>
               <div style={{ display: activeTab === 'giustificativi' ? 'block' : 'none' }}>
-                {visitedTabs.has('giustificativi') && <TabGiustificativi dip={selected} />}
+                {visitedTabs.has('giustificativi') && <TabGiustificativi key={selected?.id + '-g'} dip={selected} />}
               </div>
             </div>
           </>

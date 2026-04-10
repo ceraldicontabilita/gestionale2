@@ -73,6 +73,7 @@ const emptySupplier = {
 
 // Modale Fornitore
 function SupplierModal({ isOpen, onClose, supplier, onSave, saving }) {
+  const isMobile = useIsMobile();
   const [form, setForm] = useState(emptySupplier);
   const [loadingOpenAPI, setLoadingOpenAPI] = useState(false);
   const [openAPIError, setOpenAPIError] = useState(null);

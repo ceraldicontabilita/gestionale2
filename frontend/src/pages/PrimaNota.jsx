@@ -25,6 +25,7 @@ export default function PrimaNota() {
 
 
 function PrimaNotaDesktop() {
+  const isMobile = useIsMobile();
   const { anno: selectedYear } = useAnnoGlobale();
   const currentYear = new Date().getFullYear();
   

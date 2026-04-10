@@ -156,6 +156,7 @@ export default function DocumentiDaRivedere() {
 }
 
 function DocumentRow({ doc, centriCosto, onClassify, classifying, getTypeColor, getTypeLabel }) {
+  const isMobile = useIsMobile();
   const [expanded, setExpanded] = useState(false);
   const [selectedCdc, setSelectedCdc] = useState('');
   const typeStyle = getTypeColor(doc.ai_parsed_type);
