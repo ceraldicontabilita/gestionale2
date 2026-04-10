@@ -1,7 +1,7 @@
 # Accounting Module - Contabilità e Prima Nota
 from . import accounting_main
 from . import accounting_extended
-from . import accounting_f24
+from . import accounting_f24  # file presente ma router NON registrato nel main (conflitto /api/f24 con f24_main)
 from . import accounting_engine_api
 # NOTA: prima_nota è stato modularizzato in /app/app/routers/prima_nota_module/
 from . import prima_nota_automation
