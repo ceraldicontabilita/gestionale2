@@ -19,6 +19,7 @@ class Collections:
     # === FORNITORI ===
     FORNITORI = "fornitori"  # Collection UNICA per fornitori (canonica)
     FORNITORI_LEARNING = "fornitori_learning"  # Keywords per classificazione
+    SUPPLIERS = "fornitori"  # Alias inglese → punta a fornitori (canonica)
     SUPPLIER_PAYMENT_HISTORY = "supplier_payment_history"
     SUPPLIER_PAYMENT_METHODS = "supplier_payment_methods"
     
