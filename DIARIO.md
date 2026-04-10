@@ -83,8 +83,6 @@
 
 ## TODO prossima chat
 
-- [ ] Aggiungere publish `fornitore.aggiornato` in suppliers_module quando fornitore viene modificato
-- [ ] Aggiungere publish `ingrediente.prezzo_cambiato` quando prezzo in fattura diverso da storico
-- [ ] Pagina admin gestione PIN dipendenti
-- [ ] Tablet Cucina: GET ceraldiapp.it/api/tablet/{reparto}
-- [ ] Rinomina inline colonne frigo in TemperatureHACCP.jsx
+- [x] Aggiunto publish `fornitore.aggiornato` in suppliers_module/base.py
+- [x] Aggiunto publish `ingrediente.prezzo_cambiato` in handlers/ricette.py (variazione > 5%)
+- [ ] PIN dipendenti, Tablet Cucina, Rinomina frigo → appartengono a ceraldiapp.it

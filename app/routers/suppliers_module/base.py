@@ -368,6 +368,24 @@ async def update_supplier(supplier_id: str, data: Dict[str, Any] = Body(...)) ->
         })
         prodotti_rimossi += result_inv.deleted_count
     
+    # ── EVENTO: pubblica sul Bus per aggiornamento Learning Machine ──
+    try:
+        from app.core.event_bus import bus
+        fornitore_aggiornato = await db[Collections.SUPPLIERS].find_one(
+            {"$or": [{"id": supplier_id}, {"partita_iva": supplier_id}]},
+            {"_id": 0, "id": 1, "ragione_sociale": 1, "partita_iva": 1, "iban": 1, "metodo_pagamento": 1}
+        )
+        if fornitore_aggiornato:
+            await bus.publish("fornitore.aggiornato", payload={
+                "fornitore_id":    fornitore_aggiornato.get("id"),
+                "ragione_sociale": fornitore_aggiornato.get("ragione_sociale", ""),
+                "partita_iva":     fornitore_aggiornato.get("partita_iva", ""),
+                "iban":            fornitore_aggiornato.get("iban", ""),
+                "metodo_pagamento": fornitore_aggiornato.get("metodo_pagamento", ""),
+            }, db=db, save_to_db=False)
+    except Exception as _ev:
+        logger.debug(f"[SuppliersModule] Event Bus fornitore.aggiornato: {_ev}")
+
     return {
         "message": "Fornitore aggiornato con successo",
         "alerts_risolti": alerts_risolti,

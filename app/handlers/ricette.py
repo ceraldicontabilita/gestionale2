@@ -198,22 +198,41 @@ async def handler_aggiorna_costo_ricette(payload: Dict[str, Any], db) -> Dict[st
                 })
                 alert_margine += 1
 
-        # Aggiorna price_history per questo ingrediente
+        # Aggiorna price_history e pubblica evento se prezzo cambiato
         for ing in ingredienti_aggiornati:
             try:
+                esistente = await db["price_history"].find_one({"nome": ing["nome"]})
+                prezzo_vecchio = float(esistente.get("prezzo_attuale", 0)) if esistente else 0
+                prezzo_nuovo   = ing["prezzo"]
+
                 await db["price_history"].update_one(
                     {"nome": ing["nome"]},
                     {"$set": {
-                        "nome":          ing["nome"],
-                        "prezzo_attuale": ing["prezzo"],
-                        "updated_at":    datetime.now(timezone.utc).isoformat(),
+                        "nome":           ing["nome"],
+                        "prezzo_attuale": prezzo_nuovo,
+                        "updated_at":     datetime.now(timezone.utc).isoformat(),
                     },
                      "$push": {"storico": {
                          "data":   datetime.now(timezone.utc).strftime("%Y-%m-%d"),
-                         "prezzo": ing["prezzo"],
+                         "prezzo": prezzo_nuovo,
                      }}},
                     upsert=True
                 )
+
+                # Pubblica evento se variazione > 5%
+                if prezzo_vecchio > 0:
+                    variazione = abs(prezzo_nuovo - prezzo_vecchio) / prezzo_vecchio
+                    if variazione > VARIAZIONE_MIN:
+                        try:
+                            from app.core.event_bus import bus
+                            await bus.publish("ingrediente.prezzo_cambiato", payload={
+                                "ingrediente_nome": ing["nome"],
+                                "vecchio_prezzo":   prezzo_vecchio,
+                                "nuovo_prezzo":     prezzo_nuovo,
+                                "variazione_pct":   round(variazione * 100, 2),
+                            }, db=db, save_to_db=False)
+                        except Exception:
+                            pass
             except Exception:
                 pass
 
