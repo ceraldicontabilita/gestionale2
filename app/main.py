@@ -270,7 +270,6 @@ app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
 app.include_router(google_auth.router, prefix="/api", tags=["Google OAuth"])
 app.include_router(openclaw.router, prefix="/api", tags=["OpenClaw AI Assistant"])
 app.include_router(r_agenti, prefix="/api", tags=["Agenti AI"])
-app.include_router(settings_router.router, prefix="/api", tags=["Impostazioni"])
 app.include_router(erp_bridge_router)  # Ponte Tracciabilità → Gestionale (/api/erp/ponte)
 
 # --- F24 Module ---
@@ -348,44 +347,6 @@ app.include_router(fatture_upload.router, prefix="/api/fatture", tags=["Fatture 
 app.include_router(fatture_ricevute_router, prefix="/api/fatture-ricevute", tags=["Fatture Ricevute"])
 app.include_router(r_api_tracciabilita, prefix="/api", tags=["API Tracciabilita"])
 
-# --- Tracciabilita HACCP ---
-try:
-    from app.routers.tracciabilita import (
-        lotti, lotti_fornitori, lotti_produzione, produzioni,
-        temperature_negative, temperature_positive, sanificazione,
-        disinfestazione, haccp_auto, haccp_report, report_haccp,
-        anomalie, chiusure, attrezzature, costi_giornalieri,
-        acquaviva, colazione, ricezione_merce, sconti_merce,
-        vendita_banco, fornitori as tr_fornitori
-    )
-    from app.routers.tracciabilita import ricette as tr_ricette
-    from app.routers.tracciabilita import prodotti_vendita as tr_prodotti
-    app.include_router(lotti.router,                prefix="/api/tr", tags=["TR Lotti"])
-    app.include_router(lotti_fornitori.router,      prefix="/api/tr", tags=["TR Lotti Fornitori"])
-    app.include_router(lotti_produzione.router,     prefix="/api/tr", tags=["TR Lotti Produzione"])
-    app.include_router(produzioni.router,           prefix="/api/tr", tags=["TR Produzioni"])
-    app.include_router(temperature_positive.router, prefix="/api/tr", tags=["TR Temperature +"])
-    app.include_router(temperature_negative.router, prefix="/api/tr", tags=["TR Temperature -"])
-    app.include_router(sanificazione.router,        prefix="/api/tr", tags=["TR Sanificazione"])
-    app.include_router(disinfestazione.router,      prefix="/api/tr", tags=["TR Disinfestazione"])
-    app.include_router(haccp_auto.router,           prefix="/api/tr", tags=["TR HACCP Auto"])
-    app.include_router(haccp_report.router,         prefix="/api/tr", tags=["TR HACCP Report"])
-    app.include_router(report_haccp.router,         prefix="/api/tr", tags=["TR Report HACCP"])
-    app.include_router(anomalie.router,             prefix="/api/tr", tags=["TR Anomalie"])
-    app.include_router(chiusure.router,             prefix="/api/tr", tags=["TR Chiusure"])
-    app.include_router(attrezzature.router,         prefix="/api/tr", tags=["TR Attrezzature"])
-    app.include_router(costi_giornalieri.router,    prefix="/api/tr", tags=["TR Costi Giornalieri"])
-    app.include_router(acquaviva.router,            prefix="/api/tr", tags=["TR Acquaviva"])
-    app.include_router(colazione.router,            prefix="/api/tr", tags=["TR Colazione"])
-    app.include_router(ricezione_merce.router,      prefix="/api/tr", tags=["TR Ricezione Merce"])
-    app.include_router(sconti_merce.router,         prefix="/api/tr", tags=["TR Sconti Merce"])
-    app.include_router(vendita_banco.router,        prefix="/api/tr", tags=["TR Vendita Banco"])
-    app.include_router(tr_fornitori.router,         prefix="/api/tr", tags=["TR Fornitori"])
-    app.include_router(tr_ricette.router,           prefix="/api/tr", tags=["TR Ricette"])
-    app.include_router(tr_prodotti.router,          prefix="/api/tr", tags=["TR Prodotti Vendita"])
-except Exception as e:
-    import logging
-    logging.getLogger(__name__).warning(f"Tracciabilita non caricata: {e}")
 app.include_router(corrispettivi.router, prefix="/api/corrispettivi", tags=["Corrispettivi"])
 
 # --- Employees Module ---
@@ -775,3 +736,4 @@ if __name__ == "__main__":
         port=settings.PORT,
         reload=settings.RELOAD
     )
+

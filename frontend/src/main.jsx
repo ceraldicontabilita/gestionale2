@@ -51,6 +51,7 @@ const MappaGestionale = lazy(() => import("./pages/MappaGestionale.jsx"));
 const AgentiPage = lazy(() => import("./pages/Agenti.jsx"));
 const Portale = lazy(() => import("./pages/Portale.jsx"));
 const TracciabilitaPage = lazy(() => import("./pages/TracciabilitaPage.jsx"));
+const LearningMachine = lazy(() => import("./pages/LearningMachine.jsx"));
 
 const LazyPage = ({ children }) => (
   <Suspense fallback={<PageLoader />}>{children}</Suspense>
@@ -283,3 +284,4 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     </QueryClientProvider>
   </ErrorBoundary>
 );
+
