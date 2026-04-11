@@ -1,7 +1,7 @@
 """
 Router per Verbali Noleggio - Endpoint dettaglio e gestione completa.
 """
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Body
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 import logging
@@ -219,6 +219,137 @@ async def scarica_posta_verbali() -> Dict[str, Any]:
         "message": "Funzionalità in sviluppo",
         "status": "pending"
     }
+
+
+
+@router.get("/alert-pagamenti")
+@handle_errors
+async def alert_verbali_non_pagati() -> Dict[str, Any]:
+    """
+    Alert verbali non pagati: senza quietanza in email, estratto conto o PayPal.
+    Per ciascuno indica: upload bollettino necessario.
+    """
+    db = Database.get_db()
+    
+    verbali = await db[COLLECTION].find(
+        {"stato": {"$nin": ["pagato", "riconciliato"]}},
+        {"_id": 0, "pdf_data": 0, "quietanza_pdf": 0}
+    ).sort("data_verbale", 1).to_list(500)
+    
+    alerts = []
+    for v in verbali:
+        importo = float(v.get("importo", 0) or 0)
+        alerts.append({
+            "id": v.get("id"),
+            "numero_verbale": v.get("numero_verbale"),
+            "targa": v.get("targa"),
+            "driver": v.get("driver"),
+            "data_verbale": v.get("data_verbale"),
+            "importo": importo,
+            "stato": v.get("stato"),
+            "azione_richiesta": "upload_bollettino" if importo > 0 else "verifica_importo",
+            "messaggio": f"Verbale {v.get('numero_verbale','')} - €{importo:.2f} - Pagamento non trovato in estratto conto/email. Caricare scansione bollettino." if importo > 0 else f"Verbale {v.get('numero_verbale','')} - Importo non determinato. Verificare PDF.",
+        })
+    
+    return {
+        "totale_alert": len(alerts),
+        "importo_totale_da_pagare": round(sum(a["importo"] for a in alerts), 2),
+        "alerts": alerts
+    }
+
+
+@router.post("/{verbale_id}/upload-quietanza")
+@handle_errors
+async def upload_quietanza_verbale(verbale_id: str, data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+    """
+    Upload manuale della quietanza/bollettino per un verbale.
+    Accetta: pdf_base64, importo_pagato, data_pagamento, metodo.
+    """
+    db = Database.get_db()
+    
+    verbale = await db[COLLECTION].find_one({"id": verbale_id})
+    if not verbale:
+        raise HTTPException(status_code=404, detail="Verbale non trovato")
+    
+    update = {
+        "stato": "pagato",
+        "quietanza_ricevuta": True,
+        "data_pagamento": data.get("data_pagamento"),
+        "metodo_pagamento": data.get("metodo", "bollettino_manuale"),
+        "importo_pagato": float(data.get("importo_pagato", 0)),
+    }
+    
+    if data.get("pdf_base64"):
+        update["quietanza_pdf"] = data["pdf_base64"]
+        update["quietanza_filename"] = data.get("filename", "quietanza.pdf")
+    
+    await db[COLLECTION].update_one({"id": verbale_id}, {"$set": update})
+    
+    # Crea nota presenze per consulente del lavoro
+    driver_id = verbale.get("driver_id") or verbale.get("driver_cf")
+    if driver_id:
+        from datetime import datetime, timezone
+        dt = datetime.now(timezone.utc)
+        mese_nota = dt.month + 1 if dt.month < 12 else 1
+        anno_nota = dt.year if dt.month < 12 else dt.year + 1
+        
+        nota = {
+            "id": str(__import__("uuid").uuid4()),
+            "dipendente_id": driver_id,
+            "dipendente_nome": verbale.get("driver", ""),
+            "tipo": "trattenuta_verbale",
+            "mese": mese_nota,
+            "anno": anno_nota,
+            "importo": float(data.get("importo_pagato", 0)),
+            "descrizione": f"TRATTENUTA VERBALE {verbale.get('numero_verbale','')} - Targa {verbale.get('targa','')} - Pagato {data.get('data_pagamento','')}",
+            "evidenza": True,
+            "inviato_consulente": False,
+            "verbale_id": verbale_id,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+        await db["note_presenze_consulente"].insert_one(nota)
+        
+        # Anche in trattenute_dipendenti
+        await db["trattenute_dipendenti"].insert_one({
+            **nota,
+            "tipo": "verbale_multa",
+            "stato": "da_applicare",
+            "numero_verbale": verbale.get("numero_verbale"),
+            "targa": verbale.get("targa"),
+        })
+    
+    return {"success": True, "message": f"Quietanza caricata per verbale {verbale.get('numero_verbale','')}"}
+
+
+@router.get("/note-consulente")
+@handle_errors
+async def get_note_consulente(
+    anno: Optional[int] = Query(None),
+    mese: Optional[int] = Query(None)
+) -> Dict[str, Any]:
+    """
+    Note da inviare al consulente del lavoro per le presenze.
+    Include trattenute verbali da evidenziare.
+    """
+    db = Database.get_db()
+    
+    query = {}
+    if anno:
+        query["anno"] = anno
+    if mese:
+        query["mese"] = mese
+    
+    note = await db["note_presenze_consulente"].find(
+        query, {"_id": 0}
+    ).sort([("anno", -1), ("mese", -1)]).to_list(200)
+    
+    return {
+        "note": note,
+        "totale": len(note),
+        "importo_totale": round(sum(float(n.get("importo", 0) or 0) for n in note), 2),
+        "non_inviate": sum(1 for n in note if not n.get("inviato_consulente"))
+    }
+
 
 
 @router.put("/{verbale_id}")
