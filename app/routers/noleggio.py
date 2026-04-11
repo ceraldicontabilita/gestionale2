@@ -286,6 +286,139 @@ async def get_veicoli(
     }
 
 
+
+@router.get("/export-pdf-costi")
+@handle_errors
+async def export_pdf_costi(anno: Optional[int] = Query(None)) -> Any:
+    """
+    Genera PDF riepilogo costi noleggio auto per il commercialista.
+    Include: canoni, verbali, bollo, pedaggio, riparazioni per veicolo.
+    """
+    from fastapi.responses import Response
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import mm
+    import io
+    
+    if not anno:
+        anno = datetime.now().year
+    
+    db = Database.get_db()
+    veicoli_data, _ = await scan_fatture_noleggio(anno)
+    
+    # Merge con dati salvati
+    veicoli_salvati = {}
+    async for v in db[COLLECTION].find({}, {"_id": 0}):
+        veicoli_salvati[v["targa"]] = v
+    
+    # Arricchisci con verbali
+    verbali_db = await db["verbali_noleggio"].find(
+        {"targa": {"$ne": None, "$ne": ""}},
+        {"_id": 0, "pdf_data": 0, "quietanza_pdf": 0}
+    ).to_list(500)
+    
+    risultato = []
+    for targa, dati in veicoli_data.items():
+        salvato = veicoli_salvati.get(targa, {})
+        v = {**dati, "driver": salvato.get("driver", ""), "marca": salvato.get("marca", ""), "modello": salvato.get("modello", "")}
+        # Add verbali
+        verb_importo = sum(float(vb.get("importo", 0) or 0) for vb in verbali_db if (vb.get("targa") or "").upper() == targa.upper())
+        v["totale_verbali"] = v.get("totale_verbali", 0) + verb_importo
+        risultato.append(v)
+    
+    for targa, salvato in veicoli_salvati.items():
+        if targa not in veicoli_data:
+            verb_importo = sum(float(vb.get("importo", 0) or 0) for vb in verbali_db if (vb.get("targa") or "").upper() == targa.upper())
+            risultato.append({**salvato, "totale_canoni": 0, "totale_verbali": verb_importo, "totale_bollo": 0, "totale_pedaggio": 0, "totale_costi_extra": 0, "totale_riparazioni": 0})
+    
+    # Generate PDF
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=20*mm, bottomMargin=15*mm, leftMargin=15*mm, rightMargin=15*mm)
+    styles = getSampleStyleSheet()
+    elements = []
+    
+    # Title
+    title_style = ParagraphStyle('Title', parent=styles['Title'], fontSize=16, spaceAfter=6)
+    elements.append(Paragraph(f"RIEPILOGO COSTI NOLEGGIO AUTO {anno}", title_style))
+    elements.append(Paragraph("Ceraldi Group SRL - P.IVA 04523831214", styles['Normal']))
+    elements.append(Spacer(1, 10*mm))
+    
+    # Summary table
+    cat_labels = [("Canoni", "totale_canoni"), ("Verbali/Multe", "totale_verbali"), ("Bollo", "totale_bollo"), ("Pedaggio", "totale_pedaggio"), ("Costi Extra", "totale_costi_extra"), ("Riparazioni", "totale_riparazioni")]
+    
+    summary_data = [["Categoria", "Importo"]]
+    totale_gen = 0
+    for label, key in cat_labels:
+        val = round(sum(v.get(key, 0) for v in risultato), 2)
+        totale_gen += val
+        summary_data.append([label, f"€ {val:,.2f}"])
+    summary_data.append(["TOTALE GENERALE", f"€ {totale_gen:,.2f}"])
+    
+    t = Table(summary_data, colWidths=[120*mm, 50*mm])
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e3a5f')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#f0f4ff')),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -2), [colors.white, colors.HexColor('#f9fafb')]),
+    ]))
+    elements.append(t)
+    elements.append(Spacer(1, 8*mm))
+    
+    # Detail per vehicle
+    elements.append(Paragraph("DETTAGLIO PER VEICOLO", ParagraphStyle('H2', parent=styles['Heading2'], fontSize=13)))
+    elements.append(Spacer(1, 4*mm))
+    
+    detail_data = [["Targa", "Veicolo", "Driver", "Canoni", "Verbali", "Bollo", "Altro", "TOTALE"]]
+    for v in risultato:
+        tot = sum(v.get(k, 0) for _, k in cat_labels)
+        detail_data.append([
+            v.get("targa", ""),
+            f"{v.get('marca', '')} {v.get('modello', '')[:20]}",
+            v.get("driver", "-"),
+            f"€ {v.get('totale_canoni', 0):,.2f}",
+            f"€ {v.get('totale_verbali', 0):,.2f}",
+            f"€ {v.get('totale_bollo', 0):,.2f}",
+            f"€ {(v.get('totale_pedaggio', 0) + v.get('totale_costi_extra', 0) + v.get('totale_riparazioni', 0)):,.2f}",
+            f"€ {tot:,.2f}",
+        ])
+    detail_data.append(["", "", "TOTALE", f"€ {sum(v.get('totale_canoni',0) for v in risultato):,.2f}", f"€ {sum(v.get('totale_verbali',0) for v in risultato):,.2f}", f"€ {sum(v.get('totale_bollo',0) for v in risultato):,.2f}", "", f"€ {totale_gen:,.2f}"])
+    
+    dt = Table(detail_data, colWidths=[18*mm, 35*mm, 28*mm, 22*mm, 22*mm, 18*mm, 18*mm, 22*mm])
+    dt.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1e3a5f')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ('ALIGN', (3, 0), (-1, -1), 'RIGHT'),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#f0f4ff')),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -2), [colors.white, colors.HexColor('#f9fafb')]),
+    ]))
+    elements.append(dt)
+    elements.append(Spacer(1, 6*mm))
+    
+    # Footer
+    elements.append(Paragraph(f"Documento generato il {datetime.now().strftime('%d/%m/%Y %H:%M')} — Ceraldi ERP", ParagraphStyle('Footer', parent=styles['Normal'], fontSize=8, textColor=colors.grey)))
+    
+    doc.build(elements)
+    pdf_bytes = buffer.getvalue()
+    
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="riepilogo_costi_noleggio_{anno}.pdf"'}
+    )
+
+
+
 @router.get("/fatture-non-associate")
 @handle_errors
 async def get_fatture_non_associate(

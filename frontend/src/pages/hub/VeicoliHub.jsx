@@ -70,9 +70,25 @@ function RiepilogoCosti({ anno }) {
     <div>
       {/* Header */}
       <div style={{ background: 'linear-gradient(135deg, #059669 0%, #047857 100%)', borderRadius: 12, padding: 20, color: 'white', marginBottom: 20 }}>
-        <h2 style={{ margin: '0 0 8px', fontSize: 20 }}>💰 Riepilogo Costi Noleggio {anno}</h2>
-        <div style={{ fontSize: 32, fontWeight: 700 }}>{fmt(stats.totale_generale)}</div>
-        <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>{veicoli.length} veicoli • {veicoli.filter(v => (v.totale_canoni || 0) > 0).length} con fatture</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h2 style={{ margin: '0 0 8px', fontSize: 20 }}>💰 Riepilogo Costi Noleggio {anno}</h2>
+            <div style={{ fontSize: 32, fontWeight: 700 }}>{fmt(stats.totale_generale)}</div>
+            <div style={{ fontSize: 13, opacity: 0.8, marginTop: 4 }}>{veicoli.length} veicoli • {veicoli.filter(v => (v.totale_canoni || 0) > 0).length} con fatture</div>
+          </div>
+          <a
+            href={`/api/noleggio/export-pdf-costi?anno=${anno}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              padding: '12px 20px', background: 'rgba(255,255,255,0.2)', color: 'white',
+              borderRadius: 8, textDecoration: 'none', fontWeight: 700, fontSize: 14,
+              border: '1px solid rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', gap: 8
+            }}
+          >
+            📄 Esporta PDF
+          </a>
+        </div>
       </div>
 
       {/* Categorie cards */}
