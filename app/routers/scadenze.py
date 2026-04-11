@@ -450,6 +450,7 @@ async def _get_fatture_in_scadenza(db, anno: int, include_passate: bool, giorni_
     query = {
         "pagato": {"$ne": True},
         "status": {"$ne": "paid"},
+        "stato_pagamento": {"$nin": ["pagata", "pagato"]},
         "$or": [
             {"data_ricezione": {"$regex": f"^{anno}"}},
             {"invoice_date": {"$regex": f"^{anno}"}}

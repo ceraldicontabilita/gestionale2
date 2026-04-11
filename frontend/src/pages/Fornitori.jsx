@@ -1050,7 +1050,7 @@ function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices, onChangeMeto
                 onClick={() => handleMetodoChange(key)}
                 style={{
                   width: '100%',
-                  padding: '10px 14px',
+                  padding: '7px 12px',
                   border: 'none',
                   backgroundColor: metodoKey === key ? val.bg : 'white',
                   color: val.color,
@@ -1059,7 +1059,7 @@ function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices, onChangeMeto
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '10px',
+                  gap: '8px',
                   textAlign: 'left',
                   transition: 'all 0.15s'
                 }}
