@@ -250,7 +250,7 @@ export default function Scadenze() {
             )}
             {alertWidget.f24?.da_pagare_30gg > 0 && (
               <div 
-                onClick={() => navigate('/fisco/f24')}
+                onClick={() => navigate('/contabilita/calendario')}
                 style={{
                   background: 'rgba(255,255,255,0.15)',
                   padding: 12,
@@ -297,7 +297,7 @@ export default function Scadenze() {
             {/* Verbali in attesa di fattura */}
             {documentiRiconciliare.verbali?.in_attesa_fattura > 0 && (
               <div 
-                onClick={() => navigate('/noleggio/flotta')}
+                onClick={() => navigate('/noleggio')}
                 style={{
                   background: 'rgba(255,255,255,0.15)',
                   padding: 15,
@@ -321,7 +321,7 @@ export default function Scadenze() {
             {/* Fatture in attesa di verbale (PDF) */}
             {documentiRiconciliare.verbali?.estratti_da_fatture - documentiRiconciliare.verbali?.con_pdf_scaricato > 0 && (
               <div 
-                onClick={() => navigate('/noleggio/flotta')}
+                onClick={() => navigate('/noleggio')}
                 style={{
                   background: 'rgba(255,255,255,0.15)',
                   padding: 15,

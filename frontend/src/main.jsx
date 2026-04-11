@@ -264,6 +264,16 @@ const router = createBrowserRouter([
       // === AI (redirect to OpenClaw) ===
       { path: "assistente-ai", element: <Navigate to="/api/openclaw/ui/" replace /> },
       { path: "claude", element: <Navigate to="/api/openclaw/ui/" replace /> },
+      
+      // === REDIRECT ROTTE LEGACY / MANCANTI ===
+      { path: "fisco", element: <Navigate to="/contabilita/calendario" replace /> },
+      { path: "fisco/*", element: <Navigate to="/contabilita/calendario" replace /> },
+      { path: "riconciliazione", element: <Navigate to="/contabilita" replace /> },
+      { path: "riconciliazione-unificata", element: <Navigate to="/contabilita" replace /> },
+      { path: "riconciliazione/*", element: <Navigate to="/contabilita" replace /> },
+      
+      // === CATCH-ALL: rotte non trovate → Dashboard ===
+      { path: "*", element: <Navigate to="/" replace /> },
     ]
   }
 ]);
