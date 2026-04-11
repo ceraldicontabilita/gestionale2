@@ -22,7 +22,7 @@ const wsKeepalivePlugin = {
 };
 
 export default defineConfig({
-  plugins: [react(), wsKeepalivePlugin],
+  plugins: [react()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
@@ -33,6 +33,7 @@ export default defineConfig({
     port: 3000,
     allowedHosts: true,
     hmr: false,
+    ws: false,
     proxy: {
       '/api': {
         target: process.env.VITE_BACKEND_URL || 'http://localhost:8001',
