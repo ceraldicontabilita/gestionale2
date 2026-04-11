@@ -23,6 +23,9 @@ export default function Scadenze() {
   const [invoiceData, setInvoiceData] = useState(null);
   const [loadingInvoice, setLoadingInvoice] = useState(false);
   const [documentiRiconciliare, setDocumentiRiconciliare] = useState(null);
+  const [pagaModal, setPagaModal] = useState(null);
+  const [processing, setProcessing] = useState(false);
+  const [paidIds, setPaidIds] = useState(new Set());
   const [nuovaScadenza, setNuovaScadenza] = useState({
     data_scadenza: '',
     descrizione: '',
@@ -65,6 +68,28 @@ export default function Scadenze() {
       setLoading(false);
     }
   };
+
+  const handlePagaScadenza = async (scadenza, metodo) => {
+    setProcessing(true);
+    try {
+      await api.post('/api/fatture-ricevute/paga-manuale', {
+        fattura_id: scadenza.fattura_id || scadenza.id,
+        scadenza_id: scadenza.id,
+        importo: Math.abs(scadenza.importo),
+        metodo: metodo,
+        data_pagamento: new Date().toISOString().split('T')[0],
+        fornitore: scadenza.fornitore || '',
+        numero_fattura: scadenza.numero_fattura || ''
+      });
+      setPagaModal(null);
+      setPaidIds(prev => new Set([...prev, scadenza.id]));
+    } catch (e) {
+      alert('Errore pagamento: ' + (e.response?.data?.detail || e.message));
+    } finally {
+      setProcessing(false);
+    }
+  };
+
 
   const handleCreaScadenza = async () => {
     if (!nuovaScadenza.data_scadenza || !nuovaScadenza.descrizione) {
@@ -749,6 +774,30 @@ export default function Scadenze() {
                       </a>
                     </div>
                   )}
+                  
+                  {/* Bottone Paga Cassa/Banca */}
+                  {!paidIds.has(s.id) && (s.tipo === 'FATTURA' || s.source === 'fattura' || s.importo > 0) && (
+                    <button
+                      onClick={() => setPagaModal(s)}
+                      style={{
+                        padding: '4px 8px',
+                        background: '#f59e0b',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: 4,
+                        cursor: 'pointer',
+                        fontSize: 10,
+                        fontWeight: 600,
+                        marginTop: 4
+                      }}
+                      title="Registra Pagamento"
+                    >
+                      💰 Paga
+                    </button>
+                  )}
+                  {paidIds.has(s.id) && (
+                    <span style={{ padding: '3px 8px', background: '#dcfce7', color: '#16a34a', borderRadius: 4, fontSize: 10, fontWeight: 700 }}>✓ Pagato</span>
+                  )}
                   </td>
                 </tr>
               );
@@ -900,6 +949,61 @@ export default function Scadenze() {
           }} 
         />
       )}
+
+      {/* Modal Pagamento Cassa/Banca */}
+      {pagaModal && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
+        }} onClick={() => setPagaModal(null)}>
+          <div style={{
+            background: 'white', borderRadius: 16, padding: 24, maxWidth: 420, width: '90%',
+            boxShadow: '0 25px 50px rgba(0,0,0,0.25)'
+          }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ margin: '0 0 8px', fontSize: 18, color: '#1e3a5f' }}>💰 Registra Pagamento</h3>
+            <div style={{ fontSize: 13, color: '#6b7280', marginBottom: 16 }}>
+              {pagaModal.fornitore || pagaModal.descrizione}
+            </div>
+            <div style={{ fontSize: 24, fontWeight: 700, color: '#1e3a5f', marginBottom: 20, textAlign: 'center' }}>
+              {pagaModal.importo > 0 ? `€ ${pagaModal.importo.toFixed(2)}` : '—'}
+            </div>
+            <div style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
+              <button
+                disabled={processing}
+                onClick={() => handlePagaScadenza(pagaModal, 'cassa')}
+                style={{
+                  flex: 1, padding: '14px 20px', borderRadius: 10, border: 'none',
+                  background: '#f59e0b', color: 'white', fontWeight: 700, fontSize: 15,
+                  cursor: processing ? 'wait' : 'pointer', opacity: processing ? 0.6 : 1
+                }}
+              >
+                🏪 Paga in CASSA
+              </button>
+              <button
+                disabled={processing}
+                onClick={() => handlePagaScadenza(pagaModal, 'banca')}
+                style={{
+                  flex: 1, padding: '14px 20px', borderRadius: 10, border: 'none',
+                  background: '#3b82f6', color: 'white', fontWeight: 700, fontSize: 15,
+                  cursor: processing ? 'wait' : 'pointer', opacity: processing ? 0.6 : 1
+                }}
+              >
+                🏦 Paga in BANCA
+              </button>
+            </div>
+            <button
+              onClick={() => setPagaModal(null)}
+              style={{
+                width: '100%', padding: '10px', background: '#f3f4f6', color: '#6b7280',
+                border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13
+              }}
+            >
+              Annulla
+            </button>
+          </div>
+        </div>
+      )}
+
       </div>
     </PageLayout>
   );
