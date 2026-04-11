@@ -10,7 +10,7 @@ from typing import Dict, Any, List, Optional, Tuple
 
 from app.database import Database
 
-from .constants import FORNITORI_NOLEGGIO, TARGA_PATTERN, COLLECTION
+from .constants import FORNITORI_NOLEGGIO, TARGA_PATTERN, COLLECTION, KEYWORDS_VERBALI, KEYWORDS_BOLLO, KEYWORDS_PEDAGGIO, KEYWORDS_RIPARAZIONI
 from .parsers import (
     estrai_codice_cliente,
     estrai_modello_marca,
@@ -223,8 +223,13 @@ async def _processa_linee_fattura(
                               linea.get("prezzo_unitario") or linea.get("PrezzoUnitario") or 0)
         aliquota_iva = float(linea.get("aliquota_iva") or linea.get("AliquotaIVA") or 22)
         
-        # Categorizza con metadata
-        categoria, importo, metadata = categorizza_spesa(desc, prezzo_totale, is_nota_credito)
+        # Categorizza con metadata (o usa override per linee sintetiche)
+        if linea.get("_categoria_override"):
+            categoria = linea["_categoria_override"]
+            importo = abs(prezzo_totale) * (-1 if is_nota_credito else 1)
+            metadata = {}
+        else:
+            categoria, importo, metadata = categorizza_spesa(desc, prezzo_totale, is_nota_credito)
         iva = abs(importo) * aliquota_iva / 100
         if importo < 0:
             iva = -iva
@@ -386,6 +391,43 @@ async def scan_fatture_noleggio(anno: Optional[int] = None) -> Tuple[Dict[str, A
         
         linee = invoice.get("linee", [])
         targhe_trovate: set = set()
+        
+        # FALLBACK: se linee è vuoto, usa descrizione per costruire linee sintetiche
+        descrizione = invoice.get("descrizione", "")
+        if not linee and descrizione:
+            # Cerca targhe nella descrizione
+            desc_targhe = re.findall(TARGA_PATTERN, descrizione)
+            for t in desc_targhe:
+                targhe_trovate.add(t)
+            
+            # Costruisci linee sintetiche dalla descrizione
+            total = float(invoice.get("total_amount", 0) or 0)
+            taxable = float(invoice.get("taxable_amount", 0) or 0) or round(total / 1.22, 2)
+            vat = round(total - taxable, 2)
+            
+            # Determina categoria dalla descrizione
+            desc_lower = descrizione.lower()
+            if any(kw in desc_lower for kw in KEYWORDS_VERBALI):
+                cat = "verbali"
+            elif any(kw in desc_lower for kw in KEYWORDS_BOLLO):
+                cat = "bollo"
+            elif any(kw in desc_lower for kw in KEYWORDS_PEDAGGIO):
+                cat = "pedaggio"
+            elif any(kw in desc_lower for kw in KEYWORDS_RIPARAZIONI):
+                cat = "riparazioni"
+            else:
+                cat = "canoni"
+            
+            linee = [{
+                "descrizione": descrizione,
+                "prezzo_unitario": taxable,
+                "prezzo_totale": taxable,
+                "PrezzoTotale": taxable,
+                "importo": taxable,
+                "aliquota_iva": 22.0,
+                "_categoria_override": cat,
+                "_sintetica": True
+            }]
         
         # Prima passata: trova tutte le targhe nella fattura
         for linea in linee:
