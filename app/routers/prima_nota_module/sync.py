@@ -547,8 +547,11 @@ async def get_fatture_provvisorie(anno: int = Query(...)) -> Dict:
             } if movimento_match else None,
         })
     
-    # Auto-conferma: TUTTE le fatture con metodo CERTO → registra direttamente
-    # Non serve conferma utente se il metodo è chiaro (fornitore, XML, o estratto conto)
+    # Auto-conferma SOLO se CERTO:
+    # 1. CASSA: fornitore=contanti o XML=contanti → auto (pagato subito in contanti)
+    # 2. BANCA: trovato in estratto conto (stato_match=confermato) → auto
+    # 3. TUTTO IL RESTO → resta provvisorio (l'utente decide)
+    # Il metodo pagamento lo definisce SOLO l'utente, non il sistema
     auto_confermati = 0
     provvisori_finali = []
     
@@ -558,20 +561,17 @@ async def get_fatture_provvisorie(anno: int = Query(...)) -> Dict:
         fatt_id = p["fattura_id"]
         ref = f"FATT-{fatt_id}"
         
-        # Determina se auto-confermare
         auto_confirm = False
         
-        # CASSA: sempre auto (contanti = pagato subito)
+        # CASSA: contanti = pagato subito, sempre auto-conferma
         if suggerimento == "cassa" and stato == "confermato":
             auto_confirm = True
         
-        # BANCA verificata in estratto conto
-        elif suggerimento == "banca" and stato == "confermato":
+        # BANCA: SOLO se verificato al 100% nell'estratto conto
+        elif suggerimento == "banca" and stato == "confermato" and p.get("movimento_banca"):
             auto_confirm = True
         
-        # BANCA con metodo XML chiaro (MP05, MP09, MP18, MP19, MP20 = bonifico/sepa/rid/bollettino)
-        elif suggerimento == "banca" and p.get("metodo_xml") in ["bonifico", "sepa", "rid", "domiciliazione", "bollettino", "assegno"]:
-            auto_confirm = True
+        # TUTTO IL RESTO: provvisorio → l'utente conferma
         
         if auto_confirm:
             collection = COLLECTION_PRIMA_NOTA_CASSA if suggerimento == "cassa" else COLLECTION_PRIMA_NOTA_BANCA
@@ -613,18 +613,7 @@ async def get_fatture_provvisorie(anno: int = Query(...)) -> Dict:
                     {"id": fatt_id},
                     {"$set": {"stato_pagamento": "pagata", "prima_nota_tipo": suggerimento}}
                 )
-            
-            # Salva metodo nel fornitore per le prossime volte
-            piva = p.get("fornitore_piva", "")
-            if piva:
-                metodo_save = "contanti" if suggerimento == "cassa" else p.get("metodo_xml") or "bonifico"
-                await db["fornitori"].update_one(
-                    {"partita_iva": piva},
-                    {"$set": {"metodo_pagamento": metodo_save}},
-                    upsert=False
-                )
         else:
-            # Solo fatture veramente incerte restano da confermare
             provvisori_finali.append(p)
     
     tot_cassa = sum(p["importo"] for p in provvisori_finali if p["suggerimento"] == "cassa")
