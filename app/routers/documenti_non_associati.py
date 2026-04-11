@@ -71,6 +71,13 @@ TARGET_COLLECTIONS = {
 }
 
 
+
+@router.get("/categorie-mittente")
+async def get_categorie_mittente() -> Dict[str, Any]:
+    """Statistiche documenti per categoria mittente (INPS, Agenzia Entrate, ecc.)"""
+    return await stats_per_categoria_mittente()
+
+
 @router.get("/lista")
 async def lista_documenti_non_associati(
     limit: int = Query(default=50, le=200),
@@ -108,7 +115,11 @@ async def lista_documenti_non_associati(
     conditions = [base_filter]
     
     if categoria:
-        conditions.append({"category": categoria})
+        # Supporta sia category (tipo doc) che categoria_mittente
+        conditions.append({"$or": [
+            {"category": categoria},
+            {"categoria_mittente": categoria}
+        ]})
     
     if search:
         conditions.append({
@@ -146,6 +157,70 @@ async def lista_documenti_non_associati(
         "limit": limit,
         "documenti": documenti
     }
+
+
+
+async def stats_per_categoria_mittente() -> Dict[str, Any]:
+    """
+    Statistiche documenti raggruppati per categoria mittente.
+    Per la pagina documenti divisa per: INPS, Agenzia Entrate, 
+    Comune di Napoli, Consulente Lavoro, Commercialista, etc.
+    """
+    db = Database.get_db()
+    
+    # Carica mittenti per filtrare
+    mittenti_attivi = []
+    async for m in db["mittenti_email"].find({"attivo": True}, {"_id": 0, "pattern": 1}):
+        if m.get("pattern"):
+            mittenti_attivi.append(m["pattern"].lower())
+    
+    # Filter solo mittenti attendibili
+    mittenti_conditions = [{"email_from": {"$regex": p, "$options": "i"}} for p in mittenti_attivi]
+    mittenti_conditions.append({"category": {"$in": ["f24", "cedolino", "busta_paga", "fattura", "estratto_conto", "quietanza", "bonifico", "verbale", "cartella_esattoriale", "inps", "pagopa", "fiscale", "assicurazione"]}})
+    
+    base_filter = {
+        "$and": [
+            {"$or": [{"associato": {"$exists": False}}, {"associato": False}]},
+            {"$or": mittenti_conditions}
+        ]
+    }
+    
+    pipeline = [
+        {"$match": base_filter},
+        {"$group": {
+            "_id": {"$ifNull": ["$categoria_mittente", "Non classificato"]},
+            "count": {"$sum": 1},
+            "documenti_recenti": {"$push": {"filename": "$filename", "email_subject": "$email_subject", "email_from": "$email_from"}}
+        }},
+        {"$sort": {"count": -1}}
+    ]
+    
+    categorie = []
+    totale = 0
+    async for r in db["documenti_non_associati"].aggregate(pipeline):
+        cat = r["_id"] or "Non classificato"
+        count = r["count"]
+        totale += count
+        
+        # Icon per categoria
+        icons = {
+            "INPS": "🏛️", "Agenzia Entrate": "🏢", "Comune di Napoli": "🏙️",
+            "Consulente Lavoro": "👔", "Commercialista": "📊", "PayPal": "💳",
+            "INAIL": "🏗️", "Assicurazione": "🛡️", "SDI Fatture": "📄"
+        }
+        
+        categorie.append({
+            "nome": cat,
+            "icon": icons.get(cat, "📁"),
+            "count": count,
+            "sample": r["documenti_recenti"][:3]  # primi 3 per preview
+        })
+    
+    return {
+        "categorie": categorie,
+        "totale": totale
+    }
+
 
 
 async def genera_proposta_associazione(db, doc: Dict) -> Dict[str, Any]:

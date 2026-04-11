@@ -54,7 +54,18 @@ export default function Documenti() {
   const pollingRef = useRef(null);
   
   // Tab attivo
-  const [activeTab, setActiveTab] = useState('email');
+  const [activeTab, setActiveTab] = useState('categorie');
+  
+  // Categorie mittente
+  const [categorieMittente, setCategorieMittente] = useState([]);
+  const [filtroMittente, setFiltroMittente] = useState('');
+  
+  // Load categorie mittente
+  useEffect(() => {
+    api.get('/api/documenti-non-associati/categorie-mittente')
+      .then(r => setCategorieMittente(r.data?.categorie || []))
+      .catch(() => {});
+  }, []);
   
   // AI Documents
   const [aiDocuments, setAiDocuments] = useState([]);
@@ -446,44 +457,90 @@ export default function Documenti() {
         width: 'fit-content'
       }}>
         <button
+          onClick={() => setActiveTab('categorie')}
+          style={{
+            padding: '10px 20px',
+            background: activeTab === 'categorie' ? 'white' : 'transparent',
+            border: 'none', borderRadius: 8, cursor: 'pointer',
+            fontWeight: activeTab === 'categorie' ? 600 : 400,
+            color: activeTab === 'categorie' ? '#059669' : '#6b7280',
+            boxShadow: activeTab === 'categorie' ? '0 2px 4px rgba(0,0,0,0.1)' : 'none',
+            display: 'flex', alignItems: 'center', gap: 8
+          }}
+        >
+          🏛️ Per Mittente
+        </button>
+        <button
           onClick={() => setActiveTab('email')}
           style={{
             padding: '10px 20px',
             background: activeTab === 'email' ? 'white' : 'transparent',
-            border: 'none',
-            borderRadius: 8,
-            cursor: 'pointer',
+            border: 'none', borderRadius: 8, cursor: 'pointer',
             fontWeight: activeTab === 'email' ? 600 : 400,
             color: activeTab === 'email' ? '#1e40af' : '#6b7280',
             boxShadow: activeTab === 'email' ? '0 2px 4px rgba(0,0,0,0.1)' : 'none',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8
+            display: 'flex', alignItems: 'center', gap: 8
           }}
         >
-          📧 Documenti Email
+          📧 Tutti i Documenti
         </button>
         <button
           onClick={() => { setActiveTab('ai'); loadAiDocuments(); }}
           style={{
             padding: '10px 20px',
             background: activeTab === 'ai' ? 'white' : 'transparent',
-            border: 'none',
-            borderRadius: 8,
-            cursor: 'pointer',
+            border: 'none', borderRadius: 8, cursor: 'pointer',
             fontWeight: activeTab === 'ai' ? 600 : 400,
             color: activeTab === 'ai' ? '#7c3aed' : '#6b7280',
             boxShadow: activeTab === 'ai' ? '0 2px 4px rgba(0,0,0,0.1)' : 'none',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8
+            display: 'flex', alignItems: 'center', gap: 8
           }}
         >
           🤖 AI Estratti
         </button>
       </div>
 
-      {/* Tab Content */}
+      {/* Tab Categorie Mittente */}
+      {activeTab === 'categorie' && (
+        <div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 16, marginBottom: 24 }}>
+            {categorieMittente.map(cat => (
+              <div 
+                key={cat.nome}
+                onClick={() => { setFiltroMittente(cat.nome); setActiveTab('email'); loadData(); }}
+                style={{
+                  background: 'white', borderRadius: 12, padding: '20px', cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.06)', border: '1px solid #e5e7eb',
+                  transition: 'all 0.2s', ':hover': { borderColor: '#3b82f6' }
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <span style={{ fontSize: 28 }}>{cat.icon}</span>
+                  <span style={{ 
+                    background: '#dbeafe', color: '#1e40af', padding: '4px 12px',
+                    borderRadius: 99, fontWeight: 700, fontSize: 14
+                  }}>{cat.count}</span>
+                </div>
+                <h3 style={{ margin: '0 0 4px', fontSize: 16, fontWeight: 700, color: '#1e3a5f' }}>{cat.nome}</h3>
+                <div style={{ fontSize: 12, color: '#6b7280' }}>
+                  {cat.sample?.slice(0, 2).map((s, i) => (
+                    <div key={i} style={{ marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {s.filename || s.email_subject || ''}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          {/* Totale */}
+          <div style={{ textAlign: 'center', padding: 16, background: '#f0fdf4', borderRadius: 10, color: '#059669', fontWeight: 700 }}>
+            Totale documenti da mittenti attendibili: {categorieMittente.reduce((s, c) => s + c.count, 0)}
+          </div>
+        </div>
+      )}
+
+      {/* Tab Content Email */}
       {activeTab === 'email' ? (
         <>
           {/* CONTENUTO TAB EMAIL - Statistiche */}
