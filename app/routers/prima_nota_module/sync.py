@@ -144,13 +144,66 @@ async def registra_fattura_prima_nota(
 
 
 async def sync_corrispettivi_to_prima_nota() -> Dict:
-    """Rimossa la logica rebuild — i corrispettivi non vengono più ricostruiti in Prima Nota Cassa."""
-    return {"message": "Funzione rimossa", "ok": True}
+    """Sincronizza corrispettivi in Prima Nota Cassa."""
+    return await _sync_corrispettivi_impl()
 
 
 async def sync_corrispettivi_anno(anno: int = Query(...)) -> Dict:
-    """Rimossa la logica rebuild — i corrispettivi non vengono più sincronizzati in Prima Nota Cassa."""
-    return {"message": "Funzione rimossa", "anno": anno, "ok": True}
+    """Sincronizza corrispettivi dell'anno specificato nella Prima Nota Cassa."""
+    return await _sync_corrispettivi_impl(anno)
+
+
+async def _sync_corrispettivi_impl(anno: int = None) -> Dict:
+    """Implementazione sync corrispettivi → prima nota cassa."""
+    from .common import COLLECTION_PRIMA_NOTA_CASSA
+    db = Database.get_db()
+    
+    query = {}
+    if anno:
+        query["anno"] = anno
+    
+    corrispettivi = await db["corrispettivi"].find(query, {"_id": 0}).to_list(5000)
+    
+    inseriti = 0
+    duplicati = 0
+    
+    for c in corrispettivi:
+        corr_id = c.get("id", "")
+        
+        # Check dedup
+        existing = await db[COLLECTION_PRIMA_NOTA_CASSA].find_one({"corrispettivo_id": corr_id})
+        if existing:
+            duplicati += 1
+            continue
+        
+        data = c.get("data", c.get("data_operazione", ""))
+        totale = float(c.get("totale", 0) or c.get("totale_complessivo", 0) or c.get("importo", 0) or 0)
+        
+        if totale <= 0:
+            continue
+        
+        movimento = {
+            "id": str(__import__("uuid").uuid4()),
+            "data": data,
+            "tipo": "entrata",
+            "categoria": "Corrispettivi",
+            "descrizione": f"Corrispettivi {data}",
+            "importo": totale,
+            "corrispettivo_id": corr_id,
+            "source": "corrispettivi_sync",
+            "created_at": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
+        }
+        
+        await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento)
+        inseriti += 1
+    
+    return {
+        "message": f"Sincronizzati {inseriti} corrispettivi in Prima Nota Cassa",
+        "inseriti": inseriti,
+        "duplicati": duplicati,
+        "anno": anno,
+        "ok": True
+    }
 
 
 async def sync_fatture_pagate(anno: int = Query(...)) -> Dict:
