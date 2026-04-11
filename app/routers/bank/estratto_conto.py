@@ -587,26 +587,47 @@ async def force_reimport_estratto_conto(file: UploadFile = File(...)) -> Dict[st
     if not movimenti:
         raise HTTPException(status_code=400, detail="Nessun movimento valido trovato nel CSV")
     
-    # Identifica gli anni presenti nel CSV
-    anni_nel_csv = sorted(set(mov["data"].year for mov in movimenti))
+    # SICUREZZA: NON cancellare MAI i record esistenti.
+    # Se il CSV sovrappone un periodo già importato, inserisci SOLO i nuovi.
+    # I record già riconciliati NON vengono toccati.
     
-    # Cancella TUTTI i record per quegli anni
-    cancellati = 0
-    for anno in anni_nel_csv:
-        result = await db["estratto_conto_movimenti"].delete_many({
-            "data": {"$regex": f"^{anno}"}
-        })
-        cancellati += result.deleted_count
+    # Calcola range date del CSV
+    date_nel_csv = sorted(set(
+        mov["data"].isoformat()[:10] for mov in movimenti
+    ))
+    data_min_csv, data_max_csv = date_nel_csv[0], date_nel_csv[-1]
+    
+    # Carica chiavi dedup esistenti per il range del CSV
+    existing_keys = set()
+    existing_cursor = db["estratto_conto_movimenti"].find(
+        {"data": {"$gte": data_min_csv, "$lte": data_max_csv}},
+        {"data": 1, "importo": 1, "descrizione_originale": 1, "descrizione": 1, "_id": 0}
+    )
+    async for rec in existing_cursor:
+        dstr = rec.get("data", "")[:10]
+        imp = abs(float(rec.get("importo", 0)))
+        desc = (rec.get("descrizione_originale") or rec.get("descrizione") or "")[:80]
+        existing_keys.add((dstr, round(imp, 2), desc))
+    
+    cancellati = 0  # Non cancelliamo nulla
     
     # Ordina per data contabile ascendente
     movimenti.sort(key=lambda x: x["data"].isoformat()[:10])
     
-    # Inserisce TUTTI senza dedup
+    # Inserisce SOLO i nuovi (dedup con chiavi esistenti)
     records = []
+    duplicates_skipped = 0
     for mov in movimenti:
         data_str = mov["data"].isoformat()[:10]
         importo_abs = abs(mov["importo"])
         desc_raw = (mov.get("descrizione_originale") or "")[:80]
+        
+        # Dedup: se esiste già, salta
+        dedup_key = (data_str, round(importo_abs, 2), desc_raw)
+        if dedup_key in existing_keys:
+            duplicates_skipped += 1
+            continue
+        existing_keys.add(dedup_key)
         
         tipo_mov = "entrata" if mov["importo"] >= 0 else "uscita"
         if any(kw in desc_raw.upper() for kw in ["DISPOSIZIONE", "VS.DISP", "ADD.TOT", "I24 AGENZIA ENTRATE", "BOLL.CBILL", "PAG. UTENZE"]):
@@ -647,13 +668,16 @@ async def force_reimport_estratto_conto(file: UploadFile = File(...)) -> Dict[st
     uscite = sum(r["importo"] for r in records if r["tipo"] == "uscita")
     
     return {
-        "message": f"Reimport forzato completato: anni {anni_nel_csv}",
-        "anni_aggiornati": anni_nel_csv,
-        "record_cancellati": cancellati,
-        "movimenti_importati": len(records),
+        "message": f"Import completato: solo nuovi movimenti aggiunti",
+        "periodo_csv": f"{data_min_csv} → {data_max_csv}",
+        "record_nel_csv": len(movimenti),
+        "duplicati_saltati": duplicates_skipped,
+        "movimenti_nuovi_importati": len(records),
+        "record_cancellati": 0,
         "totale_entrate": round(entrate, 2),
         "totale_uscite": round(uscite, 2),
-        "saldo": round(entrate - uscite, 2)
+        "saldo": round(entrate - uscite, 2),
+        "nota": "I record esistenti e le riconciliazioni NON sono stati toccati"
     }
 
 
