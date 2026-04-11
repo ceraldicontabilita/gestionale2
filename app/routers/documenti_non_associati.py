@@ -81,11 +81,28 @@ async def lista_documenti_non_associati(
     """
     Lista tutti i documenti non associati con proposta intelligente.
     IMPORTANTE: Esclude automaticamente i documenti già associati.
+    Mostra SOLO documenti provenienti da mittenti attendibili.
     """
     db = Database.get_db()
     
+    # Carica mittenti attendibili per filtrare
+    mittenti_attivi = []
+    async for m in db["mittenti_email"].find({"attivo": True}, {"_id": 0, "pattern": 1}):
+        if m.get("pattern"):
+            mittenti_attivi.append(m["pattern"].lower())
+    
     # Base query: escludere documenti già associati
     base_filter = {"$or": [{"associato": {"$exists": False}}, {"associato": False}]}
+    
+    # Filtro mittenti attendibili: email_from deve contenere almeno un pattern
+    if mittenti_attivi:
+        mittenti_conditions = [{"email_from": {"$regex": p, "$options": "i"}} for p in mittenti_attivi]
+        # Includi anche documenti con categoria specifica (f24, cedolino, ecc.) - sono già classificati
+        mittenti_conditions.append({"category": {"$in": ["f24", "cedolino", "busta_paga", "fattura", "estratto_conto", "quietanza", "bonifico", "verbale", "cartella_esattoriale"]}})
+        base_filter = {"$and": [
+            base_filter,
+            {"$or": mittenti_conditions}
+        ]}
     
     # Costruisci query con filtri aggiuntivi
     conditions = [base_filter]

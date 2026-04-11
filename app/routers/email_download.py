@@ -732,6 +732,27 @@ async def riconcilia_verbali_avanzato() -> Dict[str, Any]:
     return {"success": True, "stats": stats}
 
 
+@router.post("/riconcilia-paypal")
+async def riconcilia_paypal() -> Dict[str, Any]:
+    """
+    Scarica transazioni PayPal e riconcilia con verbali non pagati.
+    Cerca match per importo e riferimento nel subject.
+    """
+    from app.services.paypal_integration import riconcilia_verbali_con_paypal
+    db = Database.get_db()
+    stats = await riconcilia_verbali_con_paypal(db)
+    return {"success": True, "stats": stats}
+
+
+@router.get("/paypal-transazioni")
+async def lista_transazioni_paypal(days_back: int = Query(default=31)) -> Dict[str, Any]:
+    """Lista transazioni PayPal recenti."""
+    from app.services.paypal_integration import cerca_transazioni_paypal
+    result = await cerca_transazioni_paypal(days_back=days_back)
+    return result
+
+
+
 
 @router.post("/estrai-importi-verbali")
 async def estrai_importi_verbali(
