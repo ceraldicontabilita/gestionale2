@@ -498,6 +498,24 @@ function PrimaNotaDesktop() {
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <a
+            href="/dati-provvisori"
+            style={{
+              padding: '6px 14px',
+              background: '#7c3aed',
+              color: 'white',
+              border: 'none',
+              borderRadius: 6,
+              fontWeight: '700',
+              fontSize: 12,
+              textDecoration: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4
+            }}
+          >
+            📋 Dati Provvisori
+          </a>
           <button
             onClick={handleSyncFatture}
             disabled={syncing}

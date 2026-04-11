@@ -2,7 +2,7 @@ import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
 const PrimaNotaContent = lazy(() => import('../PrimaNota.jsx'));
-const DatiProvvisoriContent = lazy(() => import('../DatiProvvisori.jsx'));
+const DatiProvvisoriContent = lazy(() => import('../DatiProvvisoriPage.jsx'));
 
 const Loading = () => (
   <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>
