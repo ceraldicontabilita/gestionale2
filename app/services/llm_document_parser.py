@@ -443,3 +443,133 @@ async def batch_extract_importi_verbali(db, limit: int = 76) -> Dict[str, Any]:
     
     logger.info(f"[BATCH-IMPORTI] Completato: {stats}")
     return stats
+
+
+
+PROMPT_NUMERO_VERBALE = """Questo è un documento relativo a un verbale/multa/sanzione italiano.
+Estrai SOLO il NUMERO del VERBALE (numero identificativo ufficiale del verbale, non il numero PEC o protocollo).
+Il numero verbale ha tipicamente formati come:
+- A25110648977 (lettera + 11 cifre)  
+- T23260465978
+- S22280043251
+- ZL18173182511
+- 0007016241 (solo cifre)
+- 302000600008408304
+
+NON usare numeri PEC, protocollo email o ID documento.
+Rispondi con JSON: {"numero_verbale": "il numero trovato"}
+Se non trovi il numero verbale, rispondi: {"numero_verbale": null}"""
+
+
+async def batch_fix_numeri_verbali(db, limit: int = 102) -> Dict[str, Any]:
+    """
+    Corregge i numeri verbale PEC-xxx/DOC-xxx/RELATA-xxx estraendo 
+    il vero numero dal testo del PDF o tramite LLM.
+    """
+    from datetime import datetime, timezone as tz
+    stats = {"processati": 0, "corretti": 0, "errori": 0, "skipped": 0, "gia_ok": 0}
+    
+    cursor = db["verbali_noleggio"].find(
+        {
+            "numero_verbale": {"$regex": "^(PEC-|DOC-|RELATA-|PRERUOLO-|VERB-)"},
+            "pdf_data": {"$exists": True, "$ne": ""}
+        },
+        {"_id": 0}
+    ).limit(limit)
+    
+    docs = await cursor.to_list(length=limit)
+    logger.info(f"[FIX-NUMERI] {len(docs)} verbali da correggere")
+    
+    for verbale in docs:
+        try:
+            pdf_data = verbale.get("pdf_data")
+            if not pdf_data:
+                stats["skipped"] += 1
+                continue
+            
+            pdf_bytes = base64.b64decode(pdf_data)
+            old_numero = verbale.get("numero_verbale", "")
+            new_numero = None
+            
+            # Step 1: Estrai testo e cerca con regex
+            text = await _extract_text_from_pdf(pdf_bytes)
+            if text:
+                # Pattern numeri verbale italiani
+                patterns = [
+                    # Lettera + 11-14 cifre (formato più comune)
+                    r'\b([A-Z]\d{11,14})\b',
+                    # Due lettere + 10-14 cifre
+                    r'\b([A-Z]{2}\d{10,14})\b',
+                    # Numero verbale esplicito
+                    r'(?:verbale|n\.|nr\.|numero)\s*[:\s]*([A-Z0-9]{8,20})',
+                    # Numero protocollo lungo (solo cifre, 12+)
+                    r'\b(\d{12,18})\b',
+                    # Codice obbligazione
+                    r'(?:obbligazione|obbl\.?)\s*[:\s]*(\d{8,15})',
+                ]
+                
+                for p in patterns:
+                    matches = re.findall(p, text, re.IGNORECASE)
+                    for m in matches:
+                        candidate = m.upper().strip()
+                        # Filtra falsi positivi
+                        if len(candidate) >= 8 and not candidate.startswith("IT") and candidate != old_numero:
+                            # Non usare P.IVA, IBAN, codici fiscali
+                            if not re.match(r'^\d{11}$', candidate):  # P.IVA
+                                if not re.match(r'^[A-Z]{6}\d{2}', candidate):  # CF
+                                    new_numero = candidate
+                                    break
+                    if new_numero:
+                        break
+            
+            # Step 2: Se regex fallisce, usa LLM
+            if not new_numero:
+                llm_resp = await _ask_gemini_with_pdf(pdf_bytes, PROMPT_NUMERO_VERBALE, verbale.get("pdf_filename", ""))
+                if llm_resp:
+                    try:
+                        clean = llm_resp.strip()
+                        if clean.startswith("```"):
+                            clean = re.sub(r'^```\w*\n?', '', clean)
+                            clean = re.sub(r'\n?```$', '', clean)
+                        data = json.loads(clean)
+                        if data.get("numero_verbale"):
+                            candidate = str(data["numero_verbale"]).strip()
+                            if len(candidate) >= 5 and candidate != old_numero:
+                                new_numero = candidate
+                    except (json.JSONDecodeError, ValueError):
+                        pass
+            
+            # Aggiorna se trovato un numero migliore
+            if new_numero and new_numero != old_numero:
+                update = {
+                    "numero_verbale": new_numero,
+                    "numero_verbale_old": old_numero,
+                    "numero_fixed_at": datetime.now(tz.utc).isoformat()
+                }
+                await db["verbali_noleggio"].update_one(
+                    {"id": verbale["id"]},
+                    {"$set": update}
+                )
+                
+                # Aggiorna anche trattenute collegate
+                await db["trattenute_dipendenti"].update_many(
+                    {"verbale_id": verbale["id"]},
+                    {"$set": {
+                        "numero_verbale": new_numero,
+                        "descrizione": f"Verbale {new_numero} - Targa {verbale.get('targa', '')}"
+                    }}
+                )
+                
+                stats["corretti"] += 1
+                logger.info(f"[FIX-NUMERI] {old_numero} → {new_numero}")
+            else:
+                stats["gia_ok"] += 1
+            
+            stats["processati"] += 1
+            
+        except Exception as e:
+            logger.error(f"[FIX-NUMERI] Errore {verbale.get('numero_verbale','')}: {e}")
+            stats["errori"] += 1
+    
+    logger.info(f"[FIX-NUMERI] Completato: {stats}")
+    return stats

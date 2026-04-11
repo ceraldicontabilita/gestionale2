@@ -718,6 +718,21 @@ async def estrai_importi_verbali(
     return {"success": True, "stats": stats}
 
 
+@router.post("/fix-numeri-verbali")
+async def fix_numeri_verbali(
+    limit: int = Query(default=102, description="Max verbali da processare")
+) -> Dict[str, Any]:
+    """
+    Corregge numeri verbale PEC-xxx/DOC-xxx estraendo il vero numero
+    dal contenuto PDF con regex + LLM.
+    """
+    from app.services.llm_document_parser import batch_fix_numeri_verbali
+    db = Database.get_db()
+    stats = await batch_fix_numeri_verbali(db, limit=limit)
+    return {"success": True, "stats": stats}
+
+
+
 
 
 
