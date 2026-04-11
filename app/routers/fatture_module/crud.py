@@ -244,6 +244,15 @@ async def view_fattura_assoinvoice(fattura_id: str) -> HTMLResponse:
     if not fattura:
         fattura = await db[COL_FATTURE_RICEVUTE].find_one({"id": fattura_id}, {"_id": 0})
     if not fattura:
+        # Fallback: cerca per _id (MongoDB ObjectId) — usato nei link frontend legacy
+        try:
+            from bson import ObjectId
+            fattura = await db["invoices"].find_one({"_id": ObjectId(fattura_id)})
+            if fattura:
+                fattura.pop("_id", None)
+        except Exception:
+            pass
+    if not fattura:
         raise HTTPException(status_code=404, detail="Fattura non trovata")
 
     xml_file_path = fattura.get("xml_file_path")
@@ -336,6 +345,16 @@ async def get_fattura_dettaglio(fattura_id: str) -> Dict[str, Any]:
     db = Database.get_db()
     
     fattura = await db[COL_FATTURE_RICEVUTE].find_one({"id": fattura_id}, {"_id": 0})
+    if not fattura:
+        fattura = await db["invoices"].find_one({"id": fattura_id}, {"_id": 0})
+    if not fattura:
+        try:
+            from bson import ObjectId
+            fattura = await db["invoices"].find_one({"_id": ObjectId(fattura_id)})
+            if fattura:
+                fattura.pop("_id", None)
+        except Exception:
+            pass
     if not fattura:
         raise HTTPException(status_code=404, detail="Fattura non trovata")
     

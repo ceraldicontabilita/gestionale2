@@ -810,3 +810,284 @@ async def _marca_verbale_pagato(
     if verbale.get("driver_id") and (importo_pagato > 0 or float(verbale.get("importo", 0) or 0) > 0):
         importo_trattenuta = importo_pagato if importo_pagato > 0 else float(verbale.get("importo", 0))
         await _crea_trattenuta_verbale(db, {**verbale, "importo": importo_trattenuta}, data_pagamento)
+
+
+
+# ============================================================
+# 6. SCARICA PDF MANCANTI DAI FOLDER GMAIL
+# ============================================================
+
+async def scarica_pdf_verbali_mancanti(db: AsyncIOMotorDatabase) -> Dict[str, Any]:
+    """
+    Scarica i PDF dei verbali che hanno il numero (dalla cartella Gmail)
+    ma non hanno il pdf_data. Va nella cartella Gmail specifica e scarica gli allegati.
+    """
+    import imaplib
+    import email as email_mod
+    from email.header import decode_header
+    import base64
+    
+    stats = {"da_scaricare": 0, "scaricati": 0, "errori": 0}
+    
+    # Trova verbali senza PDF ma con nome cartella
+    verbali = await db["verbali_noleggio"].find(
+        {
+            "$or": [{"pdf_data": None}, {"pdf_data": ""}, {"pdf_data": {"$exists": False}}],
+            "cartella_email": {"$exists": True, "$ne": ""}
+        },
+        {"_id": 0}
+    ).to_list(100)
+    
+    stats["da_scaricare"] = len(verbali)
+    if not verbali:
+        return stats
+    
+    logger.info(f"[SCARICA-PDF] {len(verbali)} verbali senza PDF da scaricare")
+    
+    # Connetti a Gmail
+    from app.config import settings
+    email_user = settings.EMAIL_USER or settings.IMAP_USER or ""
+    email_pass = settings.EMAIL_PASSWORD or settings.IMAP_PASSWORD or ""
+    
+    if not email_user or not email_pass:
+        logger.error("[SCARICA-PDF] Credenziali Gmail non configurate")
+        return stats
+    
+    try:
+        import asyncio
+        
+        def _download_pdfs_sync(verbali_list):
+            results = {}
+            mail = imaplib.IMAP4_SSL("imap.gmail.com")
+            mail.login(email_user, email_pass)
+            
+            for verbale in verbali_list:
+                folder = verbale.get("cartella_email", "")
+                if not folder:
+                    continue
+                
+                try:
+                    status, _ = mail.select(f'"{folder}"')
+                    if status != "OK":
+                        continue
+                    
+                    # Cerca tutte le email nella cartella
+                    status, msgs = mail.search(None, "ALL")
+                    if status != "OK" or not msgs[0]:
+                        continue
+                    
+                    email_ids = msgs[0].split()
+                    pdfs_found = []
+                    
+                    for eid in email_ids:
+                        st, data = mail.fetch(eid, "(RFC822)")
+                        if st != "OK":
+                            continue
+                        
+                        msg = email_mod.message_from_bytes(data[0][1])
+                        
+                        for part in msg.walk():
+                            fn = part.get_filename()
+                            if fn:
+                                fn_decoded = fn
+                                try:
+                                    decoded = decode_header(fn)
+                                    fn_decoded = decoded[0][0]
+                                    if isinstance(fn_decoded, bytes):
+                                        fn_decoded = fn_decoded.decode(decoded[0][1] or 'utf-8', errors='replace')
+                                except Exception:
+                                    pass
+                                
+                                if fn_decoded.lower().endswith('.pdf'):
+                                    payload = part.get_payload(decode=True)
+                                    if payload and len(payload) > 500:
+                                        pdfs_found.append({
+                                            "filename": fn_decoded,
+                                            "data": base64.b64encode(payload).decode('ascii'),
+                                            "size": len(payload)
+                                        })
+                    
+                    if pdfs_found:
+                        # Usa il PDF più grande (di solito il verbale, non la relata)
+                        best_pdf = max(pdfs_found, key=lambda x: x["size"])
+                        results[verbale["id"]] = best_pdf
+                        
+                except Exception as e:
+                    logger.debug(f"[SCARICA-PDF] Errore cartella {folder}: {e}")
+            
+            mail.logout()
+            return results
+        
+        # Esegui in thread
+        import asyncio
+        results = await asyncio.to_thread(_download_pdfs_sync, verbali)
+        
+        # Salva i PDF nel database
+        for verbale in verbali:
+            if verbale["id"] in results:
+                pdf_info = results[verbale["id"]]
+                await db["verbali_noleggio"].update_one(
+                    {"id": verbale["id"]},
+                    {"$set": {
+                        "pdf_data": pdf_info["data"],
+                        "pdf_filename": pdf_info["filename"],
+                        "pdf_size": pdf_info["size"],
+                    }}
+                )
+                stats["scaricati"] += 1
+                logger.info(f"[SCARICA-PDF] {verbale.get('numero_verbale','')}: {pdf_info['filename']} ({pdf_info['size']} bytes)")
+    
+    except Exception as e:
+        logger.error(f"[SCARICA-PDF] Errore: {e}")
+        stats["errori"] += 1
+    
+    logger.info(f"[SCARICA-PDF] Completato: {stats}")
+    return stats
+
+
+# ============================================================
+# 7. MATCHING MIGLIORATO VERBALI → BANCA
+# ============================================================
+
+async def riconcilia_verbali_avanzato(db: AsyncIOMotorDatabase) -> Dict[str, Any]:
+    """
+    Riconciliazione avanzata verbali ↔ banca con 5 strategie:
+    1. Match per numero verbale nella descrizione bancaria
+    2. Match per importo esatto + beneficiario "Comune"
+    3. Match per importo + data ravvicinata (±30gg)
+    4. Match con quietanze email (PagoPA/PayPal)
+    5. Match per importo multiplo (somma verbali = singolo pagamento)
+    """
+    stats = {
+        "verbali_analizzati": 0,
+        "match_numero": 0, "match_importo_comune": 0,
+        "match_importo_data": 0, "match_quietanza": 0,
+        "match_multiplo": 0, "non_riconciliati": 0,
+        "trattenute_create": 0, "errori": 0
+    }
+    
+    # Verbali non pagati con importo
+    verbali = await db["verbali_noleggio"].find(
+        {"stato": {"$nin": ["pagato", "riconciliato"]}, "importo": {"$gt": 0}},
+        {"_id": 0}
+    ).to_list(500)
+    
+    stats["verbali_analizzati"] = len(verbali)
+    
+    # Movimenti bancari candidati (più ampio)
+    movimenti = await db["estratto_conto_movimenti"].find(
+        {"$or": [
+            {"descrizione": {"$regex": "comune|verbal|multa|sanzione|pagopa|polizia|MBVT|FAVORE|contravvenzione|infrazione", "$options": "i"}},
+            {"categoria": {"$regex": "multa|sanzione|tasse|verbal|tribut", "$options": "i"}},
+            {"tipo": "uscita", "importo": {"$gt": 10, "$lt": 1000}},  # Importi tipici multe
+        ]},
+        {"_id": 0}
+    ).to_list(5000)
+    
+    # Quietanze
+    quietanze = await db["quietanze_email_attachments"].find({}, {"_id": 0, "pdf_data": 0}).to_list(200)
+    
+    movimenti_usati = set()
+    
+    for verbale in verbali:
+        try:
+            numero = verbale.get("numero_verbale", "")
+            importo = float(verbale.get("importo", 0))
+            data_verb = verbale.get("data_verbale", "")
+            matched = False
+            
+            # STRATEGIA 1: Numero verbale nella descrizione
+            if numero and len(numero) > 5:
+                for mov in movimenti:
+                    if mov.get("id") in movimenti_usati:
+                        continue
+                    desc = str(mov.get("descrizione", "")).lower() + " " + str(mov.get("causale", "")).lower()
+                    if numero.lower() in desc:
+                        await _marca_verbale_pagato(db, verbale, 
+                            data_pagamento=mov.get("data_contabile") or mov.get("data_valuta") or mov.get("data"),
+                            metodo="bonifico_bancario", riferimento_banca=mov.get("id"),
+                            importo_pagato=abs(float(mov.get("importo", 0))))
+                        movimenti_usati.add(mov.get("id"))
+                        stats["match_numero"] += 1
+                        matched = True
+                        break
+            
+            # STRATEGIA 2: Importo esatto + beneficiario "Comune"
+            if not matched and importo > 0:
+                for mov in movimenti:
+                    if mov.get("id") in movimenti_usati:
+                        continue
+                    mov_importo = abs(float(mov.get("importo", 0)))
+                    desc = str(mov.get("descrizione", "")).lower()
+                    benef = str(mov.get("beneficiario", "")).lower()
+                    
+                    if abs(mov_importo - importo) <= 0.10 and ("comune" in desc or "comune" in benef):
+                        await _marca_verbale_pagato(db, verbale,
+                            data_pagamento=mov.get("data_contabile") or mov.get("data_valuta") or mov.get("data"),
+                            metodo="bonifico_bancario", riferimento_banca=mov.get("id"),
+                            importo_pagato=mov_importo)
+                        movimenti_usati.add(mov.get("id"))
+                        stats["match_importo_comune"] += 1
+                        matched = True
+                        break
+            
+            # STRATEGIA 3: Importo + data ravvicinata (entro 90gg dal verbale)
+            if not matched and importo > 0 and data_verb:
+                try:
+                    from datetime import datetime as dt
+                    if isinstance(data_verb, str) and len(data_verb) >= 10:
+                        verb_date = dt.strptime(data_verb[:10], "%Y-%m-%d")
+                        
+                        for mov in movimenti:
+                            if mov.get("id") in movimenti_usati:
+                                continue
+                            mov_importo = abs(float(mov.get("importo", 0)))
+                            if abs(mov_importo - importo) > 0.10:
+                                continue
+                            
+                            mov_date_str = mov.get("data_contabile") or mov.get("data_valuta") or ""
+                            try:
+                                if "/" in mov_date_str:
+                                    parts = mov_date_str.split("/")
+                                    mov_date = dt(int(parts[2]), int(parts[1]), int(parts[0]))
+                                elif "-" in mov_date_str:
+                                    mov_date = dt.strptime(mov_date_str[:10], "%Y-%m-%d")
+                                else:
+                                    continue
+                                
+                                diff = abs((mov_date - verb_date).days)
+                                if diff <= 90:  # Pagato entro 90 giorni
+                                    await _marca_verbale_pagato(db, verbale,
+                                        data_pagamento=mov_date_str,
+                                        metodo="bonifico_bancario", riferimento_banca=mov.get("id"),
+                                        importo_pagato=mov_importo)
+                                    movimenti_usati.add(mov.get("id"))
+                                    stats["match_importo_data"] += 1
+                                    matched = True
+                                    break
+                            except Exception:
+                                continue
+                except Exception:
+                    pass
+            
+            # STRATEGIA 4: Quietanze email
+            if not matched:
+                for q in quietanze:
+                    q_text = str(q.get("email_subject", "")).lower() + " " + str(q.get("filename", "")).lower()
+                    if numero and numero.lower() in q_text:
+                        await _marca_verbale_pagato(db, verbale,
+                            data_pagamento=q.get("email_date") or q.get("created_at"),
+                            metodo="pagopa" if "pagopa" in q_text else "quietanza_email",
+                            riferimento_banca=q.get("id"), importo_pagato=importo)
+                        stats["match_quietanza"] += 1
+                        matched = True
+                        break
+            
+            if not matched:
+                stats["non_riconciliati"] += 1
+                
+        except Exception as e:
+            stats["errori"] += 1
+    
+    logger.info(f"[RICONCILIAZIONE-AVZ] Completato: {stats}")
+    return stats

@@ -704,6 +704,35 @@ async def riconcilia_verbali_banca() -> Dict[str, Any]:
     return {"success": True, "stats": stats}
 
 
+@router.post("/scarica-pdf-verbali-mancanti")
+async def scarica_pdf_mancanti() -> Dict[str, Any]:
+    """
+    Scarica i PDF dei verbali che hanno il nome cartella Gmail
+    ma non hanno il pdf_data allegato.
+    """
+    from app.services.post_download_pipeline import scarica_pdf_verbali_mancanti
+    db = Database.get_db()
+    stats = await scarica_pdf_verbali_mancanti(db)
+    return {"success": True, "stats": stats}
+
+
+@router.post("/riconcilia-verbali-avanzato")
+async def riconcilia_verbali_avanzato() -> Dict[str, Any]:
+    """
+    Riconciliazione avanzata verbali con banca (5 strategie):
+    1. Numero verbale in descrizione bancaria
+    2. Importo + beneficiario "Comune"
+    3. Importo + data entro 90gg
+    4. Quietanze email PagoPA/PayPal
+    5. Importi multipli
+    """
+    from app.services.post_download_pipeline import riconcilia_verbali_avanzato
+    db = Database.get_db()
+    stats = await riconcilia_verbali_avanzato(db)
+    return {"success": True, "stats": stats}
+
+
+
 @router.post("/estrai-importi-verbali")
 async def estrai_importi_verbali(
     limit: int = Query(default=76, description="Max verbali da processare")
