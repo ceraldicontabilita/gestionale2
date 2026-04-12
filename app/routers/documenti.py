@@ -349,10 +349,13 @@ async def conferma_operazione(
     # Determina collezione Prima Nota
     if metodo_pagamento == "cassa":
         collection = "prima_nota_cassa"
-    elif metodo_pagamento in ["banca", "assegno"]:
+    elif metodo_pagamento == "sospesa":
+        # Sospesa: non creare movimento in prima nota
+        return {"success": True, "message": "Fattura sospesa — nessun movimento creato"}
+    elif metodo_pagamento in ["banca", "assegno", "bonifico", "carta", "sepa", "riba", "rid", "mav", "rav", "f24", "pos", "carta_credito"]:
         collection = "prima_nota_banca"
     else:
-        raise HTTPException(status_code=400, detail="Metodo pagamento non valido")
+        raise HTTPException(status_code=400, detail=f"Metodo pagamento non valido: {metodo_pagamento}")
     
     # Crea movimento Prima Nota
     prima_nota_id = str(uuid.uuid4())

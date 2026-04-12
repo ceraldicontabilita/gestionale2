@@ -26,6 +26,7 @@ PAYMENT_METHODS = {
     "compensazione": {"label": "Compensazione", "prima_nota": "altro"},
     "misto": {"label": "Misto (Cassa + Banca)", "prima_nota": "misto"},
     "pos": {"label": "POS", "prima_nota": "banca"},  # Alias
+    "sospesa": {"label": "Sospesa (in attesa)", "prima_nota": "sospesa"},
 }
 
 # Termini di pagamento predefiniti
