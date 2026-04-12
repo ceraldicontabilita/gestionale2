@@ -263,7 +263,8 @@ export default function Login() {
             data-testid="google-login-btn"
             onClick={() => {
               const redirectUrl = window.location.origin + '/auth/callback';
-              window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
+              const authDomain = import.meta.env.VITE_AUTH_DOMAIN || 'auth.emergentagent.com';
+              window.location.href = `https://${authDomain}/?redirect=${encodeURIComponent(redirectUrl)}`;
             }}
             style={{
               width: '100%',
