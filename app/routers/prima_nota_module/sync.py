@@ -469,10 +469,14 @@ async def get_fatture_provvisorie(anno: int = Query(...)) -> Dict:
         metodo_code = f.get("payment_method_code", "")
         piva = f.get("supplier_vat", "")
         
+        # PRIORITÀ 0: Se la fattura è stata marcata come sospesa dall'utente
+        stato_pag = f.get("stato_pagamento", "")
+        if stato_pag == "sospesa":
+            suggerimento = "sospesa"
+            stato_match = "in_attesa"
         # PRIORITÀ 1: Metodo dal fornitore in anagrafica
-        metodo_fornitore = metodo_per_piva.get(piva, "")
-        
-        if metodo_fornitore:
+        elif metodo_per_piva.get(piva, ""):
+            metodo_fornitore = metodo_per_piva.get(piva, "")
             # Usa il metodo impostato nel fornitore
             if metodo_fornitore in ["contanti", "cassa"]:
                 suggerimento = "cassa"
@@ -640,7 +644,7 @@ async def get_fatture_provvisorie(anno: int = Query(...)) -> Dict:
 async def conferma_fattura_provvisoria(data: Dict = Body(...)) -> Dict:
     """
     Conferma una fattura provvisoria: registra in Prima Nota cassa/banca.
-    Body: { fattura_id, metodo: "cassa"|"banca", movimento_banca_id? }
+    Body: { fattura_id, metodo: "cassa"|"banca"|"sospesa", movimento_banca_id? }
     """
     db = Database.get_db()
     
@@ -655,6 +659,19 @@ async def conferma_fattura_provvisoria(data: Dict = Body(...)) -> Dict:
     fornitore = fattura.get("supplier_name", "")
     numero = fattura.get("invoice_number", "")
     data_fatt = fattura.get("invoice_date", "")
+    
+    # SOSPESA: non creare movimento in prima nota, solo aggiorna stato fattura
+    if metodo == "sospesa":
+        await db["invoices"].update_one(
+            {"id": fattura_id},
+            {"$set": {
+                "stato_pagamento": "sospesa",
+                "metodo_pagamento_effettivo": "sospesa",
+                "prima_nota_tipo": "sospesa",
+            }}
+        )
+        return {"success": True, "metodo": "sospesa", "importo": importo, "fornitore": fornitore,
+                "message": "Fattura sospesa — resta nei provvisori"}
     
     pn_id = str(uuid.uuid4())
     collection = COLLECTION_PRIMA_NOTA_CASSA if metodo == "cassa" else COLLECTION_PRIMA_NOTA_BANCA
