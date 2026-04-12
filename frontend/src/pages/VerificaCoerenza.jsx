@@ -160,7 +160,16 @@ export default function VerificaCoerenza() {
           color: '#64748b',
           fontSize: 14
         }}>
-          ⏳ Caricamento verifica coerenza dati...
+          <div style={{
+            width: 32, height: 32,
+            border: '3px solid #e2e8f0',
+            borderTop: '3px solid #3b82f6',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 12px'
+          }} />
+          <style>{`@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}`}</style>
+          Caricamento verifica coerenza dati...
         </div>
       )}
 
@@ -213,6 +222,7 @@ export default function VerificaCoerenza() {
       )}
 
       {/* Tabs */}
+      {!loading && (
       <div style={{ marginBottom: 16, background: '#f1f5f9', padding: 4, borderRadius: 12, display: 'flex', gap: 4 }}>
         <button onClick={() => handleTabChange('riepilogo')} style={tabStyle(activeTab === 'riepilogo')}>
           📋 Riepilogo
@@ -224,9 +234,10 @@ export default function VerificaCoerenza() {
           ⚠️ Discrepanze
         </button>
       </div>
+      )}
 
       {/* TAB RIEPILOGO */}
-      {activeTab === 'riepilogo' && (
+      {!loading && activeTab === 'riepilogo' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
           
           {/* IVA Annuale */}
@@ -374,7 +385,7 @@ export default function VerificaCoerenza() {
       )}
 
       {/* TAB IVA MENSILE */}
-      {activeTab === 'iva' && confrontoIva && (
+      {!loading && activeTab === 'iva' && confrontoIva && (
         <div style={cardStyle}>
           <div style={cardHeaderStyle}>
             <h3 style={cardTitleStyle}>Confronto IVA Mensile {anno}</h3>
@@ -465,7 +476,7 @@ export default function VerificaCoerenza() {
       )}
 
       {/* TAB DISCREPANZE */}
-      {activeTab === 'discrepanze' && (
+      {!loading && activeTab === 'discrepanze' && (
         verificaCompleta?.discrepanze?.length > 0 ? (
           <div style={{ ...cardStyle, border: '2px solid #fecaca' }}>
             <div style={{ ...cardHeaderStyle, background: '#fef2f2' }}>

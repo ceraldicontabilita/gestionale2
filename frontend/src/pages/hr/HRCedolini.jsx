@@ -22,8 +22,9 @@ function getNomeDipendente(b) {
   if (b.nome_dipendente && b.nome_dipendente !== 'N/A') return b.nome_dipendente;
   if (b.cognome && b.nome) return `${b.cognome} ${b.nome}`.toUpperCase();
   if (b.dipendente_nome) return b.dipendente_nome;
-  if (b.dipendente) return b.dipendente;
-  return b.filename || '—';
+  if (b.dipendente && b.dipendente !== 'N/A') return b.dipendente;
+  // Non mostrare il filename come nome dipendente
+  return '(Nome non disponibile)';
 }
 
 function getInitials(name) {

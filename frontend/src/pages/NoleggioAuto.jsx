@@ -189,7 +189,6 @@ export default function NoleggioAuto() {
   };
 
   return (
-    <PageLayout title="Noleggio Auto" subtitle="Gestione flotta veicoli noleggio">
     <div style={{ maxWidth: 1400, margin: '0 auto' }}>
       
       {/* Header */}
@@ -213,6 +212,7 @@ export default function NoleggioAuto() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <select
+            data-testid="select-anno-noleggio"
             value={annoFiltro || ''}
             onChange={(e) => setAnnoFiltro(e.target.value ? parseInt(e.target.value) : null)}
             style={{
@@ -232,16 +232,6 @@ export default function NoleggioAuto() {
               return <option key={y} value={y}>📅 {y}</option>;
             })}
           </select>
-          <span style={{ 
-            padding: '10px 20px',
-            fontSize: 16,
-            fontWeight: 'bold',
-            borderRadius: 8,
-            background: 'rgba(255,255,255,0.9)',
-            color: '#1e3a5f',
-          }}>
-            {annoFiltro ? `Anno: ${annoFiltro}` : 'Storico completo'}
-          </span>
         </div>
       </div>
 
@@ -1081,6 +1071,5 @@ export default function NoleggioAuto() {
         </div>
       )}
     </div>
-    </PageLayout>
   );
 }
