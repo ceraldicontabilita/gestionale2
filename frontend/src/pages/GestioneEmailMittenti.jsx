@@ -292,9 +292,9 @@ export default function GestioneEmailMittenti() {
             <tbody>
               {filtrati.map((m, i) => (
                 <tr key={i} style={{ opacity: m.attivo ? 1 : 0.45 }}>
-                  <td style={{ ...STYLES.td, fontFamily: 'monospace', fontWeight: 600, fontSize: 12 }}>{m.pattern}</td>
+                  <td style={{ ...STYLES.td, fontWeight: 600, fontSize: 13 }}>{m.pattern}</td>
                   <td style={STYLES.td}><TipoBadge tipo={m.tipo_documento} /></td>
-                  <td style={{ ...STYLES.td, color: COLORS.gray, fontSize: 12 }}>{m.descrizione || '—'}</td>
+                  <td style={{ ...STYLES.td, color: COLORS.gray, fontSize: 12 }}>{m.descrizione || m.note || '—'}</td>
                   <td style={STYLES.td}>
                     {m.builtin
                       ? <span style={{ fontSize: 10, fontWeight: 700, color: COLORS.gray, background: COLORS.grayLight, padding: '2px 7px', borderRadius: 99 }}>builtin</span>
