@@ -4,7 +4,7 @@ ATTENDANCE - Presenze e Assenze
 Gestione calendario presenze, assenze, ferie, permessi.
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, UploadFile, File
 from typing import Dict, Any
 from datetime import datetime, timezone, timedelta
 import uuid
@@ -731,4 +731,234 @@ async def get_riepilogo_presenze(anno: int = Query(None)) -> Dict[str, Any]:
     return {
         "dipendenti": list(riepilogo.values()),
         "total_dipendenti": len(riepilogo),
+    }
+
+
+
+# =============================================================================
+# IMPORT PRESENZE DA PDF LIBRO UNICO
+# =============================================================================
+
+@router.post("/libro-unico/import-pdf")
+@handle_errors
+async def import_presenze_da_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
+    """
+    Importa presenze giornaliere da PDF del Libro Unico del Lavoro.
+    Estrae griglia giornaliera con ore e giustificativi per ogni dipendente.
+    """
+    import tempfile
+    import calendar
+    
+    db = Database.get_db()
+    
+    if not hasattr(file, 'filename') or not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(status_code=400, detail="Il file deve essere un PDF")
+    
+    # Salva file temporaneo
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
+        content = await file.read()
+        tmp.write(content)
+        tmp_path = tmp.name
+    
+    try:
+        from app.routers.libro_unico_parser import parse_libro_unico_completo
+        parsed = parse_libro_unico_completo(tmp_path)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Errore parsing PDF: {str(e)}")
+    finally:
+        import os
+        os.unlink(tmp_path)
+    
+    dipendenti = parsed.get("dipendenti", [])
+    if not dipendenti:
+        return {"success": False, "message": "Nessun dipendente trovato nel PDF", "importati": 0}
+    
+    importati = 0
+    aggiornati = 0
+    errori = []
+    
+    MESI_LABEL = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre']
+    
+    for dip_data in dipendenti:
+        try:
+            presenze_raw = dip_data.get("foglio_presenze", {}) or {}
+            busta = dip_data.get("busta_paga", {}) or {}
+            
+            # Extract CF from either source
+            cf = (presenze_raw.get("dipendente", {}).get("codice_fiscale") or 
+                  busta.get("dipendente", {}).get("codice_fiscale"))
+            
+            if not cf:
+                errori.append("Dipendente senza codice fiscale")
+                continue
+            
+            # Extract name
+            cognome_nome = (presenze_raw.get("dipendente", {}).get("cognome_nome") or
+                           busta.get("dipendente", {}).get("cognome_nome") or "")
+            parts = cognome_nome.split(maxsplit=1) if cognome_nome else []
+            cognome = parts[0] if parts else ""
+            nome = parts[1] if len(parts) > 1 else ""
+            
+            # Extract period
+            periodo_str = presenze_raw.get("dipendente", {}).get("periodo") or ""
+            anno = None
+            mese = None
+            
+            MESI_IT = {
+                'gennaio': 1, 'febbraio': 2, 'marzo': 3, 'aprile': 4,
+                'maggio': 5, 'giugno': 6, 'luglio': 7, 'agosto': 8,
+                'settembre': 9, 'ottobre': 10, 'novembre': 11, 'dicembre': 12
+            }
+            
+            for mese_nome, mese_num in MESI_IT.items():
+                if mese_nome in periodo_str.lower():
+                    mese = mese_num
+                    import re
+                    anno_match = re.search(r'(\d{4})', periodo_str)
+                    if anno_match:
+                        anno = int(anno_match.group(1))
+                    break
+            
+            if not anno or not mese:
+                # Fallback: try to extract from filename
+                # "Busta paga - Ariante Marcella - Gennaio 2025.pdf"
+                import re as _re
+                fname = file.filename if hasattr(file, 'filename') else ''
+                for mese_nome, mese_num in MESI_IT.items():
+                    if mese_nome in fname.lower():
+                        mese = mese_num
+                        anno_match = _re.search(r'(\d{4})', fname)
+                        if anno_match:
+                            anno = int(anno_match.group(1))
+                        break
+            
+            if not anno or not mese:
+                # Fallback 2: try from busta paga header text
+                bp_text = ' '.join([str(v) for v in (busta.get("header", {}) or {}).values()])
+                for mese_nome, mese_num in MESI_IT.items():
+                    if mese_nome in bp_text.lower():
+                        mese = mese_num
+                        import re as _re2
+                        anno_match = _re2.search(r'(\d{4})', bp_text)
+                        if anno_match:
+                            anno = int(anno_match.group(1))
+                        break
+            
+            if not anno or not mese:
+                errori.append(f"{cognome_nome}: periodo non riconosciuto '{periodo_str}'")
+                continue
+            
+            # Build giorni array from parsed presenze
+            presenze_parsed = presenze_raw.get("presenze", [])
+            num_days = calendar.monthrange(anno, mese)[1]
+            
+            # Create a map of parsed days
+            parsed_days = {}
+            for p in presenze_parsed:
+                day_num = p.get("giorno")
+                if day_num:
+                    parsed_days[day_num] = p
+            
+            # Build complete giorni array
+            day_names = ['LU', 'MA', 'ME', 'GI', 'VE', 'SA', 'DO']
+            giorni = []
+            
+            for day in range(1, num_days + 1):
+                weekday = calendar.weekday(anno, mese, day)
+                giorno_sett = day_names[weekday]
+                is_festivo = giorno_sett in ('SA', 'DO')
+                
+                parsed = parsed_days.get(day, {})
+                ore_raw = parsed.get("ore_ordinarie")
+                giust_code = parsed.get("giustificativo")
+                
+                ore_ordinarie = 0.0
+                giustificativi = []
+                
+                if ore_raw:
+                    try:
+                        ore_ordinarie = float(str(ore_raw).replace(',', '.'))
+                    except:
+                        ore_ordinarie = 0.0
+                
+                # If there's a giustificativo code
+                if giust_code:
+                    giust_ore = ore_ordinarie if ore_ordinarie > 0 else 0.0
+                    giustificativi.append({"codice": giust_code, "ore": giust_ore})
+                    ore_ordinarie = 0.0  # Giustificativo hours are not ordinary hours
+                
+                giorni.append({
+                    "giorno": day,
+                    "giorno_settimana": giorno_sett,
+                    "ore_ordinarie": ore_ordinarie,
+                    "giustificativi": giustificativi,
+                    "festivo": is_festivo,
+                })
+            
+            # Build totali from riepilogo
+            totali = {}
+            legenda = {}
+            for riep in presenze_raw.get("riepilogo_giustificativi", []):
+                codice = riep.get("codice", "")
+                desc = riep.get("descrizione", "")
+                qty = riep.get("quantita", "0")
+                try:
+                    qty_float = float(str(qty).replace(',', '.'))
+                except:
+                    qty_float = 0.0
+                
+                if not codice and "ore ordinarie" in desc.lower():
+                    totali["ore_ordinarie"] = qty_float
+                elif codice:
+                    totali[codice] = qty_float
+                    legenda[codice] = desc
+            
+            # Dedup key
+            dedup_key = f"{cf}_{mese:02d}_{anno}"
+            
+            # Check if exists
+            existing = await db["presenze"].find_one({"dedup_key": dedup_key})
+            
+            presenza = {
+                "anno": anno,
+                "mese": mese,
+                "codice_fiscale": cf,
+                "codice_dipendente": presenze_raw.get("dipendente", {}).get("codice", ""),
+                "cognome": cognome,
+                "nome": nome,
+                "cessato": False,
+                "data_cessazione": "",
+                "filename": file.filename if hasattr(file, 'filename') else "upload.pdf",
+                "indirizzo": presenze_raw.get("dipendente", {}).get("indirizzo", ""),
+                "dedup_key": dedup_key,
+                "giorni": giorni,
+                "totali": totali,
+                "legenda": legenda,
+                "periodo_label": f"{MESI_LABEL[mese-1]} {anno}",
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "imported_at": datetime.now(timezone.utc).isoformat(),
+                "source": "pdf_libro_unico",
+                "giorni_estratti_dal_pdf": len(presenze_parsed),
+            }
+            
+            if existing:
+                await db["presenze"].update_one(
+                    {"dedup_key": dedup_key},
+                    {"$set": presenza}
+                )
+                aggiornati += 1
+            else:
+                await db["presenze"].insert_one(presenza)
+                importati += 1
+                
+        except Exception as e:
+            errori.append(f"Errore: {str(e)}")
+    
+    return {
+        "success": True,
+        "importati": importati,
+        "aggiornati": aggiornati,
+        "errori": len(errori),
+        "dettagli_errori": errori[:10],
+        "message": f"Import completato: {importati} nuovi, {aggiornati} aggiornati" + (f", {len(errori)} errori" if errori else "")
     }

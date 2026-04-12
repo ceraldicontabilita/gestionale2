@@ -226,7 +226,11 @@ async def process_fattura_to_db(db, parsed: Dict[str, Any], filename: str = "upl
         "numero_fattura": parsed.get("invoice_number", ""),
         "data_fattura": parsed.get("invoice_date", ""),
         "importo_totale": parsed.get("total_amount", 0),
-        "anno": int(parsed.get("invoice_date", "2024")[:4]) if parsed.get("invoice_date") else 2024
+        "anno": int(parsed.get("invoice_date", "2024")[:4]) if parsed.get("invoice_date") else 2024,
+        "causali": parsed.get("causali", []),
+        "dati_fatture_collegate": parsed.get("dati_fatture_collegate", []),
+        "dati_ordine_acquisto": parsed.get("dati_ordine_acquisto", []),
+        "tipo_documento_desc": parsed.get("tipo_documento_desc", ""),
     }
     
     await db[Collections.INVOICES].insert_one(invoice.copy())

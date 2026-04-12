@@ -54,6 +54,8 @@ export default function HRPresenze() {
   const [expandedEmployee, setExpandedEmployee] = useState(null);
   const [tab, setTab] = useState('calendario'); // 'calendario' | 'richieste'
   const [legenda, setLegenda] = useState({});
+  const [uploading, setUploading] = useState(false);
+  const [uploadResult, setUploadResult] = useState(null);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -92,6 +94,28 @@ export default function HRPresenze() {
   }, [anno, mese]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  // Upload PDF handler
+  const handleUploadPDF = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setUploadResult(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await api.post('/api/attendance/libro-unico/import-pdf', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setUploadResult({ success: true, ...res.data });
+      loadData(); // Ricarica dati
+    } catch (err) {
+      setUploadResult({ success: false, message: err?.response?.data?.detail || 'Errore upload' });
+    } finally {
+      setUploading(false);
+      e.target.value = ''; // Reset file input
+    }
+  };
 
   // Stats
   const numDipendenti = presenze.length;
@@ -146,8 +170,35 @@ export default function HRPresenze() {
             <RefreshCw size={14} style={{ animation: loading ? 'spin 1s linear infinite' : 'none' }} />
             Aggiorna
           </button>
+          <label
+            data-testid="btn-upload-pdf"
+            style={{
+              padding: '8px 16px', border: 'none', borderRadius: 8, fontSize: 13,
+              background: uploading ? COLORS.border : '#1a40b5',
+              color: 'white', cursor: uploading ? 'not-allowed' : 'pointer',
+              display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600,
+            }}>
+            <Calendar size={14} />
+            {uploading ? 'Importazione…' : 'Importa PDF Libro Unico'}
+            <input type="file" accept=".pdf" onChange={handleUploadPDF} style={{ display: 'none' }} disabled={uploading} />
+          </label>
         </div>
       </div>
+
+      {/* Upload Result */}
+      {uploadResult && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: '12px 16px', borderRadius: 10, marginBottom: 16,
+          background: uploadResult.success ? '#f0fdf4' : '#fef2f2',
+          border: `1px solid ${uploadResult.success ? '#bbf7d0' : '#fecaca'}`,
+          color: uploadResult.success ? '#15803d' : '#dc2626', fontSize: 14,
+        }}>
+          <span style={{ fontWeight: 600 }}>{uploadResult.message}</span>
+          {uploadResult.importati > 0 && <span style={{ color: '#64748b' }}>— {uploadResult.importati} importati, {uploadResult.aggiornati || 0} aggiornati</span>}
+          <button onClick={() => setUploadResult(null)} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: '#94a3b8' }}>×</button>
+        </div>
+      )}
 
       {/* KPI */}
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>

@@ -292,6 +292,38 @@ def parse_fattura_xml(xml_content: str) -> Dict[str, Any]:
             if causale_el.text:
                 causali.append(causale_el.text)
         
+        # Estrai DatiFattureCollegate (riferimenti NC↔Fattura)
+        # In FatturaPA, DatiFattureCollegate è dentro DatiGenerali (non DatiGeneraliDocumento)
+        dati_generali_parent = find_element(body, 'DatiGenerali')
+        dati_fatture_collegate = []
+        collegate_elements = find_all_elements(dati_generali_parent or body, 'DatiFattureCollegate')
+        for dfc in collegate_elements:
+            riferimento = {
+                "id_documento": get_text(dfc, 'IdDocumento'),
+                "data": get_text(dfc, 'Data'),
+                "num_item": get_text(dfc, 'NumItem'),
+                "codice_commessa": get_text(dfc, 'CodiceCommessaConvenzione'),
+                "codice_cup": get_text(dfc, 'CodiceCUP'),
+                "codice_cig": get_text(dfc, 'CodiceCIG'),
+            }
+            # Pulisci: rimuovi campi vuoti
+            riferimento = {k: v for k, v in riferimento.items() if v}
+            if riferimento:
+                dati_fatture_collegate.append(riferimento)
+        
+        # Estrai anche DatiOrdineAcquisto per riferimenti aggiuntivi
+        dati_ordine = []
+        for dao in find_all_elements(dati_generali_parent or body, 'DatiOrdineAcquisto'):
+            ordine = {
+                "id_documento": get_text(dao, 'IdDocumento'),
+                "data": get_text(dao, 'Data'),
+                "num_item": get_text(dao, 'NumItem'),
+                "codice_commessa": get_text(dao, 'CodiceCommessaConvenzione'),
+            }
+            ordine = {k: v for k, v in ordine.items() if v}
+            if ordine:
+                dati_ordine.append(ordine)
+        
         # Estrai linee dettaglio con estrazione intelligente lotto/scadenza
         linee = []
         for linea in find_all_elements(body, 'DettaglioLinee'):
@@ -421,6 +453,8 @@ def parse_fattura_xml(xml_content: str) -> Dict[str, Any]:
             "imponibile": imponibile_totale,
             "iva": iva_totale,
             "causali": causali,
+            "dati_fatture_collegate": dati_fatture_collegate,
+            "dati_ordine_acquisto": dati_ordine,
             "fornitore": fornitore,
             "cliente": cliente,
             "linee": linee,
