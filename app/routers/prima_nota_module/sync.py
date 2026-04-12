@@ -668,6 +668,9 @@ async def conferma_fattura_provvisoria(data: Dict = Body(...)) -> Dict:
                 "stato_pagamento": "sospesa",
                 "metodo_pagamento_effettivo": "sospesa",
                 "prima_nota_tipo": "sospesa",
+            },
+            "$unset": {
+                "prima_nota_id": "",
             }}
         )
         return {"success": True, "metodo": "sospesa", "importo": importo, "fornitore": fornitore,

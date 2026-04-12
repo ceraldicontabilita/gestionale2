@@ -62,6 +62,9 @@ export default function DettaglioVerbale() {
           <div style={{ fontSize: 48, marginBottom: 16 }}>❌</div>
           <div style={{ fontWeight: 'bold', marginBottom: 8 }}>Errore</div>
           <div>{error}</div>
+          <div style={{ fontSize: 13, color: '#64748b', marginTop: 8 }}>
+            Verbale "{verbaleId}" non trovato nel database. Potrebbe essere stato eliminato o il numero potrebbe non essere corretto.
+          </div>
           <button 
             onClick={() => navigate(-1)}
             style={{ 
