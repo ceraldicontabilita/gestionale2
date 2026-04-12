@@ -636,3 +636,99 @@ async def rimuovi_turno(
     })
     
     return {"message": "Turno rimosso"}
+
+
+# =============================================================================
+# PRESENZE DA LIBRO UNICO (collection "presenze")
+# =============================================================================
+
+@router.get("/libro-unico")
+@handle_errors
+async def get_presenze_libro_unico(
+    anno: int = Query(None),
+    mese: int = Query(None),
+    codice_fiscale: str = Query(None),
+) -> Dict[str, Any]:
+    """
+    Recupera le presenze dal Libro Unico del Lavoro (collection 'presenze').
+    Questi dati vengono importati dal PDF del consulente del lavoro.
+    """
+    db = Database.get_db()
+    
+    query = {}
+    if anno:
+        query["anno"] = anno
+    if mese:
+        query["mese"] = mese
+    if codice_fiscale:
+        query["codice_fiscale"] = codice_fiscale
+    
+    presenze = await db["presenze"].find(
+        query,
+        {"_id": 0}
+    ).sort([("anno", -1), ("mese", -1), ("cognome", 1)]).to_list(500)
+    
+    total = await db["presenze"].count_documents(query)
+    
+    # Statistiche
+    anni_disponibili = await db["presenze"].distinct("anno")
+    mesi_per_anno = {}
+    for a in anni_disponibili:
+        mesi = await db["presenze"].distinct("mese", {"anno": a})
+        mesi_per_anno[str(a)] = sorted([m for m in mesi if m])
+    
+    return {
+        "presenze": presenze,
+        "total": total,
+        "anni_disponibili": sorted([a for a in anni_disponibili if a], reverse=True),
+        "mesi_per_anno": mesi_per_anno,
+    }
+
+
+@router.get("/libro-unico/riepilogo")
+@handle_errors
+async def get_riepilogo_presenze(anno: int = Query(None)) -> Dict[str, Any]:
+    """Riepilogo ore per dipendente."""
+    db = Database.get_db()
+    
+    query = {}
+    if anno:
+        query["anno"] = anno
+    
+    presenze = await db["presenze"].find(query, {"_id": 0}).to_list(500)
+    
+    riepilogo = {}
+    for p in presenze:
+        nome = f"{p.get('cognome', '')} {p.get('nome', '')}".strip()
+        cf = p.get("codice_fiscale", "")
+        key = cf or nome
+        
+        if key not in riepilogo:
+            riepilogo[key] = {
+                "nome": nome,
+                "codice_fiscale": cf,
+                "codice_dipendente": p.get("codice_dipendente", ""),
+                "mesi": [],
+                "ore_totali": 0,
+                "giustificativi_totali": {},
+            }
+        
+        totali = p.get("totali", {})
+        ore = totali.get("ore_ordinarie", 0) or 0
+        riepilogo[key]["ore_totali"] += ore
+        riepilogo[key]["mesi"].append({
+            "mese": p.get("mese"),
+            "anno": p.get("anno"),
+            "ore_ordinarie": ore,
+            "giustificativi": {k: v for k, v in totali.items() if k != "ore_ordinarie"},
+        })
+        
+        # Accumula giustificativi
+        for k, v in totali.items():
+            if k != "ore_ordinarie" and v:
+                riepilogo[key]["giustificativi_totali"][k] = riepilogo[key]["giustificativi_totali"].get(k, 0) + v
+    
+    return {
+        "dipendenti": list(riepilogo.values()),
+        "total_dipendenti": len(riepilogo),
+    }

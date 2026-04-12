@@ -295,46 +295,101 @@ async def auto_populate_warehouse_from_invoice(db, invoice_data: Dict[str, Any],
 async def get_product_catalog(db, category: Optional[str] = None, search: Optional[str] = None, days: int = 30, exact: bool = False) -> List[Dict[str, Any]]:
     """
     Restituisce catalogo prodotti con miglior prezzo ultimi N giorni.
+    Cerca in warehouse_stocks e dizionario_prodotti.
     
     Args:
         exact: Se True, cerca match esatto invece di simili
     """
     query = {}
     if category:
-        query["categoria"] = category
+        query["categoria"] = {"$regex": category, "$options": "i"}
+    
+    # --- 1. Cerca in warehouse_stocks (giacenze reali) ---
+    stock_query = dict(query)
     if search:
         if exact:
-            # Match esatto (case insensitive)
-            query["$or"] = [
-                {"nome": {"$regex": f"^{re.escape(search)}$", "$options": "i"}},
-                {"nome_normalizzato": normalize_product_name(search)}
+            stock_query["$or"] = [
+                {"descrizione": {"$regex": f"^{re.escape(search)}$", "$options": "i"}},
             ]
         else:
-            # Match parziale (simili) - cerca in più campi
             search_terms = search.split()
             if len(search_terms) == 1:
-                query["$or"] = [
-                    {"nome": {"$regex": search, "$options": "i"}},
-                    {"nome_normalizzato": {"$regex": search, "$options": "i"}}
+                stock_query["$or"] = [
+                    {"descrizione": {"$regex": search, "$options": "i"}},
+                    {"codice": {"$regex": search, "$options": "i"}},
                 ]
             else:
-                # Cerca tutti i termini
                 conditions = []
                 for term in search_terms:
-                    conditions.append({"nome": {"$regex": term, "$options": "i"}})
-                query["$and"] = conditions
+                    conditions.append({"descrizione": {"$regex": term, "$options": "i"}})
+                stock_query["$and"] = conditions
     
-    # Limita risultati per performance
-    products = await db["warehouse_inventory"].find(query, {"_id": 0}).limit(500).to_list(500)
+    stocks = await db["warehouse_stocks"].find(stock_query, {"_id": 0}).limit(500).to_list(500)
     
-    # Restituisci prodotti con i prezzi già memorizzati (senza query aggiuntive)
     result = []
-    for product in products:
-        product["best_price"] = product.get("prezzi", {}).get("min")
-        product["best_supplier"] = product.get("ultimo_fornitore")
-        result.append(product)
+    for s in stocks:
+        result.append({
+            "id": s.get("id"),
+            "nome": s.get("descrizione", ""),
+            "codice": s.get("codice", ""),
+            "categoria": s.get("categoria", ""),
+            "ultimo_fornitore": s.get("fornitore_principale", ""),
+            "fornitore_piva": s.get("fornitore_piva", ""),
+            "unita_misura": s.get("unita_misura", ""),
+            "giacenza": s.get("giacenza", 0),
+            "giacenza_minima": s.get("giacenza_minima", 0),
+            "prezzo_acquisto": s.get("prezzo_acquisto", 0),
+            "best_price": s.get("prezzo_acquisto", 0),
+            "best_supplier": s.get("fornitore_principale", ""),
+            "ultimo_carico": s.get("ultimo_carico"),
+            "created_at": s.get("created_at"),
+            "source": "warehouse_stocks",
+        })
     
-    result.sort(key=lambda x: x.get("nome", "").lower())
+    # --- 2. Se nessun risultato da stocks, cerca in dizionario_prodotti ---
+    if len(result) == 0:
+        diz_query = {}
+        if category:
+            diz_query["ingrediente_canonico"] = {"$regex": category, "$options": "i"}
+        if search:
+            if exact:
+                diz_query["$or"] = [
+                    {"nome_originale": {"$regex": f"^{re.escape(search)}$", "$options": "i"}},
+                    {"nome_normalizzato": normalize_product_name(search)},
+                ]
+            else:
+                search_terms = search.split()
+                if len(search_terms) == 1:
+                    diz_query["$or"] = [
+                        {"nome_originale": {"$regex": search, "$options": "i"}},
+                        {"nome_normalizzato": {"$regex": search, "$options": "i"}},
+                    ]
+                else:
+                    conditions = []
+                    for term in search_terms:
+                        conditions.append({"nome_originale": {"$regex": term, "$options": "i"}})
+                    diz_query["$and"] = conditions
+        
+        diz_products = await db["dizionario_prodotti"].find(diz_query, {"_id": 0}).limit(500).to_list(500)
+        
+        for d in diz_products:
+            result.append({
+                "id": d.get("id"),
+                "nome": d.get("nome_originale", d.get("nome_normalizzato", "")),
+                "nome_normalizzato": d.get("nome_normalizzato", ""),
+                "categoria": d.get("ingrediente_canonico", ""),
+                "ultimo_fornitore": d.get("fornitore", ""),
+                "unita_misura": d.get("unita_confezione", ""),
+                "giacenza": d.get("quantita_disponibile_kg", 0),
+                "prezzo_acquisto": d.get("prezzo_confezione", 0),
+                "prezzo_kg": d.get("prezzo_kg", 0),
+                "best_price": d.get("prezzo_confezione", 0),
+                "best_supplier": d.get("fornitore", ""),
+                "ultimo_aggiornamento": d.get("ultimo_aggiornamento"),
+                "source": "dizionario_prodotti",
+            })
+    
+    result.sort(key=lambda x: (x.get("nome") or "").lower())
     return result
 
 

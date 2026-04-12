@@ -79,8 +79,11 @@ async def search_products(q: str = "", limit: int = 10) -> List[Dict[str, Any]]:
 async def get_categories() -> List[str]:
     """Lista categorie distinte."""
     db = Database.get_db()
-    categories = await db["warehouse_inventory"].distinct("categoria")
-    return sorted([c for c in categories if c])
+    # Cerca in warehouse_stocks e dizionario_prodotti
+    categories_ws = await db["warehouse_stocks"].distinct("categoria")
+    categories_dp = await db["dizionario_prodotti"].distinct("ingrediente_canonico")
+    all_cats = set(c for c in (categories_ws + categories_dp) if c)
+    return sorted(all_cats)
 
 
 @router.get("/{product_id}/suppliers")

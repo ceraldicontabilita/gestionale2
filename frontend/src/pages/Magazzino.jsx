@@ -50,7 +50,7 @@ export default function Magazzino() {
     try {
       setLoading(true);
       const [warehouseRes, catalogRes] = await Promise.all([
-        api.get("/api/warehouse/products?category=manutenzione&limit=200"),
+        api.get("/api/warehouse/products?limit=500"),
         api.get("/api/products/catalog").catch(() => ({ data: [] }))
       ]);
       setProducts(Array.isArray(warehouseRes.data) ? warehouseRes.data : []);
@@ -91,9 +91,9 @@ export default function Magazzino() {
   const stats = useMemo(() => {
     const total = filteredProducts.length;
     const totalValue = filteredProducts.reduce((sum, p) => {
-      return sum + ((p.prezzi?.avg || 0) * (p.giacenza || 0));
+      return sum + ((p.prezzo_acquisto || p.best_price || 0) * (p.giacenza || 0));
     }, 0);
-    const lowStock = filteredProducts.filter(p => (p.giacenza || 0) <= (p.giacenza_minima || 0)).length;
+    const lowStock = filteredProducts.filter(p => (p.giacenza || 0) <= (p.giacenza_minima || 0) && p.giacenza_minima > 0).length;
     const categorieCounts = {};
     filteredProducts.forEach(p => {
       const cat = p.categoria || 'altro';
@@ -334,9 +334,9 @@ export default function Magazzino() {
                       <th style={{ padding: 12, textAlign: 'left', fontWeight: 600 }}>Categoria</th>
                       <th style={{ padding: 12, textAlign: 'left', fontWeight: 600 }}>Fornitore</th>
                       <th style={{ padding: 12, textAlign: 'right', fontWeight: 600 }}>Giacenza</th>
-                      <th style={{ padding: 12, textAlign: 'right', fontWeight: 600 }}>Prezzo Min</th>
-                      <th style={{ padding: 12, textAlign: 'right', fontWeight: 600 }}>Prezzo Max</th>
-                      <th style={{ padding: 12, textAlign: 'left', fontWeight: 600 }}>Ultimo Acquisto</th>
+                      <th style={{ padding: 12, textAlign: 'right', fontWeight: 600 }}>Prezzo Acq.</th>
+                      <th style={{ padding: 12, textAlign: 'right', fontWeight: 600 }}>Prezzo/Kg</th>
+                      <th style={{ padding: 12, textAlign: 'left', fontWeight: 600 }}>Ultimo Carico</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -351,9 +351,9 @@ export default function Magazzino() {
                         </td>
                         <td style={{ padding: 12, color: '#64748b' }}>{p.ultimo_fornitore || '-'}</td>
                         <td style={{ padding: 12, textAlign: 'right', fontWeight: 600 }}>{(p.giacenza || 0).toFixed(2)}</td>
-                        <td style={{ padding: 12, textAlign: 'right', color: '#16a34a' }}>{formatEuro(p.prezzi?.min || 0)}</td>
-                        <td style={{ padding: 12, textAlign: 'right', color: '#64748b' }}>{formatEuro(p.prezzi?.max || 0)}</td>
-                        <td style={{ padding: 12, color: '#64748b' }}>{p.ultimo_acquisto ? formatDateIT(p.ultimo_acquisto) : '-'}</td>
+                        <td style={{ padding: 12, textAlign: 'right', color: '#16a34a' }}>{formatEuro(p.prezzo_acquisto || p.best_price || 0)}</td>
+                        <td style={{ padding: 12, textAlign: 'right', color: '#64748b' }}>{p.prezzo_kg ? `€/kg ${p.prezzo_kg.toFixed(2)}` : formatEuro(p.prezzo_acquisto || 0)}</td>
+                        <td style={{ padding: 12, color: '#64748b' }}>{p.ultimo_carico ? formatDateIT(p.ultimo_carico) : (p.ultimo_aggiornamento ? formatDateIT(p.ultimo_aggiornamento) : '-')}</td>
                       </tr>
                     ))}
                   </tbody>
