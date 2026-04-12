@@ -1,5 +1,5 @@
 # Logica Operativa — Ceraldi ERP
-> Versione: Aprile 2026 | P.IVA: 04523831214 | DB: Gestionale (MongoDB Atlas)
+> Versione: Aprile 2026 (aggiornato) | P.IVA: 04523831214 | DB: Gestionale (MongoDB Atlas)
 
 ---
 
@@ -7,9 +7,10 @@
 
 ### Fonti documenti per canale:
 - **FATTURE SDI** → arrivano via **PEC Aruba** (`fatturazioneceraldi@pec.it`) o **import manuale XML**. MAI da Gmail.
-- **CEDOLINI / BUSTE PAGA** → arrivano via **Gmail** (dal consulente TeamSystem/Zucchetti)
+- **CEDOLINI / BUSTE PAGA** → arrivano via **Gmail** (dal consulente TeamSystem/Zucchetti) o import PDF Libro Unico
 - **F24, ESTRATTI CONTO, VERBALI, QUIETANZE, BONIFICI, CARTELLE** → arrivano via **Gmail**
 - **SCHEDE TECNICHE** → via Gmail (allegati PDF da fornitori) o ricerca web
+- **PRESENZE** → importate da PDF Libro Unico del consulente via endpoint dedicato
 
 ### Scansione Email:
 - **Gmail**: scansiona le cartelle configurate — molte contengono documenti organizzati per argomento
@@ -31,6 +32,8 @@
 9. [Banca ed Estratto Conto](#9-banca-ed-estratto-conto)
 10. [Dashboard e Volume d'Affari](#10-dashboard-e-volume-daffari)
 11. [Struttura Database](#11-struttura-database)
+12. [Noleggio Auto e Verbali](#12-noleggio-auto-e-verbali)
+13. [Magazzino](#13-magazzino)
 
 ---
 
@@ -38,18 +41,19 @@
 
 ```
 Frontend (React 18 + Vite)  ←→  Backend (FastAPI + Motor)  ←→  MongoDB Atlas
-        :3000 (supervisor)           :8001 (supervisor)          azienda_erp_db
+        :3000 (supervisor)           :8001 (supervisor)          Gestionale
 ```
 
 - **Frontend**: React 18, Vite. CSS inline ONLY da `lib/utils.js`. NO Tailwind, NO Shadcn.
 - **Backend**: FastAPI, Motor (async). Entry: `backend/server.py` → `from app.main import app`.
-- **Database**: MongoDB Atlas. Variabili: `MONGO_URL`, `DB_NAME` in `backend/.env`.
+- **Database**: MongoDB Atlas, DB name: `Gestionale`. Variabili: `MONGO_URL`, `DB_NAME` in `backend/.env`.
 - **Auth**: disabilitata (`AUTH_DISABLED=true`) — accesso diretto senza login.
+- **Settings**: Pydantic settings con priorità `.env` > OS env (intenzionale per evitare override da piattaforma)
 
 ### Variabili d'ambiente (struttura .env)
 ```
-MONGO_URL = mongodb+srv://[USER]:[PASS]@cluster0.vofh7iz.mongodb.net/
-DB_NAME   = azienda_erp_db
+MONGO_URL = mongodb+srv://Ceraldidatabase:[PASS]@cluster0.vofh7iz.mongodb.net/?retryWrites=true&w=majority
+DB_NAME   = Gestionale
 
 # Gmail
 IMAP_USER     = ceraldigroupsrl@gmail.com
@@ -59,17 +63,15 @@ IMAP_PASSWORD = [APP_PASSWORD_GOOGLE]
 ARUBA_PEC_HOST = imaps.pec.aruba.it
 ARUBA_PEC_USER = fatturazioneceraldi@pec.it
 ARUBA_PEC_PASSWORD = [PASSWORD_PEC]
-
-# OpenAPI Camera di Commercio
-OPENAPI_COMPANY_TOKEN = [TOKEN]
 ```
 > ⚠️ Le credenziali reali sono nel file `backend/.env` — NON commitarle nel repo.
+> ⚠️ La priorità .env > OS env è INTENZIONALE: la piattaforma inietta un MONGO_URL locale vuoto.
 
 ---
 
 ## 2. FLUSSO EMAIL → DOCUMENTI
 
-### 2.1 Mittenti Autorizzati (`mittenti_email`)
+### 2.1 Mittenti Autorizzati (`mittenti_attendibili`, 11 record)
 
 | Canale | Pattern | Tipo Documento |
 |---|---|---|
@@ -80,44 +82,15 @@ OPENAPI_COMPANY_TOKEN = [TOKEN]
 | gmail | partenopay@... | pagopa |
 | gmail | inpscomunica@... | inps |
 | gmail | notifica.acc.campania@... | cartella_esattoriale |
-| gmail | no_reply@agenziariscossione | cartella_esattoriale |
-| gmail | auto_napoli@massivo.pec.inail | inail |
-| gmail | assistenza@paypal.it | paypal |
-| gmail | noreply-checkout@ricevute.pagopa | pagopa |
 
-**Regola match**: `if pattern in from_addr.lower()` (contenimento stringa)
-**Builtin**: non eliminabili, solo disattivabili
-
-### 2.2 API Mittenti
-```
-GET    /api/email-download/mittenti                    → lista completa
-POST   /api/email-download/mittenti                    → aggiunge mittente
-PUT    /api/email-download/mittenti/{id}               → aggiorna
-DELETE /api/email-download/mittenti/{id}               → elimina (builtin: BLOCCA)
-```
-
-### 2.3 Routing per tipo_documento
+### 2.2 Routing per tipo_documento
 
 | tipo_documento | Azione |
 |---|---|
-| `fattura_xml` | Parser XML → `invoices` |
-| `cedolino` | Salva PDF in `documents_inbox` (nessun parser auto) |
-| `pagopa` | Documento generico in `documents_inbox`, categoria=pagopa |
-| `inps` | Documento generico, categoria=inps |
-| `inail` | Documento generico, categoria=inail |
-| `paypal` | Documento generico, categoria=paypal |
-| `cartella_esattoriale` | Documento generico + alert urgente |
-
-### 2.4 Download PEC (Aruba)
-- Endpoint: `POST /api/email-download/pec/download-fatture-sync?since_days=365`
-- Esecuzione: `asyncio.to_thread()` — NON blocca il server
-- 54 email SDI trovate, 38 fatture importate (Apr 2026)
-- Deduplicazione: `xml_hash` (MD5)
-
-### 2.5 Download Gmail
-- Endpoint: `POST /api/email-download/sync-email-now`
-- Scheduler: ogni 50 minuti (APScheduler)
-- Import cedolini: `POST /api/cedolini/import-gmail?since_days=180`
+| `fattura_xml` | Parser XML → `invoices` (estrae anche DatiFattureCollegate per NC) |
+| `cedolino` | Salva PDF in `documents_inbox` |
+| `pagopa` | Documento generico, categoria=pagopa |
+| `verbale` | Parser PDF → estrae targa, importo → `verbali_noleggio` |
 
 ---
 
@@ -125,45 +98,37 @@ DELETE /api/email-download/mittenti/{id}               → elimina (builtin: BLO
 
 ### 3.1 Fatture SDI (ciclo passivo)
 - Arrivano via Aruba PEC come `.xml` o `.p7m`
-- Salvate in `documents_inbox`, processate da `xml_invoice_processor.py`
-- Salvate in `invoices` (224 record)
+- Salvate in `invoices` (**1.405 record**)
+- Parser XML estrae: `DatiFattureCollegate`, `DatiOrdineAcquisto`, `causali`, `tipo_documento`
 
-### 3.2 Inserimento Prima Nota Banca
-Se metodo pagamento = `MP05` (bonifico), `MP19` (SEPA), `MP08` (carta):
-```
-fattura pagata → prima_nota_banca: tipo "uscita", categoria "Pagamento fornitore"
-```
+### 3.2 Note Credito (TD04)
+- **29 note credito** nel database
+- Parser estrae `DatiFattureCollegate` per link automatico NC↔Fattura
+- Nel modal Assegni: NC mostrate con importo **negativo** e badge rosso "Nota Credito"
+- Fatture raggruppate per fornitore nel modal di associazione
 
 ### 3.3 Codici Tipo Documento FE
 
 | Codice | Tipo | Direzione |
 |---|---|---|
 | TD01 | Fattura ordinaria | acquisto → uscita |
-| TD04 | Nota di credito | rimborso → entrata |
+| TD04 | Nota di credito | rimborso → **importo negativo** |
 | TD24/25 | Fattura differita | vendita → entrata |
-| TD16 | Autofattura (reverse charge) | integrazione |
 
-### 3.4 Codici Metodo Pagamento FE
-
-| Codice | Metodo | Prima Nota |
-|---|---|---|
-| MP01 | Contanti | Cassa |
-| MP05 | Bonifico | Banca |
-| MP08 | Carta di credito | Banca |
-| MP19 | SEPA Credit Transfer | Banca |
-| MP02 | Assegno | Banca |
+### 3.4 Prima Nota Provvisori
+- Fatture non ancora registrate: `GET /api/prima-nota/provvisori?anno=2026`
+- 3 stati: **Cassa** (contanti), **Banca** (bonifico), **Sospesa** (in attesa)
+- Sospesa: aggiorna `stato_pagamento` sulla fattura, rimuove `prima_nota_id`, resta nei provvisori
 
 ---
 
 ## 4. PRIMA NOTA CASSA E BANCA
 
-### 4.1 Prima Nota Cassa (`prima_nota_cassa`, 2.132 record)
+### 4.1 Prima Nota Cassa (`prima_nota_cassa`, 136 record)
 - Fonte: corrispettivi contanti, fatture pagate in contanti
-- Filtro: `anno` (int) + `data` (YYYY-MM-DD)
 - API: `GET /api/prima-nota/cassa?anno=2026`
-- Sync: `POST /api/prima-nota/cassa/sync-corrispettivi?anno=2026`
 
-### 4.2 Prima Nota Banca (`prima_nota_banca`, 1.869 record)
+### 4.2 Prima Nota Banca (`prima_nota_banca`, 4.365 record)
 - Fonte: movimenti bancari, F24, stipendi, incassi POS
 - API: `GET /api/prima-nota/banca?anno=2026`
 
@@ -171,17 +136,11 @@ fattura pagata → prima_nota_banca: tipo "uscita", categoria "Pagamento fornito
 - Pagamenti elettronici (POS) → Prima Nota **Banca** (NON cassa)
 - Contanti → Prima Nota **Cassa**
 
-### 4.4 Saldi 2026 (aggiornati Marzo 2026)
-- Entrate 2026: €225.799,77
-- Uscite 2026: €220.976,10
-- Saldo 2026: €4.823,67
-- Riporto anni prec.: €1.206.190,67
-
 ---
 
 ## 5. CORRISPETTIVI E CASSA
 
-### 5.1 Struttura (`corrispettivi`, 1.114 record)
+### 5.1 Struttura (`corrispettivi`, 54 record)
 ```json
 {
   "data": "2026-01-15",
@@ -202,84 +161,72 @@ Fatturato = SUM(corrispettivi.totale_giornata) per anno
 
 ## 6. DIPENDENTI E HR
 
-### 6.1 Collections HR
+### 6.1 Collection HR
 
 | Collection | Record | Uso |
 |---|---|---|
-| `dipendenti` | 34 | Anagrafica principale — **USARE QUESTA** |
-| `employees` | 31 | Copia per presenze batch (non modificare) |
+| `dipendenti` | 30 | Anagrafica principale — **USARE QUESTA** |
+| `cedolini` | 301 | Buste paga (source: cedolino_v2 da Libro Unico) |
+| `presenze` | 290 | Presenze giornaliere (generate da cedolini + import PDF) |
 
 Campo chiave: `in_carico` (bool) — dipendenti attivi.
 
-### 6.2 Route HR (struttura Aprile 2026)
+### 6.2 Route HR
 ```
-/dipendenti          → HRDipendenti.jsx   (anagrafica + dettaglio)
-/dipendenti/cedolini → HRCedolini.jsx     (buste paga + import Gmail)
-/dipendenti/presenze → HRPresenze.jsx     (calendario presenze)
-/dipendenti/tfr      → HRTFR.jsx          (gestione TFR)
+/dipendenti          → HRDipendenti.jsx   (anagrafica + dettaglio con tab Cedolini/Verbali/etc.)
+/cedolini            → HRCedolini.jsx     (buste paga — vista Per Mese / Per Dipendente)
+/presenze            → HRPresenze.jsx     (calendario presenze da Libro Unico + import PDF)
+/tfr                 → HRTFR.jsx          (gestione TFR)
 ```
 
 ### 6.3 Presenze
+- Collection `presenze`: dati mensili per dipendente con griglia giornaliera
+- Campi: `codice_fiscale`, `cognome`, `nome`, `anno`, `mese`, `giorni[]`, `totali`, `legenda`
+- Ogni giorno: `giorno`, `giorno_settimana`, `ore_ordinarie`, `giustificativi[]`, `festivo`
+- Import: `POST /api/attendance/libro-unico/import-pdf` (upload PDF Libro Unico)
+- Lettura: `GET /api/attendance/libro-unico?anno=2026&mese=2`
 
-| Collection | Record | Contenuto |
-|---|---|---|
-| `attendance_presenze_calendario` | — | Presenze giornaliere calendario |
-| `presenze` | 20.989 | Storico completo |
-| `presenze_mensili` | 1.629 | Riepiloghi mensili |
+### 6.4 Cedolini
+- Campi chiave: `nome_dipendente` (COGNOME NOME), `codice_fiscale`, `netto`, `netto_mese`
+- `lordo` spesso 0.0 (parser Zucchetti non lo estrae)
+- `source: cedolino_v2` per tutti i record attuali
+- Frontend usa: `nome_dipendente || (cognome + nome)` per display
 
-### 6.4 API HR Principali
+### 6.5 API HR
 ```
-GET  /api/dipendenti                         → lista (34)
-GET  /api/dipendenti/{id}                    → dettaglio
-PUT  /api/dipendenti/{id}                    → aggiorna anagrafica
-GET  /api/cedolini?anno=2026                 → cedolini per anno
-GET  /api/cedolini/dipendente/{id}?anno=     → cedolini dipendente
-POST /api/cedolini/import-gmail?since_days=  → importa da Gmail
-GET  /api/tfr/acconti/{id}                   → acconti TFR
-GET  /api/paghe/buste-paga?anno=             → libro unico
-GET  /api/paghe/distinte-f24?anno=           → distinte F24
+GET  /api/dipendenti                              → lista (30)
+GET  /api/cedolini?anno=2026&limit=500            → cedolini per anno
+POST /api/cedolini/import-gmail?since_days=180    → importa da Gmail
+GET  /api/attendance/libro-unico?anno=2026        → presenze da Libro Unico
+POST /api/attendance/libro-unico/import-pdf       → upload PDF presenze
 ```
 
 ---
 
 ## 7. CEDOLINI E BUSTE PAGA
 
-### 7.1 Collections
-
-| Collection | Record | Descrizione |
-|---|---|---|
-| `cedolini` | 1.658 | Principale (Gmail + PDF + libro unico) |
-| `cedolini_importati` | 2.363 | Sistema cloud Zucchetti |
-
-### 7.2 Schema Cedolino
+### 7.1 Schema Cedolino (source: cedolino_v2)
 ```json
 {
-  "id": "uuid",
-  "dipendente_id": "uuid (→ dipendenti.id)",
-  "dipendente_nome": "Nome Cognome",
+  "codice_fiscale": "XXXXXX00X00X000X",
+  "cognome": "Rossi",
+  "nome": "Mario",
+  "nome_dipendente": "ROSSI MARIO",
   "anno": 2026,
-  "mese": 1,
-  "lordo": 1800.00,
-  "netto": 1406.00,
-  "inps_azienda": 420.00,
-  "tfr": 135.00,
-  "costo_azienda": 2355.00,
-  "source": "gmail | cedolino_v2 | document_ai | pdf_upload",
-  "file_hash": "md5 (solo source=gmail)",
-  "filename": "Busta paga - Mario Rossi - Gennaio 2026.pdf"
+  "mese": 2,
+  "lordo": 0.0,
+  "netto": 936.0,
+  "netto_mese": 936.0,
+  "tfr_mese": 133.82,
+  "mansione": "Barista",
+  "livello": "5' Livello",
+  "source": "cedolino_v2",
+  "dedup_key": "XXXXXX00X00X000X_02_2026"
 }
 ```
 
-### 7.3 Formati Cedolino Supportati
-1. **CSC Napoli** (fino al 2018)
-2. **Zucchetti classico** (2018–2022)
-3. **Zucchetti nuovo** (dal 2022 — separatore `s`)
-4. **Teamsystem**
-
-### 7.4 Import Gmail
-- 271 cedolini con `source=gmail` già presenti (storico completo)
-- Parsing filename: `"Busta paga - {Nome} - {Mese} {Anno}.pdf"` → `mese=4, anno=2026`
-- Deduplicazione: `db["cedolini"].find_one({"file_hash": hash})`
+### 7.2 Formato supportato
+- **Zucchetti nuovo** (cedolino_v2) — formato attuale dal consulente
 
 ---
 
@@ -289,23 +236,18 @@ GET  /api/paghe/distinte-f24?anno=           → distinte F24
 
 | Collection | Record | Note |
 |---|---|---|
-| `suppliers` | 328 | Usata dal modulo principale (CollectionsModule.SUPPLIERS) |
-| `fornitori` | 168 | Variante italiana (usata da alcuni router) |
-| `invoices` | 224 | Fatture passive ricevute |
-| `scadenziario_fornitori` | 1.052 | Scadenze pagamento |
+| `fornitori` | 245 | Collection principale (usata da `Collections.SUPPLIERS`) |
+| `suppliers` | 15 | Legacy — NON usare per nuovi sviluppi |
+| `invoices` | 1.405 | Fatture passive ricevute (TD01 + TD04 + TD24) |
+| `scadenziario_fornitori` | 185 | Scadenze pagamento |
 
-> **Attenzione**: `suppliers` e `fornitori` sono due collection distinte con dati parzialmente diversi. Il codice usa `suppliers` come canonica per il modulo principale. Vedi debito tecnico in `DEBITO_TECNICO.md`.
+> **Canonica**: `fornitori` (la classe `Collections.SUPPLIERS` punta a "fornitori")
 
-### 8.2 Classificazione Automatica Fatture
-
-| Pattern Fornitore | Categoria | Deducibilità |
-|---|---|---|
-| Enel, Edison, A2A | Energia | 100% |
-| TIM, Vodafone | Telefonia | 80% (IVA 50%) |
-| ARVAL, Leasys, ALD | Noleggio Auto | 20% su max €3.615 |
-| Q8, Esso | Carburante | 20% (IVA 40%) |
-| BRT, DHL | Trasporti | 100% |
-| Studio..., Consulenze | Consulenze | 100% |
+### 8.2 Note Credito nel Ciclo Passivo
+- 29 NC (TD04) nel database
+- Parser XML estrae `DatiFattureCollegate` per riferimenti incrociati
+- Nel modal Assegni: fatture ordinate per fornitore, NC con segno negativo
+- Netting: Fattura + NC selezionate insieme → totale netto = importo assegno
 
 ---
 
@@ -315,36 +257,19 @@ GET  /api/paghe/distinte-f24?anno=           → distinte F24
 
 | Collection | Record | Contenuto |
 |---|---|---|
-| `estratto_conto_movimenti` | 4.468 | Movimenti bancari (canonica) |
-| `assegni` | 212 | Gestione assegni |
-| `prima_nota_banca` | 1.869 | Prima nota banca |
+| `estratto_conto_movimenti` | 8.839 | Movimenti bancari |
+| `assegni` | 220 | Gestione assegni (con associazione fatture) |
+| `prima_nota_banca` | 4.365 | Prima nota banca |
 
-### 9.2 Distribuzione Movimenti per Anno
-- 2026 (gen–apr): ~470 record
-- 2025 (completo): ~3.128 record
-- 2024: ~881 record
+### 9.2 Assegni
+- 220 assegni raggruppati per carnet
+- Modal associazione fatture: **ordinato per fornitore** con header sticky
+- Note credito (TD04) con importo negativo e badge rosso
+- Massimo 4 fatture per assegno, solo dello stesso fornitore
 
-### 9.3 Saldi (Marzo 2026)
-- Saldo 2026: €4.823,67
-- Riporto anni precedenti: €1.206.190,67
-- Saldo cumulativo: ~€1.211.014
-
-### 9.4 Import Estratto Conto
+### 9.3 Import Estratto Conto
 - `POST /api/bank/import-estratto-conto` — CSV BPM, separatore `;`, UTF-8-BOM
 - Deduplicazione: `data + importo + descrizione_originale`
-- Performance: ~2.5s per file completo (ottimizzato con bulk insert)
-
-### 9.5 Riconciliazione Bancaria
-
-| Tipo | Criteri Match |
-|---|---|
-| Stipendi | IBAN + importo esatto + data ±5gg |
-| F24 | Importo + data 16 ±3gg + "F24"/"ERARIO" in descrizione |
-| Rate Mutuo | Importo ±€1 + data ±7gg |
-| POS | Importo ±€5 + data attesa (+1/+3gg lavorativi) |
-| Fatture | Importo ±2% + fornitore nella descrizione |
-
-**Regola POS**: Lun–Gio → accredito giorno lavorativo successivo. Ven–Dom → accredito lunedì.
 
 ---
 
@@ -355,57 +280,101 @@ GET  /api/paghe/distinte-f24?anno=           → distinte F24
 | Indicatore | Fonte | Formula |
 |---|---|---|
 | Volume d'Affari | `corrispettivi` | SUM(totale_giornata) |
-| Costi Fornitore | `invoices` | SUM(total_amount) |
+| Costi Fornitore | `invoices` | SUM(total_amount) dove tipo_documento=TD01 |
 | Utile Lordo | — | Volume − Costi |
-| Saldo Cassa | `prima_nota_cassa` | Entrate − Uscite |
-| Saldo Banca | `prima_nota_banca` | Entrate − Uscite |
-
-### 10.2 Route Dashboard
-- `/` o `/dashboard` → `DashboardHub.jsx`
-- `/contabilita-hub` → `ContabilitaHub.jsx`
+| Saldo IVA | Verifica Coerenza | IVA debito − IVA credito |
 
 ---
 
 ## 11. STRUTTURA DATABASE
 
 ```
-azienda_erp_db (MongoDB Atlas — Aprile 2026)
+Gestionale (MongoDB Atlas — Aprile 2026)
 │
 ├── HR
-│   ├── dipendenti (34)              ← CANONICA: anagrafica dipendenti
-│   ├── employees (31)               ← copia (solo presenze batch)
-│   ├── cedolini (1.658)             ← buste paga (Gmail + PDF + libro unico)
-│   ├── cedolini_importati (2.363)   ← sistema cloud Zucchetti
-│   ├── presenze (20.989)            ← storico presenze
-│   └── presenze_mensili (1.629)     ← riepiloghi mensili
+│   ├── dipendenti (30)              ← CANONICA: anagrafica dipendenti
+│   ├── cedolini (301)               ← buste paga (Libro Unico Zucchetti v2)
+│   └── presenze (290)               ← presenze giornaliere (da cedolini + PDF)
 │
 ├── CONTABILITA
-│   ├── prima_nota_cassa (2.132)
-│   ├── prima_nota_banca (1.869)
-│   ├── corrispettivi (1.114)
-│   └── invoices (224)               ← fatture passive SDI
+│   ├── prima_nota_cassa (136)
+│   ├── prima_nota_banca (4.365)
+│   ├── corrispettivi (54)
+│   ├── invoices (1.405)             ← fatture passive SDI (TD01+TD04+TD24)
+│   └── piano_conti (30)
 │
 ├── FORNITORI
-│   ├── suppliers (328)              ← canonica per modulo principale
-│   ├── fornitori (168)              ← variante italiana
-│   └── scadenziario_fornitori (1.052)
+│   ├── fornitori (245)              ← CANONICA per modulo principale
+│   └── scadenziario_fornitori (185)
 │
 ├── BANCA
-│   ├── estratto_conto_movimenti (4.468)
-│   └── assegni (212)
+│   ├── estratto_conto_movimenti (8.839)
+│   └── assegni (220)
 │
-├── EMAIL
-│   ├── mittenti_email (16)
-│   ├── email_message_index (278)
-│   └── documents_inbox (91)
+├── NOLEGGIO
+│   ├── veicoli_noleggio (4)         ← flotta attiva
+│   └── verbali_noleggio (165)       ← verbali con targa/driver/PDF
 │
 ├── MAGAZZINO
-│   ├── warehouse_inventory (6.885)
-│   └── acquisti_prodotti (15.070)
+│   ├── warehouse_stocks (496)       ← giacenze (USARE QUESTA, non warehouse_inventory)
+│   ├── warehouse_movements (788)
+│   └── dizionario_prodotti (680)    ← catalogo prodotti da fatture
+│
+├── EMAIL
+│   ├── mittenti_attendibili (11)
+│   ├── email_message_index (68)
+│   └── documents_inbox (32)
 │
 └── FISCALE
-    ├── f24_unificato (68)
-    └── scadenze (15)
+    └── f24_unificato (1)
+```
+
+---
+
+## 12. NOLEGGIO AUTO E VERBALI
+
+### 12.1 Flotta (`veicoli_noleggio`, 4 veicoli)
+- HB411GV (BMW X3) — Vincenzo Ceraldi — Leasys
+- GW980EP (Mazda) — Antonietta Ceraldi — ARVAL
+- GX037HJ (BMW X1) — Valerio Ceraldi — ALD
+- GG782PN (Alfa Romeo Stelvio) — Vincenzo Ceraldi — Leasys
+
+### 12.2 Verbali (`verbali_noleggio`, 165 record)
+- Scaricati da PEC (notifiche sanzioni CdS)
+- Targa estratta da PDF con PyMuPDF
+- Driver collegato tramite targa → veicolo → driver
+- Stati: salvato (91), pagato (28), fattura_ricevuta (16), identificato (10), pagato_attesa_fattura (10), da_scaricare (7), riconciliato (3)
+
+### 12.3 API Verbali
+```
+GET  /api/verbali-riconciliazione/dashboard
+GET  /api/verbali-riconciliazione/lista
+POST /api/verbali-riconciliazione/scan-fatture-verbali
+POST /api/verbali-riconciliazione/collega-driver-massivo
+POST /api/verbali-riconciliazione/riconcilia/{numero}
+GET  /api/verbali-noleggio/pdf/{numero}
+```
+
+---
+
+## 13. MAGAZZINO
+
+### 13.1 Collections
+
+| Collection | Record | Uso |
+|---|---|---|
+| `warehouse_stocks` | 496 | **Giacenze reali** — USARE QUESTA |
+| `warehouse_movements` | 788 | Movimenti carico/scarico |
+| `dizionario_prodotti` | 680 | Catalogo prodotti da fatture XML |
+| `warehouse_inventory` | 0 | VUOTA — non usare |
+
+> ⚠️ `warehouse_inventory` è vuota. Il backend è stato corretto per leggere da `warehouse_stocks`.
+
+### 13.2 API Magazzino
+```
+GET  /api/products/catalog               → catalogo (da warehouse_stocks)
+GET  /api/products/categories             → categorie
+GET  /api/products/search?q=...           → ricerca predittiva
 ```
 
 ---
@@ -413,14 +382,20 @@ azienda_erp_db (MongoDB Atlas — Aprile 2026)
 ## NOTE CRITICHE PER SVILUPPO
 
 1. **IMAP sempre in thread**: `await asyncio.to_thread(funzione_sync_imap, ...)`
-2. **Collection dipendenti**: usare `dipendenti` (34 record), NON `employees`
-3. **Anno corrispettivi**: filtrare per range di `data` (il campo `anno` può mancare)
-4. **Design**: CSS inline da `lib/utils.js` per pagine gestionali. NO Tailwind, NO Shadcn
-5. **`_id` MongoDB**: escludere sempre con `{"_id": 0}` o via Pydantic
-6. **Auth**: disabilitata (`AUTH_DISABLED=true`)
-7. **server.py**: NON cancellare — punto di avvio uvicorn via Supervisor
-8. **Collection canonica fornitori**: `suppliers` per il modulo principale
+2. **Collection dipendenti**: usare `dipendenti` (30 record), NON `employees`
+3. **Collection fornitori**: usare `fornitori` (245 record), NON `suppliers`
+4. **Collection magazzino**: usare `warehouse_stocks` (496 record), NON `warehouse_inventory`
+5. **DB name**: `Gestionale` (NON `azienda_erp_db`)
+6. **Anno corrispettivi**: filtrare per range di `data` (il campo `anno` può mancare)
+7. **Design**: CSS inline da `lib/utils.js` per pagine gestionali. NO Tailwind, NO Shadcn
+8. **`_id` MongoDB**: escludere sempre con `{"_id": 0}` o via Pydantic
+9. **Auth**: disabilitata (`AUTH_DISABLED=true`)
+10. **server.py**: NON cancellare — punto di avvio uvicorn via Supervisor
+11. **Settings priority**: `.env` > OS env (intenzionale — la piattaforma inietta MONGO_URL locale vuoto)
+12. **Cedolini display**: usare `nome_dipendente` (non `dipendente_nome`) per il nome dipendente
+13. **Note credito**: `tipo_documento=TD04` → importo negativo nel modal assegni
+14. **Prima Nota Sospesa**: `metodo=sospesa` → aggiorna solo fattura, non crea movimento
 
 ---
 
-*Aggiornato: Aprile 2026*
+*Aggiornato: Aprile 2026 — Sessione di fix incoerenze e logica*
