@@ -44,12 +44,12 @@ async def get_pec_credentials(db) -> Dict[str, Any]:
     """
     try:
         cfg = await db["pec_email_settings"].find_one({}, {"_id": 0})
-        if cfg and cfg.get("email") and cfg.get("app_password"):
+        if cfg and cfg.get("email") and (cfg.get("app_password") or cfg.get("password")):
             return {
-                "host": cfg.get("imap_server", PEC_HOST),
-                "port": int(cfg.get("imap_port", PEC_PORT)),
+                "host": cfg.get("imap_server", cfg.get("host", PEC_HOST)),
+                "port": int(cfg.get("imap_port", cfg.get("port", PEC_PORT))),
                 "user": cfg["email"],
-                "password": cfg["app_password"],
+                "password": cfg.get("app_password") or cfg.get("password"),
                 "source": "database",
             }
     except Exception as e:
