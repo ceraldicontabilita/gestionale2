@@ -179,9 +179,8 @@ export default function Commercialista() {
     doc.text(`Periodo: ${meseNome} ${selectedYear}`, 14, 52);
     
     // ==========================================
-    // RIEPILOGO DETTAGLIATO
+    // RIEPILOGO DETTAGLIATO (2 COLONNE)
     // ==========================================
-    // Calcola dettagli per categoria
     const movimenti = primaNotaData.movimenti || [];
     
     // Entrate per categoria
@@ -214,7 +213,10 @@ export default function Commercialista() {
     
     const uscitePOS = movimenti
       .filter(m => (m.tipo === 'uscita' || m.type === 'uscita') && 
-        (m.categoria === 'POS' || m.category === 'POS'))
+        ((m.categoria || m.category || '') === 'POS' || 
+         (m.descrizione || m.description || '').toLowerCase().includes('pos') ||
+         (m.descrizione || m.description || '').toLowerCase().includes('bancomat') ||
+         (m.descrizione || m.description || '').toLowerCase().includes('elettronico')))
       .reduce((sum, m) => sum + parseFloat(m.importo || m.amount || 0), 0);
     
     const usciteAltro = movimenti
@@ -222,14 +224,33 @@ export default function Commercialista() {
         !(m.categoria || m.category || '').toLowerCase().includes('fattura') &&
         !(m.categoria || m.category || '').toLowerCase().includes('fornitore') &&
         m.categoria !== 'Versamento' && m.category !== 'Versamento' &&
-        m.categoria !== 'POS' && m.category !== 'POS')
+        m.categoria !== 'POS' && m.category !== 'POS' &&
+        !(m.descrizione || m.description || '').toLowerCase().includes('versamento') &&
+        !(m.descrizione || m.description || '').toLowerCase().includes('pos') &&
+        !(m.descrizione || m.description || '').toLowerCase().includes('bancomat'))
       .reduce((sum, m) => sum + parseFloat(m.importo || m.amount || 0), 0);
     
-    // Box riepilogo
-    doc.setFillColor(240, 248, 255);
-    doc.roundedRect(14, 58, 182, 55, 3, 3, 'F');
+    const fmt = (v) => formatEuroStr(v);
+    const totEntrate = primaNotaData.totale_entrate || 0;
+    const totUscite = primaNotaData.totale_uscite || 0;
+    const saldo = totEntrate - totUscite;
     
-    // ENTRATE
+    // Calcola ultimo giorno del mese per il saldo
+    const ultimoGiorno = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+    const dataOggi = new Date();
+    const isCurrentMonth = dataOggi.getFullYear() === selectedYear && dataOggi.getMonth() === selectedMonth;
+    const giornoSaldo = isCurrentMonth ? dataOggi.getDate() : ultimoGiorno;
+    const dataSaldo = `${String(giornoSaldo).padStart(2, '0')}/${String(selectedMonth + 1).padStart(2, '0')}/${selectedYear}`;
+
+    // ==========================================
+    // BOX ENTRATE (colonna sinistra)
+    // ==========================================
+    doc.setFillColor(240, 255, 240);
+    doc.roundedRect(14, 58, 88, 58, 3, 3, 'F');
+    doc.setDrawColor(39, 174, 96);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(14, 58, 88, 58, 3, 3, 'S');
+    
     doc.setFontSize(11);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(39, 174, 96);
@@ -238,75 +259,88 @@ export default function Commercialista() {
     doc.setFontSize(9);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(60);
-    let yPos = 75;
+    let yLeft = 76;
     
-    doc.text(`Corrispettivi:`, 25, yPos);
-    doc.text(formatEuro(entrateCorresp), 80, yPos, { align: 'right' });
+    doc.text('Corrispettivi Contanti:', 20, yLeft);
+    doc.text(fmt(entrateCorresp), 96, yLeft, { align: 'right' });
     
     if (entrateFinSoci > 0) {
-      yPos += 5;
-      doc.text(`Finanziamento Soci:`, 25, yPos);
-      doc.text(formatEuro(entrateFinSoci), 80, yPos, { align: 'right' });
+      yLeft += 6;
+      doc.text('Finanziamento Soci:', 20, yLeft);
+      doc.text(fmt(entrateFinSoci), 96, yLeft, { align: 'right' });
     }
-    
     if (entrateAltro > 0) {
-      yPos += 5;
-      doc.text(`Altre entrate:`, 25, yPos);
-      doc.text(formatEuro(entrateAltro), 80, yPos, { align: 'right' });
+      yLeft += 6;
+      doc.text('Altre entrate:', 20, yLeft);
+      doc.text(fmt(entrateAltro), 96, yLeft, { align: 'right' });
     }
     
-    // Totale entrate
-    yPos += 7;
+    yLeft = 106;
     doc.setFont(undefined, 'bold');
     doc.setTextColor(39, 174, 96);
-    doc.text(`TOTALE ENTRATE:`, 25, yPos);
-    doc.text(formatEuro(primaNotaData.totale_entrate || 0), 80, yPos, { align: 'right' });
+    doc.text('TOTALE ENTRATE:', 20, yLeft);
+    doc.text(fmt(totEntrate), 96, yLeft, { align: 'right' });
     
-    // USCITE
+    // ==========================================
+    // BOX USCITE (colonna destra)
+    // ==========================================
+    doc.setFillColor(255, 240, 240);
+    doc.roundedRect(108, 58, 88, 58, 3, 3, 'F');
+    doc.setDrawColor(231, 76, 60);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(108, 58, 88, 58, 3, 3, 'S');
+    
     doc.setFontSize(11);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(231, 76, 60);
-    doc.text('USCITE', 110, 68);
+    doc.text('USCITE', 114, 68);
     
     doc.setFontSize(9);
     doc.setFont(undefined, 'normal');
     doc.setTextColor(60);
-    yPos = 75;
+    let yRight = 76;
     
-    doc.text(`Pagamento Fatture:`, 115, yPos);
-    doc.text(formatEuro(usciteFatture), 180, yPos, { align: 'right' });
-    
-    if (usciteVersamenti > 0) {
-      yPos += 5;
-      doc.text(`Versamenti in banca:`, 115, yPos);
-      doc.text(formatEuro(usciteVersamenti), 180, yPos, { align: 'right' });
+    if (usciteFatture > 0) {
+      doc.text('Pagamento Fatture:', 114, yRight);
+      doc.text(fmt(usciteFatture), 190, yRight, { align: 'right' });
+      yRight += 6;
     }
-    
     if (uscitePOS > 0) {
-      yPos += 5;
-      doc.text(`POS / Bancomat:`, 115, yPos);
-      doc.text(formatEuro(uscitePOS), 180, yPos, { align: 'right' });
+      doc.text('Pagamento Elettronico/POS:', 114, yRight);
+      doc.text(fmt(uscitePOS), 190, yRight, { align: 'right' });
+      yRight += 6;
     }
-    
+    if (usciteVersamenti > 0) {
+      doc.text('Versamenti in banca:', 114, yRight);
+      doc.text(fmt(usciteVersamenti), 190, yRight, { align: 'right' });
+      yRight += 6;
+    }
     if (usciteAltro > 0) {
-      yPos += 5;
-      doc.text(`Altre uscite:`, 115, yPos);
-      doc.text(formatEuro(usciteAltro), 180, yPos, { align: 'right' });
+      doc.text('Altre uscite:', 114, yRight);
+      doc.text(fmt(usciteAltro), 190, yRight, { align: 'right' });
+      yRight += 6;
+    }
+    if (usciteFatture === 0 && uscitePOS === 0 && usciteVersamenti === 0 && usciteAltro === 0) {
+      doc.text('Nessuna uscita', 114, yRight);
+      yRight += 6;
     }
     
-    // Totale uscite
-    yPos = 97;
+    yRight = 106;
     doc.setFont(undefined, 'bold');
     doc.setTextColor(231, 76, 60);
-    doc.text(`TOTALE USCITE:`, 115, yPos);
-    doc.text(formatEuro(primaNotaData.totale_uscite || 0), 180, yPos, { align: 'right' });
+    doc.text('TOTALE USCITE:', 114, yRight);
+    doc.text(fmt(totUscite), 190, yRight, { align: 'right' });
     
-    // SALDO
-    const saldo = (primaNotaData.totale_entrate || 0) - (primaNotaData.totale_uscite || 0);
+    // ==========================================
+    // SALDO CASSA
+    // ==========================================
+    doc.setFillColor(saldo >= 0 ? 240 : 255, saldo >= 0 ? 248 : 240, saldo >= 0 ? 255 : 240);
+    doc.roundedRect(14, 120, 182, 12, 2, 2, 'F');
     doc.setFontSize(12);
     doc.setFont(undefined, 'bold');
     doc.setTextColor(saldo >= 0 ? 39 : 231, saldo >= 0 ? 174 : 76, saldo >= 0 ? 96 : 60);
-    doc.text(`SALDO PERIODO: ${formatEuro(saldo)}`, 14, 120);
+    doc.text(`SALDO CASSA AL ${dataSaldo}:`, 20, 129);
+    doc.text(fmt(saldo), 190, 129, { align: 'right' });
     
     // ==========================================
     // TABELLA MOVIMENTI
@@ -327,7 +361,7 @@ export default function Commercialista() {
       });
       
       autoTable(doc, {
-        startY: 128,
+        startY: 140,
         head: [['Data', 'Tipo', 'Importo', 'Descrizione', 'Categoria']],
         body: tableData,
         theme: 'striped',
