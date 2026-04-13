@@ -26,7 +26,6 @@ const ALTRO_ITEMS = [
   { to: '/documenti', label: 'Documenti', Icon: BookMarked },
   { to: '/noleggio', label: 'Noleggio Auto', Icon: Car },
   { to: '/riconciliazione', label: 'Riconciliazione', Icon: FileBarChart },
-  { to: '/gestione-email', label: 'Email', Icon: Settings },
   { to: '/strumenti', label: 'Strumenti', Icon: Wrench },
   { to: '/admin', label: 'Admin', Icon: Settings },
 ];
@@ -46,7 +45,6 @@ const S = {
     boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
     padding: '0 12px',
     gap: 0,
-    overflow: 'hidden',
   },
   brand: {
     display: 'flex',
