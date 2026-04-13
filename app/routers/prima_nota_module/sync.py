@@ -178,40 +178,53 @@ async def _sync_corrispettivi_impl(anno: int = None) -> Dict:
         
         data = c.get("data", c.get("data_operazione", ""))
         
-        # REGOLA CONTABILE: in cassa va SOLO il pagato contanti, NON il totale
-        # Il pagamento elettronico (POS) va in banca come accredito
+        # REGOLA CONTABILE: 
+        # ENTRATA = totale corrispettivo (contanti + POS)
+        # USCITA = POS verso banca (il POS esce dalla cassa verso la banca)
+        # SALDO = solo contanti rimasti in cassa
         contanti = float(c.get("pagato_contanti", 0) or 0)
         elettronico = float(c.get("pagato_elettronico", 0) or 0)
         totale = float(c.get("totale", 0) or c.get("totale_complessivo", 0) or c.get("importo", 0) or 0)
         
-        # Se pagato_contanti non è disponibile, usa totale - elettronico
-        importo_cassa = contanti if contanti > 0 else max(0, totale - elettronico)
-        
-        if importo_cassa <= 0 and elettronico <= 0:
+        if totale <= 0:
             continue
         
-        # ENTRATA CASSA: solo contanti
-        if importo_cassa > 0:
-            movimento = {
-                "id": str(__import__("uuid").uuid4()),
-                "data": data,
-                "tipo": "entrata",
-                "categoria": "Corrispettivi",
-                "descrizione": f"Corrispettivi contanti {data}",
-                "importo": round(importo_cassa, 2),
-                "corrispettivo_id": corr_id,
-                "pagato_contanti": round(contanti, 2),
-                "pagato_elettronico": round(elettronico, 2),
-                "totale_giornata": round(totale, 2),
-                "source": "corrispettivi_sync",
-                "created_at": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
-            }
-            await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento)
-            inseriti += 1
+        # ENTRATA CASSA: totale corrispettivo
+        movimento = {
+            "id": str(__import__("uuid").uuid4()),
+            "data": data,
+            "tipo": "entrata",
+            "categoria": "Corrispettivi",
+            "descrizione": f"Corrispettivi {data}",
+            "importo": round(totale, 2),
+            "corrispettivo_id": corr_id,
+            "pagato_contanti": round(contanti, 2),
+            "pagato_elettronico": round(elettronico, 2),
+            "totale_giornata": round(totale, 2),
+            "source": "corrispettivi_sync",
+            "created_at": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
+        }
+        await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento)
+        inseriti += 1
         
-        # NOTA: Il pagamento elettronico (POS) NON va in cassa come uscita.
-        # Il POS va diretto in banca come accredito (si trova nell'estratto conto).
-        # I campi pagato_contanti e pagato_elettronico sono salvati per informazione.
+        # USCITA CASSA: POS verso banca
+        if elettronico > 0:
+            existing_pos = await db[COLLECTION_PRIMA_NOTA_CASSA].find_one(
+                {"corrispettivo_id": corr_id, "source": "corrispettivi_pos_sync"}
+            )
+            if not existing_pos:
+                movimento_pos = {
+                    "id": str(__import__("uuid").uuid4()),
+                    "data": data,
+                    "tipo": "uscita",
+                    "categoria": "POS Verso Banca",
+                    "descrizione": f"Pagamento elettronico {data} → Banca",
+                    "importo": round(elettronico, 2),
+                    "corrispettivo_id": corr_id,
+                    "source": "corrispettivi_pos_sync",
+                    "created_at": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
+                }
+                await db[COLLECTION_PRIMA_NOTA_CASSA].insert_one(movimento_pos)
     
     return {
         "message": f"Sincronizzati {inseriti} corrispettivi in Prima Nota Cassa",

@@ -270,18 +270,8 @@ export default function Commercialista() {
     doc.setTextColor(60);
     let yLeft = 76;
     
-    doc.text('Corrispettivi Contanti:', 20, yLeft);
+    doc.text('Corrispettivi:', 20, yLeft);
     doc.text(fmt(entrateCorresp), 96, yLeft, { align: 'right' });
-    
-    if (totalePOS > 0) {
-      yLeft += 6;
-      doc.setTextColor(100);
-      doc.setFont(undefined, 'italic');
-      doc.text('Pagam. Elettronico (→ Banca):', 20, yLeft);
-      doc.text(fmt(totalePOS), 96, yLeft, { align: 'right' });
-      doc.setFont(undefined, 'normal');
-      doc.setTextColor(60);
-    }
     
     if (entrateFinSoci > 0) {
       yLeft += 6;
@@ -324,9 +314,9 @@ export default function Commercialista() {
       doc.text(fmt(usciteFatture), 190, yRight, { align: 'right' });
       yRight += 6;
     }
-    if (uscitePOS > 0) {
-      doc.text('Pagamento Elettronico/POS:', 114, yRight);
-      doc.text(fmt(uscitePOS), 190, yRight, { align: 'right' });
+    if (totalePOS > 0) {
+      doc.text('Pag. Elettronico → Banca:', 114, yRight);
+      doc.text(fmt(totalePOS), 190, yRight, { align: 'right' });
       yRight += 6;
     }
     if (usciteVersamenti > 0) {
