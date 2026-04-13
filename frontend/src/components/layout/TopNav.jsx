@@ -105,9 +105,9 @@ const S = {
     flexShrink: 0,
   },
   dropdownMenu: {
-    position: 'absolute',
-    top: 'calc(100% + 8px)',
-    left: 0,
+    position: 'fixed',
+    top: 56,
+    right: 'auto',
     background: '#fff',
     borderRadius: 10,
     boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
@@ -279,10 +279,9 @@ const TopNav = memo(function TopNav() {
               </NavLink>
             )
           )}
+          {/* Dropdown "Altro" — ultimo item nella nav */}
+          <AltroDropdown isAltroActive={isAltroActive} />
         </div>
-
-        {/* Dropdown "Altro" — FUORI dal container overflow per non essere clippato */}
-        <AltroDropdown isAltroActive={isAltroActive} />
 
         {/* Destra: Anno + Notifiche + Avatar */}
         <div style={S.right}>
