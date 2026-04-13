@@ -46,7 +46,6 @@ const Scadenze = lazy(() => import("./pages/Scadenze.jsx"));
 const ToDo = lazy(() => import("./pages/ToDo.jsx"));
 const GestioneRiservata = lazy(() => import("./pages/GestioneRiservata.jsx"));
 const DettaglioVerbale = lazy(() => import("./pages/DettaglioVerbale.jsx"));
-const GestioneEmailMittenti = lazy(() => import("./pages/GestioneEmailMittenti.jsx"));
 const ImpostazioniF24Email = lazy(() => import("./pages/ImpostazioniF24Email.jsx"));
 const MappaGestionale = lazy(() => import("./pages/MappaGestionale.jsx"));
 const DatiProvvisoriPage = lazy(() => import("./pages/DatiProvvisoriPage.jsx"));
@@ -223,12 +222,6 @@ const router = createBrowserRouter([
       { path: "documenti", element: <LazyPage><DocumentiHub /></LazyPage> },
       { path: "documenti/:tab", element: <LazyPage><DocumentiHub /></LazyPage> },
       { path: "documenti-email", element: <Navigate to="/documenti" replace /> },
-      { path: "da-rivedere", element: <Navigate to="/documenti/da-rivedere" replace /> },
-      { path: "da-rivedere/:stato", element: <LazyPage><DocumentiHub /></LazyPage> },
-      { path: "classificazione-email", element: <Navigate to="/documenti/classificazione" replace /> },
-      { path: "classificazione-email/:tab", element: <LazyPage><DocumentiHub /></LazyPage> },
-      { path: "documenti-da-rivedere", element: <Navigate to="/documenti/da-rivedere" replace /> },
-      { path: "classificazione-documenti", element: <Navigate to="/documenti/classificazione" replace /> },
       { path: "regole-categorizzazione", element: <Navigate to="/learning-machine/regole" replace /> },
       { path: "fornitori-learning", element: <Navigate to="/fornitori" replace /> },
       
@@ -247,7 +240,6 @@ const router = createBrowserRouter([
       { path: "email-download/:casella", element: <LazyPage><StrumentiHub /></LazyPage> },
       { path: "visure", element: <Navigate to="/strumenti/visure" replace /> },
       { path: "impostazioni-f24-email", element: <LazyPage><ImpostazioniF24Email /></LazyPage> },
-      { path: "gestione-email", element: <LazyPage><GestioneEmailMittenti /></LazyPage> },
       
       // === INTEGRAZIONI ===
       { path: "integrazioni", element: <LazyPage><IntegrazioniHub /></LazyPage> },

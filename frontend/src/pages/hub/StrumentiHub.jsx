@@ -5,14 +5,12 @@ import { useAnnoGlobale } from '../../contexts/AnnoContext';
 const VerificaContent       = lazy(() => import('../VerificaCoerenza.jsx'));
 const CommercialistaContent = lazy(() => import('../Commercialista.jsx'));
 const PianificazioneContent = lazy(() => import('../Pianificazione.jsx'));
-const EmailContent          = lazy(() => import('../EmailDownloadManager.jsx'));
 const VisureContent         = lazy(() => import('../Visure.jsx'));
 
 const TABS = [
   { id: 'verifica',        label: '🔍 Verifica Coerenza', color: '#3b82f6' },
   { id: 'commercialista',  label: '📊 Commercialista',    color: '#8b5cf6' },
   { id: 'pianificazione',  label: '📅 Pianificazione',    color: '#10b981' },
-  { id: 'email',           label: '📧 Email Download',    color: '#f59e0b' },
   { id: 'visure',          label: '🏛️ Visure',            color: '#06b6d4' },
 ];
 
@@ -34,7 +32,6 @@ const Loading = () => (
 const getTabFromPath = (pathname) => {
   if (pathname.includes('/commercialista')) return 'commercialista';
   if (pathname.includes('/pianificazione')) return 'pianificazione';
-  if (pathname.includes('/email-download') || pathname.includes('/email')) return 'email';
   if (pathname.includes('/visure'))         return 'visure';
   if (pathname.includes('/strumenti/')) {
     const m = pathname.match(/\/strumenti\/([\w-]+)/);
@@ -68,7 +65,6 @@ export default function StrumentiHub() {
     'verifica':       VerificaContent,
     'commercialista': CommercialistaContent,
     'pianificazione': PianificazioneContent,
-    'email':          EmailContent,
     'visure':         VisureContent,
   };
 
