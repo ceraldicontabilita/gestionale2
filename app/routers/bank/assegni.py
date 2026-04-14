@@ -599,7 +599,7 @@ async def collega_fattura(
         {"$set": {
             "fattura_collegata": fattura_id,
             "fornitore_piva": fattura.get("cedente_piva"),
-            "beneficiario": fattura.get("cedente_denominazione"),
+            "beneficiario": str(fattura.get("cedente_denominazione") or fattura.get("supplier_name") or "")[:100],
             "importo": fattura.get("importo_totale"),
             "causale": f"Pagamento fattura {fattura.get('numero_fattura')} del {fattura.get('data_fattura')}",
             "stato": "compilato" if assegno.get("stato") == "vuoto" else assegno.get("stato"),
