@@ -1,401 +1,370 @@
-# Logica Operativa — Ceraldi ERP
-> Versione: Aprile 2026 (aggiornato) | P.IVA: 04523831214 | DB: Gestionale (MongoDB Atlas)
+# CERALDI ERP — Riepilogo Funzionale Completo
+> Come funziona il gestionale pagina per pagina, dato per dato
+> Ceraldi Group S.R.L. | Aprile 2026
 
 ---
 
-## REGOLE BUSINESS FONDAMENTALI
+## 1. IL CICLO DEI DATI — Come Entrano e Dove Vanno
 
-### Fonti documenti per canale:
-- **FATTURE SDI** → arrivano via **PEC Aruba** (`fatturazioneceraldi@pec.it`) o **import manuale XML**. MAI da Gmail.
-- **CEDOLINI / BUSTE PAGA** → arrivano via **Gmail** (dal consulente TeamSystem/Zucchetti) o import PDF Libro Unico
-- **F24, ESTRATTI CONTO, VERBALI, QUIETANZE, BONIFICI, CARTELLE** → arrivano via **Gmail**
-- **SCHEDE TECNICHE** → via Gmail (allegati PDF da fornitori) o ricerca web
-- **PRESENZE** → importate da PDF Libro Unico del consulente via endpoint dedicato
+### 1.1 Fonti dei dati in ingresso
 
-### Scansione Email:
-- **Gmail**: scansiona le cartelle configurate — molte contengono documenti organizzati per argomento
-- **PEC**: scansiona INBOX + INBOX.lette — supporta P7M firmati digitalmente (OpenSSL + asn1crypto)
-- **Fatture da Gmail**: ESCLUSE automaticamente (solo PEC/SDI per le fatture)
+Il gestionale riceve dati da 3 fonti automatiche:
 
----
+| Fonte | Cosa arriva | Frequenza | Dove finisce |
+|-------|-------------|-----------|-------------|
+| **PEC Aruba** (`fatturazioneceraldi@pec.it`) | Fatture XML dal Sistema di Interscambio (SDI) | Ogni ora (scheduler) | `invoices` → pagina Fatture |
+| **Gmail** (`ceraldigroupsrl@gmail.com`) | Cedolini, F24, verbali, quietanze, cartelle | Ogni 10 min (scheduler) | `documents_inbox` → smistati per tipo |
+| **Import manuale** | Corrispettivi XML, estratto conto CSV, PDF | Quando l'utente carica | Varie collection |
 
-## INDICE
+### 1.2 Mittenti autorizzati (14 configurati)
 
-1. [Architettura Generale](#1-architettura-generale)
-2. [Flusso Email → Documenti](#2-flusso-email--documenti)
-3. [Fatture XML e Prima Nota](#3-fatture-xml-e-prima-nota)
-4. [Prima Nota Cassa e Banca](#4-prima-nota-cassa-e-banca)
-5. [Corrispettivi e Cassa](#5-corrispettivi-e-cassa)
-6. [Dipendenti e HR](#6-dipendenti-e-hr)
-7. [Cedolini e Buste Paga](#7-cedolini-e-buste-paga)
-8. [Fornitori e Ciclo Passivo](#8-fornitori-e-ciclo-passivo)
-9. [Banca ed Estratto Conto](#9-banca-ed-estratto-conto)
-10. [Dashboard e Volume d'Affari](#10-dashboard-e-volume-daffari)
-11. [Struttura Database](#11-struttura-database)
-12. [Noleggio Auto e Verbali](#12-noleggio-auto-e-verbali)
-13. [Magazzino](#13-magazzino)
-
----
-
-## 1. ARCHITETTURA GENERALE
-
-```
-Frontend (React 18 + Vite)  ←→  Backend (FastAPI + Motor)  ←→  MongoDB Atlas
-        :3000 (supervisor)           :8001 (supervisor)          Gestionale
-```
-
-- **Frontend**: React 18, Vite. CSS inline ONLY da `lib/utils.js`. NO Tailwind, NO Shadcn.
-- **Backend**: FastAPI, Motor (async). Entry: `backend/server.py` → `from app.main import app`.
-- **Database**: MongoDB Atlas, DB name: `Gestionale`. Variabili: `MONGO_URL`, `DB_NAME` in `backend/.env`.
-- **Auth**: disabilitata (`AUTH_DISABLED=true`) — accesso diretto senza login.
-- **Settings**: Pydantic settings con priorità `.env` > OS env (intenzionale per evitare override da piattaforma)
-
-### Variabili d'ambiente (struttura .env)
-```
-MONGO_URL = mongodb+srv://Ceraldidatabase:[PASS]@cluster0.vofh7iz.mongodb.net/?retryWrites=true&w=majority
-DB_NAME   = Gestionale
-
-# Gmail
-IMAP_USER     = ceraldigroupsrl@gmail.com
-IMAP_PASSWORD = [APP_PASSWORD_GOOGLE]
-
-# PEC Aruba
-ARUBA_PEC_HOST = imaps.pec.aruba.it
-ARUBA_PEC_USER = fatturazioneceraldi@pec.it
-ARUBA_PEC_PASSWORD = [PASSWORD_PEC]
-```
-> ⚠️ Le credenziali reali sono nel file `backend/.env` — NON commitarle nel repo.
-> ⚠️ La priorità .env > OS env è INTENZIONALE: la piattaforma inietta un MONGO_URL locale vuoto.
+| Mittente | Tipo documento | Dove va |
+|----------|---------------|---------|
+| `grazia.studioferrantini@email.it` | Cedolino/F24 | → `cedolini` |
+| `rosaria.marotta@email.it` | F24 | → `cedolini` |
+| `f.ferrantini@email.it` | Cedolino/F24 | → `cedolini` |
+| `ricevuta.pagaonline@agenziariscossione.gov.it` | Cartella esattoriale | → `documenti_non_associati` |
+| `notifica.acc.campania@pec.agenziariscossione.gov.it` | Cartella esattoriale | → `documenti_non_associati` |
+| `no_reply@agenziariscossione.gov.it` | Cartella esattoriale | → `documenti_non_associati` |
+| `inpscomunica@postacert.inps.gov.it` | INPS | → `documenti_non_associati` |
+| `auto_napoli@massivo.pec.inail.it` | INAIL | → `documenti_non_associati` |
+| `partenopay@ext.comune.napoli.it` | PagoPA | → `verbali` |
+| `noreply-checkout@ricevute.pagopa.it` | PagoPA | → `documenti_non_associati` |
+| `tari.avvisibonari@pec.comune.napoli.it` | TARI | → `documenti_non_associati` |
+| `entrate.tari-tares-tarsu@pec.comune.napoli.it` | TARI | → `documenti_non_associati` |
+| `assistenza@paypal.it` | PayPal | → `documenti_non_associati` |
+| `@pec.fatturapa.it` (PEC) | Fattura XML SDI | → `invoices` (parser XML) |
 
 ---
 
-## 2. FLUSSO EMAIL → DOCUMENTI
+## 2. PAGINA PER PAGINA
 
-### 2.1 Mittenti Autorizzati (`mittenti_attendibili`, 11 record)
+### 📊 DASHBOARD (`/`)
 
-| Canale | Pattern | Tipo Documento |
-|---|---|---|
-| pec | @pec.fatturapa.it | fattura_xml |
-| pec | sdi@pec.fatturapa.it | fattura_xml |
-| gmail | f.ferrantini@... | cedolino |
-| gmail | rosaria.marotta@... | cedolino |
-| gmail | partenopay@... | pagopa |
-| gmail | inpscomunica@... | inps |
-| gmail | notifica.acc.campania@... | cartella_esattoriale |
+**Cosa mostra:** Riepilogo istantaneo dell'azienda per l'anno selezionato.
 
-### 2.2 Routing per tipo_documento
+**Dati che legge:**
+- `corrispettivi` → Ricavi (volume d'affari)
+- `invoices` → Costi (fatture passive)
+- `scadenziario_fornitori` → Prossime scadenze
+- `f24_unificato` → Scadenze fiscali
 
-| tipo_documento | Azione |
-|---|---|
-| `fattura_xml` | Parser XML → `invoices` (estrae anche DatiFattureCollegate per NC) |
-| `cedolino` | Salva PDF in `documents_inbox` |
-| `pagopa` | Documento generico, categoria=pagopa |
-| `verbale` | Parser PDF → estrae targa, importo → `verbali_noleggio` |
+**Cosa calcola:**
+- Bilancio istantaneo: Ricavi - Costi = Utile lordo
+- Saldo IVA: IVA debito (corrispettivi) - IVA credito (fatture)
+- Prossime scadenze con giorni mancanti
 
----
+**Alert che genera:**
+- ⚠️ F24 in scadenza (rosso se < 5 giorni)
+- ⚠️ Fatture da pagare (con importo e fornitore)
+- Banner commercialista se ci sono dati da inviare
 
-## 3. FATTURE XML E PRIMA NOTA
-
-### 3.1 Fatture SDI (ciclo passivo)
-- Arrivano via Aruba PEC come `.xml` o `.p7m`
-- Salvate in `invoices` (**1.405 record**)
-- Parser XML estrae: `DatiFattureCollegate`, `DatiOrdineAcquisto`, `causali`, `tipo_documento`
-
-### 3.2 Note Credito (TD04)
-- **29 note credito** nel database
-- Parser estrae `DatiFattureCollegate` per link automatico NC↔Fattura
-- Nel modal Assegni: NC mostrate con importo **negativo** e badge rosso "Nota Credito"
-- Fatture raggruppate per fornitore nel modal di associazione
-
-### 3.3 Codici Tipo Documento FE
-
-| Codice | Tipo | Direzione |
-|---|---|---|
-| TD01 | Fattura ordinaria | acquisto → uscita |
-| TD04 | Nota di credito | rimborso → **importo negativo** |
-| TD24/25 | Fattura differita | vendita → entrata |
-
-### 3.4 Prima Nota Provvisori
-- Fatture non ancora registrate: `GET /api/prima-nota/provvisori?anno=2026`
-- 3 stati: **Cassa** (contanti), **Banca** (bonifico), **Sospesa** (in attesa)
-- Sospesa: aggiorna `stato_pagamento` sulla fattura, rimuove `prima_nota_id`, resta nei provvisori
+**Relazioni:** Legge da TUTTE le collection principali. Non scrive nulla.
 
 ---
 
-## 4. PRIMA NOTA CASSA E BANCA
+### 📄 FATTURE (`/fatture`)
 
-### 4.1 Prima Nota Cassa (`prima_nota_cassa`, 136 record)
-- Fonte: corrispettivi contanti, fatture pagate in contanti
-- API: `GET /api/prima-nota/cassa?anno=2026`
+**Cosa mostra:** Tutte le fatture passive ricevute dai fornitori (1.405 record).
 
-### 4.2 Prima Nota Banca (`prima_nota_banca`, 4.365 record)
-- Fonte: movimenti bancari, F24, stipendi, incassi POS
-- API: `GET /api/prima-nota/banca?anno=2026`
+**Come arrivano i dati:**
+1. PEC Aruba scarica email con allegati XML/P7M
+2. Il parser XML estrae: fornitore, P.IVA, numero, data, imponibile, IVA, totale, righe dettaglio
+3. Estrae anche: `DatiFattureCollegate` (per note credito), `causali`, `tipo_documento` (TD01/TD04)
+4. Cerca il fornitore in `fornitori` per P.IVA
+5. **Prende il metodo pagamento DAL FORNITORE** (mai dall'XML)
+6. Se metodo = contanti → auto-registra in `prima_nota_cassa` + stato "pagata"
+7. Se metodo = bonifico → auto-registra in `prima_nota_banca` + stato "pagata"
+8. Se metodo = sospesa/misto/nuovo → resta "provvisoria" da confermare
 
-### 4.3 Regola POS
-- Pagamenti elettronici (POS) → Prima Nota **Banca** (NON cassa)
-- Contanti → Prima Nota **Cassa**
+**Bottoni per ogni fattura:**
+- `Vedi` → apre dettaglio XML
+- `✓ Cassa` (verde) → confermata pagata in contanti (visibile solo se il fornitore paga contanti)
+- `✓ Banca` (verde) → confermata pagata con bonifico
+- `Cassa` / `Banca` (grigio) → da confermare
 
----
+**Cosa popola:**
+- `invoices` → la fattura stessa
+- `fornitori` → crea il fornitore se non esiste (auto da P.IVA)
+- `prima_nota_cassa` o `prima_nota_banca` → movimento di pagamento
+- `warehouse_stocks` → aggiorna giacenze magazzino (se abilitato)
 
-## 5. CORRISPETTIVI E CASSA
-
-### 5.1 Struttura (`corrispettivi`, 54 record)
-```json
-{
-  "data": "2026-01-15",
-  "pagato_contanti": 949.91,
-  "pagato_elettronico": 928.70,
-  "totale_giornata": 1878.61
-}
-```
-**Nota**: il campo `anno` può essere assente — filtrare sempre per range di `data`.
-
-### 5.2 Volume d'Affari
-```
-Fatturato = SUM(corrispettivi.totale_giornata) per anno
-```
-> ⚠️ **REGOLA CRITICA**: NON usare le fatture ricevute per il volume d'affari. Quelle sono COSTI.
+**Note Credito (TD04):**
+- Importo mostrato con segno negativo
+- Badge rosso "Nota Credito"
+- Nel modal Assegni si scala dall'importo fattura
 
 ---
 
-## 6. DIPENDENTI E HR
+### 📒 PRIMA NOTA (`/prima-nota`)
 
-### 6.1 Collection HR
+**2 sezioni: CASSA e BANCA**
 
-| Collection | Record | Uso |
-|---|---|---|
-| `dipendenti` | 30 | Anagrafica principale — **USARE QUESTA** |
-| `cedolini` | 301 | Buste paga (source: cedolino_v2 da Libro Unico) |
-| `presenze` | 290 | Presenze giornaliere (generate da cedolini + import PDF) |
+#### CASSA
+**Cosa contiene:**
+- **ENTRATE**: Corrispettivi giornalieri (totale incassato = contanti + POS)
+- **USCITE POS → Banca**: La parte elettronica del corrispettivo che va in banca
+- **USCITE Fatture**: Fatture pagate in contanti
+- **USCITE Versamenti**: Contanti portati fisicamente in banca
 
-Campo chiave: `in_carico` (bool) — dipendenti attivi.
+**Come si popola:**
+1. Corrispettivi importati da XML registratore → crea ENTRATA (totale) + USCITA (POS)
+2. Fatture con fornitore metodo=contanti → crea USCITA
+3. Versamenti contanti trovati nell'estratto conto ("VERS. CONTANTI") → crea USCITA
 
-### 6.2 Route HR
-```
-/dipendenti          → HRDipendenti.jsx   (anagrafica + dettaglio con tab Cedolini/Verbali/etc.)
-/cedolini            → HRCedolini.jsx     (buste paga — vista Per Mese / Per Dipendente)
-/presenze            → HRPresenze.jsx     (calendario presenze da Libro Unico + import PDF)
-/tfr                 → HRTFR.jsx          (gestione TFR)
-```
+**Saldo Cassa = Entrate - Uscite POS - Fatture contanti - Versamenti banca**
 
-### 6.3 Presenze
-- Collection `presenze`: dati mensili per dipendente con griglia giornaliera
-- Campi: `codice_fiscale`, `cognome`, `nome`, `anno`, `mese`, `giorni[]`, `totali`, `legenda`
-- Ogni giorno: `giorno`, `giorno_settimana`, `ore_ordinarie`, `giustificativi[]`, `festivo`
-- Import: `POST /api/attendance/libro-unico/import-pdf` (upload PDF Libro Unico)
-- Lettura: `GET /api/attendance/libro-unico?anno=2026&mese=2`
+#### BANCA
+**Cosa contiene:**
+- Movimenti dall'estratto conto bancario (8.839 record)
+- Pagamenti fatture bonifico
+- Stipendi dipendenti
+- F24 Agenzia Entrate
+- Accrediti POS (dall'incasso giorno precedente)
+- Rate mutuo, SDD, commissioni
 
-### 6.4 Cedolini
-- Campi chiave: `nome_dipendente` (COGNOME NOME), `codice_fiscale`, `netto`, `netto_mese`
-- `lordo` spesso 0.0 (parser Zucchetti non lo estrae)
-- `source: cedolino_v2` per tutti i record attuali
-- Frontend usa: `nome_dipendente || (cognome + nome)` per display
+**Come si popola:**
+1. Import CSV estratto conto BPM → `estratto_conto_movimenti`
+2. Fatture con fornitore metodo=bonifico → auto-registra qui
 
-### 6.5 API HR
-```
-GET  /api/dipendenti                              → lista (30)
-GET  /api/cedolini?anno=2026&limit=500            → cedolini per anno
-POST /api/cedolini/import-gmail?since_days=180    → importa da Gmail
-GET  /api/attendance/libro-unico?anno=2026        → presenze da Libro Unico
-POST /api/attendance/libro-unico/import-pdf       → upload PDF presenze
-```
+#### PROVVISORI
+**Cosa sono:** Fatture importate ma non ancora confermate.
+- Se il fornitore ha metodo definito → auto-confermate (non appaiono qui)
+- Se il fornitore NON ha metodo → appaiono qui con bottoni Cassa/Banca/Sospesa
+
+**Bottone Sospesa:** La fattura resta nei provvisori, non crea movimento. Si può confermare dopo.
 
 ---
 
-## 7. CEDOLINI E BUSTE PAGA
+### 🏢 FORNITORI (`/fornitori`)
 
-### 7.1 Schema Cedolino (source: cedolino_v2)
-```json
-{
-  "codice_fiscale": "XXXXXX00X00X000X",
-  "cognome": "Rossi",
-  "nome": "Mario",
-  "nome_dipendente": "ROSSI MARIO",
-  "anno": 2026,
-  "mese": 2,
-  "lordo": 0.0,
-  "netto": 936.0,
-  "netto_mese": 936.0,
-  "tfr_mese": 133.82,
-  "mansione": "Barista",
-  "livello": "5' Livello",
-  "source": "cedolino_v2",
-  "dedup_key": "XXXXXX00X00X000X_02_2026"
-}
+**Cosa mostra:** Anagrafica di tutti i fornitori (245 record).
+
+**Ogni card fornitore mostra:**
+- Nome, P.IVA, indirizzo
+- Numero fatture anno corrente
+- Metodo pagamento (Contanti/Bonifico/Assegno/Misto)
+- Giorni medi pagamento
+
+**Il metodo pagamento è FONDAMENTALE:**
+- Determina dove va la fattura (cassa o banca)
+- NON viene mai dall'XML della fattura
+- Se cambi metodo, salva la data del cambio (storico)
+
+**Bottoni:**
+- `Fatture` → apre estratto fatture del fornitore
+- `Modifica` → modifica anagrafica + metodo pagamento
+- `Cerca P.IVA` → cerca dati Camera di Commercio (OpenAPI)
+- `Schede` → schede tecniche prodotti
+
+**Relazioni:**
+- `invoices` → fatture del fornitore (per P.IVA)
+- `prima_nota_cassa` / `prima_nota_banca` → movimenti collegati
+- `assegni` → assegni emessi a favore del fornitore
+
+---
+
+### 👥 HR — DIPENDENTI (`/dipendenti`)
+
+**Cosa mostra:** 30 dipendenti con dettaglio per ognuno.
+
+**Tab per ogni dipendente:**
+- **Anagrafica**: nome, cognome, CF, IBAN, mansione, livello, data assunzione
+- **Contratti**: tipo contratto, scadenza
+- **Cedolini**: buste paga del dipendente
+- **Verbali**: verbali noleggio associati (se driver)
+- **Movimenti**: bonifici stipendio trovati in banca
+- **Giustificativi**: ferie, permessi, malattia
+
+---
+
+### 💰 CEDOLINI (`/cedolini`)
+
+**Cosa mostra:** 301 buste paga, vista "Per Mese" o "Per Dipendente".
+
+**Come arrivano:**
+1. Il consulente del lavoro invia il PDF "Libro Unico" via Gmail
+2. Il parser Zucchetti estrae per ogni dipendente: nome, CF, netto, TFR, ore
+
+**Campi chiave:** `nome_dipendente`, `codice_fiscale`, `netto`, `netto_mese`, `tfr_mese`
+
+**Bottone "Importa da Gmail":** Scarica nuovi cedolini dall'email del consulente.
+
+**Bottone "Importa PDF Libro Unico":** Upload manuale del PDF presenze.
+
+---
+
+### 📅 PRESENZE (`/presenze`)
+
+**Cosa mostra:** Calendario presenze giornaliero per dipendente (290 record).
+
+**Dati per ogni giorno:** ore ordinarie, giustificativi (FE=ferie, AI=assenza, RL=ROL, MA=malattia)
+
+**Legenda colorata:** Ogni codice ha un colore diverso.
+
+**Come si popola:**
+- Generati dai dati cedolini (totali mensili)
+- Import PDF Libro Unico per dettaglio giornaliero
+
+---
+
+### 🚗 NOLEGGIO AUTO (`/noleggio`)
+
+**3 tab: Flotta Auto, Verbali Noleggio, Riepilogo Costi**
+
+#### Flotta (4 veicoli)
+| Targa | Veicolo | Fornitore | Driver |
+|-------|---------|-----------|--------|
+| HB411GV | BMW X3 | Leasys | Vincenzo Ceraldi |
+| GW980EP | Mazda | ARVAL | Antonietta Ceraldi |
+| GX037HJ | BMW X1 | ALD | Valerio Ceraldi |
+| GG782PN | Alfa Romeo Stelvio | Leasys | Vincenzo Ceraldi |
+
+#### Verbali (49 attivi)
+- Scaricati automaticamente dalla PEC (notifiche sanzioni CdS)
+- Targa estratta dal PDF con PyMuPDF
+- Solo targhe aziendali (non aziendali archiviate)
+- Driver associato tramite targa → veicolo → driver
+
+**Bottoni:**
+- `Scan Fatture Noleggiatori` → cerca verbali nelle fatture
+- `Associa Driver` → collega driver ai verbali per targa
+- `Riconcilia` → riconcilia con pagamenti bancari
+
+---
+
+### 📦 MAGAZZINO (`/magazzino`)
+
+**Cosa mostra:** 496 prodotti con giacenze, prezzi, fornitori.
+
+**Legge da:** `warehouse_stocks` (NON warehouse_inventory che è vuota)
+
+**Tab:** Giacenze, Inventario, Ricerca Prodotti, Dizionario Articoli, Coerenza POS
+
+---
+
+### 🏦 RICONCILIAZIONE (`/riconciliazione`)
+
+**Cosa fa:** Confronta movimenti bancari con fatture, stipendi, F24 per trovare corrispondenze.
+
+**Tab:** Banca, Assegni, F24, Fatture Aruba, Stipendi, Documenti, PayPal
+
+---
+
+### ✏️ ASSEGNI (`/riconciliazione/assegni`)
+
+**Cosa mostra:** 220 assegni raggruppati per carnet.
+
+**Modal "Collega Fatture":**
+- Fatture ordinate per FORNITORE (header sticky)
+- Note credito con importo NEGATIVO (badge rosso)
+- Massimo 4 fatture per assegno
+- Solo fatture dello stesso fornitore
+
+**Regola:** L'auto-associazione collega assegni SOLO a fatture di fornitori con metodo "assegno".
+
+---
+
+### 📈 CONTABILITÀ (`/contabilita`)
+
+**Tab:** Piano dei Conti, Bilancio, Verifica Bilancio, Controllo Mensile, Calendario Fiscale, Cespiti, Finanziaria, Chiusura Esercizio, Budget, Mutui, Contab. Avanzata
+
+---
+
+### 🔍 STRUMENTI (`/strumenti`)
+
+**Tab:** Verifica Coerenza, Commercialista, Pianificazione, Visure
+
+#### Verifica Coerenza
+Confronta automaticamente:
+- IVA mensile (debito vs credito)
+- Versamenti cassa vs banca
+- Prima Nota vs Estratto Conto
+- Bonifici vs movimenti bancari
+
+#### Commercialista
+Genera PDF per il commercialista:
+- **Prima Nota Cassa**: 2 colonne (Entrate verde / Uscite rosso), POS in uscite, "SALDO CASSA AL dd/mm/yyyy"
+- **Fatture Cassa**: elenco fatture pagate contanti
+- **Carnet Assegni**: PDF con assegni selezionati
+
+---
+
+### 📥 DOCUMENTI (`/documenti`)
+
+**Tab:** Archivio, Import Documenti
+
+#### Archivio
+Documenti raggruppati per mittente: Consulente Lavoro (61), Comune di Napoli (43), Commercialista (40), INPS (40), Agenzia Entrate (8), Assicurazione (7)
+
+#### Import Documenti
+Upload manuale di: XML fatture, CSV estratto conto, PDF cedolini, XML corrispettivi
+
+---
+
+### ⚙️ ADMIN (`/admin`)
+
+**Tab:** Email, Parole Chiave, Fatture, Sistema
+
+#### Email
+- Account Gmail configurato con parole chiave per filtro
+- PEC Aruba configurata per fatture SDI
+- Test connessione e salvataggio credenziali
+
+#### Parole Chiave
+Parole usate per categorizzare documenti email: F24, cedolino, busta paga, pagamento, bonifico, ricevuta, etc.
+
+---
+
+## 3. FLUSSO COMPLETO: DA EMAIL A PRIMA NOTA
+
 ```
-
-### 7.2 Formato supportato
-- **Zucchetti nuovo** (cedolino_v2) — formato attuale dal consulente
-
----
-
-## 8. FORNITORI E CICLO PASSIVO
-
-### 8.1 Collections
-
-| Collection | Record | Note |
-|---|---|---|
-| `fornitori` | 245 | Collection principale (usata da `Collections.SUPPLIERS`) |
-| `suppliers` | 15 | Legacy — NON usare per nuovi sviluppi |
-| `invoices` | 1.405 | Fatture passive ricevute (TD01 + TD04 + TD24) |
-| `scadenziario_fornitori` | 185 | Scadenze pagamento |
-
-> **Canonica**: `fornitori` (la classe `Collections.SUPPLIERS` punta a "fornitori")
-
-### 8.2 Note Credito nel Ciclo Passivo
-- 29 NC (TD04) nel database
-- Parser XML estrae `DatiFattureCollegate` per riferimenti incrociati
-- Nel modal Assegni: fatture ordinate per fornitore, NC con segno negativo
-- Netting: Fattura + NC selezionate insieme → totale netto = importo assegno
-
----
-
-## 9. BANCA ED ESTRATTO CONTO
-
-### 9.1 Collections
-
-| Collection | Record | Contenuto |
-|---|---|---|
-| `estratto_conto_movimenti` | 8.839 | Movimenti bancari |
-| `assegni` | 220 | Gestione assegni (con associazione fatture) |
-| `prima_nota_banca` | 4.365 | Prima nota banca |
-
-### 9.2 Assegni
-- 220 assegni raggruppati per carnet
-- Modal associazione fatture: **ordinato per fornitore** con header sticky
-- Note credito (TD04) con importo negativo e badge rosso
-- Massimo 4 fatture per assegno, solo dello stesso fornitore
-
-### 9.3 Import Estratto Conto
-- `POST /api/bank/import-estratto-conto` — CSV BPM, separatore `;`, UTF-8-BOM
-- Deduplicazione: `data + importo + descrizione_originale`
-
----
-
-## 10. DASHBOARD E VOLUME D'AFFARI
-
-### 10.1 KPI Principali
-
-| Indicatore | Fonte | Formula |
-|---|---|---|
-| Volume d'Affari | `corrispettivi` | SUM(totale_giornata) |
-| Costi Fornitore | `invoices` | SUM(total_amount) dove tipo_documento=TD01 |
-| Utile Lordo | — | Volume − Costi |
-| Saldo IVA | Verifica Coerenza | IVA debito − IVA credito |
-
----
-
-## 11. STRUTTURA DATABASE
-
-```
-Gestionale (MongoDB Atlas — Aprile 2026)
-│
-├── HR
-│   ├── dipendenti (30)              ← CANONICA: anagrafica dipendenti
-│   ├── cedolini (301)               ← buste paga (Libro Unico Zucchetti v2)
-│   └── presenze (290)               ← presenze giornaliere (da cedolini + PDF)
-│
-├── CONTABILITA
-│   ├── prima_nota_cassa (136)
-│   ├── prima_nota_banca (4.365)
-│   ├── corrispettivi (54)
-│   ├── invoices (1.405)             ← fatture passive SDI (TD01+TD04+TD24)
-│   └── piano_conti (30)
-│
-├── FORNITORI
-│   ├── fornitori (245)              ← CANONICA per modulo principale
-│   └── scadenziario_fornitori (185)
-│
-├── BANCA
-│   ├── estratto_conto_movimenti (8.839)
-│   └── assegni (220)
-│
-├── NOLEGGIO
-│   ├── veicoli_noleggio (4)         ← flotta attiva
-│   └── verbali_noleggio (165)       ← verbali con targa/driver/PDF
-│
-├── MAGAZZINO
-│   ├── warehouse_stocks (496)       ← giacenze (USARE QUESTA, non warehouse_inventory)
-│   ├── warehouse_movements (788)
-│   └── dizionario_prodotti (680)    ← catalogo prodotti da fatture
-│
-├── EMAIL
-│   ├── mittenti_attendibili (11)
-│   ├── email_message_index (68)
-│   └── documents_inbox (32)
-│
-└── FISCALE
-    └── f24_unificato (1)
-```
-
----
-
-## 12. NOLEGGIO AUTO E VERBALI
-
-### 12.1 Flotta (`veicoli_noleggio`, 4 veicoli)
-- HB411GV (BMW X3) — Vincenzo Ceraldi — Leasys
-- GW980EP (Mazda) — Antonietta Ceraldi — ARVAL
-- GX037HJ (BMW X1) — Valerio Ceraldi — ALD
-- GG782PN (Alfa Romeo Stelvio) — Vincenzo Ceraldi — Leasys
-
-### 12.2 Verbali (`verbali_noleggio`, 165 record)
-- Scaricati da PEC (notifiche sanzioni CdS)
-- Targa estratta da PDF con PyMuPDF
-- Driver collegato tramite targa → veicolo → driver
-- Stati: salvato (91), pagato (28), fattura_ricevuta (16), identificato (10), pagato_attesa_fattura (10), da_scaricare (7), riconciliato (3)
-
-### 12.3 API Verbali
-```
-GET  /api/verbali-riconciliazione/dashboard
-GET  /api/verbali-riconciliazione/lista
-POST /api/verbali-riconciliazione/scan-fatture-verbali
-POST /api/verbali-riconciliazione/collega-driver-massivo
-POST /api/verbali-riconciliazione/riconcilia/{numero}
-GET  /api/verbali-noleggio/pdf/{numero}
+1. Email arriva (PEC o Gmail)
+   ↓
+2. Scheduler la scarica (ogni ora PEC, ogni 10 min Gmail)
+   ↓
+3. Controlla mittente nella lista autorizzati (14 mittenti)
+   ↓
+4. Se mittente SDI (@pec.fatturapa.it):
+   → Parser XML fattura
+   → Cerca fornitore per P.IVA
+   → Prende metodo pagamento DAL FORNITORE
+   → Se contanti: crea movimento in prima_nota_cassa + stato=pagata
+   → Se bonifico: crea movimento in prima_nota_banca + stato=pagata
+   → Se sospesa/nuovo: resta provvisoria
+   → Aggiorna contatore fatture fornitore
+   → Aggiorna giacenze magazzino (se abilitato)
+   ↓
+5. Se mittente cedolino (Ferrantini/Marotta):
+   → Salva PDF in documents_inbox
+   → Disponibile per import manuale
+   ↓
+6. Se mittente cartella/INPS/INAIL:
+   → Salva in documenti_non_associati
+   → Crea alert se urgente
+   ↓
+7. Dashboard si aggiorna automaticamente
+   → Nuova scadenza se fattura ha data_scadenza
+   → Bilancio ricalcolato
+   → Volume affari aggiornato (solo corrispettivi)
 ```
 
 ---
 
-## 13. MAGAZZINO
+## 4. RELAZIONI TRA DATI
 
-### 13.1 Collections
-
-| Collection | Record | Uso |
-|---|---|---|
-| `warehouse_stocks` | 496 | **Giacenze reali** — USARE QUESTA |
-| `warehouse_movements` | 788 | Movimenti carico/scarico |
-| `dizionario_prodotti` | 680 | Catalogo prodotti da fatture XML |
-| `warehouse_inventory` | 0 | VUOTA — non usare |
-
-> ⚠️ `warehouse_inventory` è vuota. Il backend è stato corretto per leggere da `warehouse_stocks`.
-
-### 13.2 API Magazzino
 ```
-GET  /api/products/catalog               → catalogo (da warehouse_stocks)
-GET  /api/products/categories             → categorie
-GET  /api/products/search?q=...           → ricerca predittiva
+fornitori.partita_iva ←→ invoices.supplier_vat
+fornitori.metodo_pagamento → determina prima_nota_cassa o prima_nota_banca
+invoices.id → prima_nota_cassa.fattura_id o prima_nota_banca.fattura_id
+invoices.tipo_documento=TD04 → nota credito (importo negativo)
+corrispettivi.data → prima_nota_cassa (entrata=totale, uscita=POS)
+estratto_conto_movimenti (VERS.CONTANTI) → prima_nota_cassa (uscita versamento)
+dipendenti.codice_fiscale ←→ cedolini.codice_fiscale ←→ presenze.codice_fiscale
+veicoli_noleggio.targa ←→ verbali_noleggio.targa → veicoli_noleggio.driver
+assegni.fornitore_piva ←→ invoices.supplier_vat (solo metodo=assegno)
 ```
 
 ---
 
-## NOTE CRITICHE PER SVILUPPO
-
-1. **IMAP sempre in thread**: `await asyncio.to_thread(funzione_sync_imap, ...)`
-2. **Collection dipendenti**: usare `dipendenti` (30 record), NON `employees`
-3. **Collection fornitori**: usare `fornitori` (245 record), NON `suppliers`
-4. **Collection magazzino**: usare `warehouse_stocks` (496 record), NON `warehouse_inventory`
-5. **DB name**: `Gestionale` (NON `azienda_erp_db`)
-6. **Anno corrispettivi**: filtrare per range di `data` (il campo `anno` può mancare)
-7. **Design**: CSS inline da `lib/utils.js` per pagine gestionali. NO Tailwind, NO Shadcn
-8. **`_id` MongoDB**: escludere sempre con `{"_id": 0}` o via Pydantic
-9. **Auth**: disabilitata (`AUTH_DISABLED=true`)
-10. **server.py**: NON cancellare — punto di avvio uvicorn via Supervisor
-11. **Settings priority**: `.env` > OS env (intenzionale — la piattaforma inietta MONGO_URL locale vuoto)
-12. **Cedolini display**: usare `nome_dipendente` (non `dipendente_nome`) per il nome dipendente
-13. **Note credito**: `tipo_documento=TD04` → importo negativo nel modal assegni
-14. **Prima Nota Sospesa**: `metodo=sospesa` → aggiorna solo fattura, non crea movimento
-
----
-
-*Aggiornato: Aprile 2026 — Sessione di fix incoerenze e logica*
+*Generato: Aprile 2026*
