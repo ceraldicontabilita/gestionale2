@@ -396,12 +396,14 @@
 }
 
 @media (max-width: 768px) {
-  .topnav-items {
-    display: none;
+  .topnav-items,
+  .topnav-items-scroll {
+    display: none !important;
   }
   
   .topnav-primary {
     justify-content: space-between;
+    height: 48px !important;
   }
   
   .brand-name {
@@ -409,9 +411,21 @@
     font-size: 14px;
   }
   
+  /* Hide right section items on mobile except brand */
+  .topnav-right {
+    display: none !important;
+  }
+  
   /* Show mobile bottom nav */
   .mobile-nav-topnav {
     display: flex !important;
+  }
+  
+  /* Page content needs less top padding on mobile */
+  .topnav-layout .page-content {
+    padding-top: 56px !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
   }
 }
 

@@ -76,7 +76,6 @@ const S = {
     whiteSpace: 'nowrap',
   },
   items: {
-    display: 'flex',
     alignItems: 'center',
     flex: 1,
     gap: 1,
@@ -249,7 +248,7 @@ const TopNav = memo(function TopNav() {
         </NavLink>
 
         {/* Link principali */}
-        <div style={S.items} className="topnav-items-scroll">
+        <div style={S.items} className="topnav-items-scroll topnav-items">
           {NAV_ITEMS.map(({ to, href, label, Icon, external }) =>
             external ? (
               /* Link esterno (es. Tracciabilità → ceraldiapp.it) */
@@ -284,7 +283,7 @@ const TopNav = memo(function TopNav() {
         </div>
 
         {/* Destra: Anno + Notifiche + Avatar */}
-        <div style={S.right}>
+        <div style={S.right} className="topnav-right">
           {/* Selettore Anno */}
           <div style={S.annoWrap} data-testid="anno-selector">
             <span style={S.annoLabel}>ANNO</span>
