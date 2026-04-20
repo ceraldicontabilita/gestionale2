@@ -32,21 +32,14 @@ function useDebounce(value, delay) {
   return debouncedValue;
 }
 
-// Dizionario Metodi di Pagamento - allineato con il backend
+// Dizionario Metodi di Pagamento — SOLO 6 metodi
 const METODI_PAGAMENTO = {
   contanti: { label: 'Contanti', bg: '#dcfce7', color: '#16a34a' },
-  bonifico: { label: 'Bonifico', bg: '#dbeafe', color: '#2563eb' },
   assegno: { label: 'Assegno', bg: '#fef3c7', color: '#d97706' },
-  riba: { label: 'Ri.Ba.', bg: '#fed7aa', color: '#c2410c' },
-  carta: { label: 'Carta', bg: '#fce7f3', color: '#db2777' },
-  carta_credito: { label: 'Carta/POS', bg: '#fce7f3', color: '#db2777' },
-  sepa: { label: 'SEPA', bg: '#e0e7ff', color: '#4f46e5' },
-  mav: { label: 'MAV', bg: '#d1fae5', color: '#059669' },
-  rav: { label: 'RAV', bg: '#cffafe', color: '#0891b2' },
-  rid: { label: 'RID', bg: '#e0f2fe', color: '#0284c7' },
-  f24: { label: 'F24', bg: '#fef9c3', color: '#ca8a04' },
-  compensazione: { label: 'Compensazione', bg: '#f5f5f4', color: '#78716c' },
+  bonifico: { label: 'Bonifico', bg: '#dbeafe', color: '#2563eb' },
   misto: { label: 'Misto', bg: '#f3e8ff', color: '#9333ea' },
+  rid: { label: 'R.I.D.', bg: '#e0f2fe', color: '#0284c7' },
+  carta: { label: 'Carta', bg: '#fce7f3', color: '#db2777' },
 };
 
 const getMetodo = (key) => METODI_PAGAMENTO[key] || METODI_PAGAMENTO.bonifico;
