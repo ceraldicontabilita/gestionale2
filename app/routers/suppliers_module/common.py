@@ -10,23 +10,14 @@ logger = logging.getLogger(__name__)
 SUPPLIERS_CACHE_KEY = "suppliers_list"
 SUPPLIERS_CACHE_TTL = 300  # 5 minuti per performance migliori
 
-# Metodi di pagamento disponibili
+# Metodi di pagamento disponibili — SOLO questi 6
 PAYMENT_METHODS = {
     "contanti": {"label": "Contanti", "prima_nota": "cassa"},
-    "bonifico": {"label": "Bonifico Bancario", "prima_nota": "banca"},
     "assegno": {"label": "Assegno", "prima_nota": "banca"},
-    "riba": {"label": "Ri.Ba.", "prima_nota": "banca"},
-    "carta": {"label": "Carta di Credito", "prima_nota": "banca"},
-    "carta_credito": {"label": "Carta di Credito/POS", "prima_nota": "banca"},  # Alias
-    "sepa": {"label": "Addebito SEPA", "prima_nota": "banca"},
-    "mav": {"label": "MAV", "prima_nota": "banca"},
-    "rav": {"label": "RAV", "prima_nota": "banca"},
-    "rid": {"label": "RID", "prima_nota": "banca"},
-    "f24": {"label": "F24", "prima_nota": "banca"},
-    "compensazione": {"label": "Compensazione", "prima_nota": "altro"},
-    "misto": {"label": "Misto (Cassa + Banca)", "prima_nota": "misto"},
-    "pos": {"label": "POS", "prima_nota": "banca"},  # Alias
-    "sospesa": {"label": "Sospesa (in attesa)", "prima_nota": "sospesa"},
+    "bonifico": {"label": "Bonifico", "prima_nota": "banca"},
+    "misto": {"label": "Misto", "prima_nota": "provvisorio"},
+    "rid": {"label": "R.I.D.", "prima_nota": "banca"},
+    "carta": {"label": "Carta", "prima_nota": "banca"},
 }
 
 # Termini di pagamento predefiniti
@@ -41,7 +32,7 @@ PAYMENT_TERMS = [
 ]
 
 # Metodi bancari che richiedono IBAN
-METODI_BANCARI = ["bonifico", "banca", "sepa", "rid", "sdd", "assegno", "riba", "mav", "rav", "f24", "carta", "misto"]
+METODI_BANCARI = ["bonifico", "assegno", "rid", "carta"]
 
 
 def clean_mongo_doc(doc: Dict[str, Any]) -> Dict[str, Any]:

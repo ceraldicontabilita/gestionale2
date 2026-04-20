@@ -102,20 +102,22 @@ export default function Commercialista() {
       setPrimaNotaData(primaNotaRes.data);
       setFattureCassaData(fattureCassaRes.data);
       
-      // Group assegni by carnet
+      // Group assegni by carnet (stessa logica di GestioneAssegni)
       const assegni = assegniRes.data || [];
       const carnetGroups = {};
       assegni.forEach(a => {
-        const prefix = a.numero?.split('-')[0] || 'Senza Carnet';
-        if (!carnetGroups[prefix]) {
-          carnetGroups[prefix] = {
-            id: prefix,
+        const num = a.numero || a.numero_assegno || '';
+        // Carnet = prime 8 cifre del numero assegno
+        const carnetId = num.substring(0, 8) || 'Sconosciuto';
+        if (!carnetGroups[carnetId]) {
+          carnetGroups[carnetId] = {
+            id: carnetId,
             assegni: [],
             totale: 0
           };
         }
-        carnetGroups[prefix].assegni.push(a);
-        carnetGroups[prefix].totale += parseFloat(a.importo || 0);
+        carnetGroups[carnetId].assegni.push(a);
+        carnetGroups[carnetId].totale += parseFloat(a.importo || 0);
       });
       setCarnets(Object.values(carnetGroups));
       
@@ -594,7 +596,7 @@ export default function Commercialista() {
     doc.setFontSize(14);
     doc.setTextColor(0);
     const totaleImporto = carnetsArray.reduce((sum, c) => sum + c.totale, 0);
-    doc.text(`Totale Generale: ${formatEuroStr(totaleImporto)}}`, 14, 42);
+    doc.text(`Totale Generale: ${formatEuroStr(totaleImporto)}`, 14, 42);
     
     // Tabella con tutti gli assegni raggruppati per carnet
     let currentY = 55;
