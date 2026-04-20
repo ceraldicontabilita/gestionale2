@@ -1826,7 +1826,7 @@ export default function Fornitori() {
           justifyContent: 'center',
           zIndex: 10000
         }}>
-          <div style={{
+          <div id="estratto-fatture-content" style={{
             backgroundColor: 'white',
             borderRadius: '16px',
             width: '95%',
@@ -2092,7 +2092,19 @@ export default function Fornitori() {
               </div>
               <div style={{ display: 'flex', gap: 12 }}>
                 <button
-                  onClick={() => window.print()}
+                  onClick={() => {
+                    const modal = document.getElementById('estratto-fatture-content');
+                    if (!modal) { window.print(); return; }
+                    const printWin = window.open('', '_blank');
+                    printWin.document.write(`<html><head><title>Estratto Fatture</title><style>
+                      body{font-family:Arial,sans-serif;padding:20px}
+                      table{width:100%;border-collapse:collapse;font-size:12px}
+                      th,td{border:1px solid #ddd;padding:8px;text-align:left}
+                      th{background:#1e3a5f;color:white}
+                    </style></head><body>${modal.innerHTML}</body></html>`);
+                    printWin.document.close();
+                    printWin.print();
+                  }}
                   style={{
                     padding: '8px 16px',
                     background: '#f3f4f6',
