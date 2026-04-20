@@ -3,7 +3,6 @@
    Minimale · Professionale · Full-frame · No Tailwind · Mobile-safe
    ================================================================ */
 
-@import './styles/common.css';
 @import './styles/utilities.css';
 
 /* CSS tokens (coerenti con lib/utils.js COLORS) */
