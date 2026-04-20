@@ -60,7 +60,7 @@ const emptySupplier = {
   iban_lista: [],  // Lista di IBAN aggiuntivi estratti dalle fatture
   metodo_pagamento: 'bonifico',
   giorni_pagamento: 30,
-  esclude_magazzino: false,
+  esclude_magazzino: true,
   note: ''
 };
 

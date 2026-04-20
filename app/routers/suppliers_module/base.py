@@ -695,6 +695,7 @@ async def update_supplier_nome(supplier_id: str, data: Dict[str, Any] = Body(...
             "ragione_sociale": denominazione,
             "metodo_pagamento": "bonifico",
             "attivo": True,
+            "esclude_magazzino": True,
             "created_at": datetime.now(timezone.utc).isoformat()
         }
         await db[Collections.SUPPLIERS].insert_one(nuovo.copy())

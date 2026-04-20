@@ -373,6 +373,7 @@ async def sincronizza_fornitori_da_fatture() -> Dict[str, Any]:
                 "pec": f.get("pec") or "",
                 "metodo_pagamento": "bonifico",
                 "attivo": True,
+                "esclude_magazzino": True,
                 "source": "sincronizzazione_fatture",
                 "fatture_count": f.get("count", 0),
                 "created_at": datetime.now(timezone.utc).isoformat()

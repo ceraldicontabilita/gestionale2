@@ -81,7 +81,7 @@ async def import_fattura_xml(file: UploadFile = File(...)) -> Dict[str, Any]:
         "id": fornitore_result.get("fornitore_id"),
         "partita_iva": partita_iva,
         "ragione_sociale": fornitore_result.get("ragione_sociale"),
-        "esclude_magazzino": fornitore_db.get("esclude_magazzino", False) if fornitore_db else False,
+        "esclude_magazzino": fornitore_db.get("esclude_magazzino", True) if fornitore_db else True,
         "metodo_pagamento": metodo_pagamento_finale,
         "iban": fornitore_db.get("iban") if fornitore_db else None
     }

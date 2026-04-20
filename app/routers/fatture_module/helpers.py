@@ -54,6 +54,7 @@ async def get_or_create_fornitore(db, parsed_data: Dict) -> Dict[str, Any]:
         "iban": "",
         "metodo_pagamento": None,
         "giorni_pagamento": 30,
+        "esclude_magazzino": True,
         "fatture_count": 1,
         "attivo": True,
         "source": "auto_import_xml",

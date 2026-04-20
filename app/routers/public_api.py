@@ -385,7 +385,7 @@ async def create_supplier(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         "iban_lista": data.get("iban_lista", []),
         "metodo_pagamento": data.get("metodo_pagamento", "bonifico"),
         "giorni_pagamento": data.get("giorni_pagamento", 30),
-        "esclude_magazzino": data.get("esclude_magazzino", False),
+        "esclude_magazzino": data.get("esclude_magazzino", True),
         "escludi_da_tracciabilita": data.get("escludi_da_tracciabilita", False),
         "note": data.get("note", ""),
         "created_at": datetime.now(timezone.utc).isoformat()
