@@ -113,12 +113,22 @@ export default function ArchivioFatture() {
       if (anno) params.append('anno', anno);
       if (mese) params.append('mese', mese);
       if (fornitore) params.append('fornitore_piva', fornitore);
-      if (stato) params.append('stato', stato);
+      // "senza_metodo" è un filtro client-side: fa fetch senza stato e poi filtra
+      if (stato && stato !== 'senza_metodo') params.append('stato', stato);
       if (search) params.append('search', search);
       params.append('limit', '500');
       
       const res = await api.get(`/api/fatture-ricevute/archivio?${params.toString()}`);
-      setFatture(res.data.fatture || res.data.items || []);
+      let items = res.data.fatture || res.data.items || [];
+      
+      // Filtro client: fatture di fornitori SENZA metodo pagamento configurato
+      if (stato === 'senza_metodo') {
+        items = items.filter(f => {
+          const m = (f.fornitore_metodo_pagamento || '').toLowerCase().trim();
+          return !m || m === 'da_configurare' || m === 'misto' || m === 'altro';
+        });
+      }
+      setFatture(items);
     } catch (err) {
       console.error('Errore caricamento fatture:', err);
     }
@@ -251,6 +261,7 @@ export default function ArchivioFatture() {
                   <option value="importata">Importate</option>
                   <option value="anomala">Anomale</option>
                   <option value="pagata">Pagate</option>
+                  <option value="senza_metodo">⚠️ Senza metodo pagamento</option>
                 </select>
               </div>
               <div style={{ flex: 1, minWidth: 180 }}>

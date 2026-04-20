@@ -528,30 +528,9 @@ function SupplierModal({ isOpen, onClose, supplier, onSave, saving }) {
               )}
             </div>
             
-            {/* Esclude Magazzino */}
-            <div style={{ 
-              padding: '14px', 
-              background: form.esclude_magazzino ? '#fef3c7' : '#f8fafc', 
-              borderRadius: '10px',
-              border: form.esclude_magazzino ? '1px solid #fbbf24' : '1px solid #e2e8f0'
-            }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={form.esclude_magazzino || false}
-                  onChange={(e) => handleChange('esclude_magazzino', e.target.checked)}
-                  style={{ width: '18px', height: '18px', accentColor: '#f59e0b' }}
-                />
-                <div>
-                  <div style={{ fontSize: '14px', fontWeight: 600, color: '#374151' }}>
-                    Esclude dal Magazzino
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '2px' }}>
-                    I prodotti di questo fornitore NON verranno caricati in magazzino (es. manutenzione, servizi, ferramenta)
-                  </div>
-                </div>
-              </label>
-            </div>
+            {/* Nota: il toggle "Esclude dal Magazzino" è ora un badge cliccabile
+                direttamente sulla card del fornitore (accanto al metodo di pagamento).
+                Basta cliccare su "📦 In magazzino" / "🚫 Escluso magazzino" per cambiare. */}
 
           </div>
         </div>
@@ -633,7 +612,7 @@ function StatCard({ icon: Icon, label, value, color, bgColor }) {
 }
 
 // Supplier Card con cambio rapido metodo
-function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices, onChangeMetodo, onSearchPiva, onShowFatturato, onShowSchedeTecniche, selectedYear }) {
+function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices, onChangeMetodo, onSearchPiva, onShowFatturato, onShowSchedeTecniche, onToggleEsclude, selectedYear }) {
   const nome = supplier.ragione_sociale || supplier.denominazione || supplier.nome || supplier.name || 'Senza nome';
   const piva = supplier.partita_iva || supplier.piva || null;
   const hasIncomplete = !piva || !supplier.comune || !supplier.email || !supplier.telefono;
@@ -831,17 +810,37 @@ function SupplierCard({ supplier, onEdit, onDelete, onViewInvoices, onChangeMeto
           </div>
         </div>
 
-        {/* Flag badges */}
-        {supplier.esclude_magazzino && (
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '10px' }}>
-            <span style={{
-              padding: '3px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 600,
-              background: '#fef3c7', color: '#92400e', border: '1px solid #fbbf24'
-            }} title="Le fatture di questo fornitore non popolano il magazzino">
-              Escluso Magazzino
-            </span>
-          </div>
-        )}
+        {/* Flag badges — cliccabili per toggle rapido */}
+        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '10px' }}>
+          <button
+            onClick={async (e) => {
+              e.stopPropagation();
+              if (onToggleEsclude) {
+                await onToggleEsclude(supplier.id, !supplier.esclude_magazzino);
+              }
+            }}
+            data-testid={`btn-toggle-esclude-magazzino-${supplier.id}`}
+            title={supplier.esclude_magazzino
+              ? 'Click: RIMETTI nel magazzino (le fatture popoleranno le giacenze)'
+              : 'Click: ESCLUDI dal magazzino (le fatture NON creano carichi)'}
+            style={{
+              padding: '4px 10px',
+              borderRadius: '6px',
+              fontSize: '11px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '5px',
+              background: supplier.esclude_magazzino ? '#fef3c7' : '#f0fdf4',
+              color: supplier.esclude_magazzino ? '#92400e' : '#166534',
+              border: supplier.esclude_magazzino ? '1px solid #fbbf24' : '1px solid #86efac',
+            }}
+          >
+            {supplier.esclude_magazzino ? '🚫 Escluso magazzino' : '📦 In magazzino'}
+          </button>
+        </div>
       </div>
 
       {/* Actions */}
@@ -1092,6 +1091,7 @@ export default function Fornitori() {
   const setFilterMetodo = (v) => setHs('metodo', v);
 
   const [filterIncomplete, setFilterIncomplete] = useState(false);
+  const [filterSenzaMetodo, setFilterSenzaMetodo] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [currentSupplier, setCurrentSupplier] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -1169,6 +1169,11 @@ export default function Fornitori() {
       if (metodo !== filterMetodo) return false;
     }
     if (filterIncomplete && (s.partita_iva || s.piva) && s.email) return false;
+    if (filterSenzaMetodo) {
+      const m = (s.metodo_pagamento || '').toLowerCase().trim();
+      const senzaMetodo = !m || m === 'da_configurare' || m === 'misto' || m === 'altro';
+      if (!senzaMetodo) return false;
+    }
     return true;
   });
 
@@ -1212,6 +1217,18 @@ export default function Fornitori() {
       ));
     } catch (error) {
       alert('Errore aggiornamento metodo: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+
+  // Toggle rapido "esclude_magazzino" dalla card (evita apertura modifica)
+  const handleToggleEsclude = async (supplierId, nuovoValore) => {
+    try {
+      await api.put(`/api/suppliers/${supplierId}`, { esclude_magazzino: nuovoValore });
+      setSuppliers(prev => prev.map(s =>
+        s.id === supplierId ? { ...s, esclude_magazzino: nuovoValore } : s
+      ));
+    } catch (error) {
+      alert('Errore aggiornamento magazzino: ' + (error.response?.data?.detail || error.message));
     }
   };
 
@@ -1601,6 +1618,34 @@ export default function Fornitori() {
               />
               Solo incompleti
             </label>
+
+            {/* Filter Senza Metodo Pagamento — per risalire ai fornitori di fatture non auto-confermate */}
+            <label
+              title="Mostra solo i fornitori SENZA metodo di pagamento predefinito (le loro fatture non vengono auto-confermate)"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '10px 14px',
+                border: filterSenzaMetodo ? '1px solid #f59e0b' : '1px solid #e5e7eb',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: filterSenzaMetodo ? 700 : 400,
+                backgroundColor: filterSenzaMetodo ? '#fef3c7' : 'white',
+                color: filterSenzaMetodo ? '#92400e' : '#374151',
+              }}
+              data-testid="filter-senza-metodo-pagamento"
+            >
+              <input
+                type="checkbox"
+                checked={filterSenzaMetodo}
+                onChange={(e) => setFilterSenzaMetodo(e.target.checked)}
+                style={{ width: '16px', height: '16px', accentColor: '#f59e0b' }}
+              />
+              ⚠️ Fatture senza metodo
+            </label>
+
             <CopyLinkButton style={{ flexShrink: 0 }} />
           </div>
         </div>
@@ -1658,6 +1703,7 @@ export default function Fornitori() {
                 onSearchPiva={handleSearchPiva}
                 onShowFatturato={handleShowFatturato}
                 onShowSchedeTecniche={handleViewSchedeTecniche}
+                onToggleEsclude={handleToggleEsclude}
                 selectedYear={selectedYear}
               />
             ))}
