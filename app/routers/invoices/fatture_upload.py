@@ -239,37 +239,62 @@ async def process_fattura_to_db(db, parsed: Dict[str, Any], filename: str = "upl
     
     logger.info(f"Fattura importata: {invoice.get('invoice_number')} - {invoice.get('supplier_name')}")
     
-    # AUTO-REGISTRA in Prima Nota se il fornitore ha metodo definito (non sospesa)
-    if metodo_pagamento and metodo_pagamento not in ['sospesa', 'misto']:
+    # AUTO-REGISTRA in Prima Nota
+    # 1. Se contanti → sempre in cassa
+    # 2. Se banca/assegno/rid/carta → cerca prima nell'estratto conto, se trovato registra
+    # 3. Se misto/sconosciuto → provvisorio
+    if metodo_pagamento and metodo_pagamento not in ['misto', '']:
         import uuid as _uuid
         pn_id = str(_uuid.uuid4())
         is_cassa = metodo_pagamento in ['contanti', 'cassa']
-        pn_collection = "prima_nota_cassa" if is_cassa else "prima_nota_banca"
         
-        await db[pn_collection].insert_one({
-            "id": pn_id,
-            "data": invoice.get("invoice_date", ""),
-            "tipo": "uscita",
-            "categoria": "Fatture",
-            "descrizione": f"Fatt. {invoice.get('invoice_number','')} - {invoice.get('supplier_name','')[:30]}",
-            "importo": invoice.get("total_amount", 0),
-            "fattura_id": invoice["id"],
-            "riferimento": f"FATT-{invoice['id']}",
-            "source": "auto_import",
-            "created_at": datetime.now(timezone.utc).isoformat(),
-        })
+        if is_cassa:
+            # Contanti → sempre in cassa
+            pn_collection = "prima_nota_cassa"
+            registra = True
+        else:
+            # Banca → cerca nell'estratto conto prima di registrare
+            importo_fatt = invoice.get("total_amount", 0)
+            nome_forn = (invoice.get("supplier_name", "") or "").upper()[:10]
+            ec_query = {"importo": {"$gte": importo_fatt - 1, "$lte": importo_fatt + 1}, "tipo": "uscita"}
+            if nome_forn and len(nome_forn) > 3:
+                ec_query["descrizione"] = {"$regex": nome_forn[:8], "$options": "i"}
+            ec_match = await db["estratto_conto_movimenti"].find_one(ec_query)
+            
+            if ec_match:
+                pn_collection = "prima_nota_banca"
+                registra = True
+                logger.info(f"  → Pagamento trovato in EC: {ec_match.get('descrizione', '')[:40]}")
+            else:
+                # Non trovato in EC → provvisorio
+                registra = False
+                logger.info(f"  → Pagamento NON trovato in EC → provvisorio")
         
-        await db[Collections.INVOICES].update_one(
-            {"id": invoice["id"]},
-            {"$set": {
-                "prima_nota_id": pn_id,
-                "prima_nota_tipo": "cassa" if is_cassa else "banca",
-                "prima_nota_cassa_id": pn_id if is_cassa else None,
-                "prima_nota_banca_id": pn_id if not is_cassa else None,
-                "stato_pagamento": "pagata",
-            }}
-        )
-        logger.info(f"  → Auto-registrata in {'CASSA' if is_cassa else 'BANCA'} (metodo fornitore: {metodo_pagamento})")
+        if registra:
+            await db[pn_collection].insert_one({
+                "id": pn_id,
+                "data": invoice.get("invoice_date", ""),
+                "tipo": "uscita",
+                "categoria": "Fatture",
+                "descrizione": f"Fatt. {invoice.get('invoice_number','')} - {invoice.get('supplier_name','')[:30]}",
+                "importo": invoice.get("total_amount", 0),
+                "fattura_id": invoice["id"],
+                "riferimento": f"FATT-{invoice['id']}",
+                "source": "auto_import",
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            })
+            
+            await db[Collections.INVOICES].update_one(
+                {"id": invoice["id"]},
+                {"$set": {
+                    "prima_nota_id": pn_id,
+                    "prima_nota_tipo": "cassa" if is_cassa else "banca",
+                    "prima_nota_cassa_id": pn_id if is_cassa else None,
+                    "prima_nota_banca_id": pn_id if not is_cassa else None,
+                    "stato_pagamento": "pagata",
+                }}
+            )
+            logger.info(f"  → Auto-registrata in {'CASSA' if is_cassa else 'BANCA'} (metodo: {metodo_pagamento})")
     
     return invoice
 
