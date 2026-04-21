@@ -550,3 +550,68 @@ async def riconcilia_completo() -> Dict[str, Any]:
             if ok:
                 r3["riconciliati"] += 1
     return {"scan_gmail": r1, "link_fatture": r2, "ricerca_pagamenti": r3}
+
+
+@router.post("/bulk-assegna-pagamento")
+@handle_errors
+async def bulk_assegna_pagamento(body: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+    """
+    Assegna pagamento PayPal a una lista di verbali con dati noti (da tabella utente
+    o import CSV). Ciascun item aggiorna il verbale E la paypal_transactions con IUV e
+    numero_verbale_collegato per abilitare ricerche future.
+
+    Body: { "items": [ { "numero_verbale", "iuv", "transaction_id", "importo",
+                          "data_pagamento", "psp", "metodo_pagamento", "targa" }, ... ] }
+    """
+    from datetime import datetime, timezone
+    items = body.get("items", [])
+    if not isinstance(items, list) or not items:
+        raise HTTPException(400, "Body deve contenere 'items' (lista non vuota)")
+
+    db = Database.get_db()
+    stats = {"processati": 0, "verbali_aggiornati": 0, "paypal_tx_aggiornate": 0, "errori": []}
+
+    for it in items:
+        stats["processati"] += 1
+        nv = (it.get("numero_verbale") or "").strip()
+        iuv = (it.get("iuv") or "").strip() or None
+        txid = (it.get("transaction_id") or "").strip() or None
+        if not nv:
+            stats["errori"].append({"item": it, "errore": "numero_verbale mancante"})
+            continue
+
+        # Verbale update
+        v_update = {
+            "stato": "pagato",
+            "fonte_riconciliazione": it.get("fonte", "manuale_tabella"),
+            "riconciliato_paypal": True,
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+        for src, dst in [("iuv","iuv"), ("transaction_id","paypal_transaction_id"),
+                          ("importo","importo"), ("data_pagamento","data_pagamento"),
+                          ("psp","psp"), ("metodo_pagamento","metodo_pagamento"),
+                          ("targa","targa")]:
+            val = it.get(src)
+            if val:
+                v_update[dst] = val
+        res_v = await db["verbali_noleggio"].update_one(
+            {"numero_verbale": nv}, {"$set": v_update}
+        )
+        if res_v.modified_count:
+            stats["verbali_aggiornati"] += 1
+
+        # paypal_transactions: denormalizza iuv + numero_verbale_collegato per future ricerche
+        if txid:
+            res_tx = await db["paypal_transactions"].update_one(
+                {"transaction_id": txid},
+                {"$set": {
+                    "iuv": iuv,
+                    "numero_verbale_collegato": nv,
+                    "targa_collegata": it.get("targa"),
+                    "verbale_linked_at": datetime.now(timezone.utc).isoformat(),
+                }}
+            )
+            if res_tx.modified_count:
+                stats["paypal_tx_aggiornate"] += 1
+
+    return stats

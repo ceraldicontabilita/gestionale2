@@ -49,6 +49,7 @@ async def _cerca_in_paypal(db, iuv, numero_verbale, targa, importo):
     queries = []
     if iuv:
         queries.append({"$or": [
+            {"iuv": iuv},  # denormalizzato via bulk-assegna
             {"custom_field": {"$regex": iuv}},
             {"transaction_subject": {"$regex": iuv}},
             {"invoice_id_fornitore": iuv},
@@ -56,13 +57,17 @@ async def _cerca_in_paypal(db, iuv, numero_verbale, targa, importo):
         ]})
     if numero_verbale:
         queries.append({"$or": [
+            {"numero_verbale_collegato": numero_verbale},  # denormalizzato via bulk-assegna
             {"transaction_subject": {"$regex": re.escape(numero_verbale)}},
             {"ricevuta_dati.verbale": numero_verbale},
         ]})
     if targa and importo and float(importo) > 0:
         imp = float(importo)
         queries.append({
-            "transaction_subject": {"$regex": re.escape(targa), "$options": "i"},
+            "$or": [
+                {"targa_collegata": targa},
+                {"transaction_subject": {"$regex": re.escape(targa), "$options": "i"}},
+            ],
             "importo": {"$gte": -imp - 2, "$lte": -imp + 2},
         })
     for q in queries:
