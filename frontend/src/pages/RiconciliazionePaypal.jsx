@@ -110,12 +110,46 @@ export default function RiconciliazionePaypal() {
     try {
       const res = await api.get('/api/paypal-api/account-ids-non-mappati');
       setMappingData(res.data);
+      // Pre-seleziona automaticamente i fornitori con match certo (nome_controparte ↔ ragione_sociale)
+      const autoSelect = {};
+      for (const item of res.data.items || []) {
+        if (item.suggested_fornitore_id) {
+          autoSelect[item.paypal_account_id] = item.suggested_fornitore_id;
+        }
+      }
+      if (Object.keys(autoSelect).length > 0) {
+        setSelectedForn((prev) => ({ ...autoSelect, ...prev }));
+      }
     } catch (e) {
       toast.error('Errore caricamento mapping: ' + (e.response?.data?.detail || e.message));
     } finally {
       setMappingLoading(false);
     }
   }, []);
+
+  const mappaTuttiCerti = async () => {
+    if (!mappingData) return;
+    const certi = mappingData.items.filter((i) => i.suggested_fornitore_id);
+    if (certi.length === 0) {
+      toast.info('Nessun match certo da mappare');
+      return;
+    }
+    if (!confirm(`Mappare automaticamente ${certi.length} fornitori con match certo?`)) return;
+    let ok = 0;
+    for (const item of certi) {
+      try {
+        await api.post('/api/paypal-api/mappa-fornitore', {
+          paypal_account_id: item.paypal_account_id,
+          fornitore_id: item.suggested_fornitore_id,
+        });
+        ok++;
+      } catch {
+        // continua col prossimo
+      }
+    }
+    toast.success(`✓ Mappati ${ok}/${certi.length} fornitori`);
+    loadMapping();
+  };
 
   const mappaFornitore = async (paypalAccountId, fornitoreId) => {
     if (!fornitoreId) {
@@ -493,6 +527,23 @@ export default function RiconciliazionePaypal() {
               </button>
             </div>
 
+            {/* Banner azione massiva match certi */}
+            {mappingData && mappingData.items.some((i) => i.suggested_fornitore_id) && (
+              <div style={{ padding: '12px 18px', background: 'linear-gradient(135deg, #dcfce7 0%, #f0fdf4 100%)', borderBottom: '1px solid #22c55e', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                <div style={{ fontSize: 13, color: '#166534' }}>
+                  🎯 <strong>{mappingData.items.filter((i) => i.suggested_fornitore_id).length} match certi</strong> trovati
+                  tramite nome PayPal. Puoi mapparli tutti con un click.
+                </div>
+                <button
+                  data-testid="mappa-tutti-certi-btn"
+                  onClick={mappaTuttiCerti}
+                  style={{ padding: '8px 18px', background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap' }}
+                >
+                  🚀 Mappa tutti i certi
+                </button>
+              </div>
+            )}
+
             {mappingLoading && !mappingData && (
               <div style={{ padding: 40, textAlign: 'center', color: '#9ca3af' }}>
                 <RefreshCw style={{ width: 24, height: 24, animation: 'spin 1s linear infinite', color: '#0070ba' }} />
@@ -511,7 +562,12 @@ export default function RiconciliazionePaypal() {
                 style={{ padding: '14px 18px', borderBottom: '1px solid #f3f4f6', display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '260px 1fr 260px', gap: 14, alignItems: 'center' }}>
                 {/* Colonna 1: info account */}
                 <div>
-                  <div style={{ fontFamily: 'Courier New, monospace', fontSize: 12, fontWeight: 700, color: '#003087' }}>
+                  {item.nome_controparte && (
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#15803d', marginBottom: 4 }}>
+                      🏢 {item.nome_controparte}
+                    </div>
+                  )}
+                  <div style={{ fontFamily: 'Courier New, monospace', fontSize: 11, fontWeight: 600, color: '#003087' }}>
                     {item.paypal_account_id}
                   </div>
                   <div style={{ fontSize: 11, color: '#6b7280', marginTop: 3 }}>
@@ -520,30 +576,49 @@ export default function RiconciliazionePaypal() {
                   <div style={{ fontSize: 10, color: '#9ca3af' }}>
                     Media: {formatEuro(item.importo_medio)} · Ultima: {formatDate(item.ultima_data)}
                   </div>
-                  {item.subjects?.length > 0 && (
-                    <div style={{ fontSize: 11, color: '#6b7280', marginTop: 6, fontStyle: 'italic', maxHeight: 50, overflow: 'hidden' }}>
-                      "{item.subjects[0].substring(0, 80)}{item.subjects[0].length > 80 ? '...' : ''}"
+                  {item.email_controparte && (
+                    <div style={{ fontSize: 10, color: '#6b7280', marginTop: 3 }}>
+                      ✉️ {item.email_controparte}
                     </div>
                   )}
                   {item.invoice_ids?.length > 0 && (
-                    <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 3 }}>
+                    <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 3 }}>
                       Invoice: {item.invoice_ids.slice(0, 2).join(', ')}
                     </div>
                   )}
                 </div>
 
-                {/* Colonna 2: selezione fornitore con suggerimenti */}
+                {/* Colonna 2: selezione fornitore con badge match certo */}
                 <div>
+                  {item.suggested_fornitore_id && (
+                    <div style={{ fontSize: 11, color: '#166534', fontWeight: 700, marginBottom: 4, background: '#dcfce7', padding: '3px 8px', borderRadius: 10, display: 'inline-block' }}>
+                      🎯 Match certo da nome PayPal
+                    </div>
+                  )}
                   <select
                     data-testid={`select-fornitore-${item.paypal_account_id}`}
                     value={selectedForn[item.paypal_account_id] || ''}
                     onChange={(e) => setSelectedForn({ ...selectedForn, [item.paypal_account_id]: e.target.value })}
-                    style={{ width: '100%', padding: '8px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, background: 'white' }}
+                    style={{
+                      width: '100%', padding: '8px 10px',
+                      border: item.suggested_fornitore_id && selectedForn[item.paypal_account_id] === item.suggested_fornitore_id
+                        ? '2px solid #22c55e' : '1px solid #d1d5db',
+                      borderRadius: 6, fontSize: 13, background: 'white',
+                    }}
                   >
                     <option value="">— Seleziona fornitore —</option>
-                    {item.candidati?.length > 0 && (
-                      <optgroup label="💡 Candidati (per importo simile)">
-                        {item.candidati.map((c) => (
+                    {item.candidati?.filter((c) => c.source?.startsWith('nome_paypal')).length > 0 && (
+                      <optgroup label="🎯 Match certo (nome PayPal)">
+                        {item.candidati.filter((c) => c.source?.startsWith('nome_paypal')).map((c) => (
+                          <option key={c.fornitore_id} value={c.fornitore_id}>
+                            {c.nome} · P.IVA {c.piva} · score {c.score}
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                    {item.candidati?.filter((c) => c.source === 'importo_simile').length > 0 && (
+                      <optgroup label="💡 Candidati (importo simile)">
+                        {item.candidati.filter((c) => c.source === 'importo_simile').map((c) => (
                           <option key={c.fornitore_id} value={c.fornitore_id}>
                             {c.nome} · P.IVA {c.piva} · {c.n_fatture_simili} fatture
                           </option>
@@ -553,7 +628,7 @@ export default function RiconciliazionePaypal() {
                   </select>
                   {item.candidati?.length === 0 && (
                     <div style={{ fontSize: 11, color: '#ef4444', marginTop: 4 }}>
-                      Nessun candidato automatico. Inserisci manualmente il fornitore via anagrafica.
+                      Nessun candidato. Crea il fornitore in anagrafica.
                     </div>
                   )}
                 </div>

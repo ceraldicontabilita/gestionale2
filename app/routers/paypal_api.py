@@ -3,9 +3,11 @@ from fastapi.responses import FileResponse
 from datetime import datetime, timezone
 from typing import Dict, Any
 import os
+import re
 
 from app.database import Database
 from app.services.paypal_api_sync import sync_paypal_period
+from app.services.paypal_riconciliazione import match_fornitore, normalize_string
 
 router = APIRouter(prefix="/paypal-api", tags=["paypal-api"])
 
@@ -133,7 +135,7 @@ async def account_ids_non_mappati():
     - n. transazioni, importo totale, ultima data, lista transaction_subject/invoice_id
     - fornitori candidati (per importo vicino + nome simile)
     """
-    from app.services.paypal_riconciliazione import normalize_string, match_fornitore
+    from app.services.paypal_riconciliazione import normalize_string, match_fornitore  # noqa: F811
 
     db = Database.get_db()
 
@@ -148,6 +150,8 @@ async def account_ids_non_mappati():
             "subjects": {"$addToSet": "$transaction_subject"},
             "invoice_ids": {"$addToSet": "$invoice_id_fornitore"},
             "is_pagopa": {"$max": "$is_pagopa"},
+            "nome_controparte": {"$first": "$nome_controparte"},
+            "email_controparte": {"$first": "$email_controparte"},
         }},
         {"$sort": {"ultima_data": -1}},
     ]
@@ -174,12 +178,58 @@ async def account_ids_non_mappati():
         importo_medio = abs(agg["importo_totale"] / max(agg["n_tx"], 1))
         subjects = [s for s in agg.get("subjects") or [] if s]
         invoice_ids = [i for i in agg.get("invoice_ids") or [] if i]
+        nome_controparte = (agg.get("nome_controparte") or "").strip()
 
-        # Cerca candidati fornitori: match su importo medio (±30%) + nome tramite subject
         query_text = " ".join(subjects[:3])
         candidati = []
+        suggested_forn_id = None  # pre-selezione UI se match certo
 
-        # Fornitori che hanno già fatture di importo simile negli ultimi 12 mesi
+        # STRATEGIA 1 (match certo): cerca fornitore con ragione_sociale che matcha nome_controparte
+        if nome_controparte:
+            # Prima parola significativa (es. "Gruppo Adam s.r.l." → "Gruppo Adam" o "Gruppo")
+            words = [w for w in nome_controparte.split() if len(w) >= 3
+                     and w.lower() not in ("spa", "srl", "s.r.l.", "s.p.a.", "s.r.l", "s.p.a",
+                                            "sas", "snc", "ltd", "gmbh", "ag", "sa", "ab")]
+            search_word = words[0] if words else nome_controparte.split()[0]
+
+            cursor_forn = db["fornitori"].find(
+                {"$or": [
+                    {"nome": {"$regex": re.escape(search_word), "$options": "i"}},
+                    {"ragione_sociale": {"$regex": re.escape(search_word), "$options": "i"}},
+                ]},
+                {"_id": 0, "id": 1, "nome": 1, "ragione_sociale": 1, "piva": 1}
+            )
+            async for forn in cursor_forn:
+                forn_nome = forn.get("ragione_sociale") or forn.get("nome") or ""
+                # Normalizza entrambi per match
+                norm_cp = normalize_string(nome_controparte)
+                norm_fn = normalize_string(forn_nome)
+                # Exact match (uguali dopo normalize) oppure uno contiene l'altro
+                if norm_cp == norm_fn:
+                    match_type = "exact"
+                    score = 1.0
+                elif norm_cp in norm_fn or norm_fn in norm_cp:
+                    match_type = "partial"
+                    score = 0.85
+                else:
+                    # Fuzzy score su nome
+                    score = match_fornitore(nome_controparte, forn_nome)
+                    match_type = "fuzzy" if score >= 0.6 else None
+                if match_type:
+                    candidato = {
+                        "fornitore_id": forn.get("id"),
+                        "nome": forn_nome,
+                        "piva": forn.get("piva") or "",
+                        "n_fatture_simili": 0,
+                        "score": round(score, 2),
+                        "source": f"nome_paypal_{match_type}",
+                    }
+                    candidati.append(candidato)
+                    # Primo match esatto → lo suggeriamo per pre-selezione
+                    if match_type == "exact" and not suggested_forn_id:
+                        suggested_forn_id = forn.get("id")
+
+        # STRATEGIA 2: fornitori con fatture di importo simile (fallback)
         min_imp = importo_medio * 0.6
         max_imp = importo_medio * 1.4
         pipeline_forn = [
@@ -197,40 +247,49 @@ async def account_ids_non_mappati():
         except Exception:
             forn_cursor = []
 
-        seen_piva = set()
+        seen_piva = {c["piva"] for c in candidati if c.get("piva")}
+        seen_ids = {c["fornitore_id"] for c in candidati}
         for fc in forn_cursor:
             piva = fc.get("_id")
             if not piva or piva in seen_piva:
                 continue
             seen_piva.add(piva)
             nome = fc.get("supplier_name") or fc.get("fornitore_denominazione") or ""
-            # Score di match per subject/invoice (soft)
             score = match_fornitore(query_text or account_id, nome) if query_text else 0.0
-            # Lookup fornitore canonico
+            # Boost se il nome matcha nome_controparte
+            if nome_controparte and nome:
+                cp_score = match_fornitore(nome_controparte, nome)
+                if cp_score > score:
+                    score = cp_score
             forn = await db["fornitori"].find_one(
                 {"$or": [{"piva": piva}, {"partita_iva": piva}, {"codice_fiscale": piva}]},
                 {"_id": 0, "id": 1, "nome": 1, "ragione_sociale": 1, "piva": 1}
             )
-            if forn:
+            if forn and forn.get("id") not in seen_ids:
+                seen_ids.add(forn.get("id"))
                 candidati.append({
                     "fornitore_id": forn.get("id"),
                     "nome": forn.get("ragione_sociale") or forn.get("nome") or nome,
                     "piva": forn.get("piva") or piva,
                     "n_fatture_simili": fc.get("n_fatture", 0),
                     "score": round(score, 2),
+                    "source": "importo_simile",
                 })
         # Ordina per score desc poi per n_fatture desc
         candidati.sort(key=lambda c: (c["score"], c["n_fatture_simili"]), reverse=True)
 
         risultati.append({
             "paypal_account_id": account_id,
+            "nome_controparte": nome_controparte or None,
+            "email_controparte": agg.get("email_controparte") or None,
             "n_tx": agg["n_tx"],
             "importo_totale": round(abs(agg["importo_totale"]), 2),
             "importo_medio": round(importo_medio, 2),
             "ultima_data": agg["ultima_data"],
             "subjects": subjects[:5],
             "invoice_ids": invoice_ids[:5],
-            "candidati": candidati[:5],
+            "candidati": candidati[:8],
+            "suggested_fornitore_id": suggested_forn_id,
         })
 
     return {
