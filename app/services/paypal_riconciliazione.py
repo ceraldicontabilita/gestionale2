@@ -233,6 +233,7 @@ async def riconcilia_pagamenti_paypal(
             # STRATEGIA PRIMARIA: match tramite paypal_account_id
             paypal_account_id = pag.get("paypal_account_id")
             fatture_candidate = []
+            match_certo_paypal_id = False
             if paypal_account_id:
                 fornitore_match = await match_fornitore_by_paypal_id(db, paypal_account_id)
                 if fornitore_match:
@@ -250,6 +251,8 @@ async def riconcilia_pagamenti_paypal(
                     fatture_candidate = await db[collection_name].find(
                         query_fatt, {"_id": 0}
                     ).to_list(100)
+                    if fatture_candidate:
+                        match_certo_paypal_id = True
 
             # Fallback: cerca per importo simile (tolleranza 2% o 1€)
             if not fatture_candidate:
@@ -276,12 +279,16 @@ async def riconcilia_pagamenti_paypal(
             # Trova la migliore corrispondenza per nome fornitore
             best_match = None
             best_score = 0.0
-            
+
             for fattura in fatture_candidate:
                 # Supporta entrambi i formati: supplier_name e fornitore_ragione_sociale
                 fornitore = fattura.get("supplier_name") or fattura.get("fornitore_ragione_sociale", "")
-                score = match_fornitore(beneficiario, fornitore)
-                
+                # Se match primario via paypal_account_id è certo → score base 1.0
+                if match_certo_paypal_id:
+                    score = 1.0
+                else:
+                    score = match_fornitore(beneficiario, fornitore)
+
                 # Bonus se data è vicina
                 if data_pag:
                     data_fatt_str = fattura.get("invoice_date") or fattura.get("data_documento")
@@ -293,14 +300,15 @@ async def riconcilia_pagamenti_paypal(
                                 score += 0.2
                             elif diff_giorni <= 30:
                                 score += 0.1
-                        except:
+                        except (ValueError, TypeError):
                             pass
-                
+
                 if score > best_score:
                     best_score = score
                     best_match = fattura
-            
-            if best_match and best_score >= 0.3:  # Soglia abbassata
+
+            # Soglia: 0.3 per match nome, ma bypassata da match_certo_paypal_id (score sempre ≥1.0)
+            if best_match and (match_certo_paypal_id or best_score >= 0.3):
                 fattura_id = best_match.get("id")
                 fornitore_nome = best_match.get("supplier_name") or best_match.get("fornitore_ragione_sociale", "?")
                 importo_fatt = best_match.get("total_amount") or best_match.get("importo_totale", 0)
