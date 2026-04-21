@@ -9,7 +9,7 @@ import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { useIsMobile } from '../hooks/useData';
 import {
   RefreshCw, CreditCard, AlertTriangle, CheckCircle2, FileText,
-  Download, Search, TrendingDown, BarChart3
+  Download, Search, TrendingDown, BarChart3, Link2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageLayout } from '../components/PageLayout';
@@ -56,6 +56,9 @@ export default function RiconciliazionePaypal() {
   const [annoFiltro, setAnnoFiltro] = useState(anno);
   const [soloPagamenti, setSoloPagamenti] = useState(true);
   const [searchTx, setSearchTx] = useState('');
+  const [mappingData, setMappingData] = useState(null);
+  const [mappingLoading, setMappingLoading] = useState(false);
+  const [selectedForn, setSelectedForn] = useState({}); // {paypal_account_id: fornitore_id}
 
   // Sincronizza il filtro locale con l'anno globale quando cambia nel TopNav
   useEffect(() => { setAnnoFiltro(anno); }, [anno]);
@@ -102,6 +105,41 @@ export default function RiconciliazionePaypal() {
 
   useEffect(() => { loadAll(); }, [loadAll]);
 
+  const loadMapping = useCallback(async () => {
+    setMappingLoading(true);
+    try {
+      const res = await api.get('/api/paypal-api/account-ids-non-mappati');
+      setMappingData(res.data);
+    } catch (e) {
+      toast.error('Errore caricamento mapping: ' + (e.response?.data?.detail || e.message));
+    } finally {
+      setMappingLoading(false);
+    }
+  }, []);
+
+  const mappaFornitore = async (paypalAccountId, fornitoreId) => {
+    if (!fornitoreId) {
+      toast.error('Seleziona prima un fornitore');
+      return;
+    }
+    try {
+      const res = await api.post('/api/paypal-api/mappa-fornitore', {
+        paypal_account_id: paypalAccountId,
+        fornitore_id: fornitoreId,
+      });
+      toast.success(`✓ Mappato: ${res.data.fornitore}`);
+      loadMapping();
+    } catch (e) {
+      toast.error('Errore: ' + (e.response?.data?.detail || e.message));
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'mapping' && !mappingData) {
+      loadMapping();
+    }
+  }, [activeTab, mappingData, loadMapping]);
+
   const filteredTx = transactions.filter(tx => {
     if (!searchTx) return true;
     const s = searchTx.toLowerCase();
@@ -123,6 +161,7 @@ export default function RiconciliazionePaypal() {
     { id: 'transazioni', label: 'Transazioni', icon: <CreditCard size={16} />, count: dashboard?.total_transactions },
     { id: 'report', label: 'Report Spese', icon: <TrendingDown size={16} /> },
     { id: 'estratti', label: 'Estratti Conto', icon: <FileText size={16} />, count: statements.length },
+    { id: 'mapping', label: 'Mapping Fornitori', icon: <Link2 size={16} />, count: mappingData?.totale_non_mappati },
   ];
 
   return (
@@ -423,6 +462,134 @@ export default function RiconciliazionePaypal() {
             </table>
             {statements.length === 0 && (
               <div style={{ padding: 40, textAlign: 'center', color: '#9ca3af' }}>Nessun estratto conto importato.</div>
+            )}
+          </div>
+        )}
+
+        {/* Mapping Fornitori Tab */}
+        {activeTab === 'mapping' && (
+          <div data-testid="mapping-fornitori-panel" style={{ background: 'white', borderRadius: 10, boxShadow: '0 1px 4px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+            <div style={{ padding: '14px 18px', background: '#f9fafb', borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 14 }}>
+                  🔗 Account PayPal da mappare ai Fornitori
+                  {mappingData?.totale_non_mappati !== undefined && (
+                    <span style={{ marginLeft: 10, padding: '2px 10px', borderRadius: 10, background: '#fef3c7', color: '#92400e', fontSize: 12 }}>
+                      {mappingData.totale_non_mappati} non mappati
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>
+                  Associa l'ID PayPal del beneficiario al fornitore corretto per abilitare la riconciliazione automatica delle fatture.
+                </div>
+              </div>
+              <button
+                data-testid="reload-mapping-btn"
+                onClick={loadMapping}
+                disabled={mappingLoading}
+                style={{ padding: '8px 14px', background: '#0070ba', color: 'white', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}
+              >
+                {mappingLoading ? '⏳ Caricamento...' : '🔄 Ricarica'}
+              </button>
+            </div>
+
+            {mappingLoading && !mappingData && (
+              <div style={{ padding: 40, textAlign: 'center', color: '#9ca3af' }}>
+                <RefreshCw style={{ width: 24, height: 24, animation: 'spin 1s linear infinite', color: '#0070ba' }} />
+              </div>
+            )}
+
+            {mappingData && mappingData.items.length === 0 && (
+              <div style={{ padding: 40, textAlign: 'center', color: '#22c55e', fontWeight: 600 }}>
+                ✅ Tutti gli account PayPal sono mappati!
+              </div>
+            )}
+
+            {mappingData && mappingData.items.map((item) => (
+              <div key={item.paypal_account_id}
+                data-testid={`mapping-row-${item.paypal_account_id}`}
+                style={{ padding: '14px 18px', borderBottom: '1px solid #f3f4f6', display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '260px 1fr 260px', gap: 14, alignItems: 'center' }}>
+                {/* Colonna 1: info account */}
+                <div>
+                  <div style={{ fontFamily: 'Courier New, monospace', fontSize: 12, fontWeight: 700, color: '#003087' }}>
+                    {item.paypal_account_id}
+                  </div>
+                  <div style={{ fontSize: 11, color: '#6b7280', marginTop: 3 }}>
+                    {item.n_tx} tx · {formatEuro(item.importo_totale)}
+                  </div>
+                  <div style={{ fontSize: 10, color: '#9ca3af' }}>
+                    Media: {formatEuro(item.importo_medio)} · Ultima: {formatDate(item.ultima_data)}
+                  </div>
+                  {item.subjects?.length > 0 && (
+                    <div style={{ fontSize: 11, color: '#6b7280', marginTop: 6, fontStyle: 'italic', maxHeight: 50, overflow: 'hidden' }}>
+                      "{item.subjects[0].substring(0, 80)}{item.subjects[0].length > 80 ? '...' : ''}"
+                    </div>
+                  )}
+                  {item.invoice_ids?.length > 0 && (
+                    <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 3 }}>
+                      Invoice: {item.invoice_ids.slice(0, 2).join(', ')}
+                    </div>
+                  )}
+                </div>
+
+                {/* Colonna 2: selezione fornitore con suggerimenti */}
+                <div>
+                  <select
+                    data-testid={`select-fornitore-${item.paypal_account_id}`}
+                    value={selectedForn[item.paypal_account_id] || ''}
+                    onChange={(e) => setSelectedForn({ ...selectedForn, [item.paypal_account_id]: e.target.value })}
+                    style={{ width: '100%', padding: '8px 10px', border: '1px solid #d1d5db', borderRadius: 6, fontSize: 13, background: 'white' }}
+                  >
+                    <option value="">— Seleziona fornitore —</option>
+                    {item.candidati?.length > 0 && (
+                      <optgroup label="💡 Candidati (per importo simile)">
+                        {item.candidati.map((c) => (
+                          <option key={c.fornitore_id} value={c.fornitore_id}>
+                            {c.nome} · P.IVA {c.piva} · {c.n_fatture_simili} fatture
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                  </select>
+                  {item.candidati?.length === 0 && (
+                    <div style={{ fontSize: 11, color: '#ef4444', marginTop: 4 }}>
+                      Nessun candidato automatico. Inserisci manualmente il fornitore via anagrafica.
+                    </div>
+                  )}
+                </div>
+
+                {/* Colonna 3: bottone collega */}
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    data-testid={`mappa-btn-${item.paypal_account_id}`}
+                    onClick={() => mappaFornitore(item.paypal_account_id, selectedForn[item.paypal_account_id])}
+                    disabled={!selectedForn[item.paypal_account_id]}
+                    style={{
+                      padding: '10px 16px',
+                      background: selectedForn[item.paypal_account_id]
+                        ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)'
+                        : '#e5e7eb',
+                      color: selectedForn[item.paypal_account_id] ? 'white' : '#9ca3af',
+                      border: 'none',
+                      borderRadius: 6,
+                      cursor: selectedForn[item.paypal_account_id] ? 'pointer' : 'not-allowed',
+                      fontWeight: 600,
+                      fontSize: 13,
+                      flex: 1,
+                    }}
+                  >
+                    🔗 Collega
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {mappingData && mappingData.items.length > 0 && (
+              <div style={{ padding: '14px 18px', background: '#f0f9ff', borderTop: '2px solid #0070ba', fontSize: 12, color: '#075985' }}>
+                💡 <strong>Suggerimento</strong>: una volta mappati i fornitori, esegui{' '}
+                <code style={{ padding: '1px 4px', background: '#dbeafe', borderRadius: 3 }}>POST /api/paypal-api/riconcilia</code>{' '}
+                per riconciliare tutte le fatture commerciali PayPal.
+              </div>
             )}
           </div>
         )}

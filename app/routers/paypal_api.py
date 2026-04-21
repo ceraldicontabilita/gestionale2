@@ -123,3 +123,165 @@ async def scarica_ricevuta_pdf(transaction_id: str):
         media_type="application/pdf",
         filename=f"ricevuta_paypal_{transaction_id}.pdf",
     )
+
+
+@router.get("/account-ids-non-mappati")
+async def account_ids_non_mappati():
+    """
+    Ritorna lista di paypal_account_id presenti in paypal_transactions
+    ma NON ancora mappati a un fornitore. Per ciascun account_id aggrega:
+    - n. transazioni, importo totale, ultima data, lista transaction_subject/invoice_id
+    - fornitori candidati (per importo vicino + nome simile)
+    """
+    from app.services.paypal_riconciliazione import normalize_string, match_fornitore
+
+    db = Database.get_db()
+
+    # Aggrega i paypal_account_id dalle transazioni
+    pipeline = [
+        {"$match": {"paypal_account_id": {"$exists": True, "$nin": [None, ""]}}},
+        {"$group": {
+            "_id": "$paypal_account_id",
+            "n_tx": {"$sum": 1},
+            "importo_totale": {"$sum": "$importo"},
+            "ultima_data": {"$max": "$initiation_date"},
+            "subjects": {"$addToSet": "$transaction_subject"},
+            "invoice_ids": {"$addToSet": "$invoice_id_fornitore"},
+            "is_pagopa": {"$max": "$is_pagopa"},
+        }},
+        {"$sort": {"ultima_data": -1}},
+    ]
+    aggregates = await db["paypal_transactions"].aggregate(pipeline).to_list(500)
+
+    # Fornitori già mappati
+    mapped_ids = set()
+    async for f in db["fornitori"].find(
+        {"paypal_account_id": {"$ne": None}},
+        {"_id": 0, "paypal_account_id": 1}
+    ):
+        if f.get("paypal_account_id"):
+            mapped_ids.add(f["paypal_account_id"])
+
+    # Per le transazioni PagoPA il fornitore è un ente, non serve mapping
+    risultati = []
+    for agg in aggregates:
+        account_id = agg["_id"]
+        if account_id in mapped_ids:
+            continue
+        if agg.get("is_pagopa"):
+            continue
+
+        importo_medio = abs(agg["importo_totale"] / max(agg["n_tx"], 1))
+        subjects = [s for s in agg.get("subjects") or [] if s]
+        invoice_ids = [i for i in agg.get("invoice_ids") or [] if i]
+
+        # Cerca candidati fornitori: match su importo medio (±30%) + nome tramite subject
+        query_text = " ".join(subjects[:3])
+        candidati = []
+
+        # Fornitori che hanno già fatture di importo simile negli ultimi 12 mesi
+        min_imp = importo_medio * 0.6
+        max_imp = importo_medio * 1.4
+        pipeline_forn = [
+            {"$match": {"total_amount": {"$gte": min_imp, "$lte": max_imp}}},
+            {"$group": {
+                "_id": "$supplier_vat",
+                "supplier_name": {"$first": "$supplier_name"},
+                "fornitore_denominazione": {"$first": "$fornitore_denominazione"},
+                "n_fatture": {"$sum": 1},
+            }},
+            {"$limit": 30},
+        ]
+        try:
+            forn_cursor = await db["invoices"].aggregate(pipeline_forn).to_list(30)
+        except Exception:
+            forn_cursor = []
+
+        seen_piva = set()
+        for fc in forn_cursor:
+            piva = fc.get("_id")
+            if not piva or piva in seen_piva:
+                continue
+            seen_piva.add(piva)
+            nome = fc.get("supplier_name") or fc.get("fornitore_denominazione") or ""
+            # Score di match per subject/invoice (soft)
+            score = match_fornitore(query_text or account_id, nome) if query_text else 0.0
+            # Lookup fornitore canonico
+            forn = await db["fornitori"].find_one(
+                {"$or": [{"piva": piva}, {"partita_iva": piva}, {"codice_fiscale": piva}]},
+                {"_id": 0, "id": 1, "nome": 1, "ragione_sociale": 1, "piva": 1}
+            )
+            if forn:
+                candidati.append({
+                    "fornitore_id": forn.get("id"),
+                    "nome": forn.get("ragione_sociale") or forn.get("nome") or nome,
+                    "piva": forn.get("piva") or piva,
+                    "n_fatture_simili": fc.get("n_fatture", 0),
+                    "score": round(score, 2),
+                })
+        # Ordina per score desc poi per n_fatture desc
+        candidati.sort(key=lambda c: (c["score"], c["n_fatture_simili"]), reverse=True)
+
+        risultati.append({
+            "paypal_account_id": account_id,
+            "n_tx": agg["n_tx"],
+            "importo_totale": round(abs(agg["importo_totale"]), 2),
+            "importo_medio": round(importo_medio, 2),
+            "ultima_data": agg["ultima_data"],
+            "subjects": subjects[:5],
+            "invoice_ids": invoice_ids[:5],
+            "candidati": candidati[:5],
+        })
+
+    return {
+        "totale_non_mappati": len(risultati),
+        "items": risultati,
+    }
+
+
+@router.post("/mappa-fornitore")
+async def mappa_fornitore(body: Dict[str, Any] = Body(...)):
+    """Associa un paypal_account_id a un fornitore esistente."""
+    paypal_account_id = (body.get("paypal_account_id") or "").strip()
+    fornitore_id = (body.get("fornitore_id") or "").strip()
+    if not paypal_account_id or not fornitore_id:
+        raise HTTPException(400, "paypal_account_id e fornitore_id richiesti")
+
+    db = Database.get_db()
+    forn = await db["fornitori"].find_one({"id": fornitore_id}, {"_id": 0, "id": 1, "nome": 1, "ragione_sociale": 1})
+    if not forn:
+        raise HTTPException(404, "Fornitore non trovato")
+
+    # Verifica che l'account_id non sia già mappato a un altro fornitore
+    already = await db["fornitori"].find_one(
+        {"paypal_account_id": paypal_account_id, "id": {"$ne": fornitore_id}},
+        {"_id": 0, "id": 1, "nome": 1, "ragione_sociale": 1}
+    )
+    if already:
+        raise HTTPException(409, f"Account già mappato a: {already.get('ragione_sociale') or already.get('nome')}")
+
+    res = await db["fornitori"].update_one(
+        {"id": fornitore_id},
+        {"$set": {"paypal_account_id": paypal_account_id, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    return {
+        "success": True,
+        "modified": res.modified_count,
+        "fornitore": forn.get("ragione_sociale") or forn.get("nome"),
+        "paypal_account_id": paypal_account_id,
+    }
+
+
+@router.post("/smappa-fornitore")
+async def smappa_fornitore(body: Dict[str, Any] = Body(...)):
+    """Rimuove mapping paypal_account_id da un fornitore (per correzioni)."""
+    fornitore_id = (body.get("fornitore_id") or "").strip()
+    if not fornitore_id:
+        raise HTTPException(400, "fornitore_id richiesto")
+    db = Database.get_db()
+    res = await db["fornitori"].update_one(
+        {"id": fornitore_id},
+        {"$unset": {"paypal_account_id": ""},
+         "$set": {"updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    return {"success": True, "modified": res.modified_count}
