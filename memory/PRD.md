@@ -35,6 +35,19 @@ Funzionante in produzione: tutte le aree core (fatture, prima nota, fornitori, H
 noleggio, magazzino, assegni, riconciliazione, contabilità, strumenti, email).
 
 Attività recenti (Apr 2026):
+- **[FIX P0 corrispettivi – Apr 2026]** Riscritta l'ingestion dei Corrispettivi
+  XML con anti-duplicato rigoroso a 3 livelli (corrispettivo_key, data+matricola,
+  data+totale±0.01) e propagazione automatica in Prima Nota:
+  quota contanti → `prima_nota_cassa` (source `corrispettivo_import`),
+  quota POS → `prima_nota_banca` (source `corrispettivo_pos`).
+  Helper centralizzato in `app/routers/invoices/corrispettivi_helpers.py`,
+  usato da `/api/documenti/upload-auto`, `/api/corrispettivi/upload-xml`,
+  `upload-xml-bulk`, `upload-zip`. Nuovi endpoint di manutenzione:
+  `POST /api/corrispettivi/rebuild-prima-nota?anno=YYYY` e
+  `POST /api/corrispettivi/cleanup-duplicati-forte?anno=YYYY`.
+  Eseguito rebuild 2026: 50 corrispettivi → 50 mov. cassa + 50 mov. banca POS,
+  quadratura contabile verificata (€50.222,60 cassa + €83.383,82 POS = €133.606,42).
+  Test backend 7/7 passati.
 - Refactoring grafico completo: design system unificato, palette navy + oro,
   layout full-frame, tabs uniformate, mobile-responsive (no scroll orizzontale).
 - Rimosso Tailwind dalla build (PostCSS senza plugin).
@@ -44,15 +57,24 @@ Attività recenti (Apr 2026):
 ## Backlog
 
 P1:
+- Auto-matcher Assegni (`POST /api/assegni/auto-match` + UI "🤖 Auto-collega",
+  logica 4 livelli già documentata in `/app/memoria/LOGICA_OPERATIVA.md`)
+- Tab contabili vuoti: Mutui, Budget, Chiusura Esercizio, Finanziaria, Cespiti
+- Associazione automatica documenti Gmail (F24, cedolini, verbali)
 - Prima Nota automatica senza conferma per match E/C ≥90% confidenza
 - Endpoint `/scarica-posta` per verbali via PEC (ancora stub)
 
 P2:
+- Controllo Mensile UI: aggiungere colonne POS banca + differenza esplicite
 - Scheda fornitore completa (storico + scadenze + pattern)
 - Fascicolo dipendente (cedolini + TFR + presenze + bonifici)
 - Merge `suppliers` (15 legacy) in `fornitori` (245)
+- Split `/app/app/routers/invoices/corrispettivi.py` (>1400 righe) per famiglie
 
 P3:
+- Pulsante auto-conferma fatture in pagina Fornitori
+- Indicatore fornitori attivi in Magazzino
+- PWA (manifest + service worker)
 - TFR automatico da cedolino
 - Controllo IVA mensile automatico + F24 suggerito
 - Notifiche WhatsApp (Meta token già configurato)
