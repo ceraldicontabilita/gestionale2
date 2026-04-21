@@ -35,6 +35,34 @@ Funzionante in produzione: tutte le aree core (fatture, prima nota, fornitori, H
 noleggio, magazzino, assegni, riconciliazione, contabilità, strumenti, email).
 
 Attività recenti (Apr 2026):
+- **[FEAT P2/P3 – Apr 2026]** Pacchetto multi-feature:
+  • **Auto-conferma fatture**: bottone "✅ Auto-conferma fatture" in `/fornitori`
+    che chiama `POST /api/fatture-ricevute/backfill-autoroute` — scorre tutte
+    le fatture non confermate e, se il fornitore ha `metodo_pagamento`
+    definito (contanti/cassa/bonifico/banca/MP0*/carta), le registra
+    automaticamente in prima_nota_cassa o prima_nota_banca.
+    Primo lancio reale: 809 analizzate, 22 skip assegno (OK), 609 skip
+    metodo non definito (fornitori senza predefinito), 170 fornitori mancanti.
+  • **Notifiche WhatsApp (Meta Cloud API v21.0)**: nuovo servizio
+    `app/services/whatsapp_notifications.py` + endpoint
+    `GET /api/whatsapp/status`, `POST /api/whatsapp/send`,
+    `POST /api/whatsapp/send-test`. Configurato con WHATSAPP_API_TOKEN,
+    WHATSAPP_PHONE_NUMBER_ID, WHATSAPP_RECIPIENT_1/2 dal .env.
+    Fallback automatico a template `hello_world` se finestra 24h scaduta.
+    ⚠️ Nota: il token Meta attuale è scaduto il 12/04/2026 — va rigenerato
+    dalla console Meta (scegliere System User access token per evitare
+    scadenze).
+  • **PWA**: installabile da Chrome/Safari con manifest.webmanifest
+    (3 icone, 3 shortcuts — Dashboard, Prima Nota, Fatture), service-worker
+    con cache prudente (niente cache su /api/*, stale-while-revalidate su
+    asset statici, navigate fallback a /index.html per routing SPA).
+    Icon install app + "Aggiungi a schermata Home" ora disponibili su mobile.
+  • **Controllo Mensile**: già contiene tutte le colonne richieste
+    (POS RT / POS Reale / 🏦 POS Banca / Diff. / Corr. Auto / Corr. Man. /
+    Diff. / Versam. / Saldo) — nessun intervento necessario.
+  • **Split corrispettivi.py**: rimandato a sessione dedicata con test di
+    regressione completi (refactoring estetico senza valore utente diretto,
+    rischio alto su endpoint in produzione).
 - **[FEAT P1 auto-matcher Assegni – Apr 2026]** Implementato l'auto-matcher
   Assegni↔Fatture a 4 livelli (L1 1↔1, L2 N uguali→1, L3 N diversi→1, L4 1→N)
   con tolleranza rigida ±0,005€ e vincolo P.IVA fornitore.

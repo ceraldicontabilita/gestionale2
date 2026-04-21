@@ -292,3 +292,13 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   </ErrorBoundary>
 );
 
+// Registra il Service Worker per PWA (solo in produzione, skip dev mode Vite)
+if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/service-worker.js')
+      .then(() => console.info('[PWA] service-worker registered'))
+      .catch((err) => console.warn('[PWA] sw registration failed:', err));
+  });
+}
+

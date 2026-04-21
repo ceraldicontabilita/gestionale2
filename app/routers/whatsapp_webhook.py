@@ -65,3 +65,55 @@ async def receive_webhook(request: Request):
     
     # Meta richiede sempre 200 OK
     return {"status": "ok"}
+
+
+
+# ============================================================
+# INVIO MESSAGGI WHATSAPP (Meta Cloud API)
+# ============================================================
+
+@router.get("/status")
+async def whatsapp_status():
+    """Stato configurazione WhatsApp Cloud API (senza esporre il token)."""
+    from app.services.whatsapp_notifications import get_whatsapp_config_status
+    return get_whatsapp_config_status()
+
+
+@router.post("/send")
+async def whatsapp_send(payload: dict):
+    """
+    Invia un messaggio WhatsApp.
+
+    Body JSON:
+      - text (str, obbligatorio): testo del messaggio
+      - to (str, opzionale): numero destinatario (formato intl senza '+')
+                             Se omesso, invia a WHATSAPP_RECIPIENT_1.
+      - broadcast (bool, opzionale): se True, invia a tutti i RECIPIENT_*
+                                     configurati nel .env.
+    """
+    from app.services.whatsapp_notifications import (
+        send_whatsapp_message, send_whatsapp_to_all
+    )
+
+    text = (payload.get("text") or "").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Campo 'text' obbligatorio")
+
+    if payload.get("broadcast"):
+        return await send_whatsapp_to_all(text)
+
+    to = payload.get("to")
+    return await send_whatsapp_message(text, to=to)
+
+
+@router.post("/send-test")
+async def whatsapp_send_test():
+    """Invia un messaggio di test al primo destinatario configurato."""
+    from datetime import datetime
+    from app.services.whatsapp_notifications import send_whatsapp_message
+    msg = (
+        f"✅ Test notifica da Ceraldi ERP\n"
+        f"Ora: {datetime.now().strftime('%d/%m/%Y %H:%M')}\n"
+        f"Se ricevi questo messaggio, l'integrazione WhatsApp è attiva."
+    )
+    return await send_whatsapp_message(msg)
