@@ -35,6 +35,20 @@ Funzionante in produzione: tutte le aree core (fatture, prima nota, fornitori, H
 noleggio, magazzino, assegni, riconciliazione, contabilità, strumenti, email).
 
 Attività recenti (Apr 2026):
+- **[FEAT P1 auto-matcher Assegni – Apr 2026]** Implementato l'auto-matcher
+  Assegni↔Fatture a 4 livelli (L1 1↔1, L2 N uguali→1, L3 N diversi→1, L4 1→N)
+  con tolleranza rigida ±0,005€ e vincolo P.IVA fornitore.
+  Orchestratore in `app/routers/bank/assegni_auto_match.py`, endpoint
+  `POST /api/assegni/auto-match?dry_run=true|false`.
+  Include arricchimento automatico P.IVA (dai nomi in `beneficiario` usando
+  tabella `fornitori`) e dedup intelligente delle fatture duplicate nel DB.
+  Genera movimenti `prima_nota_banca` con source=`assegno_auto_match` (idempotente).
+  Aggiorna `invoices.importo_pagato`, `payment_status`, `assegni_collegati[]`.
+  Frontend: 2 nuovi bottoni su `/riconciliazione/assegni`:
+  `[data-testid=auto-match-btn]` (🤖 Auto-collega) + `[data-testid=auto-match-preview-btn]` (👁 Anteprima).
+  Risultato su produzione: 220 assegni reali → 185 arricchiti P.IVA automaticamente,
+  **44 match L1 eseguiti** + 44 movimenti banca + 44 fatture aggiornate, 9 ambigui genuini,
+  idempotenza verificata. Test 100% (backend + frontend).
 - **[FIX P0 corrispettivi – Apr 2026]** Riscritta l'ingestion dei Corrispettivi
   XML con anti-duplicato rigoroso a 3 livelli (corrispettivo_key, data+matricola,
   data+totale±0.01) e propagazione automatica in Prima Nota:
@@ -57,10 +71,9 @@ Attività recenti (Apr 2026):
 ## Backlog
 
 P1:
-- Auto-matcher Assegni (`POST /api/assegni/auto-match` + UI "🤖 Auto-collega",
-  logica 4 livelli già documentata in `/app/memoria/LOGICA_OPERATIVA.md`)
 - Tab contabili vuoti: Mutui, Budget, Chiusura Esercizio, Finanziaria, Cespiti
 - Associazione automatica documenti Gmail (F24, cedolini, verbali)
+- Risoluzione ambigui auto-match: UI per confermare manualmente gli assegni con più candidati (9 casi attualmente)
 - Prima Nota automatica senza conferma per match E/C ≥90% confidenza
 - Endpoint `/scarica-posta` per verbali via PEC (ancora stub)
 

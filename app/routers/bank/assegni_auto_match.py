@@ -519,12 +519,11 @@ async def _aggiorna_fattura_bulk(db, fattura_id: str, quota_tot: float, assegni:
 async def _crea_mov_banca(db, assegno: Dict[str, Any], quota: float, fattura_id: str) -> int:
     """Crea un movimento in prima_nota_banca tipo 'uscita_assegno'. Idempotente.
     Ritorna 1 se creato, 0 se già presente."""
-    # idempotenza: stesso assegno_id + fattura_id
+    # idempotenza: stesso assegno_id + fattura_id + source auto-match
     existing = await db["prima_nota_banca"].find_one({
         "assegno_id": assegno.get("id"),
         "invoice_id": fattura_id,
-        "tipo": "uscita",
-        "categoria": "Assegni",
+        "source": "assegno_auto_match",
     })
     if existing:
         return 0
