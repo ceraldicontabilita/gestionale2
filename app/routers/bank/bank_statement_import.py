@@ -784,9 +784,45 @@ async def import_bank_statement(
         })
         
         # Salva nella collection estratto_conto per il confronto
+        # Normalizza data in formato ISO per l'anti-duplicato
+        data_iso = movement["data"] if movement.get("data", "").startswith("20") and "-" in movement["data"] else None
+        if not data_iso and movement.get("data") and "/" in movement["data"]:
+            parts = movement["data"].split("/")
+            if len(parts) == 3:
+                data_iso = f"{parts[2]}-{parts[1].zfill(2)}-{parts[0].zfill(2)}"
+
+        # Formato italiano per data_contabile
+        if data_iso:
+            y, m, d = data_iso.split("-")
+            data_it = f"{d}/{m}/{y}"
+        else:
+            data_it = movement.get("data", "")
+
+        # ANTI-DUPLICATO: non reinserire se (data+importo+descrizione) già presente
+        dup_query = {
+            "descrizione": movement["descrizione"],
+            "importo": {"$gte": float(movement["importo"]) - 0.005, "$lte": float(movement["importo"]) + 0.005},
+            "tipo": movement["tipo"],
+            "$or": [
+                {"data": data_iso} if data_iso else {"data": movement["data"]},
+                {"data_contabile": data_it},
+            ],
+        }
+        existing = await db[COLLECTION_ESTRATTO_CONTO].find_one(dup_query, {"_id": 1})
+        if existing:
+            results["not_found_details"].append({
+                "data": movement["data"],
+                "descrizione": movement["descrizione"][:50],
+                "importo": movement["importo"],
+                "tipo": movement["tipo"],
+                "skipped": "duplicato"
+            })
+            continue
+
         estratto_doc = {
             "id": movement["id"],
-            "data": movement["data"],
+            "data": data_iso or movement["data"],
+            "data_contabile": data_it,
             "descrizione": movement["descrizione"],
             "importo": movement["importo"],
             "tipo": movement["tipo"],
@@ -856,6 +892,92 @@ async def manual_reconcile(
         "prima_nota_id": prima_nota_movimento_id,
         "estratto_conto_id": estratto_conto_movimento_id
     }
+
+
+@router.post("/cleanup-duplicati")
+@handle_errors
+async def cleanup_duplicati_estratto_conto() -> Dict[str, Any]:
+    """
+    Pulisce i duplicati nell'estratto conto, creatisi in passato per import
+    multipli con date in formati diversi (ISO vs italiano).
+
+    Criterio: (data normalizzata ISO, importo ±0.01, descrizione[:60], tipo).
+    Tiene il record con più campi data valorizzati; elimina gli altri.
+    """
+    from collections import defaultdict
+    import re as _re
+    db = Database.get_db()
+    coll = db[COLLECTION_ESTRATTO_CONTO]
+
+    def _norm_date(iso, it):
+        if iso and _re.match(r"^\d{4}-\d{2}-\d{2}", str(iso)):
+            return str(iso)[:10]
+        if it and "/" in str(it):
+            parts = str(it).split("/")
+            if len(parts) == 3:
+                return f"{parts[2].zfill(4)}-{parts[1].zfill(2)}-{parts[0].zfill(2)}"
+        return None
+
+    records = await coll.find({}, {
+        "_id": 1, "data": 1, "data_contabile": 1, "data_valuta": 1,
+        "importo": 1, "descrizione": 1, "tipo": 1,
+    }).to_list(100000)
+
+    before = len(records)
+    groups = defaultdict(list)
+    for r in records:
+        iso = _norm_date(r.get("data"), r.get("data_contabile"))
+        if not iso:
+            continue
+        key = (iso, round(float(r.get("importo") or 0), 2),
+               (r.get("descrizione") or "")[:60].strip(), r.get("tipo") or "")
+        groups[key].append(r)
+
+    dup_groups = [g for g in groups.values() if len(g) > 1]
+    to_delete = []
+    from pymongo import UpdateOne
+    update_ops = []
+    for grp in dup_groups:
+        # preferisci quello con più campi data
+        grp_sorted = sorted(grp, key=lambda r: -(bool(r.get("data_contabile")) + bool(r.get("data"))))
+        keeper = grp_sorted[0]
+        iso = _norm_date(keeper.get("data"), keeper.get("data_contabile"))
+        it_fmt = None
+        for r in grp:
+            if r.get("data_contabile"):
+                it_fmt = r["data_contabile"]; break
+            if r.get("data_valuta"):
+                it_fmt = r["data_valuta"]; break
+        if not it_fmt and iso:
+            y, m, d = iso.split("-")
+            it_fmt = f"{d}/{m}/{y}"
+        fields = {}
+        if iso and keeper.get("data") != iso:
+            fields["data"] = iso
+        if it_fmt and not keeper.get("data_contabile"):
+            fields["data_contabile"] = it_fmt
+        if fields:
+            update_ops.append(UpdateOne({"_id": keeper["_id"]}, {"$set": fields}))
+        to_delete.extend(r["_id"] for r in grp_sorted[1:])
+
+    if update_ops:
+        await coll.bulk_write(update_ops, ordered=False)
+
+    deleted = 0
+    for i in range(0, len(to_delete), 500):
+        r = await coll.delete_many({"_id": {"$in": to_delete[i:i+500]}})
+        deleted += r.deleted_count
+
+    after = await coll.count_documents({})
+    return {
+        "success": True,
+        "records_prima": before,
+        "records_dopo": after,
+        "gruppi_duplicati": len(dup_groups),
+        "eliminati": deleted,
+        "keepers_aggiornati": len(update_ops),
+    }
+
 
 
 @router.get("/formati-supportati")
