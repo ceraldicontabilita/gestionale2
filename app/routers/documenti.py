@@ -2600,9 +2600,13 @@ async def upload_documento_automatico(
     
     try:
         if tipo_rilevato == 'corrispettivo':
-            # Import corrispettivo telematico COR10
+            # Import corrispettivo telematico COR10 con anti-duplicato rigoroso
+            # + propagazione automatica a Prima Nota Cassa/Banca
+            from app.routers.invoices.corrispettivi_helpers import (
+                ingest_corrispettivo_parsed,
+            )
             from app.parsers.corrispettivi_parser import parse_corrispettivo_xml
-            
+
             xml_content = None
             for enc in ['utf-8', 'utf-8-sig', 'latin-1', 'iso-8859-1']:
                 try:
@@ -2610,7 +2614,7 @@ async def upload_documento_automatico(
                     break
                 except (UnicodeDecodeError, LookupError):
                     continue
-            
+
             if not xml_content:
                 result["success"] = False
                 result["message"] = "Impossibile decodificare il file corrispettivo"
@@ -2620,47 +2624,23 @@ async def upload_documento_automatico(
                     result["success"] = False
                     result["message"] = f"Errore parsing corrispettivo: {parsed['error']}"
                 else:
-                    corrispettivo_key = parsed.get("corrispettivo_key", "")
-                    corrispettivo_data = {
-                        "corrispettivo_key": corrispettivo_key,
-                        "data": parsed.get("data", ""),
-                        "matricola_rt": parsed.get("matricola_rt", ""),
-                        "numero_documento": parsed.get("numero_documento", ""),
-                        "partita_iva": parsed.get("partita_iva", ""),
-                        "totale": float(parsed.get("totale", 0) or 0),
-                        "pagato_contanti": float(parsed.get("pagato_contanti", 0) or 0),
-                        "pagato_elettronico": float(parsed.get("pagato_elettronico", 0) or 0),
-                        "totale_imponibile": float(parsed.get("totale_imponibile", 0) or 0),
-                        "totale_iva": float(parsed.get("totale_iva", 0) or 0),
-                        "pagato_non_riscosso": float(parsed.get("pagato_non_riscosso", 0) or 0),
-                        "totale_ammontare_annulli": float(parsed.get("totale_ammontare_annulli", 0) or 0),
-                        "numero_documenti": int(parsed.get("numero_documenti", 0) or 0),
-                        "riepilogo_iva": parsed.get("riepilogo_iva", []),
-                        "status": "imported",
-                        "source": "xml",
-                        "filename": filename,
-                        "anno": int(parsed.get("data", "")[:4]) if parsed.get("data") else datetime.now().year,
-                        "updated_at": datetime.now(timezone.utc).isoformat()
-                    }
-                    # Upsert per corrispettivo_key o data
-                    existing = None
-                    if corrispettivo_key:
-                        existing = await db["corrispettivi"].find_one({"corrispettivo_key": corrispettivo_key})
-                    if existing:
-                        await db["corrispettivi"].update_one(
-                            {"corrispettivo_key": corrispettivo_key},
-                            {"$set": corrispettivo_data}
-                        )
-                        result["message"] = f"Corrispettivo aggiornato: {corrispettivo_data.get('data', 'N/A')}"
-                    else:
-                        import uuid
-                        corrispettivo_data["id"] = str(uuid.uuid4())
-                        corrispettivo_data["created_at"] = datetime.now(timezone.utc).isoformat()
-                        await db["corrispettivi"].insert_one(corrispettivo_data)
-                        del corrispettivo_data["_id"]
-                        result["message"] = f"Corrispettivo importato: {corrispettivo_data.get('data', 'N/A')} — totale {corrispettivo_data.get('totale', 0):.2f}€"
-                    result["imported"] = 1
+                    ingest = await ingest_corrispettivo_parsed(db, parsed, filename=filename, source="xml")
+                    result["action"] = ingest["action"]
+                    result["corrispettivo_id"] = ingest.get("corrispettivo_id")
+                    result["prima_nota_cassa_id"] = ingest.get("prima_nota_cassa_id")
+                    result["prima_nota_banca_id"] = ingest.get("prima_nota_banca_id")
                     result["tipo_documento"] = "corrispettivo"
+                    data_str = ingest.get("data", "N/A")
+                    tot_str = f"{ingest.get('totale', 0):.2f}"
+                    if ingest["action"] == "duplicate":
+                        result["message"] = f"Corrispettivo duplicato ignorato: {data_str} — totale {tot_str}€"
+                        result["imported"] = 0
+                    elif ingest["action"] == "updated":
+                        result["message"] = f"Corrispettivo aggiornato: {data_str} — totale {tot_str}€"
+                        result["imported"] = 1
+                    else:
+                        result["message"] = f"Corrispettivo importato: {data_str} — totale {tot_str}€ (Prima Nota aggiornata)"
+                        result["imported"] = 1
                     
         elif tipo_rilevato == 'fattura':
             # Import fattura XML

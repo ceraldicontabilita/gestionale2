@@ -174,188 +174,79 @@ async def upload_corrispettivo_xml(
     file: UploadFile = File(...),
     force_update: bool = Query(True, description="Se True, sovrascrive corrispettivo esistente")
 ) -> Dict[str, Any]:
-    """Upload singolo corrispettivo XML. Di default aggiorna i dati esistenti."""
+    """Upload singolo corrispettivo XML.
+    Anti-duplicato robusto + propagazione automatica a Prima Nota Cassa/Banca.
+    """
     if not file.filename.lower().endswith('.xml'):
         raise HTTPException(status_code=400, detail="Il file deve essere XML")
-    
-    try:
-        content = await file.read()
-        xml_content = None
-        for enc in ['utf-8', 'utf-8-sig', 'latin-1', 'iso-8859-1']:
-            try:
-                xml_content = content.decode(enc)
-                break
-            except (UnicodeDecodeError, LookupError):
-                continue
-        
-        if not xml_content:
-            raise HTTPException(status_code=400, detail="Impossibile decodificare")
-        
-        parsed = parse_corrispettivo_xml(xml_content)
-        if parsed.get("error"):
-            raise HTTPException(status_code=400, detail=parsed["error"])
-        
-        db = Database.get_db()
-        
-        corrispettivo_key = parsed.get("corrispettivo_key", "")
-        data_corrispettivo = parsed.get("data", "")
-        
-        # LOGICA SOVRASCRIZIONE:
-        # 1. Cerca prima per corrispettivo_key esatto (stesso registratore)
-        # 2. Se non trova, cerca per DATA (per sovrascrivere dati manuali provvisori)
-        existing = None
-        existing_manuale = None
-        
-        if corrispettivo_key:
-            existing = await db["corrispettivi"].find_one({
-                "corrispettivo_key": corrispettivo_key,
-                "status": {"$nin": ["deleted", "archived"]}
-            })
-        
-        # Se non trovato per key, cerca record MANUALE per stessa DATA da sovrascrivere
-        if not existing and data_corrispettivo:
-            existing_manuale = await db["corrispettivi"].find_one({
-                "data": data_corrispettivo,
-                "source": "manual",  # Solo record manuali
-                "status": {"$nin": ["deleted", "archived"]}
-            })
-        
-        corrispettivo_data = {
-            "corrispettivo_key": corrispettivo_key,
-            "data": data_corrispettivo,
-            "matricola_rt": parsed.get("matricola_rt", ""),
-            "numero_documento": parsed.get("numero_documento", ""),
-            "partita_iva": parsed.get("partita_iva", ""),
-            "totale": float(parsed.get("totale", 0) or 0),
-            "pagato_contanti": float(parsed.get("pagato_contanti", 0) or 0),
-            "pagato_elettronico": float(parsed.get("pagato_elettronico", 0) or 0),
-            "totale_imponibile": float(parsed.get("totale_imponibile", 0) or 0),
-            "totale_iva": float(parsed.get("totale_iva", 0) or 0),
-            "pagato_non_riscosso": float(parsed.get("pagato_non_riscosso", 0) or 0),
-            "totale_ammontare_annulli": float(parsed.get("totale_ammontare_annulli", 0) or 0),
-            "numero_documenti": int(parsed.get("numero_documenti", 0) or 0),
-            "riepilogo_iva": parsed.get("riepilogo_iva", []),
-            "status": "imported",
-            "source": "xml",  # Marca come proveniente da XML
-            "filename": file.filename,
-            "updated_at": datetime.now(timezone.utc).isoformat()
-        }
-        
-        action = "created"
-        corrispettivo_id = None
-        movimento_manuale_eliminato = False
-        
-        if existing:
-            # Stesso corrispettivo (stessa matricola) - AGGIORNA con dati XML
-            await db["corrispettivi"].update_one(
-                {"corrispettivo_key": corrispettivo_key},
-                {"$set": corrispettivo_data}
-            )
-            corrispettivo_id = existing.get("id")
-            action = "updated"
-            
-        elif existing_manuale:
-            # Trovato record MANUALE per stessa data - SOVRASCRIVILO con XML
-            corrispettivo_id = existing_manuale.get("id")
-            corrispettivo_data["id"] = corrispettivo_id
-            corrispettivo_data["sovrascritto_manuale"] = True
-            corrispettivo_data["data_sovrascrizione"] = datetime.now(timezone.utc).isoformat()
-            
-            await db["corrispettivi"].update_one(
-                {"id": corrispettivo_id},
-                {"$set": corrispettivo_data}
-            )
-            action = "replaced_manual"
-            
-            # ELIMINA anche il movimento manuale dalla Prima Nota Cassa
-            # (il nuovo movimento XML verrà creato dopo)
-            mov_manuale = await db["prima_nota_cassa"].find_one({
-                "data": data_corrispettivo,
-                "categoria": "Corrispettivi",
-                "source": {"$in": ["manual_entry", "manual", "corrispettivo_manuale"]}
-            })
-            if mov_manuale:
-                await db["prima_nota_cassa"].delete_one({"_id": mov_manuale["_id"]})
-                movimento_manuale_eliminato = True
-                logger.info(f"Eliminato movimento manuale Prima Nota per data {data_corrispettivo}")
-            
-            # Elimina anche eventuali POS manuali per la stessa data
-            pos_manuale = await db["prima_nota_cassa"].find_one({
-                "data": data_corrispettivo,
-                "categoria": "POS",
-                "source": {"$in": ["manual_pos", "manual_entry", "manual"]}
-            })
-            if pos_manuale:
-                await db["prima_nota_cassa"].delete_one({"_id": pos_manuale["_id"]})
-                logger.info(f"Eliminato POS manuale Prima Nota per data {data_corrispettivo}")
-            
-        else:
-            # INSERT - Nuovo record
-            corrispettivo_data["id"] = str(uuid.uuid4())
-            corrispettivo_data["created_at"] = datetime.now(timezone.utc).isoformat()
-            await db["corrispettivi"].insert_one(corrispettivo_data.copy())
-            corrispettivo_id = corrispettivo_data["id"]
-            action = "created"
-        
-        corrispettivo_data.pop("_id", None)
-        corrispettivo_data["id"] = corrispettivo_id
-        
-        # Propaga corrispettivo a Prima Nota Cassa usando DataPropagationService
-        # Per nuovi E per quelli che hanno sostituito record manuali
-        propagation_result = {}
-        if action in ["created", "replaced_manual"]:
-            from app.services.data_propagation import get_propagation_service
-            propagation_service = get_propagation_service()
-            propagation_result = await propagation_service.propagate_corrispettivo_to_prima_nota(corrispettivo_data)
-            
-            if propagation_result.get("movement_created"):
-                await db["corrispettivi"].update_one(
-                    {"id": corrispettivo_id},
-                    {"$set": {"prima_nota_id": propagation_result.get("movement_id")}}
-                )
-        
-        action_msg = {
-            "created": "importato",
-            "updated": "aggiornato",
-            "replaced_manual": "sostituito dato manuale"
-        }.get(action, action)
-        
-        return {
-            "success": True,
-            "action": action,
-            "message": f"Corrispettivo del {parsed.get('data')} {action_msg}",
-            "corrispettivo": corrispettivo_data,
-            "prima_nota_id": propagation_result.get("movement_id"),
-            "movimento_manuale_eliminato": movimento_manuale_eliminato if 'movimento_manuale_eliminato' in dir() else False
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Errore: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+
+    content = await file.read()
+    xml_content = None
+    for enc in ['utf-8', 'utf-8-sig', 'latin-1', 'iso-8859-1']:
+        try:
+            xml_content = content.decode(enc)
+            break
+        except (UnicodeDecodeError, LookupError):
+            continue
+    if not xml_content:
+        raise HTTPException(status_code=400, detail="Impossibile decodificare")
+
+    parsed = parse_corrispettivo_xml(xml_content)
+    if parsed.get("error"):
+        raise HTTPException(status_code=400, detail=parsed["error"])
+
+    from app.routers.invoices.corrispettivi_helpers import ingest_corrispettivo_parsed
+    db = Database.get_db()
+    ingest = await ingest_corrispettivo_parsed(
+        db, parsed, filename=file.filename, source="xml",
+        update_if_exists=force_update,
+    )
+
+    action_msg = {
+        "created": "importato",
+        "updated": "aggiornato",
+        "duplicate": "già presente (ignorato)",
+    }.get(ingest["action"], ingest["action"])
+
+    return {
+        "success": True,
+        "action": ingest["action"],
+        "message": f"Corrispettivo del {ingest.get('data','?')} {action_msg}",
+        "corrispettivo_id": ingest.get("corrispettivo_id"),
+        "prima_nota_cassa_id": ingest.get("prima_nota_cassa_id"),
+        "prima_nota_banca_id": ingest.get("prima_nota_banca_id"),
+        "totale": ingest.get("totale"),
+    }
 
 
 @router.post("/upload-xml-bulk")
 @handle_errors
 async def upload_corrispettivi_xml_bulk(
     files: List[UploadFile] = File(...),
-    force_update: bool = Query(True, description="Se True, aggiorna corrispettivi esistenti invece di saltarli")
+    force_update: bool = Query(False, description="Se True, aggiorna corrispettivi esistenti invece di segnarli come duplicati")
 ) -> Dict[str, Any]:
-    """Upload massivo corrispettivi XML. Di default aggiorna i dati esistenti."""
+    """Upload massivo corrispettivi XML.
+    Anti-duplicato rigoroso + propagazione automatica a Prima Nota.
+    """
+    from app.routers.invoices.corrispettivi_helpers import ingest_corrispettivo_parsed
+
     if not files:
         raise HTTPException(status_code=400, detail="Nessun file")
-    
-    results = {"success": [], "errors": [], "duplicates": [], "updated": [], "total": len(files), "imported": 0, "failed": 0, "skipped": 0, "updated_count": 0}
+
     db = Database.get_db()
-    
+    results = {
+        "success": [], "errors": [], "duplicates": [], "updated": [],
+        "total": len(files), "imported": 0, "failed": 0,
+        "skipped": 0, "updated_count": 0,
+    }
+
     for file in files:
         try:
             if not file.filename.lower().endswith('.xml'):
                 results["errors"].append({"filename": file.filename, "error": "Non XML"})
                 results["failed"] += 1
                 continue
-            
+
             content = await file.read()
             xml_content = None
             for enc in ['utf-8', 'utf-8-sig', 'latin-1']:
@@ -364,99 +255,36 @@ async def upload_corrispettivi_xml_bulk(
                     break
                 except (UnicodeDecodeError, LookupError):
                     continue
-            
             if not xml_content:
                 results["errors"].append({"filename": file.filename, "error": "Decodifica fallita"})
                 results["failed"] += 1
                 continue
-            
+
             parsed = parse_corrispettivo_xml(xml_content)
             if parsed.get("error"):
                 results["errors"].append({"filename": file.filename, "error": parsed["error"]})
                 results["failed"] += 1
                 continue
-            
-            key = parsed.get("corrispettivo_key", "")
-            existing = await db["corrispettivi"].find_one({"corrispettivo_key": key}) if key else None
-            
-            if existing:
-                if force_update:
-                    # UPSERT - Aggiorna esistente
-                    update_data = {
-                        "data": parsed.get("data", ""),
-                        "matricola_rt": parsed.get("matricola_rt", ""),
-                        "partita_iva": parsed.get("partita_iva", ""),
-                        "totale": float(parsed.get("totale", 0) or 0),
-                        "pagato_contanti": float(parsed.get("pagato_contanti", 0) or 0),
-                        "pagato_elettronico": float(parsed.get("pagato_elettronico", 0) or 0),
-                        "totale_iva": float(parsed.get("totale_iva", 0) or 0),
-                        "pagato_non_riscosso": float(parsed.get("pagato_non_riscosso", 0) or 0),
-                        "totale_ammontare_annulli": float(parsed.get("totale_ammontare_annulli", 0) or 0),
-                        "numero_documenti": int(parsed.get("numero_documenti", 0) or 0),
-                        "riepilogo_iva": parsed.get("riepilogo_iva", []),
-                        "filename": file.filename,
-                        "updated_at": datetime.now(timezone.utc).isoformat()
-                    }
-                    await db["corrispettivi"].update_one(
-                        {"corrispettivo_key": key},
-                        {"$set": update_data}
-                    )
-                    results["updated"].append({"filename": file.filename, "data": parsed.get("data")})
-                    results["updated_count"] += 1
-                else:
-                    results["duplicates"].append({"filename": file.filename, "data": parsed.get("data")})
-                    results["skipped"] += 1
-                continue
-            
-            # INSERT - Nuovo corrispettivo
-            corr = {
-                "id": str(uuid.uuid4()),
-                "corrispettivo_key": key,
-                "data": parsed.get("data", ""),
-                "matricola_rt": parsed.get("matricola_rt", ""),
-                "partita_iva": parsed.get("partita_iva", ""),
-                "totale": float(parsed.get("totale", 0) or 0),
-                "pagato_contanti": float(parsed.get("pagato_contanti", 0) or 0),
-                "pagato_elettronico": float(parsed.get("pagato_elettronico", 0) or 0),
-                "totale_iva": float(parsed.get("totale_iva", 0) or 0),
-                "pagato_non_riscosso": float(parsed.get("pagato_non_riscosso", 0) or 0),
-                "totale_ammontare_annulli": float(parsed.get("totale_ammontare_annulli", 0) or 0),
-                "numero_documenti": int(parsed.get("numero_documenti", 0) or 0),
-                "riepilogo_iva": parsed.get("riepilogo_iva", []),
-                "filename": file.filename,
-                "created_at": datetime.now(timezone.utc).isoformat()
-            }
-            
-            await db["corrispettivi"].insert_one(corr.copy())
-            
-            # Inserisci anche in prima_nota_cassa per visualizzazione
-            movimento_cassa = {
-                "id": f"corr_{corr['id']}",
-                "data": parsed.get("data", ""),
-                "tipo": "entrata",
-                "importo": float(parsed.get("totale", 0) or 0),
-                "descrizione": f"Corrispettivo {parsed.get('data', '')} - RT {parsed.get('matricola_rt', '')}",
-                "categoria": "Corrispettivi",
-                "dettaglio": {
-                    "matricola_rt": parsed.get("matricola_rt", ""),
-                    "contanti": float(parsed.get("pagato_contanti", 0) or 0),
-                    "elettronico": float(parsed.get("pagato_elettronico", 0) or 0),
-                    "totale_iva": float(parsed.get("totale_iva", 0) or 0),
-                    "numero_documenti": int(parsed.get("numero_documenti", 0) or 0)
-                },
-                "corrispettivo_id": corr["id"],
-                "fonte": "xml_import",
-                "created_at": datetime.now(timezone.utc).isoformat()
-            }
-            await db["prima_nota_cassa"].insert_one(movimento_cassa.copy())
-            
-            results["success"].append({"filename": file.filename, "data": parsed.get("data")})
-            results["imported"] += 1
-            
+
+            ingest = await ingest_corrispettivo_parsed(
+                db, parsed, filename=file.filename, source="xml",
+                update_if_exists=force_update,
+            )
+            item = {"filename": file.filename, "data": ingest.get("data"), "totale": ingest.get("totale")}
+            if ingest["action"] == "duplicate":
+                results["duplicates"].append(item)
+                results["skipped"] += 1
+            elif ingest["action"] == "updated":
+                results["updated"].append(item)
+                results["updated_count"] += 1
+            else:
+                results["success"].append(item)
+                results["imported"] += 1
+
         except Exception as e:
             results["errors"].append({"filename": file.filename, "error": str(e)})
             results["failed"] += 1
-    
+
     return results
 
 
@@ -625,126 +453,74 @@ async def delete_corrispettivo(
 @router.post("/upload-zip")
 @handle_errors
 async def upload_corrispettivi_zip(file: UploadFile = File(...)) -> Dict[str, Any]:
+    """Upload massivo corrispettivi da file ZIP contenente XML.
+    Anti-duplicato rigoroso + propagazione automatica a Prima Nota Cassa/Banca.
     """
-    Upload massivo corrispettivi da file ZIP contenente XML.
-    Gestisce duplicati automaticamente (salta e continua).
-    """
+    from app.routers.invoices.corrispettivi_helpers import ingest_corrispettivo_parsed
+
     if not file.filename.lower().endswith('.zip'):
         raise HTTPException(status_code=400, detail="Il file deve essere un archivio ZIP")
-    
+
     results = {
-        "success": [],
-        "errors": [],
-        "duplicates": [],
-        "total": 0,
-        "imported": 0,
-        "failed": 0,
-        "skipped_duplicates": 0
+        "success": [], "errors": [], "duplicates": [],
+        "total": 0, "imported": 0, "failed": 0, "skipped_duplicates": 0,
     }
-    
     db = Database.get_db()
-    
+
     try:
-        # Leggi il file ZIP
         content = await file.read()
         zip_buffer = io.BytesIO(content)
-        
+
         with zipfile.ZipFile(zip_buffer, 'r') as zip_file:
-            # Filtra solo file XML
-            xml_files = [f for f in zip_file.namelist() if f.lower().endswith('.xml') and not f.startswith('__MACOSX')]
+            xml_files = [f for f in zip_file.namelist()
+                         if f.lower().endswith('.xml') and not f.startswith('__MACOSX')]
             results["total"] = len(xml_files)
-            
+
             for xml_filename in xml_files:
                 try:
-                    # Leggi il file XML dal ZIP
-                    xml_content = None
                     xml_bytes = zip_file.read(xml_filename)
-                    
-                    # Prova diverse codifiche
+                    xml_content = None
                     for enc in ['utf-8', 'utf-8-sig', 'latin-1', 'iso-8859-1']:
                         try:
                             xml_content = xml_bytes.decode(enc)
                             break
                         except (UnicodeDecodeError, LookupError):
                             continue
-                    
                     if not xml_content:
-                        results["errors"].append({
-                            "filename": xml_filename,
-                            "error": "Impossibile decodificare il file"
-                        })
+                        results["errors"].append({"filename": xml_filename, "error": "Decodifica fallita"})
                         results["failed"] += 1
                         continue
-                    
-                    # Parsa XML
+
                     parsed = parse_corrispettivo_xml(xml_content)
                     if parsed.get("error"):
-                        results["errors"].append({
-                            "filename": xml_filename,
-                            "error": parsed["error"]
-                        })
+                        results["errors"].append({"filename": xml_filename, "error": parsed["error"]})
                         results["failed"] += 1
                         continue
-                    
-                    # Controlla duplicati (esclude archiviati/eliminati)
-                    key = parsed.get("corrispettivo_key", "")
-                    if key:
-                        existing = await db["corrispettivi"].find_one({
-                            "corrispettivo_key": key,
-                            "status": {"$nin": ["deleted", "archived"]}
-                        })
-                        if existing:
-                            results["duplicates"].append({
-                                "filename": xml_filename,
-                                "data": parsed.get("data"),
-                                "matricola": parsed.get("matricola_rt"),
-                                "totale": parsed.get("totale", 0)
-                            })
-                            results["skipped_duplicates"] += 1
-                            continue
-                    
-                    # Inserisci nuovo corrispettivo
-                    corr = {
-                        "id": str(uuid.uuid4()),
-                        "corrispettivo_key": key,
-                        "data": parsed.get("data", ""),
-                        "matricola_rt": parsed.get("matricola_rt", ""),
-                        "partita_iva": parsed.get("partita_iva", ""),
-                        "totale": float(parsed.get("totale", 0) or 0),
-                        "pagato_contanti": float(parsed.get("pagato_contanti", 0) or 0),
-                        "pagato_elettronico": float(parsed.get("pagato_elettronico", 0) or 0),
-                        "totale_imponibile": float(parsed.get("totale_imponibile", 0) or 0),
-                        "totale_iva": float(parsed.get("totale_iva", 0) or 0),
-                        "riepilogo_iva": parsed.get("riepilogo_iva", []),
-                        "numero_documenti": parsed.get("numero_documenti", 0),
-                        "status": "imported",
-                        "source": "zip_upload",
+
+                    ingest = await ingest_corrispettivo_parsed(
+                        db, parsed, filename=xml_filename, source="zip_upload",
+                        update_if_exists=False,
+                    )
+                    item = {
                         "filename": xml_filename,
-                        "zip_filename": file.filename,
-                        "created_at": datetime.now(timezone.utc).isoformat()
+                        "data": ingest.get("data"),
+                        "totale": ingest.get("totale"),
+                        "matricola": parsed.get("matricola_rt"),
                     }
-                    
-                    await db["corrispettivi"].insert_one(corr.copy())
-                    
-                    results["success"].append({
-                        "filename": xml_filename,
-                        "data": parsed.get("data"),
-                        "totale": corr["totale"],
-                        "contanti": corr["pagato_contanti"],
-                        "elettronico": corr["pagato_elettronico"]
-                    })
-                    results["imported"] += 1
-                    
+                    if ingest["action"] == "duplicate":
+                        results["duplicates"].append(item)
+                        results["skipped_duplicates"] += 1
+                    else:
+                        results["success"].append(item)
+                        results["imported"] += 1
+
                 except Exception as e:
                     logger.error(f"Errore processando {xml_filename}: {e}")
-                    results["errors"].append({
-                        "filename": xml_filename,
-                        "error": str(e)
-                    })
+                    results["errors"].append({"filename": xml_filename, "error": str(e)})
                     results["failed"] += 1
-        
+
         return results
-        
+
     except zipfile.BadZipFile:
         raise HTTPException(status_code=400, detail="File ZIP non valido o corrotto")
     except Exception as e:
@@ -1156,6 +932,34 @@ async def hard_delete_corrispettivi_bulk(data: Dict[str, Any]) -> Dict[str, Any]
     
     result = await db["corrispettivi"].delete_many({"id": {"$in": ids}})
     return {"deleted": result.deleted_count}
+
+
+@router.post("/cleanup-duplicati-forte")
+@handle_errors
+async def cleanup_duplicati_forte(anno: int = Query(None, description="Anno (opzionale). Se omesso agisce su tutti gli anni")) -> Dict[str, Any]:
+    """
+    Pulizia forte dei duplicati nella collection 'corrispettivi'.
+    Raggruppa per (data, matricola_rt, totale arrotondato a 0.01) e mantiene il più vecchio.
+    """
+    from app.routers.invoices.corrispettivi_helpers import cleanup_duplicate_corrispettivi
+    db = Database.get_db()
+    res = await cleanup_duplicate_corrispettivi(db, anno=anno)
+    return {"success": True, **res}
+
+
+@router.post("/rebuild-prima-nota")
+@handle_errors
+async def rebuild_prima_nota(anno: int = Query(None, description="Anno (opzionale). Se omesso ricostruisce tutti gli anni")) -> Dict[str, Any]:
+    """
+    Rigenera i movimenti Prima Nota (cassa + banca POS) partendo dai corrispettivi esistenti.
+    - Elimina i movimenti con source=corrispettivo_* nel periodo
+    - Ricrea i movimenti dai corrispettivi validi
+    """
+    from app.routers.invoices.corrispettivi_helpers import rebuild_prima_nota_from_corrispettivi
+    db = Database.get_db()
+    res = await rebuild_prima_nota_from_corrispettivi(db, anno=anno)
+    return {"success": True, **res}
+
 
 
 
