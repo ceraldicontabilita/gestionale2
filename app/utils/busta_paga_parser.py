@@ -52,6 +52,35 @@ def detect_format(text: str) -> str:
         return 'unknown'
 
 
+def extract_lordo_mese(text: str, lines: List[str]) -> float:
+    """
+    Estrae il lordo mensile (imponibile contributivo) dal testo di una busta paga.
+    Cerca in ordine:
+    1. Righe con 'Contributo IVS' seguito da importo (è il lordo previdenziale)
+    2. 'TOTALE COMPETENZE' o 'Totale competenze'
+    3. 'Imponibile INPS' / 'Imponibile contributivo'
+    4. 'LORDO'
+    """
+    patterns = [
+        # Zucchetti: "Z00000Contributo IVS 1.682,00 9,19000% 154,58" → il primo numero è il lordo
+        (r'Contributo\s+IVS\s+([\d.,]+)\s+\d', 100, 10000),
+        (r'Imponibile\s+(?:INPS|previdenziale|contributivo)\s+([\d.,]+)', 100, 10000),
+        (r'TOTALE\s+COMPETENZE\s+([\d.,]+)', 100, 10000),
+        (r'Totale\s+competenze\s+([\d.,]+)', 100, 10000),
+        (r'(?:^|\s)LORDO(?:\s+(?:DEL\s+)?MESE)?\s+([\d.,]+)', 100, 10000),
+        (r'Retribuzione\s+lorda\s+([\d.,]+)', 100, 10000),
+    ]
+
+    for pat, min_v, max_v in patterns:
+        for line in lines:
+            m = re.search(pat, line, re.IGNORECASE)
+            if m:
+                val = parse_italian_number(m.group(1))
+                if min_v <= val <= max_v:
+                    return val
+    return 0.0
+
+
 def parse_format_csc_2017(text: str, lines: List[str]) -> Dict[str, Any]:
     """Parser per formato CSC 2017-2021."""
     result = {
@@ -386,6 +415,7 @@ def extract_busta_paga_data(pdf_path: str) -> Dict[str, Any]:
         'rol_goduti': 0.0,
         'rol_saldo': 0.0,
         'netto_mese': 0.0,
+        'lordo_mese': 0.0,
         'format_detected': 'unknown',
         'parsed_at': datetime.now().isoformat()
     }
@@ -463,6 +493,12 @@ def extract_busta_paga_data(pdf_path: str) -> Dict[str, Any]:
                     result['paga_base_mensile'] = value
                 elif key == 'contingenza_mensile':
                     result['contingenza_mensile'] = value
+
+            # Estrazione lordo mese: prova sempre, anche quando i parser specifici
+            # non lo catturano (tipico del formato "Busta paga - X - Mese.pdf")
+            lordo = extract_lordo_mese(full_text, lines)
+            if lordo > 0:
+                result['lordo_mese'] = lordo
     
     except Exception as e:
         result['error'] = str(e)

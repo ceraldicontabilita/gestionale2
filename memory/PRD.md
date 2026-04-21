@@ -284,4 +284,51 @@ P3:
 - Note credito TD04 = importo negativo + badge rosso
 - IMAP sempre in `asyncio.to_thread()`
 
+
+## [FEAT P0 HR Dedupe + Non in carico + Bugfix modale presenze — Feb 2026]
+
+### Deduplica dipendenti
+- `app/services/dipendenti_dedupe.py`: servizio dedupe con match per CF
+  normalizzato (upper) e nome+cognome normalizzati (lower).
+  Merge unifica i campi vuoti del target, non duplica i cedolini
+  (match anno+mese → elimina il duplicato), re-point di presenze,
+  giustificativi, verbali e bonifici al target.
+- Endpoint: `GET /api/dipendenti/duplicati`,
+  `POST /api/dipendenti/duplicati/merge`,
+  `POST /api/dipendenti/duplicati/auto-merge` (dry-run default).
+- Soft delete: il duplicato resta come `stato=merged`,
+  `in_carico=false`, `merged_into=<target_id>` per audit trail.
+- Frontend: `components/DedupeDipendentiModal.jsx` + bottone
+  "Gestisci duplicati" nell'header HRDipendenti. Preselezione target
+  = record più completo (score su CF/IBAN/mansione/progressivi/TFR).
+
+### Flag "non in carico"
+- `GET /api/dipendenti` ora accetta `in_carico` (bool) e `include_merged` (bool).
+  Default: esclude record merged, include sia flag esplicito true che record legacy
+  senza flag (considerati in carico per default storico).
+- Frontend: checkbox "Dipendente NON in carico" nella scheda anagrafica,
+  toggle "Mostra non in carico" nella sidebar, badge "NO" rosso sui record
+  inattivi nella lista (con strikethrough).
+
+### Bugfix: modale presenze non visibile
+- `components/BatchGiustificativoModal.jsx` importava da `../lib/api`
+  inesistente → il build Vite falliva per HRPresenze dynamic import.
+  Corretto a `import api from '../api'`. Il modale "Inserimento massivo
+  giustificativi" ora si apre correttamente dal bottone "Inserimento massivo"
+  nell'header presenze.
+
+### Parser "Busta paga" singolo: estrazione lordo
+- `app/utils/busta_paga_parser.py`: aggiunta `extract_lordo_mese()` che
+  cerca in ordine "Contributo IVS", "Imponibile INPS/contributivo",
+  "TOTALE COMPETENZE", "LORDO", "Retribuzione lorda". Il campo `lordo_mese`
+  è ora sempre valorizzato (dove estraibile) quando si processano PDF
+  formato "Busta paga - [Nome] - [Mese] [Anno].pdf".
+
+### Backlog immediato (prossimi task da completare)
+- **P1** Upload PDF certificati medici reali in Presenze (ora salva solo filename).
+- **P1** Alert anagrafica HR incompleta (IBAN/CF/contratto mancanti) come da `DIPENDENTI.txt` §13.
+- **P2** Calendario drag&drop inserimento presenze.
+- **P2** Analisi/pulizia fatture flat duplicate (l'utente ha allegato screenshot).
+- **P2** File `CEDOLINI.txt` non più presente: chiedere all'utente di riallegarlo per la logica relazionale cedolini.
+- **Backlog** Refactoring `corrispettivi.py` (1450 righe). Token WhatsApp Meta scaduto (serve nuovo token).
 Per dettagli operativi vedi `/app/memoria/LOGICA_OPERATIVA.md`.

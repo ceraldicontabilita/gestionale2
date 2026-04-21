@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Search, Plus, User, Edit2, Save, X, ChevronRight } from 'lucide-react';
 import api from '../../api';
 import { COLORS, STYLES, SPACING, useIsMobile, RG, pagePad } from '../../lib/utils';
+import DedupeDipendentiModal from '../../components/DedupeDipendentiModal';
 
 const TABS = [
   { id: 'anagrafica',   label: 'Anagrafica' },
@@ -115,6 +116,33 @@ function TabAnagrafica({ dip, onSaved }) {
         {field('IBAN', 'iban')}
         {field('Banca', 'banca')}
         {field('Importo Netto Mensile', 'importo_netto', 'number')}
+      </div>
+
+      {/* Stato in carico */}
+      <div style={{ marginTop: 16, padding: 12, background: '#f8fafc', borderRadius: 8, border: `1px solid ${COLORS.border}` }}>
+        <label data-testid="toggle-non-in-carico" style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: edit ? 'pointer' : 'default', userSelect: 'none' }}>
+          <input
+            type="checkbox"
+            checked={form.in_carico === false}
+            disabled={!edit}
+            onChange={e => setForm(p => ({ ...p, in_carico: !e.target.checked }))}
+            style={{ width: 16, height: 16, cursor: edit ? 'pointer' : 'default' }}
+          />
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: COLORS.text }}>
+              Dipendente NON in carico
+            </div>
+            <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 2 }}>
+              Spunta se il dipendente è cessato o non più gestito.
+              Il fascicolo resta consultabile ma verrà escluso dai flussi attivi (presenze, cedolini correnti).
+            </div>
+          </div>
+          {form.in_carico === false && (
+            <span style={{ marginLeft: 'auto', padding: '3px 10px', borderRadius: 99, fontSize: 11, fontWeight: 700, background: '#fef2f2', color: '#dc2626' }}>
+              NON IN CARICO
+            </span>
+          )}
+        </label>
       </div>
     </div>
   );
@@ -663,16 +691,22 @@ export default function HRDipendenti() {
   const [selected, setSelected] = useState(null);
   const [activeTab, setActiveTab] = useState(tab);
   const [visitedTabs, setVisitedTabs] = useState(() => new Set([tab]));
+  const [mostraNonInCarico, setMostraNonInCarico] = useState(false);
+  const [dedupeOpen, setDedupeOpen] = useState(false);
 
-  useEffect(() => {
-    api.get('/api/dipendenti')
+  const reloadDipendenti = useCallback(() => {
+    setLoading(true);
+    const params = mostraNonInCarico ? {} : { in_carico: true };
+    api.get('/api/dipendenti', { params })
       .then(r => {
         const list = Array.isArray(r.data) ? r.data : r.data?.dipendenti || [];
         setDipendenti(list);
       })
       .catch(() => setDipendenti([]))
       .finally(() => setLoading(false));
-  }, []);
+  }, [mostraNonInCarico]);
+
+  useEffect(() => { reloadDipendenti(); }, [reloadDipendenti]);
 
   useEffect(() => { setActiveTab(tab); }, [tab]);
 
@@ -701,13 +735,32 @@ export default function HRDipendenti() {
     <div style={{ minHeight: 'calc(100vh - 110px)', background: COLORS.grayBg }}>
 
       {/* Header gradiente — coerente con il resto dell'ERP */}
-      <div style={{ ...STYLES.header, borderRadius: 0, marginBottom: 0 }}>
+      <div style={{ ...STYLES.header, borderRadius: 0, marginBottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
           <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: COLORS.white }}>Gestione Dipendenti</h1>
           <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)', marginTop: 4 }}>
-            {dipendenti.length} dipendenti registrati
+            {dipendenti.length} dipendenti {mostraNonInCarico ? '(inclusi non in carico)' : 'in carico'}
           </div>
         </div>
+        <button
+          data-testid="btn-gestisci-duplicati"
+          onClick={() => setDedupeOpen(true)}
+          style={{
+            background: 'rgba(255,255,255,0.15)',
+            border: '1px solid rgba(255,255,255,0.25)',
+            color: 'white',
+            padding: '8px 14px',
+            borderRadius: 8,
+            fontSize: 13,
+            fontWeight: 600,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+          }}
+        >
+          Gestisci duplicati
+        </button>
       </div>
 
       <div style={{ height: 'calc(100vh - 170px)', display: 'flex' }}>
@@ -729,6 +782,15 @@ export default function HRDipendenti() {
               style={{ width: '100%', paddingLeft: 32, paddingRight: 10, paddingTop: 8, paddingBottom: 8, border: `1px solid ${COLORS.border}`, borderRadius: 6, fontSize: 13, outline: 'none', boxSizing: 'border-box' }}
             />
           </div>
+          <label data-testid="toggle-mostra-non-in-carico" style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10, cursor: 'pointer', fontSize: 12, color: COLORS.textMuted }}>
+            <input
+              type="checkbox"
+              checked={mostraNonInCarico}
+              onChange={e => setMostraNonInCarico(e.target.checked)}
+              style={{ cursor: 'pointer' }}
+            />
+            Mostra non in carico
+          </label>
         </div>
 
         {/* Lista */}
@@ -740,6 +802,7 @@ export default function HRDipendenti() {
           {filtrati.map(d => {
             const isSelected = selected?.id === d.id;
             const nome = d.nome_completo || `${d.cognome || ''} ${d.nome || ''}`.trim();
+            const nonInCarico = d.in_carico === false;
             return (
               <div
                 key={d.id}
@@ -755,9 +818,17 @@ export default function HRDipendenti() {
                   background: isSelected ? `${COLORS.primary}10` : 'transparent',
                   borderLeft: isSelected ? `3px solid ${COLORS.primary}` : '3px solid transparent',
                   transition: 'all 0.1s',
+                  opacity: nonInCarico ? 0.55 : 1,
                 }}
               >
-                <div style={{ fontWeight: isSelected ? 700 : 500, fontSize: 13, color: isSelected ? COLORS.primary : COLORS.text }}>{nome}</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                  <div style={{ fontWeight: isSelected ? 700 : 500, fontSize: 13, color: isSelected ? COLORS.primary : COLORS.text, textDecoration: nonInCarico ? 'line-through' : 'none' }}>{nome}</div>
+                  {nonInCarico && (
+                    <span style={{ padding: '1px 6px', borderRadius: 4, fontSize: 9, fontWeight: 700, background: '#fef2f2', color: '#dc2626', whiteSpace: 'nowrap' }}>
+                      NO
+                    </span>
+                  )}
+                </div>
                 <div style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 2 }}>{d.mansione || '—'}</div>
               </div>
             );
@@ -842,6 +913,12 @@ export default function HRDipendenti() {
         )}
       </div>
     </div>
+
+    <DedupeDipendentiModal
+      open={dedupeOpen}
+      onClose={() => setDedupeOpen(false)}
+      onMerged={reloadDipendenti}
+    />
     </div>
   );
 }

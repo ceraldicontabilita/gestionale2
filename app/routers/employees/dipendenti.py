@@ -44,15 +44,24 @@ async def list_dipendenti(
     skip: int = Query(0, ge=0),
     limit: int = Query(1000, ge=1, le=10000),
     attivo: Optional[bool] = Query(None),
+    in_carico: Optional[bool] = Query(None, description="Se true solo in carico, false solo non in carico, null=tutti"),
+    include_merged: bool = Query(False, description="Includi record già unificati (merged_into)"),
     mansione: Optional[str] = Query(None),
     search: Optional[str] = Query(None)
 ) -> List[Dict[str, Any]]:
     """Lista dipendenti con filtri."""
     db = Database.get_db()
     
-    query = {}
+    query: Dict[str, Any] = {}
     if attivo is not None:
         query["attivo"] = attivo
+    if in_carico is True:
+        # "in carico" = flag esplicito true OPPURE assente (default storico)
+        query["$and"] = query.get("$and", []) + [{"$or": [{"in_carico": True}, {"in_carico": {"$exists": False}}]}]
+    elif in_carico is False:
+        query["in_carico"] = False
+    if not include_merged:
+        query["merged_into"] = {"$exists": False}
     if mansione:
         query["mansione"] = mansione
     if search:
@@ -124,6 +133,57 @@ async def get_dipendenti_stats() -> Dict[str, Any]:
         "per_mansione": {item["_id"] or "N/D": item["count"] for item in by_mansione},
         "libretti_in_scadenza": libretti_scadenza
     }
+
+
+# ─── Deduplica dipendenti ────────────────────────────────────────────────────
+
+@router.get("/duplicati")
+@handle_errors
+async def lista_duplicati_dipendenti() -> Dict[str, Any]:
+    """
+    Analizza l'anagrafica e ritorna gruppi di sospetti duplicati.
+    Si basa su CF normalizzato e su nome+cognome normalizzati.
+    """
+    from app.services.dipendenti_dedupe import trova_duplicati
+    return await trova_duplicati()
+
+
+@router.post("/duplicati/merge")
+@handle_errors
+async def merge_duplicato_dipendente(
+    payload: Dict[str, Any] = Body(...)
+) -> Dict[str, Any]:
+    """
+    Unifica `duplicate_id` dentro `target_id`. Re-point di tutti i cedolini,
+    presenze, verbali, movimenti. I cedolini duplicati (stesso anno+mese)
+    vengono scartati. Soft delete di default (il duplicato resta come
+    `merged_into` al target e `in_carico=False`).
+    """
+    from app.services.dipendenti_dedupe import merge_dipendenti
+    target_id = payload.get("target_id")
+    duplicate_id = payload.get("duplicate_id")
+    soft = payload.get("soft", True)
+    if not target_id or not duplicate_id:
+        raise HTTPException(status_code=400, detail="target_id e duplicate_id richiesti")
+    try:
+        return await merge_dipendenti(target_id, duplicate_id, soft=soft)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/duplicati/auto-merge")
+@handle_errors
+async def auto_merge_duplicati(
+    payload: Dict[str, Any] = Body(default={})
+) -> Dict[str, Any]:
+    """
+    Auto-merge di tutti i duplicati ad alta certezza.
+    Default dry_run=True: ritorna lista dei merge previsti senza eseguirli.
+    Passa `{"dry_run": false}` per eseguire effettivamente i merge.
+    """
+    from app.services.dipendenti_dedupe import auto_merge_tutti
+    dry_run = bool(payload.get("dry_run", True))
+    return await auto_merge_tutti(dry_run=dry_run)
 
 
 @router.get("/report-ferie-permessi-tutti")
