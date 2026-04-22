@@ -433,7 +433,7 @@ async def _crea_trattenuta_verbale(
         # Determina mese/anno della trattenuta (mese successivo al pagamento)
         try:
             dt = datetime.fromisoformat(data_pagamento.replace('Z', '+00:00'))
-        except:
+        except Exception:
             dt = datetime.now(timezone.utc)
         
         mese_trattenuta = dt.month + 1 if dt.month < 12 else 1
