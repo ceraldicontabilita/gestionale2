@@ -36,7 +36,7 @@ def parse_italian_number(value: str) -> float:
             # Formato 1234,56
             clean = clean.replace(',', '.')
         return float(clean) if clean else 0.0
-    except:
+    except Exception:
         return 0.0
 
 
