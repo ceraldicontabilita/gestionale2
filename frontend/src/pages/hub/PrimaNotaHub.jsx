@@ -6,14 +6,17 @@ const DatiProvvisoriContent = lazy(() => import('../DatiProvvisoriPage.jsx'));
 
 const Loading = () => (
   <div style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>
-    <div style={{
-      width: 32, height: 32,
-      border: '3px solid #e2e8f0',
-      borderTop: '3px solid #2563eb',
-      borderRadius: '50%',
-      animation: 'spin 1s linear infinite',
-      margin: '0 auto 12px'
-    }} />
+    <div
+      style={{
+        width: 32,
+        height: 32,
+        border: '3px solid #e2e8f0',
+        borderTop: '3px solid #2563eb',
+        borderRadius: '50%',
+        animation: 'spin 1s linear infinite',
+        margin: '0 auto 12px',
+      }}
+    />
     Caricamento...
   </div>
 );
@@ -35,14 +38,10 @@ export default function PrimaNotaHub() {
   return (
     <div style={{ width: '100%' }}>
       <div style={{ display: isProvvisori ? 'none' : 'block' }}>
-        <Suspense fallback={<Loading />}>
-          {visitedPrimaNota && <PrimaNotaContent />}
-        </Suspense>
+        <Suspense fallback={<Loading />}>{visitedPrimaNota && <PrimaNotaContent />}</Suspense>
       </div>
       <div style={{ display: isProvvisori ? 'block' : 'none' }}>
-        <Suspense fallback={<Loading />}>
-          {visitedProvvisori && <DatiProvvisoriContent />}
-        </Suspense>
+        <Suspense fallback={<Loading />}>{visitedProvvisori && <DatiProvvisoriContent />}</Suspense>
       </div>
     </div>
   );
