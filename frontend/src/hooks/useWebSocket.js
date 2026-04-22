@@ -64,7 +64,7 @@ export function useWebSocketNotifications() {
         }, 20000);
       };
 
-      ws.onmessage = (event) => {
+      ws.onmessage = event => {
         try {
           const msg = JSON.parse(event.data);
 
@@ -74,7 +74,7 @@ export function useWebSocketNotifications() {
 
             // 2. Invalida cache React Query per le query registrate
             const keys = QUERY_INVALIDATIONS[msg.event] || [];
-            keys.forEach((key) => queryClient.invalidateQueries({ queryKey: key }));
+            keys.forEach(key => queryClient.invalidateQueries({ queryKey: key }));
 
             console.info(`[WS] data_change ricevuto: ${msg.event}`, msg.data);
           }
@@ -92,7 +92,9 @@ export function useWebSocketNotifications() {
         retriesRef.current++;
         if (retriesRef.current < MAX_RETRIES) {
           const delay = Math.min(1000 * Math.pow(2, retriesRef.current), 30000);
-          console.info(`[WS] Riconnessione tra ${delay}ms (tentativo ${retriesRef.current}/${MAX_RETRIES})...`);
+          console.info(
+            `[WS] Riconnessione tra ${delay}ms (tentativo ${retriesRef.current}/${MAX_RETRIES})...`
+          );
           reconnectTimerRef.current = setTimeout(connect, delay);
         }
       };
