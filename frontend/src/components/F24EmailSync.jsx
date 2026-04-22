@@ -50,18 +50,20 @@ export default function F24EmailSync({ onClose }) {
   if (!visible) return null;
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 20,
-      right: 20,
-      zIndex: 9999,
-      maxWidth: 420,
-      background: 'white',
-      borderRadius: 12,
-      boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
-      overflow: 'hidden',
-      animation: 'slideIn 0.3s ease-out'
-    }}>
+    <div
+      style={{
+        position: 'fixed',
+        top: 20,
+        right: 20,
+        zIndex: 9999,
+        maxWidth: 420,
+        background: 'white',
+        borderRadius: 12,
+        boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+        overflow: 'hidden',
+        animation: 'slideIn 0.3s ease-out',
+      }}
+    >
       <style>{`
         @keyframes slideIn {
           from { transform: translateX(100%); opacity: 0; }
@@ -70,16 +72,23 @@ export default function F24EmailSync({ onClose }) {
       `}</style>
 
       {/* Header */}
-      <div style={{
-        padding: '16px 20px',
-        background: status === 'loading' ? '#3b82f6' :
-          status === 'success' ? '#16a34a' :
-            status === 'empty' ? '#64748b' : '#dc2626',
-        color: 'white',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between'
-      }}>
+      <div
+        style={{
+          padding: '16px 20px',
+          background:
+            status === 'loading'
+              ? '#3b82f6'
+              : status === 'success'
+                ? '#16a34a'
+                : status === 'empty'
+                  ? '#64748b'
+                  : '#dc2626',
+          color: 'white',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {status === 'loading' ? (
             <Loader2 size={20} className="animate-spin" />
@@ -91,10 +100,13 @@ export default function F24EmailSync({ onClose }) {
             <AlertCircle size={20} />
           )}
           <span style={{ fontWeight: 'bold' }}>
-            {status === 'loading' ? 'Controllo Email F24...' :
-              status === 'success' ? 'Nuovi F24 Trovati!' :
-                status === 'empty' ? 'Nessun Nuovo F24' :
-                  'Errore Sync F24'}
+            {status === 'loading'
+              ? 'Controllo Email F24...'
+              : status === 'success'
+                ? 'Nuovi F24 Trovati!'
+                : status === 'empty'
+                  ? 'Nessun Nuovo F24'
+                  : 'Errore Sync F24'}
           </span>
         </div>
         {status !== 'loading' && (
@@ -105,7 +117,7 @@ export default function F24EmailSync({ onClose }) {
               border: 'none',
               color: 'white',
               cursor: 'pointer',
-              padding: 4
+              padding: 4,
             }}
           >
             <X size={18} />
@@ -132,30 +144,36 @@ export default function F24EmailSync({ onClose }) {
         {status === 'success' && result && (
           <div>
             {/* Riepilogo */}
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: 12,
-              marginBottom: 16
-            }}>
-              <div style={{
-                padding: 12,
-                background: '#dcfce7',
-                borderRadius: 8,
-                textAlign: 'center'
-              }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: 12,
+                marginBottom: 16,
+              }}
+            >
+              <div
+                style={{
+                  padding: 12,
+                  background: '#dcfce7',
+                  borderRadius: 8,
+                  textAlign: 'center',
+                }}
+              >
                 <div style={{ fontSize: 24, fontWeight: 'bold', color: '#166534' }}>
                   {result.f24_caricati}
                 </div>
                 <div style={{ fontSize: 12, color: '#166534' }}>F24 Caricati</div>
               </div>
               {result.quietanze_trovate > 0 && (
-                <div style={{
-                  padding: 12,
-                  background: '#dbeafe',
-                  borderRadius: 8,
-                  textAlign: 'center'
-                }}>
+                <div
+                  style={{
+                    padding: 12,
+                    background: '#dbeafe',
+                    borderRadius: 8,
+                    textAlign: 'center',
+                  }}
+                >
                   <div style={{ fontSize: 24, fontWeight: 'bold', color: '#1e40af' }}>
                     {result.quietanze_trovate}
                   </div>
@@ -167,7 +185,9 @@ export default function F24EmailSync({ onClose }) {
             {/* Dettagli F24 */}
             {result.dettagli && result.dettagli.length > 0 && (
               <div>
-                <div style={{ fontSize: 13, fontWeight: 'bold', marginBottom: 8, color: '#1e293b' }}>
+                <div
+                  style={{ fontSize: 13, fontWeight: 'bold', marginBottom: 8, color: '#1e293b' }}
+                >
                   📋 F24 Importati:
                 </div>
                 <div style={{ maxHeight: 200, overflowY: 'auto' }}>
@@ -179,21 +199,29 @@ export default function F24EmailSync({ onClose }) {
                         background: '#f8fafc',
                         borderRadius: 6,
                         marginBottom: 8,
-                        fontSize: 13
+                        fontSize: 13,
                       }}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}
+                      >
                         <div style={{ fontWeight: 'bold', color: '#1e293b' }}>
                           <FileText size={14} style={{ display: 'inline', marginRight: 6 }} />
                           {f24.file.length > 30 ? f24.file.substring(0, 30) + '...' : f24.file}
                         </div>
-                        <div style={{
-                          fontWeight: 'bold',
-                          color: '#dc2626',
-                          background: '#fef2f2',
-                          padding: '2px 8px',
-                          borderRadius: 4
-                        }}>
+                        <div
+                          style={{
+                            fontWeight: 'bold',
+                            color: '#dc2626',
+                            background: '#fef2f2',
+                            padding: '2px 8px',
+                            borderRadius: 4,
+                          }}
+                        >
                           {formatEuro(f24.importo)}
                         </div>
                       </div>
@@ -227,7 +255,7 @@ export default function F24EmailSync({ onClose }) {
                 textAlign: 'center',
                 borderRadius: 8,
                 textDecoration: 'none',
-                fontWeight: 'bold'
+                fontWeight: 'bold',
               }}
             >
               Vai a F24 / Tributi →
