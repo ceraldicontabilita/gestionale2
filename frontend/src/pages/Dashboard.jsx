@@ -755,7 +755,7 @@ export default function Dashboard() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {scadenzeF24.scadenze.slice(0, 4).map((f24, idx) => {
+            {(scadenzeF24?.scadenze ?? []).slice(0, 4).map((f24, idx) => {
               const isUrgente = f24.giorni_mancanti <= 7;
               const isScaduto = f24.giorni_mancanti < 0;
               return (
@@ -1140,7 +1140,7 @@ export default function Dashboard() {
                     label={({ percentuale }) => `${percentuale}%`}
                     labelLine={false}
                   >
-                    {speseCategoria.categorie.map((entry, index) => (
+                    {(speseCategoria?.categorie ?? []).map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                     ))}
                   </Pie>
@@ -1148,7 +1148,7 @@ export default function Dashboard() {
                 </PieChart>
               </ResponsiveContainer>
               <div style={{ width: '40%', fontSize: 11, maxHeight: 250, overflow: 'auto' }}>
-                {speseCategoria.categorie.slice(0, 6).map((cat, idx) => (
+                {(speseCategoria?.categorie ?? []).slice(0, 6).map((cat, idx) => (
                   <div
                     key={idx}
                     style={{
@@ -1228,12 +1228,12 @@ export default function Dashboard() {
                   style={{
                     fontWeight: 'bold',
                     color:
-                      statoRiconciliazione.riepilogo.percentuale_globale >= 80
+                      (statoRiconciliazione?.riepilogo?.percentuale_globale ?? 0) >= 80
                         ? '#16a34a'
                         : '#f59e0b',
                   }}
                 >
-                  {statoRiconciliazione.riepilogo.percentuale_globale}%
+                  {(statoRiconciliazione?.riepilogo?.percentuale_globale ?? 0)}%
                 </span>
               </div>
               <div
@@ -1242,9 +1242,9 @@ export default function Dashboard() {
                 <div
                   style={{
                     height: '100%',
-                    width: `${statoRiconciliazione.riepilogo.percentuale_globale}%`,
+                    width: `${(statoRiconciliazione?.riepilogo?.percentuale_globale ?? 0)}%`,
                     background:
-                      statoRiconciliazione.riepilogo.percentuale_globale >= 80
+                      (statoRiconciliazione?.riepilogo?.percentuale_globale ?? 0) >= 80
                         ? 'linear-gradient(90deg, #10b981, #34d399)'
                         : 'linear-gradient(90deg, #f59e0b, #fbbf24)',
                     borderRadius: 6,
@@ -1271,12 +1271,12 @@ export default function Dashboard() {
                     borderRadius: 10,
                     fontSize: 12,
                     background:
-                      statoRiconciliazione.fatture.percentuale_pagate >= 80 ? '#dcfce7' : '#fef3c7',
+                      (statoRiconciliazione?.fatture?.percentuale_pagate ?? 0) >= 80 ? '#dcfce7' : '#fef3c7',
                     color:
-                      statoRiconciliazione.fatture.percentuale_pagate >= 80 ? '#16a34a' : '#d97706',
+                      (statoRiconciliazione?.fatture?.percentuale_pagate ?? 0) >= 80 ? '#16a34a' : '#d97706',
                   }}
                 >
-                  {statoRiconciliazione.fatture.percentuale_pagate}%
+                  {(statoRiconciliazione?.fatture?.percentuale_pagate ?? 0)}%
                 </span>
               </div>
               <div
@@ -1290,7 +1290,7 @@ export default function Dashboard() {
                 <div>
                   <div style={{ color: '#6b7280' }}>Pagate</div>
                   <div style={{ fontWeight: 'bold', color: '#16a34a' }}>
-                    {statoRiconciliazione.fatture.pagate} / {statoRiconciliazione.fatture.totali}
+                    {(statoRiconciliazione?.fatture?.pagate ?? 0)} / {(statoRiconciliazione?.fatture?.totali ?? 0)}
                   </div>
                 </div>
                 <div>
@@ -1319,16 +1319,16 @@ export default function Dashboard() {
                     borderRadius: 10,
                     fontSize: 12,
                     background:
-                      statoRiconciliazione.salari.percentuale_riconciliati >= 80
+                      (statoRiconciliazione?.salari?.percentuale_riconciliati ?? 0) >= 80
                         ? '#dcfce7'
                         : '#fef3c7',
                     color:
-                      statoRiconciliazione.salari.percentuale_riconciliati >= 80
+                      (statoRiconciliazione?.salari?.percentuale_riconciliati ?? 0) >= 80
                         ? '#16a34a'
                         : '#d97706',
                   }}
                 >
-                  {statoRiconciliazione.salari.percentuale_riconciliati}%
+                  {(statoRiconciliazione?.salari?.percentuale_riconciliati ?? 0)}%
                 </span>
               </div>
               <div
@@ -1342,8 +1342,8 @@ export default function Dashboard() {
                 <div>
                   <div style={{ color: '#6b7280' }}>Riconciliati</div>
                   <div style={{ fontWeight: 'bold', color: '#16a34a' }}>
-                    {statoRiconciliazione.salari.riconciliati} /{' '}
-                    {statoRiconciliazione.salari.totali}
+                    {(statoRiconciliazione?.salari?.riconciliati ?? 0)} /{' '}
+                    {(statoRiconciliazione?.salari?.totali ?? 0)}
                   </div>
                 </div>
                 <div>
