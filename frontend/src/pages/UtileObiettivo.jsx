@@ -21,7 +21,7 @@ export default function UtileObiettivo() {
     try {
       const res = await api.get(`/api/centri-costo/utile-obiettivo?anno=${anno}`);
       const data = res.data;
-      
+
       setStatus({
         target_utile: data.target?.utile_target_annuo || 0,
         margine_atteso: data.target?.margine_medio_atteso || 0.15,
@@ -30,11 +30,11 @@ export default function UtileObiettivo() {
         utile_attuale: data.reale?.utile_corrente || 0,
         percentuale_raggiungimento: Math.max(0, data.analisi?.percentuale_raggiungimento || 0),
         gap_da_colmare: Math.abs(data.analisi?.scostamento_ad_oggi || 0),
-        per_centro_costo: {}
+        per_centro_costo: {},
       });
       setSettings({
         target_utile: data.target?.utile_target_annuo || 0,
-        margine_atteso: data.target?.margine_medio_atteso || 0.15
+        margine_atteso: data.target?.margine_medio_atteso || 0.15,
       });
     } catch (err) {
       console.error('Errore caricamento status:', err);
@@ -50,7 +50,7 @@ export default function UtileObiettivo() {
       await api.post('/api/centri-costo/utile-obiettivo', {
         anno,
         utile_target_annuo: settings.target_utile,
-        margine_medio_atteso: settings.margine_atteso
+        margine_medio_atteso: settings.margine_atteso,
       });
       loadStatus();
     } catch (err) {
@@ -63,15 +63,17 @@ export default function UtileObiettivo() {
   const percentualeRaggiungimento = status?.percentuale_raggiungimento || 0;
   const isOnTrack = percentualeRaggiungimento >= 80;
   const isAtRisk = percentualeRaggiungimento >= 50 && percentualeRaggiungimento < 80;
-  const progressColor = isOnTrack ? '#16a34a' : (isAtRisk ? '#ca8a04' : '#dc2626');
+  const progressColor = isOnTrack ? '#16a34a' : isAtRisk ? '#ca8a04' : '#dc2626';
 
   const MetricCard = ({ label, value, icon: Icon, color, bgColor }) => (
-    <div style={{ 
-      background: bgColor, 
-      padding: 20, 
-      borderRadius: 12,
-      border: `1px solid ${color}22`
-    }}>
+    <div
+      style={{
+        background: bgColor,
+        padding: 20,
+        borderRadius: 12,
+        border: `1px solid ${color}22`,
+      }}
+    >
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
         <Icon size={20} color={color} />
         <span style={{ fontSize: 13, color: '#6b7280', fontWeight: 500 }}>{label}</span>
@@ -94,39 +96,62 @@ export default function UtileObiettivo() {
           <PageSection title="Impostazioni Target" icon={<Calculator size={18} />}>
             <PageGrid cols={3} gap={20}>
               <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: 13,
+                    fontWeight: 500,
+                    color: '#374151',
+                    marginBottom: 6,
+                  }}
+                >
                   Target Utile Annuale (€)
                 </label>
                 <input
                   type="number"
                   value={settings.target_utile}
-                  onChange={(e) => setSettings(s => ({ ...s, target_utile: parseFloat(e.target.value) || 0 }))}
+                  onChange={e =>
+                    setSettings(s => ({ ...s, target_utile: parseFloat(e.target.value) || 0 }))
+                  }
                   style={{
                     width: '100%',
                     padding: 12,
                     border: '1px solid #e5e7eb',
                     borderRadius: 8,
                     fontSize: 16,
-                    fontWeight: 600
+                    fontWeight: 600,
                   }}
                   data-testid="input-target-utile"
                 />
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>
+                <label
+                  style={{
+                    display: 'block',
+                    fontSize: 13,
+                    fontWeight: 500,
+                    color: '#374151',
+                    marginBottom: 6,
+                  }}
+                >
                   Margine Atteso (%)
                 </label>
                 <input
                   type="number"
                   value={(settings.margine_atteso * 100).toFixed(0)}
-                  onChange={(e) => setSettings(s => ({ ...s, margine_atteso: (parseFloat(e.target.value) || 0) / 100 }))}
+                  onChange={e =>
+                    setSettings(s => ({
+                      ...s,
+                      margine_atteso: (parseFloat(e.target.value) || 0) / 100,
+                    }))
+                  }
                   style={{
                     width: '100%',
                     padding: 12,
                     border: '1px solid #e5e7eb',
                     borderRadius: 8,
                     fontSize: 16,
-                    fontWeight: 600
+                    fontWeight: 600,
                   }}
                   data-testid="input-margine"
                 />
@@ -148,7 +173,7 @@ export default function UtileObiettivo() {
                     display: 'flex',
                     alignItems: 'center',
                     gap: 8,
-                    opacity: saving ? 0.7 : 1
+                    opacity: saving ? 0.7 : 1,
                   }}
                 >
                   <Save size={16} />
@@ -163,9 +188,18 @@ export default function UtileObiettivo() {
             <>
               {/* Barra Progresso Principale */}
               <PageSection title="Raggiungimento Obiettivo" style={{ marginTop: 24 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: 24,
+                  }}
+                >
                   <div>
-                    <div style={{ fontSize: 14, color: '#6b7280', marginBottom: 4 }}>Percentuale</div>
+                    <div style={{ fontSize: 14, color: '#6b7280', marginBottom: 4 }}>
+                      Percentuale
+                    </div>
                     <div style={{ fontSize: 48, fontWeight: 700, color: progressColor }}>
                       {percentualeRaggiungimento.toFixed(1)}%
                     </div>
@@ -177,35 +211,55 @@ export default function UtileObiettivo() {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Progress Bar */}
-                <div style={{ background: '#f3f4f6', borderRadius: 12, height: 24, overflow: 'hidden', marginBottom: 16 }}>
+                <div
+                  style={{
+                    background: '#f3f4f6',
+                    borderRadius: 12,
+                    height: 24,
+                    overflow: 'hidden',
+                    marginBottom: 16,
+                  }}
+                >
                   <div
                     style={{
                       width: `${Math.min(percentualeRaggiungimento, 100)}%`,
                       height: '100%',
                       background: `linear-gradient(90deg, ${progressColor}, ${progressColor}dd)`,
                       borderRadius: 12,
-                      transition: 'width 0.5s ease'
+                      transition: 'width 0.5s ease',
                     }}
                   />
                 </div>
 
                 {/* Status Badge */}
                 <div style={{ display: 'flex', justifyContent: 'center' }}>
-                  <span style={{
-                    background: isOnTrack ? '#dcfce7' : (isAtRisk ? '#fef3c7' : '#fef2f2'),
-                    color: progressColor,
-                    padding: '8px 20px',
-                    borderRadius: 20,
-                    fontSize: 14,
-                    fontWeight: 600,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 8
-                  }}>
-                    {isOnTrack ? <TrendingUp size={18} /> : (isAtRisk ? <BarChart3 size={18} /> : <TrendingDown size={18} />)}
-                    {isOnTrack ? 'In linea con obiettivo' : (isAtRisk ? 'Attenzione richiesta' : 'Sotto obiettivo')}
+                  <span
+                    style={{
+                      background: isOnTrack ? '#dcfce7' : isAtRisk ? '#fef3c7' : '#fef2f2',
+                      color: progressColor,
+                      padding: '8px 20px',
+                      borderRadius: 20,
+                      fontSize: 14,
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                    }}
+                  >
+                    {isOnTrack ? (
+                      <TrendingUp size={18} />
+                    ) : isAtRisk ? (
+                      <BarChart3 size={18} />
+                    ) : (
+                      <TrendingDown size={18} />
+                    )}
+                    {isOnTrack
+                      ? 'In linea con obiettivo'
+                      : isAtRisk
+                        ? 'Attenzione richiesta'
+                        : 'Sotto obiettivo'}
                   </span>
                 </div>
               </PageSection>
@@ -247,14 +301,23 @@ export default function UtileObiettivo() {
               {/* Distribuzione per CDC */}
               {status.per_centro_costo && Object.keys(status.per_centro_costo).length > 0 && (
                 <PageSection title="Distribuzione per Centro di Costo" style={{ marginTop: 24 }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                      gap: 12,
+                    }}
+                  >
                     {Object.entries(status.per_centro_costo).map(([cdc, data]) => (
-                      <div key={cdc} style={{ 
-                        background: '#f8fafc', 
-                        padding: 16, 
-                        borderRadius: 8,
-                        border: '1px solid #e2e8f0'
-                      }}>
+                      <div
+                        key={cdc}
+                        style={{
+                          background: '#f8fafc',
+                          padding: 16,
+                          borderRadius: 8,
+                          border: '1px solid #e2e8f0',
+                        }}
+                      >
                         <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{cdc}</div>
                         <div style={{ fontSize: 18, fontWeight: 700, color: '#1e293b' }}>
                           {formatEuro(data.totale || 0)}
