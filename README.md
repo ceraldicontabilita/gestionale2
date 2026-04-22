@@ -1,8 +1,9 @@
 # Ceraldi ERP
 
 Gestionale web interno di Ceraldi Group S.R.L. (Napoli).
-Unifica contabilità, ciclo passivo, prima nota, HR, magazzino, noleggio auto e
-riconciliazione bancaria — con acquisizione automatica da PEC e Gmail.
+Unifica contabilità, ciclo passivo, prima nota, HR, magazzino, noleggio auto,
+riconciliazione bancaria e tracciabilità HACCP — con acquisizione automatica
+da PEC e Gmail e sistema relazionale a eventi.
 
 Repository GitHub: `ceraldicontabilita/gestionale2`
 Branch di riferimento: `main`
@@ -11,8 +12,9 @@ Branch di riferimento: `main`
 
 - Frontend: React 18 + Vite (porta 3000) — design inline via `src/lib/utils.js`
 - Backend: FastAPI + Motor async (porta 8001)
-- Database: MongoDB Atlas, DB `Gestionale`
+- Database: MongoDB Atlas, DB `Gestionale`, cluster `cluster0.vofh7iz`
 - Scheduler: APScheduler (PEC orario, Gmail 10 min)
+- Servizi core: `app/services/` — event bus, alert engine, riconciliazione, partite aperte
 
 ## Avvio rapido (ambiente Emergent)
 
@@ -33,7 +35,14 @@ Health: `curl -s http://localhost:8001/api/health`
 ```
 /app
 ├── backend/            Entry point FastAPI (server.py) + .env
-├── app/                Codice applicativo backend (routers, services, models, parsers...)
+├── app/                Codice applicativo backend
+│   ├── routers/        Router FastAPI organizzati per modulo
+│   ├── services/       Servizi core condivisi (event bus, alert, audit, deduplica,
+│   │                   partite aperte, riconciliazione engine)
+│   ├── models/         Modelli dati e stati
+│   ├── parsers/        Parser XML, PDF (Zucchetti, F24, verbali)
+│   ├── database.py     Connessione MongoDB + indici
+│   └── db_collections.py  Nomi collezioni (fonte di verità)
 ├── frontend/           React + Vite
 │   └── src/
 │       ├── lib/utils.js        Design system unico (colori, spazi, bottoni, formatter)
@@ -42,26 +51,52 @@ Health: `curl -s http://localhost:8001/api/health`
 │       ├── components/         layout, UI comune, widget
 │       └── pages/
 │           ├── hub/            Hub multi-tab (Contabilità, Magazzino, Strumenti...)
+│           ├── hr/             HR: Dipendenti, Cedolini, Presenze, TFR
 │           └── *.jsx           Pagine singole
-├── memoria/            Documentazione viva: PRD · INDEX · LOGICA_OPERATIVA
-├── tests/              Test manuali e script di appoggio
-├── uploads/            Cache allegati (XML, PDF) in fase di processing
+├── memoria/            Documentazione viva: PRD · INDEX · LOGICA_OPERATIVA · BACKLOG
+├── claude-patches/     Patch di sviluppo da Claude (chat-N-descrizione/)
+├── PIANO_LAVORO_RELAZIONALE.md   Architettura relazionale completa
+├── DIARIO.md           Cronologia sviluppo per chat
 └── README.md           Questo file
 ```
 
 ## Dove leggere la documentazione
 
+- `memoria/INDEX.md` — scheda rapida (stack, collections, route, regole critiche)
 - `memoria/PRD.md` — product requirements, stato implementazione, backlog
-- `memoria/INDEX.md` — scheda rapida (stack, collection, route, regole critiche)
 - `memoria/LOGICA_OPERATIVA.md` — funzionamento pagina per pagina
+- `memoria/BACKLOG.md` — backlog operativo con priorità
+- `PIANO_LAVORO_RELAZIONALE.md` — architettura relazionale, catalogo alert, piano 8 fasi
+
+## Architettura relazionale
+
+Il gestionale usa un sistema a eventi sincroni per far comunicare i moduli.
+Quando un'entità cambia stato, il cambio si propaga automaticamente:
+
+```
+Fattura XML → crea/aggiorna Fornitore → crea Partita Aperta → genera Alert se incompleta
+Movimento Banca → cerca Match con Partite → Riconcilia → aggiorna Fattura/F24/Stipendio
+Cedolino importato → aggiorna Dipendente → crea Prima Nota Salari → crea Partita Stipendio
+```
+
+I servizi core in `app/services/`:
+- `event_bus.py` — dispatcher eventi sincrono tra moduli
+- `alert_engine.py` — 48 codici alert standardizzati con trigger e chiusura
+- `audit_logger.py` — log unificato di ogni cambio stato
+- `deduplica.py` — verifica duplicati per tutte le entità
+- `partite_aperte_engine.py` — scadenziario materializzato
+- `riconciliazione_engine.py` — scoring match a 4 livelli
 
 ## Principi
 
 1. I ricavi arrivano SOLO da `corrispettivi`. Le `invoices` sono costi.
 2. Il metodo di pagamento di una fattura viene sempre dall'anagrafica del fornitore, mai dall'XML SDI.
-3. Collezioni canoniche: `fornitori`, `dipendenti`, `warehouse_stocks` (non le loro controparti in inglese/legacy).
+3. Collezioni canoniche: `fornitori`, `dipendenti`, `warehouse_inventory` (non le controparti legacy).
 4. Design system: una sola fonte di verità in `src/lib/utils.js`. Niente Tailwind, niente Shadcn.
 5. Full-frame e responsive: layout 100% width, niente `max-width` fisso, tabelle con wrapper scrollabile.
+6. Nomi collezioni: importare sempre da `app/db_collections.py`, mai stringhe hardcoded.
+7. Patch Claude: mai push diretto su main, sempre in `claude-patches/chat-N-descrizione/` con `ISTRUZIONI.md`.
+8. Ogni operazione CRUD significativa chiama `propagate_event()` per aggiornare i moduli collegati.
 
 ## Package management
 

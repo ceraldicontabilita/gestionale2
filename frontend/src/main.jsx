@@ -54,6 +54,7 @@ const AgentiPage = lazy(() => import("./pages/Agenti.jsx"));
 const Portale = lazy(() => import("./pages/Portale.jsx"));
 const TracciabilitaPage = lazy(() => import("./pages/TracciabilitaPage.jsx"));
 const LearningMachine = lazy(() => import("./pages/LearningMachine.jsx"));
+const DashboardRelazionale = lazy(() => import("./pages/DashboardRelazionale.jsx"));
 
 const LazyPage = ({ children }) => (
   <Suspense fallback={<PageLoader />}>{children}</Suspense>
@@ -72,6 +73,7 @@ const router = createBrowserRouter([
       // === DASHBOARD ===
       { index: true, element: <LazyPage><DashboardHub /></LazyPage> },
       { path: "dashboard", element: <LazyPage><DashboardHub /></LazyPage> },
+      { path: "dashboard-relazionale", element: <LazyPage><DashboardRelazionale /></LazyPage> },
       { path: "dashboard/:anno", element: <LazyPage><DashboardHub /></LazyPage> },
       { path: "analytics", element: <LazyPage><DashboardHub /></LazyPage> },
       { path: "analytics/:periodo", element: <LazyPage><DashboardHub /></LazyPage> },

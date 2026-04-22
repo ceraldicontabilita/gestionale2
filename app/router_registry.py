@@ -26,7 +26,18 @@ def register_all_routers(app: FastAPI) -> None:
     _register_noleggio(app)
     _register_ai(app)
     _register_tracciabilita(app)
-    
+
+    # Sistema relazionale (Chat 9e) + Fascicolo dipendenti (Chat 9 fix)
+    try:
+        from app.routers.partite_aperte_api import router as partite_router
+        from app.routers.riconciliazione_stats_api import router as ric_stats_router
+        from app.routers.employees.fascicolo_dipendente import router as fascicolo_router
+        app.include_router(partite_router, prefix="/api", tags=["Partite Aperte"])
+        app.include_router(ric_stats_router, prefix="/api", tags=["Riconciliazione Stats"])
+        app.include_router(fascicolo_router, prefix="/api", tags=["Fascicolo Dipendente"])
+    except Exception as e:
+        logger.warning(f"Router relazionali non registrati: {e}")
+
     logger.info("✅ Tutti i router registrati")
 
 

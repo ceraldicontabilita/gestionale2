@@ -296,6 +296,22 @@ COLL_DELIBERE_FONSI = "delibere_fonsi"
 COLL_DIMISSIONI = "dimissioni"
 
 # ===========================================
+# SISTEMA RELAZIONALE — Chat 8
+# ===========================================
+
+# Partite Aperte (scadenziario materializzato)
+COLL_PARTITE_APERTE = "partite_aperte"
+
+# Riconciliazione Match (N:M tra movimenti e partite)
+COLL_RICONCILIAZIONI_MATCH = "riconciliazioni_match"
+
+# Audit Log unificato
+COLL_AUDIT_LOG = "audit_log"
+
+# Alert Definitions (catalogo codici)
+COLL_ALERT_DEFINITIONS = "alert_definitions"
+
+# ===========================================
 # QUERY PATTERNS COMUNI
 # ===========================================
 

@@ -3,6 +3,11 @@
 Elenco ragionato delle cose da sistemare, per priorità di impatto sul lavoro quotidiano.
 Ultimo aggiornamento: Apr 2026.
 
+**NOTA**: Molti punti di questo backlog (auto-associazione documenti, fascicolo dipendente,
+scheda fornitore, riconciliazione automatica, alert scadenze) sono ora coperti dal sistema
+relazionale in fase di implementazione (Chat 8-16). Vedi `PIANO_LAVORO_RELAZIONALE.md` per
+il piano completo e le tempistiche.
+
 ---
 
 ## 🔴 P0 — Problemi critici che falsano i numeri

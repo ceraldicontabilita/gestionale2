@@ -14,21 +14,24 @@ Un unico gestionale web che consolidi:
 - riconciliazione bancaria (estratto conto CSV)
 - HR: dipendenti, cedolini, presenze, TFR
 - noleggio auto aziendali e verbali stradali
-- magazzino prodotti
+- magazzino prodotti con dizionario e normalizzazione
 - assegni emessi per carnet
 - contabilità (piano conti, bilancio, IVA, cespiti, mutui)
+- tracciabilità HACCP e produzione (via ceraldiapp.it)
 - scambi con il commercialista
 - alert/scadenziario F24
 
-Tutto alimentato in automatico da PEC (fatture XML SDI) e Gmail (cedolini, F24, verbali, quietanze).
+Tutto alimentato in automatico da PEC (fatture XML SDI) e Gmail (cedolini, F24, verbali, quietanze),
+con un sistema relazionale a eventi che propaga automaticamente gli aggiornamenti tra i moduli.
 
 ## Stack
 
 - Frontend: React 18 + Vite, porta 3000, in `/app/frontend`
 - Backend: FastAPI + Motor (async), porta 8001, in `/app/backend` + `/app/app`
-- Database: MongoDB Atlas, DB name `Gestionale`
-- Design: inline styles da `src/lib/utils.js`, zero Tailwind, zero Shadcn
+- Database: MongoDB Atlas, DB `Gestionale`, cluster `cluster0.vofh7iz`
+- Design: inline styles da `src/lib/utils.js` — palette navy #0f2744 + accento oro #b8860b
 - Scheduler: APScheduler per PEC (orario) e Gmail (10 min)
+- Servizi core: `app/services/` — event bus, alert engine, audit, deduplica, partite, riconciliazione
 
 Variabili d'ambiente principali:
 - frontend: `REACT_APP_BACKEND_URL`, `VITE_BACKEND_URL`
@@ -37,6 +40,7 @@ Variabili d'ambiente principali:
 ## Utenti
 
 Uso interno dello staff amministrativo. Niente multi-tenant, niente registrazione pubblica.
+Autenticazione multi-livello: Admin (JWT), Operatore (PIN personale bcrypt), Reparto (PIN operatore di turno).
 
 ## Principi architetturali
 
@@ -44,63 +48,60 @@ Uso interno dello staff amministrativo. Niente multi-tenant, niente registrazion
 2. Il metodo di pagamento di una fattura NON arriva dall'XML SDI: viene preso dall'anagrafica del fornitore (contanti / bonifico / assegno / misto).
 3. I ricavi arrivano SOLO da `corrispettivi`. Le `invoices` sono sempre costi.
 4. Le note credito (TD04) vengono registrate con importo negativo e badge rosso.
-5. La collezione autorevole per il magazzino è `warehouse_stocks`; per i fornitori `fornitori`; per HR `dipendenti` (mai `employees`).
+5. Collezioni canoniche: `warehouse_inventory` (magazzino), `fornitori`, `dipendenti` (mai le controparti legacy).
+6. Nomi collezioni sempre da `app/db_collections.py` — mai stringhe hardcoded nei router.
+7. Ogni operazione CRUD significativa chiama `propagate_event()` dal event bus per aggiornare i moduli collegati.
+8. Alert con codici standardizzati dal catalogo in `alert_engine.py` (48 codici) — mai alert "liberi".
+9. Patch Claude: mai push diretto su main, sempre in `claude-patches/chat-N-descrizione/`.
+
+## Architettura relazionale (Chat 8, Apr 2026)
+
+Il gestionale è stato progettato con un sistema a eventi sincroni che collega tutti i moduli.
+Decisioni architetturali vincolanti:
+
+- **Riconciliazione**: collezione dedicata `riconciliazioni_match` (supporta match N:M)
+- **Alert**: collezione unica `alerts` con codici standardizzati
+- **Eventi**: sincroni via `event_bus.py` (no Redis/Celery — il volume lo consente)
+- **Partite aperte**: materializzate in `partite_aperte` (non derivate al volo)
+
+Servizi core in `app/services/`:
+- `event_bus.py` — dispatcher sincrono con handler registrabili per tipo evento
+- `alert_engine.py` — 48 codici alert con generazione idempotente e chiusura automatica
+- `audit_logger.py` — log di ogni cambio stato: chi/quando/cosa/da-dove-a-dove
+- `deduplica.py` — verifica duplicati per fatture, fornitori, cedolini, F24, movimenti
+- `partite_aperte_engine.py` — scadenziario materializzato con CRUD e ricerca per match
+- `riconciliazione_engine.py` — scoring a 4 livelli: esatto → pattern noto → approssimato → debole
+
+Il documento completo è in `PIANO_LAVORO_RELAZIONALE.md` nella root del repo.
 
 ## Stato implementazione (Apr 2026)
 
 Funzionante:
-- Fatture SDI: 1.405 record, TD01 + TD04 con netting, `DatiFattureCollegate`
-- Prima Nota: Cassa (136) + Banca (4.365) + Provvisori con Cassa / Banca / Sospesa
-- Corrispettivi: 54 record importati da XML registratore
-- Fornitori: 245 record, aggiornamento anagrafica da OpenAPI Camera di Commercio
-- HR: 30 dipendenti, 301 cedolini (vista Per Mese / Per Dipendente), 290 presenze
-- Presenze: calendario giornaliero, import PDF Libro Unico, giustificativi con legenda
-- Magazzino: 496 prodotti in `warehouse_stocks`, catalogo costruito dalle righe XML
-- Noleggio: 4 veicoli, 165 verbali, estrazione targa da PDF (PyMuPDF), riconciliazione
-- Assegni: 220 assegni raggruppati per carnet, modal "Collega Fatture" con NC netting
-- Banca: 8.839 movimenti estratto conto, matching automatico con fatture/stipendi/F24
-- Strumenti: verifica coerenza IVA / saldi / discrepanze, export PDF commercialista
-- Email: PEC Aruba per fatture SDI, Gmail per cedolini / F24 / verbali / quietanze
+- Fatture SDI: ~3856 record, TD01 + TD04 con netting, `DatiFattureCollegate`
+- Prima Nota: Cassa (~1428) + Banca (~1138) + Provvisori
+- Corrispettivi: ~1051 record importati da XML registratore
+- Fornitori: ~268 record, aggiornamento anagrafica da OpenAPI Camera di Commercio
+- HR: ~30 dipendenti, ~916 cedolini (vista Per Mese / Per Dipendente)
+- Presenze: calendario giornaliero, import PDF Libro Unico, giustificativi
+- Magazzino: ~5372 prodotti in `warehouse_inventory`, dizionario ~112, catalogo da righe XML
+- Noleggio: 4 veicoli, ~165 verbali, estrazione targa da PDF (PyMuPDF)
+- Assegni: ~210 assegni raggruppati per carnet, modal collegamento fatture con NC netting
+- Banca: ~4261 movimenti estratto conto, matching con fatture/stipendi/F24
+- Strumenti: verifica coerenza IVA/saldi, export PDF commercialista
+- Email: PEC Aruba per fatture SDI, Gmail per cedolini/F24/verbali/quietanze
+- Tracciabilità HACCP: temperature, sanificazione, disinfestazione, ricezione merce (via ceraldiapp.it)
+- Servizi core relazionali: event bus, alert engine, audit, deduplica, partite, riconciliazione (Chat 8)
 
-Backlog:
-- P1: Prima Nota automatica senza conferma per match E/C con confidenza ≥90%
-- P1: download posta verbali da PEC (endpoint `/scarica-posta` ancora stub)
-- P2: scheda fornitore completa (fatturato storico, scadenze, pattern di pagamento)
-- P2: fascicolo dipendente (storico cedolini + TFR + presenze + bonifici)
-- P2: cleanup DB — merge di `suppliers` (15 record legacy) in `fornitori`
-- P3: calcolo TFR automatico dal cedolino (parser estrae già la quota)
-- P3: controllo IVA mensile automatico con generazione F24
-- P3: notifiche WhatsApp (token Meta configurato, endpoint da creare)
+In sviluppo (piano relazionale Chat 9-16):
+- Fase 2: Handler eventi Fatture↔Fornitori↔Prima Nota (Chat 10)
+- Fase 3: Riconciliazione Banca con scoring 4 livelli (Chat 11)
+- Fase 4: F24↔Banca (Chat 12)
+- Fase 5: Cedolini↔Dipendenti↔Banca (Chat 13)
+- Fase 6: Corrispettivi↔POS↔Cassa↔Banca (Chat 14)
+- Fase 7: Trasferimenti interni + Inbox documentale (Chat 15)
+- Fase 8: Dashboard relazionale + UI alert unificata (Chat 16)
 
-## Refactoring grafico — Apr 2026
-
-Obiettivo: uniformare visivamente tutto il gestionale, rendere le pagine responsive (niente scroll orizzontale su smartphone), ridurre il peso del bundle.
-
-Regole:
-- niente Tailwind nella build (postcss pulito)
-- una sola fonte di verità per colori/spaziature/bottoni: `src/lib/utils.js`
-- palette: navy `#0f2744` primario, accento oro sobrio `#b8860b`, slate neutri
-- layout full-frame: nessun `max-width` fisso, il padding è gestito una sola volta dal layout
-- mobile-first: `html, body { overflow-x: hidden }` come safety net, tabelle con wrapper scrollabile, griglie che collassano a 1-2 colonne
-
-File riscritti (design):
-- `src/lib/utils.js` — design system completo
-- `src/index.css` — reset, componenti comuni, regole mobile globali
-- `src/styles/topnav.css` — palette allineata alla utils.js
-- `src/styles/common.css` — shim legacy minimi
-- `src/styles/utilities.css` — utility classes CSS vanilla per le pagine che usavano Tailwind-like
-- `src/styles.css` — solo tokens legacy
-
-File toccati (layout):
-- tutti gli hub in `src/pages/hub/*.jsx` — rimosso padding duplicato, uniformata la tab bar
-- `src/components/layout/TopNav.jsx` — palette unica, altezza 54px
-- `src/main.jsx` — aggiunto import di `index.css` (era orfano)
-- `postcss.config.cjs` — rimosso plugin tailwind
-
-Fix di contorno:
-- installati `lxml` e `primp` nel backend per riabilitare l'import degli XML SDI
-- forzato `overflow-x: hidden` su html/body per bloccare overflow laterali nelle pagine legacy
-- nascosti i link del menu principale sul TopNav in viewport ≤768px (il menu resta accessibile dalla bottom bar)
+Backlog separato: vedi `memoria/BACKLOG.md`.
 
 ## Regole contabili di riferimento
 

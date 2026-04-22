@@ -110,7 +110,33 @@ class Database:
         await _safe_index("paypal_transactions", "paypal_account_id", name="idx_paypal_account")
         await _safe_index("paypal_transactions", "is_pagopa", name="idx_paypal_pagopa")
         await _safe_index("paypal_transactions", [("initiation_date", -1)], name="idx_paypal_date")
-        
+
+        # --- Partite Aperte (Chat 8) ---
+        await _safe_index("partite_aperte", "id", unique=True, name="idx_pa_id")
+        await _safe_index("partite_aperte", [("stato", 1), ("tipo", 1)], name="idx_pa_stato_tipo")
+        await _safe_index("partite_aperte", [("controparte_id", 1), ("stato", 1)], name="idx_pa_controparte")
+        await _safe_index("partite_aperte", [("documento_id", 1), ("tipo", 1)], name="idx_pa_doc_tipo")
+        await _safe_index("partite_aperte", "data_scadenza", name="idx_pa_scadenza")
+
+        # --- Riconciliazioni Match (Chat 8) ---
+        await _safe_index("riconciliazioni_match", "id", unique=True, name="idx_rm_id")
+        await _safe_index("riconciliazioni_match", [("movimento_id", 1)], name="idx_rm_movimento")
+        await _safe_index("riconciliazioni_match", [("partita_id", 1)], name="idx_rm_partita")
+        await _safe_index("riconciliazioni_match", [("stato", 1)], name="idx_rm_stato")
+
+        # --- Audit Log (Chat 8) ---
+        await _safe_index("audit_log", "id", unique=True, name="idx_audit_id")
+        await _safe_index("audit_log", [("entita_id", 1), ("timestamp", -1)], name="idx_audit_entita")
+        await _safe_index("audit_log", [("modulo", 1), ("timestamp", -1)], name="idx_audit_modulo")
+
+        # --- Alert Definitions (Chat 8) ---
+        await _safe_index("alert_definitions", "codice", unique=True, name="idx_alertdef_codice")
+
+        # --- Alerts (Chat 8) ---
+        await _safe_index("alerts", "id", unique=True, sparse=True, name="idx_alerts_id")
+        await _safe_index("alerts", [("codice", 1), ("entita_id", 1), ("stato", 1)], name="idx_alerts_codice_entita")
+        await _safe_index("alerts", [("modulo", 1), ("stato", 1)], name="idx_alerts_modulo_stato")
+
         logger.info(f"✅ Database indexes: {created} creati, {skipped} già esistenti")
 
     @classmethod

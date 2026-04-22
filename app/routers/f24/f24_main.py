@@ -365,7 +365,21 @@ async def create_f24(
     
     await db[COLL_F24].insert_one(f24.copy())
     f24.pop("_id", None)
-    
+
+    # --- EVENT BUS: F24 acquisito (Chat 9c) ---
+    try:
+        from app.services.event_bus import propagate_event, EventTypes
+        await propagate_event(EventTypes.F24_ACQUISITO, {
+            "f24_id": f24.get("id"),
+            "importo_totale": f24.get("importo_totale"),
+            "data_scadenza": f24.get("data_scadenza"),
+            "periodo": f24.get("periodo"),
+            "codice_tributo": f24.get("codice_tributo"),
+            "data_acquisizione": f24.get("created_at"),
+        }, db, source_module="f24_create")
+    except Exception:
+        pass
+
     return f24
 
 

@@ -804,6 +804,19 @@ async def import_corrispettivi_csv(file: UploadFile = File(...)) -> Dict[str, An
                     # Inserisci nuovo
                     await db["corrispettivi"].insert_one(corr_doc.copy())
                     importati += 1
+
+                    # --- EVENT BUS: corrispettivo registrato (Chat 9c) ---
+                    try:
+                        from app.services.event_bus import propagate_event, EventTypes
+                        await propagate_event(EventTypes.CORRISPETTIVO_REGISTRATO, {
+                            "corrispettivo_id": corr_doc.get("id"),
+                            "data": corr_doc.get("data"),
+                            "totale": corr_doc.get("totale") or corr_doc.get("importo_totale"),
+                            "contanti": corr_doc.get("contanti") or corr_doc.get("quota_contanti"),
+                            "elettronico": corr_doc.get("elettronico") or corr_doc.get("quota_pos"),
+                        }, db, source_module="corrispettivi_csv")
+                    except Exception:
+                        pass
                 
                 totale_importato += totale
                 

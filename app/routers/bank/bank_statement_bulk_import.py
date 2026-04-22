@@ -211,6 +211,19 @@ async def commit_preview(
             
             await db[collection].insert_one(record)
             imported += 1
+
+            # --- EVENT BUS: movimento banca importato (Chat 9b) ---
+            try:
+                from app.services.event_bus import propagate_event, EventTypes
+                await propagate_event(EventTypes.MOVIMENTO_BANCA_IMPORTATO, {
+                    "movimento_id": record.get("id"),
+                    "importo": record.get("importo", 0),
+                    "data": record.get("data", ""),
+                    "descrizione": record.get("descrizione", ""),
+                    "tipo": record.get("tipo", ""),
+                }, db, source_module="bank_statement_bulk_import")
+            except Exception:
+                pass
             
         except Exception as e:
             errors_list.append(f"Errore: {str(e)[:50]}")

@@ -338,6 +338,23 @@ async def crea_cedolino(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     }
     
     await db["cedolini"].insert_one(cedolino.copy())
+
+    # --- EVENT BUS: cedolino importato (Chat 9c) ---
+    try:
+        from app.services.event_bus import propagate_event, EventTypes
+        await propagate_event(EventTypes.CEDOLINO_IMPORTATO, {
+            "cedolino_id": cedolino.get("id"),
+            "dipendente_id": cedolino.get("dipendente_id"),
+            "dipendente_nome": cedolino.get("nome_dipendente") or cedolino.get("dipendente_nome"),
+            "netto": cedolino.get("netto") or cedolino.get("netto_mese"),
+            "lordo": cedolino.get("lordo"),
+            "mese": cedolino.get("mese"),
+            "anno": cedolino.get("anno"),
+            "tipo_cedolino": cedolino.get("tipo_cedolino", "mensile"),
+        }, db, source_module="cedolini_create")
+    except Exception:
+        pass
+
     return {"success": True, "message": "Cedolino creato", "id": cedolino["id"]}
 
 

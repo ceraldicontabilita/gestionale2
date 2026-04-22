@@ -832,7 +832,21 @@ async def import_bank_statement(
             "created_at": now
         }
         await db[COLLECTION_ESTRATTO_CONTO].insert_one(estratto_doc.copy())
-    
+
+        # --- EVENT BUS: movimento banca importato (Chat 9b) ---
+        try:
+            from app.services.event_bus import propagate_event, EventTypes
+            await propagate_event(EventTypes.MOVIMENTO_BANCA_IMPORTATO, {
+                "movimento_id": estratto_doc.get("id"),
+                "importo": estratto_doc.get("importo", 0),
+                "data": estratto_doc.get("data", ""),
+                "descrizione": estratto_doc.get("descrizione", ""),
+                "tipo": estratto_doc.get("tipo", ""),
+            }, db, source_module="bank_statement_import")
+        except Exception:
+            logger.exception("Errore propagazione evento movimento_banca.importato")
+        # --- fine event bus ---
+
     # Summary message
     if results["reconciled"] > 0:
         results["message"] = f"Importati {len(movements)} movimenti. Riconciliati: {results['reconciled']}, Non trovati: {results['not_found']}"

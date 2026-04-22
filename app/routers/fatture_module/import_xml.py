@@ -142,7 +142,28 @@ async def import_fattura_xml(file: UploadFile = File(...)) -> Dict[str, Any]:
     }
     
     await db[COL_FATTURE_RICEVUTE].insert_one(fattura.copy())
-    
+
+    # --- EVENT BUS: propaga evento fattura creata (Chat 9) ---
+    try:
+        from app.services.event_bus import propagate_event, EventTypes
+        await propagate_event(EventTypes.FATTURA_CREATED, {
+            "fattura_id": fattura.get("id"),
+            "numero_documento": fattura.get("numero_documento"),
+            "tipo_documento": parsed.get("tipo_documento", "TD01"),
+            "importo_totale": parsed.get("total_amount", 0),
+            "fornitore_id": fattura.get("fornitore_id"),
+            "fornitore_ragione_sociale": fattura.get("fornitore_ragione_sociale") or fattura.get("supplier_name"),
+            "fornitore_iban": fattura.get("fornitore_iban"),
+            "metodo_pagamento": fattura.get("metodo_pagamento"),
+            "data_documento": parsed.get("invoice_date", ""),
+            "data_scadenza": parsed.get("pagamento", {}).get("data_scadenza") if isinstance(parsed.get("pagamento"), dict) else None,
+            "stato": fattura.get("stato"),
+            "pagato": False,
+        }, db, source_module="import_xml")
+    except Exception:
+        logger.exception("Errore propagazione evento fattura.created")
+    # --- fine event bus ---
+
     # Trigger B: verbali da fattura XML noleggio (non bloccante)
     try:
         from app.services.verbali_fattura_trigger import processa_fattura_per_verbali

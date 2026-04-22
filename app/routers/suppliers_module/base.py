@@ -665,7 +665,17 @@ async def update_supplier_payment_method(
         await cache.delete("suppliers_list_default")
     except Exception:
         pass
-    
+
+    # --- EVENT BUS: fornitore aggiornato (Chat 9) ---
+    try:
+        from app.services.event_bus import propagate_event, EventTypes
+        await propagate_event(EventTypes.FORNITORE_UPDATED, {
+            "fornitore_id": supplier_id,
+            "metodo_pagamento": metodo_lower,
+        }, db, source_module="fornitori_metodo_pagamento")
+    except Exception:
+        pass
+
     return {"success": True, "metodo_pagamento": metodo_lower}
 
 

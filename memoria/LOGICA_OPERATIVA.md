@@ -570,3 +570,95 @@ dipendenti.codice_fiscale        ←→ cedolini.codice_fiscale ←→ presenze.
 veicoli_noleggio.targa           ←→ verbali_noleggio.targa   →  veicoli_noleggio.driver
 assegni.fornitore_piva           ←→ invoices.supplier_vat     (solo metodo = assegno)
 ```
+
+---
+
+## 5. Sistema relazionale a eventi (Chat 8+)
+
+### 5.1 Come i moduli si parlano
+
+Il gestionale usa un event bus sincrono (`app/services/event_bus.py`) che propaga gli aggiornamenti tra moduli. Quando un router crea o modifica un'entità, chiama `propagate_event()` che esegue tutti gli handler registrati per quel tipo di evento.
+
+Flusso tipo — arrivo fattura XML:
+```
+1. PEC scarica fattura XML
+2. Parser crea record in invoices
+3. propagate_event("fattura.created", {...})
+   ├── handler: verifica/crea fornitore in fornitori
+   ├── handler: crea partita in partite_aperte
+   ├── handler: genera alert se metodo pagamento mancante
+   ├── handler: instrada verso prima_nota_cassa o prima_nota_banca
+   └── handler: invia righe merce a magazzino
+4. Tutto avviene nella stessa request (sincrono)
+```
+
+### 5.2 Partite aperte
+
+Le partite aperte sono lo scadenziario materializzato. Ogni debito/credito atteso è un record reale nella collezione `partite_aperte` con importo originale, residuo e stato (aperta/parziale/chiusa).
+
+Tipi di partita:
+- `fattura_fornitore` — da fattura ricevuta
+- `f24` — da F24 acquisito
+- `stipendio` — da cedolino importato
+- `pos_atteso` — da quota POS corrispettivo
+- `trasferimento` — da trasferimento cassa↔banca
+
+### 5.3 Riconciliazione automatica
+
+Il motore di riconciliazione (`app/services/riconciliazione_engine.py`) cerca match tra movimenti bancari/cassa e partite aperte con scoring a 4 livelli:
+
+1. **Esatto** (score ≥0.90): importo identico + controparte univoca → riconciliazione automatica
+2. **Pattern noto** (score 0.70-0.90): causale F24/stipendio/POS riconosciuta → proposta o auto
+3. **Approssimato** (score 0.40-0.65): importo vicino, controparte probabile → proposta utente
+4. **Debole** (score <0.30): scartato, movimento resta da verificare
+
+Ogni match viene salvato in `riconciliazioni_match` e può essere confermato, respinto o lasciato come candidato. Supporta match N:M (un pagamento chiude più fatture, più pagamenti chiudono una fattura).
+
+### 5.4 Alert centralizzati
+
+Tutti gli alert del gestionale vivono in un'unica collezione `alerts` con 48 codici standardizzati (definiti in `app/services/alert_engine.py`). Ogni alert ha:
+- codice univoco (es. `FORN_MP_MANCANTE`, `FAT_DUPLICATA`, `CED_DIP_NON_TROVATO`)
+- severità: info / warning / critical
+- condizione di apertura e di chiusura
+- riferimento all'entità coinvolta
+
+Gli alert sono idempotenti: lo stesso alert non viene duplicato se già aperto. Si chiudono automaticamente quando la condizione di chiusura è soddisfatta.
+
+### 5.5 Audit trail
+
+Ogni cambio di stato nel gestionale viene loggato in `audit_log` con: modulo, azione, entità, stato prima/dopo, fonte, utente, timestamp. Utile per capire chi ha fatto cosa e per il debugging dei flussi automatici.
+
+### 5.6 Mappa relazionale completa
+
+```
+                      DOCUMENTI/INBOX
+                      (classificazione)
+                           │
+              ┌────────────┼────────────┐
+              ▼            ▼            ▼
+         FATTURE         F24       CEDOLINI
+         RICEVUTE                         
+              │            │            │
+     ┌────┬───┘            │       ┌────┴────┐
+     ▼    ▼                │       ▼         ▼
+  FORNIT. MAGAZZINO        │  DIPENDENTI    TFR
+     │                     │
+     ▼                     │
+  PARTITE APERTE ◄─────────┘  ◄── tutte le entità pagabili
+     │
+     ▼
+  RICONCILIAZIONE ◄─── ESTRATTO CONTO (banca)
+  MATCH                       ▲
+     │                        │
+     ▼                        │
+  PRIMA NOTA    ◄────►   PRIMA NOTA
+    CASSA                  BANCA
+  (trasferimenti interni)
+
+  CORRISPETTIVI ──► contanti → CASSA
+                ──► POS → PARTITA APERTA → BANCA
+
+  ALERTS      ◄── tutti i moduli
+  AUDIT LOG   ◄── ogni cambio stato
+  EVENT BUS   ◄── orchestra tutto
+```

@@ -43,6 +43,22 @@ async def lifespan(app: FastAPI):
     except Exception:
         pass
 
+    # Event Bus relazionale (Chat 8/9)
+    try:
+        from app.services.event_bus import register_all_handlers
+        register_all_handlers()
+    except Exception as e:
+        logger.warning(f"Event bus relazionale non inizializzato: {e}")
+
+    # Seed alert definitions (Chat 8)
+    try:
+        from app.services.alert_engine import seed_alert_definitions
+        db = Database.get_db()
+        if db is not None:
+            await seed_alert_definitions(db)
+    except Exception as e:
+        logger.warning(f"Seed alert_definitions non eseguito: {e}")
+
     # Scheduler (PEC ogni ora, Gmail ogni ora, F24 giornaliero)
     try:
         from app.scheduler import start_scheduler
