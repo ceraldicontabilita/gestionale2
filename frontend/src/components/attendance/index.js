@@ -1,6 +1,6 @@
 /**
  * Modulo Attendance - Gestione Presenze
- * 
+ *
  * Esporta costanti, helpers e componenti per la gestione delle presenze
  */
 
