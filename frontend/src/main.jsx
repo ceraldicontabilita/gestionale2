@@ -32,6 +32,7 @@ const DipendentiHub = lazy(() => import("./pages/hr/HRPresenze.jsx"));
 const HRDipendenti = lazy(() => import("./pages/hr/HRDipendenti.jsx"));
 const HRCedolini = lazy(() => import("./pages/hr/HRCedolini.jsx"));
 const HRTFR = lazy(() => import("./pages/hr/HRTFR.jsx"));
+const HRTurni = lazy(() => import("./pages/hr/HRTurni.jsx"));
 const VeicoliHub = lazy(() => import("./pages/hub/VeicoliHub.jsx"));
 const ContabilitaHub = lazy(() => import("./pages/hub/ContabilitaHub.jsx"));
 const MagazzinoHub = lazy(() => import("./pages/hub/MagazzinoHub.jsx"));
@@ -115,6 +116,7 @@ const router = createBrowserRouter([
       { path: "presenze/:dipendente", element: <LazyPage><DipendentiHub /></LazyPage> },
       { path: "presenze/:dipendente/:mese", element: <LazyPage><DipendentiHub /></LazyPage> },
       { path: "saldi-ferie-permessi", element: <LazyPage><DipendentiHub /></LazyPage> },
+      { path: "turni", element: <LazyPage><HRTurni /></LazyPage> },
       
       // === CEDOLINI & TFR ===
       { path: "paghe", element: <Navigate to="/cedolini" replace /> },
