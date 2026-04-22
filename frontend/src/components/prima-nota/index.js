@@ -6,7 +6,7 @@ export {
   ActionButtons,
   VirtualizedSalariTable,
   AggiustamentoModal,
-  ImportResultAlert
+  ImportResultAlert,
 } from './PrimaNotaComponents';
 
 // Main Tab Component
