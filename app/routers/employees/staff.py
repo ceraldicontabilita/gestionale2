@@ -1,5 +1,5 @@
 """Staff router - Staff/Employee management (legacy compatibility)."""
-from fastapi import APIRouter, Depends, Path, status, UploadFile, File
+from fastapi import APIRouter, Body, Depends, File, Path, UploadFile, status
 from typing import Dict, Any, List
 from datetime import datetime, timezone
 import logging
@@ -60,7 +60,7 @@ async def get_staff(
     summary="Create staff member"
 )
 async def create_staff(
-    staff_data: Dict[str, Any],
+    staff_data: Dict[str, Any] = Body(...),
     current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> Dict[str, str]:
     """Create a new staff member."""
