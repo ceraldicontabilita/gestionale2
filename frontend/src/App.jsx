@@ -29,6 +29,7 @@ const ALL_NAV_ITEMS = [
   { to: "/prima-nota", label: "Prima Nota", icon: "📒" },
   { to: "/riconciliazione", label: "Riconciliazione", icon: "🏦" },
   { to: "/dipendenti", label: "Dipendenti", icon: "👥" },
+  { to: "/turni", label: "Turni", icon: "🗓️" },
   { to: "/cedolini", label: "Cedolini", icon: "📄" },
   { to: "/bilancio", label: "Bilancio", icon: "📊" },
   { to: "/mutui", label: "Mutui", icon: "🏦" },
