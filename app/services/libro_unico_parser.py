@@ -377,7 +377,7 @@ def parse_libro_unico_pdf(pdf_bytes: bytes) -> Dict[str, Any]:
                                     if 1 <= candidate_hours <= 250:
                                         ore_ordinarie = candidate_hours
                                         break
-                                except:
+                                except Exception:
                                     pass
 
                     # Estrai lordo previdenziale (da riga "Z00000Contributo IVS <LORDO> 9,19000%")
