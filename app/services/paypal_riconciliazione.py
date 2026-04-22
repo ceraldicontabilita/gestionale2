@@ -341,7 +341,7 @@ async def riconcilia_pagamenti_paypal(
                     import uuid
                     movimento_id = str(uuid.uuid4())
                     data_mov = data_pag.strftime("%Y-%m-%d") if data_pag else datetime.now(timezone.utc).strftime("%Y-%m-%d")
-                    anno_mov = int(data_mov[:4])
+                    anno_mov = int(data_mov[:4]) if data_mov and len(str(data_mov)) >= 4 and str(data_mov)[:4].isdigit() else None
                     
                     movimento = {
                         "id": movimento_id,
