@@ -48,7 +48,7 @@ def get_token_from_config():
             with open(CONFIG_FILE, 'r') as f:
                 config = json.load(f)
             return config.get("gateway", {}).get("auth", {}).get("token")
-    except:
+    except Exception:
         pass
     return gateway_state.get("token")
 
@@ -107,7 +107,7 @@ def create_moltbot_config(token: str = None, api_key: str = None, provider: str 
         try:
             with open(CONFIG_FILE, "r") as f:
                 existing_config = json.load(f)
-        except:
+        except Exception:
             pass
     
     existing_token = existing_config.get("gateway", {}).get("auth", {}).get("token")
@@ -168,7 +168,7 @@ async def start_gateway_process(api_key: str, provider: str):
             with open(CONFIG_FILE, 'r') as f:
                 config = json.load(f)
             token = config.get("gateway", {}).get("auth", {}).get("token")
-        except:
+        except Exception:
             pass
         
         if not token:
@@ -201,7 +201,7 @@ async def start_gateway_process(api_key: str, provider: str):
                 response = await client.get(f"http://127.0.0.1:{MOLTBOT_PORT}/", timeout=2.0)
                 if response.status_code == 200:
                     return token
-            except:
+            except Exception:
                 pass
             await asyncio.sleep(1)
     
@@ -221,7 +221,7 @@ async def get_openclaw_status():
             async with httpx.AsyncClient() as probe:
                 r = await probe.get(f"http://127.0.0.1:{MOLTBOT_PORT}/", timeout=2.0)
                 running = r.status_code == 200
-        except:
+        except Exception:
             pass
     
     if running:
@@ -407,7 +407,7 @@ async def proxy_openclaw_ui(request: Request, path: str = ""):
             async with httpx.AsyncClient() as probe:
                 r = await probe.get(f"http://127.0.0.1:{MOLTBOT_PORT}/", timeout=2.0)
                 is_running = r.status_code == 200
-        except:
+        except Exception:
             pass
     
     if not is_running:
@@ -506,7 +506,7 @@ async def websocket_proxy(websocket: WebSocket):
             async with httpx.AsyncClient() as probe:
                 r = await probe.get(f"http://127.0.0.1:{MOLTBOT_PORT}/", timeout=2.0)
                 is_running = r.status_code == 200
-        except:
+        except Exception:
             pass
     
     if not is_running:
