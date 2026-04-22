@@ -8,54 +8,56 @@ import { generateBreadcrumb } from '../utils/urlHelpers';
 
 export default function Breadcrumb({ pageTitle = '', customItems = null }) {
   const location = useLocation();
-  
+
   // Usa items custom se forniti, altrimenti genera automaticamente
   const items = customItems || generateBreadcrumb(location.pathname, pageTitle);
-  
+
   if (items.length <= 1) return null;
-  
+
   return (
-    <nav 
-      aria-label="Breadcrumb" 
+    <nav
+      aria-label="Breadcrumb"
       style={{
         padding: '12px 0',
-        marginBottom: 16
+        marginBottom: 16,
       }}
     >
-      <ol style={{
-        display: 'flex',
-        alignItems: 'center',
-        listStyle: 'none',
-        margin: 0,
-        padding: 0,
-        flexWrap: 'wrap',
-        gap: 4
-      }}>
+      <ol
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          listStyle: 'none',
+          margin: 0,
+          padding: 0,
+          flexWrap: 'wrap',
+          gap: 4,
+        }}
+      >
         {items.map((item, index) => (
-          <li 
+          <li
             key={item.path}
             style={{
               display: 'flex',
-              alignItems: 'center'
+              alignItems: 'center',
             }}
           >
             {index > 0 && (
-              <ChevronRight 
-                style={{ 
-                  width: 14, 
-                  height: 14, 
+              <ChevronRight
+                style={{
+                  width: 14,
+                  height: 14,
                   color: '#9ca3af',
-                  marginRight: 4
-                }} 
+                  marginRight: 4,
+                }}
               />
             )}
-            
+
             {item.isLast ? (
-              <span 
+              <span
                 style={{
                   color: '#1f2937',
                   fontWeight: 600,
-                  fontSize: 14
+                  fontSize: 14,
                 }}
               >
                 {index === 0 ? <Home style={{ width: 14, height: 14 }} /> : item.label}
@@ -69,10 +71,10 @@ export default function Breadcrumb({ pageTitle = '', customItems = null }) {
                   fontSize: 14,
                   display: 'flex',
                   alignItems: 'center',
-                  transition: 'color 0.2s'
+                  transition: 'color 0.2s',
                 }}
-                onMouseEnter={(e) => e.target.style.color = '#3b82f6'}
-                onMouseLeave={(e) => e.target.style.color = '#6b7280'}
+                onMouseEnter={e => (e.target.style.color = '#3b82f6')}
+                onMouseLeave={e => (e.target.style.color = '#6b7280')}
               >
                 {index === 0 ? <Home style={{ width: 14, height: 14 }} /> : item.label}
               </Link>
@@ -87,15 +89,17 @@ export default function Breadcrumb({ pageTitle = '', customItems = null }) {
 // Versione compatta per header di pagina
 export function BreadcrumbCompact({ items }) {
   if (!items || items.length <= 1) return null;
-  
+
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      fontSize: 12,
-      color: 'rgba(255,255,255,0.8)',
-      marginTop: 4
-    }}>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        fontSize: 12,
+        color: 'rgba(255,255,255,0.8)',
+        marginTop: 4,
+      }}
+    >
       {items.slice(1).map((item, index) => (
         <span key={item.path}>
           {index > 0 && <span style={{ margin: '0 6px' }}>/</span>}
