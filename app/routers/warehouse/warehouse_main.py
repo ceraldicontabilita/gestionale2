@@ -667,7 +667,7 @@ async def get_excluded_suppliers(
     summary="Add excluded supplier"
 )
 async def add_excluded_supplier(
-    data: Dict[str, Any],
+    data: Dict[str, Any] = Body(...),
     current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> Dict[str, str]:
     """Add supplier to exclusion list."""
