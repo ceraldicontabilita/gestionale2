@@ -16,7 +16,9 @@ export function useLibroUnico(selectedYear, selectedMonth) {
       setLoading(true);
       const monthStr = String(selectedMonth).padStart(2, '0');
       const monthYear = `${selectedYear}-${monthStr}`;
-      const res = await api.get(`/api/dipendenti/libro-unico/salaries?month_year=${monthYear}`).catch(() => ({ data: [] }));
+      const res = await api
+        .get(`/api/dipendenti/libro-unico/salaries?month_year=${monthYear}`)
+        .catch(() => ({ data: [] }));
       setSalaries(res.data || []);
     } catch (error) {
       console.error('Error loading libro unico:', error);
@@ -26,43 +28,49 @@ export function useLibroUnico(selectedYear, selectedMonth) {
     }
   }, [selectedYear, selectedMonth]);
 
-  const handleUpload = useCallback(async (file) => {
-    try {
-      setUploading(true);
-      setUploadResult(null);
-      
-      const monthStr = String(selectedMonth).padStart(2, '0');
-      const monthYear = `${selectedYear}-${monthStr}`;
-      
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('month_year', monthYear);
-      
-      const res = await api.post('/api/dipendenti/libro-unico/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      
-      setUploadResult(res.data);
-      await loadData();
-      return res.data;
-    } catch (error) {
-      const result = { success: false, message: error.response?.data?.detail || error.message };
-      setUploadResult(result);
-      return result;
-    } finally {
-      setUploading(false);
-    }
-  }, [selectedYear, selectedMonth, loadData]);
+  const handleUpload = useCallback(
+    async file => {
+      try {
+        setUploading(true);
+        setUploadResult(null);
+
+        const monthStr = String(selectedMonth).padStart(2, '0');
+        const monthYear = `${selectedYear}-${monthStr}`;
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('month_year', monthYear);
+
+        const res = await api.post('/api/dipendenti/libro-unico/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+
+        setUploadResult(res.data);
+        await loadData();
+        return res.data;
+      } catch (error) {
+        const result = { success: false, message: error.response?.data?.detail || error.message };
+        setUploadResult(result);
+        return result;
+      } finally {
+        setUploading(false);
+      }
+    },
+    [selectedYear, selectedMonth, loadData]
+  );
 
   const handleExport = useCallback(async () => {
     try {
       const monthStr = String(selectedMonth).padStart(2, '0');
       const monthYear = `${selectedYear}-${monthStr}`;
-      
-      const response = await api.get(`/api/dipendenti/libro-unico/export-excel?month_year=${monthYear}`, {
-        responseType: 'blob'
-      });
-      
+
+      const response = await api.get(
+        `/api/dipendenti/libro-unico/export-excel?month_year=${monthYear}`,
+        {
+          responseType: 'blob',
+        }
+      );
+
       const blob = new Blob([response.data]);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -78,18 +86,19 @@ export function useLibroUnico(selectedYear, selectedMonth) {
     }
   }, [selectedYear, selectedMonth]);
 
-  const handleDelete = useCallback(async (salaryId) => {
-    
-    
-    try {
-      await api.delete(`/api/dipendenti/libro-unico/salaries/${salaryId}`);
-      await loadData();
-      return true;
-    } catch (error) {
-      alert('Errore eliminazione: ' + (error.response?.data?.detail || error.message));
-      return false;
-    }
-  }, [loadData]);
+  const handleDelete = useCallback(
+    async salaryId => {
+      try {
+        await api.delete(`/api/dipendenti/libro-unico/salaries/${salaryId}`);
+        await loadData();
+        return true;
+      } catch (error) {
+        alert('Errore eliminazione: ' + (error.response?.data?.detail || error.message));
+        return false;
+      }
+    },
+    [loadData]
+  );
 
   const clearUploadResult = useCallback(() => {
     setUploadResult(null);
@@ -104,6 +113,6 @@ export function useLibroUnico(selectedYear, selectedMonth) {
     handleUpload,
     handleExport,
     handleDelete,
-    clearUploadResult
+    clearUploadResult,
   };
 }
