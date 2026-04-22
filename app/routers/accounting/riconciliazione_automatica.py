@@ -38,6 +38,48 @@ COLLECTION_ASSEGNI = "assegni"
 IMPORTI_COMMISSIONI = [0.75, 1.00, 1.10, 1.50, 2.00, 2.50, 3.00]
 
 
+async def _propaga_fattura_pagata(db, fattura_id: str, metodo: str, data_pag: str,
+                                   movimento_id: Optional[str] = None,
+                                   importo: Optional[float] = None,
+                                   source: str = "riconciliazione_automatica") -> None:
+    """
+    Helper per propagare FATTURA_PAGATA dopo update invoice in questo file.
+    Centralizza i 5 punti di pagamento per evitare duplicazione di codice.
+    Fail-safe: logga l'errore senza mai propagarlo.
+    """
+    try:
+        from app.services.event_bus import propagate_event, EventTypes
+        await propagate_event(EventTypes.FATTURA_PAGATA, {
+            "fattura_id": fattura_id,
+            "metodo_pagamento": metodo,
+            "data_pagamento": data_pag,
+            "movimento_id": movimento_id,
+            "importo": importo,
+        }, db, source_module=source)
+    except Exception:
+        logger.exception(f"Errore propagazione fattura.pagata ({source}) fat={fattura_id}")
+
+
+async def _propaga_f24_pagato(db, f24_id: str, data_pag: str,
+                               movimento_id: Optional[str] = None,
+                               importo: Optional[float] = None,
+                               source: str = "riconciliazione_automatica") -> None:
+    """
+    Helper per propagare F24_PAGATO in questo file.
+    Fail-safe.
+    """
+    try:
+        from app.services.event_bus import propagate_event, EventTypes
+        await propagate_event(EventTypes.F24_PAGATO, {
+            "f24_id": f24_id,
+            "data_pagamento": data_pag,
+            "movimento_id": movimento_id,
+            "importo_totale": importo,
+        }, db, source_module=source)
+    except Exception:
+        logger.exception(f"Errore propagazione f24.pagato ({source}) f24={f24_id}")
+
+
 def is_commissione(desc: str, imp: float) -> bool:
     """Verifica se è una commissione bancaria da ignorare."""
     desc_upper = (desc or "").upper()
@@ -390,7 +432,16 @@ async def riconcilia_estratto_conto() -> Dict[str, Any]:
                             "updated_at": now
                         }}
                     )
-                    
+                    await _propaga_fattura_pagata(
+                        db,
+                        fattura_id=str(fattura.get("id") or fattura.get("_id")),
+                        metodo=metodo_pagamento,
+                        data_pag=data_ec,
+                        movimento_id=mov_id,
+                        importo=fattura.get("total_amount") or fattura.get("importo_totale"),
+                        source="ric_auto_esatto_multi",
+                    )
+
                     match_details = {
                         "fattura_id": str(fattura.get("_id")),
                         "numero_fattura": fattura.get("numero_fattura") or fattura.get("invoice_number"),
@@ -429,7 +480,16 @@ async def riconcilia_estratto_conto() -> Dict[str, Any]:
                                 "updated_at": now
                             }}
                         )
-                        
+                        await _propaga_fattura_pagata(
+                            db,
+                            fattura_id=str(fattura.get("id") or fattura.get("_id")),
+                            metodo=metodo_pagamento,
+                            data_pag=data_ec,
+                            movimento_id=mov_id,
+                            importo=fattura.get("total_amount") or fattura.get("importo_totale"),
+                            source="ric_auto_parziale_singolo",
+                        )
+
                         match_details = {
                             "fattura_id": str(fattura.get("_id")),
                             "numero_fattura": fattura.get("numero_fattura") or fattura.get("invoice_number"),
@@ -504,7 +564,16 @@ async def riconcilia_estratto_conto() -> Dict[str, Any]:
                                 "updated_at": now
                             }}
                         )
-                        
+                        await _propaga_fattura_pagata(
+                            db,
+                            fattura_id=str(fattura.get("id") or fattura.get("_id")),
+                            metodo=metodo_pagamento,
+                            data_pag=data_ec,
+                            movimento_id=mov_id,
+                            importo=fattura.get("total_amount") or fattura.get("importo_totale"),
+                            source="ric_auto_solo_importo",
+                        )
+
                         match_details = {
                             "fattura_id": str(fattura.get("_id")),
                             "numero_fattura": fattura.get("numero_fattura") or fattura.get("invoice_number"),
@@ -575,7 +644,15 @@ async def riconcilia_estratto_conto() -> Dict[str, Any]:
                             "updated_at": now
                         }}
                     )
-                    
+                    await _propaga_f24_pagato(
+                        db,
+                        f24_id=str(f24.get("id") or f24.get("_id")),
+                        data_pag=data_ec,
+                        movimento_id=mov_id,
+                        importo=f24.get("totale") or f24.get("importo_totale"),
+                        source="ric_auto_f24",
+                    )
+
                     match_details = {
                         "f24_id": str(f24.get("_id")),
                         "periodo": f24.get("periodo_riferimento"),
@@ -803,7 +880,16 @@ async def conferma_operazione(
                 "updated_at": now
             }}
         )
-        
+        await _propaga_fattura_pagata(
+            db,
+            fattura_id=fattura_id,
+            metodo="Bonifico",
+            data_pag=operazione["data"],
+            movimento_id=operazione.get("movimento_ec_id"),
+            importo=operazione.get("importo"),
+            source="ric_auto_conferma_operazione",
+        )
+
         # Aggiorna EC
         await db[COLLECTION_ESTRATTO_CONTO].update_one(
             {"id": operazione["movimento_ec_id"]},
