@@ -2526,7 +2526,7 @@ def detect_document_type(filename: str, file_content: bytes) -> str:
                 # Verifica intestazioni tipiche distinte BPM
                 if 'Beneficiario' in content_str and ('Importo' in content_str or 'IBAN' in content_str):
                     return 'distinte_bpm'
-            except:
+            except Exception:
                 pass
         return 'estratto_conto'  # CSV/Excel di default è estratto conto
     
