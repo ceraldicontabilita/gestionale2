@@ -635,7 +635,7 @@ async def scansiona_certificati_medici(
                     "email_date": date_str,
                     "pdf_filename": pdf_filename,
                     "pdf_base64": pdf_base64,
-                    "created_at": datetime.now().isoformat()
+                    "created_at": datetime.now(timezone.utc).isoformat()
                 }
                 
                 await db[COLLECTION_CERTIFICATI_MEDICI].insert_one(certificato)
@@ -656,7 +656,7 @@ async def scansiona_certificati_medici(
                             {"employee_id": employee_id, "data": data_iso},
                             {"$set": {
                                 "protocollo_malattia": dati["protocollo"],
-                                "updated_at": datetime.now().isoformat()
+                                "updated_at": datetime.now(timezone.utc).isoformat()
                             }},
                             upsert=True
                         )
