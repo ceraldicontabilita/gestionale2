@@ -127,7 +127,7 @@ class FieldNormalizer:
                     normalized["anno"] = int(data[:4])
                 elif isinstance(data, datetime):
                     normalized["anno"] = data.year
-            except:
+            except Exception:
                 pass
                 
         return normalized
