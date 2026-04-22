@@ -127,8 +127,10 @@ try:
 except ImportError:
     pass
 
-# Auth Middleware
+# Auth Middleware — montato GLOBALMENTE su tutti gli endpoint /api/
+# (esclude whitelist di path pubblici definita in authentication.py)
 from app.middleware.authentication import AuthenticationMiddleware
+app.add_middleware(AuthenticationMiddleware)
 
 # Exception Handlers
 add_exception_handlers(app)

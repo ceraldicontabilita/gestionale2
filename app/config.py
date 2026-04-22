@@ -212,24 +212,47 @@ class Settings(BaseSettings):
         }
     
     def validate_startup(self) -> None:
-        """Validate critical configuration at startup."""
+        """Validate critical configuration at startup.
+
+        In produzione, se FAIL_FAST_SECRETS=true è attivo, l'applicazione
+        fallisce l'avvio se mancano SECRET_KEY o MONGODB_ATLAS_URI.
+        Altrimenti logga un errore critico ma continua (comportamento legacy).
+        """
         import logging
+        import os
         logger = logging.getLogger(__name__)
-        
+
+        fail_fast = self.is_production and os.getenv("FAIL_FAST_SECRETS", "").lower() in ("true", "1", "yes")
+        errors: list[str] = []
+
         # Check SECRET_KEY was explicitly configured (not auto-generated)
-        # This can't be done perfectly, but we can at least warn if it looks auto-generated
         if not os.getenv("SECRET_KEY"):
-            logger.error(
-                "❌ ERROR: SECRET_KEY non configurata nell'ambiente! "
+            msg = (
+                "SECRET_KEY non configurata nell'ambiente! "
                 "L'applicazione sta usando una chiave temporanea. "
-                "Configurare SECRET_KEY nel file .env per la produzione."
+                "Configurare SECRET_KEY nel file .env per la produzione. "
+                "I token JWT NON sopravviveranno al riavvio."
             )
-        
+            if fail_fast:
+                errors.append(msg)
+            else:
+                logger.error(f"❌ ERROR: {msg}")
+
         # Check database configuration
         if not self.MONGODB_ATLAS_URI:
-            logger.error(
-                "❌ ERROR: MONGODB_ATLAS_URI non configurata! "
+            msg = (
+                "MONGODB_ATLAS_URI non configurata! "
                 "Il database non funzionerà correttamente."
+            )
+            if fail_fast:
+                errors.append(msg)
+            else:
+                logger.error(f"❌ ERROR: {msg}")
+
+        if errors:
+            raise RuntimeError(
+                "Fail-fast produzione: configurazione mancante. "
+                + " | ".join(errors)
             )
 
 
