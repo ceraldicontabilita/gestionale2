@@ -405,7 +405,7 @@ class EmailFullDownloader:
                     if content:
                         filename = msg.get_filename() or "documento.pdf"
                         pdfs.append((decode_mime_header(filename), content))
-                except:
+                except Exception:
                     pass
         
         return pdfs
@@ -431,12 +431,12 @@ class EmailFullDownloader:
                     try:
                         body = part.get_payload(decode=True).decode('utf-8', errors='replace')
                         break
-                    except:
+                    except Exception:
                         pass
         else:
             try:
                 body = msg.get_payload(decode=True).decode('utf-8', errors='replace')
-            except:
+            except Exception:
                 pass
         
         # ============================================================
@@ -1494,7 +1494,7 @@ async def process_cedolini_to_prima_nota(db: AsyncIOMotorDatabase) -> Dict[str, 
                         if 100 < num < 10000:  # Range ragionevole per uno stipendio netto
                             parsed_data['netto'] = num
                             break
-                    except:
+                    except Exception:
                         pass
                 if parsed_data.get('netto'):
                     break
@@ -1505,7 +1505,7 @@ async def process_cedolini_to_prima_nota(db: AsyncIOMotorDatabase) -> Dict[str, 
                 val = lordo_match.group(1).replace('.', '').replace(',', '.').replace('+', '')
                 try:
                     parsed_data['lordo'] = float(val)
-                except:
+                except Exception:
                     pass
             
             # INPS (Ritenute Previdenziali)
@@ -1514,7 +1514,7 @@ async def process_cedolini_to_prima_nota(db: AsyncIOMotorDatabase) -> Dict[str, 
                 val = inps_match.group(1).replace('.', '').replace(',', '.').replace('-', '')
                 try:
                     parsed_data['inps'] = float(val)
-                except:
+                except Exception:
                     pass
             
             # IRPEF (Ritenute Fiscali)
@@ -1523,7 +1523,7 @@ async def process_cedolini_to_prima_nota(db: AsyncIOMotorDatabase) -> Dict[str, 
                 val = irpef_match.group(1).replace('.', '').replace(',', '.').replace('-', '')
                 try:
                     parsed_data['irpef'] = float(val)
-                except:
+                except Exception:
                     pass
             
             # Se abbiamo abbastanza dati, crea record in prima_nota_salari
