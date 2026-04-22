@@ -295,7 +295,32 @@ async def process_fattura_to_db(db, parsed: Dict[str, Any], filename: str = "upl
                 }}
             )
             logger.info(f"  → Auto-registrata in {'CASSA' if is_cassa else 'BANCA'} (metodo: {metodo_pagamento})")
-    
+
+    # --- EVENT BUS: propaga evento fattura creata (upload manuale) ---
+    # Attiva i 4 handler su FATTURA_CREATED: crea_partita, alert_fornitore,
+    # audit, righe_magazzino. Fail-safe per non bloccare l'import.
+    try:
+        from app.services.event_bus import propagate_event, EventTypes
+        fornitore_data = invoice.get("fornitore") or {}
+        await propagate_event(EventTypes.FATTURA_CREATED, {
+            "fattura_id": invoice["id"],
+            "numero_documento": invoice.get("invoice_number", ""),
+            "tipo_documento": invoice.get("tipo_documento", "TD01"),
+            "importo_totale": invoice.get("total_amount", 0),
+            "fornitore_id": supplier_id,
+            "fornitore_ragione_sociale": invoice.get("supplier_name", ""),
+            "fornitore_nuovo": supplier_result.get("nuovo", False),
+            "fornitore_iban": fornitore_data.get("iban") if isinstance(fornitore_data, dict) else None,
+            "metodo_pagamento": metodo_pagamento,
+            "data_documento": invoice.get("invoice_date", ""),
+            "data_scadenza": data_scadenza,
+            "stato": invoice.get("status", "imported"),
+            "pagato": invoice.get("stato_pagamento") == "pagata",
+            "righe_linee": invoice.get("linee", []),
+        }, db, source_module="fatture_upload_manuale")
+    except Exception:
+        logger.exception("Errore propagazione evento fattura.created (upload manuale)")
+
     return invoice
 
 

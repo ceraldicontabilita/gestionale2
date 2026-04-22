@@ -124,6 +124,19 @@ async def rapido_paga_fattura(
         "created_at": datetime.now(timezone.utc).isoformat()
     })
     await db["invoices"].update_one({"id": invoice_id}, {"$set": {"pagato": True, "stato_pagamento": "pagata"}})
+
+    # --- EVENT BUS: propaga evento fattura pagata (rapido) ---
+    try:
+        from app.services.event_bus import propagate_event, EventTypes
+        await propagate_event(EventTypes.FATTURA_PAGATA, {
+            "fattura_id": invoice_id,
+            "metodo_pagamento": metodo_pagamento,
+            "data_pagamento": datetime.now().strftime("%Y-%m-%d"),
+            "importo": abs(imp),
+        }, db, source_module="rapido_paga_fattura")
+    except Exception:
+        logger.exception("Errore propagazione evento fattura.pagata (rapido)")
+
     return {"success": True, "id": mov_id, "message": f"Fattura pagata ({metodo_pagamento})"}
 
 

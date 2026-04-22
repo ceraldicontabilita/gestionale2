@@ -2589,7 +2589,22 @@ async def upload_documento_automatico(
         }
         
         await db["documents_inbox"].insert_one(dict(doc_record).copy())
-        
+
+        # --- EVENT BUS: propaga evento documento acquisito (upload manuale) ---
+        try:
+            from app.services.event_bus import propagate_event, EventTypes
+            await propagate_event(EventTypes.DOCUMENTO_ACQUISITO, {
+                "documento_id": doc_id,
+                "filename": filename,
+                "origine": "upload_manuale",
+                "mime_type": "application/octet-stream",
+                "hash_file": file_hash,
+                "mittente": None,
+                "category": "altro",
+            }, db, source_module="documenti_upload_auto")
+        except Exception:
+            logger.exception("Errore propagazione evento documento.acquisito (upload)")
+
         return {
             "success": True,
             "tipo_rilevato": "non_riconosciuto",
