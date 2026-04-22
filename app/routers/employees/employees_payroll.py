@@ -301,6 +301,10 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
                             "permessi_residuo": summary.get("permessi_residuo"),
                             "template": result.get("template"),
                             "tipo_cedolino": result.get("tipo_cedolino"),
+                            # Rilevamento cessazione rapporto
+                            "cessato": summary.get("cessato", False),
+                            "cessazione_diciture": summary.get("cessazione_diciture", []),
+                            "data_cessazione_rilevata": summary.get("data_cessazione_rilevata"),
                             "_pdf_bytes": pdf_bytes,
                             "_pdf_filename": pdf_filename,
                             "_parse_method": "multi_template"
@@ -608,7 +612,71 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
                         await db["prima_nota_salari"].insert_one(movimento_salario.copy())
                         logger.info(f"Prima Nota Salari CREATA: €{importo_busta} per {nome} ({periodo})")
                         prima_nota_creata = True
-                
+
+                # --- AUTO-CESSAZIONE DA CEDOLINO ---
+                # Se il parser ha rilevato diciture di cessazione (LIQUIDAZIONE TFR,
+                # SALDO TFR, CESSAZIONE RAPPORTO, ecc.) marca il dipendente come
+                # cessato e propaga l'evento (che attiva: terminazione contratti,
+                # rifiuto richieste assenza future, annullamento partite aperte,
+                # risoluzione alert). Idempotente.
+                cessato_rilevato = bool(payslip.get("cessato"))
+                if cessato_rilevato and emp_id:
+                    # Calcola data_cessazione: prima prova quella rilevata dal PDF,
+                    # altrimenti ultimo giorno del mese del cedolino
+                    data_cess = payslip.get("data_cessazione_rilevata")
+                    if not data_cess and anno and mese:
+                        try:
+                            import calendar as _cal
+                            ug = _cal.monthrange(int(anno), int(mese))[1]
+                            data_cess = f"{int(anno):04d}-{int(mese):02d}-{ug:02d}"
+                        except Exception:
+                            data_cess = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+                    # Aggiorna dipendente (solo se non già cessato per evitare
+                    # doppio update quando arrivano cedolini cessazione multipli)
+                    dip_now = await db["dipendenti"].find_one(
+                        {"id": emp_id},
+                        {"_id": 0, "attivo": 1, "in_carico": 1, "data_cessazione": 1}
+                    )
+                    gia_cessato = dip_now and (
+                        dip_now.get("attivo") is False
+                        or dip_now.get("in_carico") is False
+                        or dip_now.get("data_cessazione")
+                    )
+
+                    if not gia_cessato:
+                        await db["dipendenti"].update_one(
+                            {"id": emp_id},
+                            {"$set": {
+                                "attivo": False,
+                                "in_carico": False,
+                                "data_cessazione": data_cess,
+                                "cessato_automaticamente": True,
+                                "cessazione_source": "cedolino_upload",
+                                "cessazione_diciture": payslip.get("cessazione_diciture", []),
+                                "updated_at": datetime.now(timezone.utc).isoformat(),
+                            }}
+                        )
+                        logger.info(
+                            f"Dipendente {nome} ({emp_id}) AUTO-CESSATO da cedolino: "
+                            f"diciture={payslip.get('cessazione_diciture')}"
+                        )
+
+                        # Propaga evento cessazione esteso (il nuovo handler
+                        # terminerà contratti, rifiuterà richieste, annullerà partite)
+                        try:
+                            from app.services.event_bus import propagate_event, EventTypes
+                            await propagate_event(EventTypes.DIPENDENTE_CESSATO, {
+                                "dipendente_id": emp_id,
+                                "nome_completo": nome,
+                                "codice_fiscale": cf,
+                                "data_cessazione": data_cess,
+                                "auto_from_cedolino": True,
+                                "cessazione_diciture": payslip.get("cessazione_diciture", []),
+                            }, db, source_module="cedolino_upload")
+                        except Exception:
+                            logger.exception(f"Errore propagazione dipendente.cessato per {emp_id}")
+
                 results["success"].append({"nome": nome, "periodo": periodo, "netto": importo_busta, "is_new": is_new, "prima_nota": prima_nota_creata})
                 results["imported"] += 1
                 

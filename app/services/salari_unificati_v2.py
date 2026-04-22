@@ -465,6 +465,78 @@ async def processa_cedolino_v2(
         except Exception:
             logger.exception("Errore propagazione cedolino.importato (canale D V2)")
 
+        # --- AUTO-CESSAZIONE DA CEDOLINO (canale D) ---
+        # Cerca diciture di cessazione nel testo grezzo del PDF o nei campi
+        # già esposti dal parser. Se trovate, marca il dipendente cessato e
+        # propaga l'evento che attiverà termine contratti, rifiuto richieste
+        # future, annullamento partite, risoluzione alert.
+        cessazione_info = None
+        try:
+            # 1. Se già estratto dal parser upstream (canale A style)
+            if cedolino_data.get("cessato"):
+                cessazione_info = {
+                    "cessato": True,
+                    "diciture_trovate": cedolino_data.get("cessazione_diciture", []),
+                    "data_cessazione_rilevata": cedolino_data.get("data_cessazione_rilevata"),
+                }
+            # 2. Altrimenti analizza il pdf_text se disponibile
+            elif pdf_text:
+                from app.parsers.busta_paga_multi_template import detect_cessazione
+                cessazione_info = detect_cessazione(pdf_text)
+        except Exception:
+            logger.exception("Errore detect_cessazione (canale D V2)")
+
+        if cessazione_info and cessazione_info.get("cessato") and dipendente_id:
+            try:
+                # Calcola data_cessazione
+                data_cess = cessazione_info.get("data_cessazione_rilevata")
+                if not data_cess:
+                    import calendar as _cal
+                    ug = _cal.monthrange(int(anno), int(mese))[1]
+                    data_cess = f"{int(anno):04d}-{int(mese):02d}-{ug:02d}"
+
+                # Idempotente: skip se già cessato
+                dip_now = await db["dipendenti"].find_one(
+                    {"id": dipendente_id},
+                    {"_id": 0, "attivo": 1, "in_carico": 1, "data_cessazione": 1}
+                )
+                gia_cessato = dip_now and (
+                    dip_now.get("attivo") is False
+                    or dip_now.get("in_carico") is False
+                    or dip_now.get("data_cessazione")
+                )
+
+                if not gia_cessato:
+                    await db["dipendenti"].update_one(
+                        {"id": dipendente_id},
+                        {"$set": {
+                            "attivo": False,
+                            "in_carico": False,
+                            "data_cessazione": data_cess,
+                            "cessato_automaticamente": True,
+                            "cessazione_source": "cedolino_auto_v2",
+                            "cessazione_diciture": cessazione_info.get("diciture_trovate", []),
+                            "updated_at": datetime.now(timezone.utc).isoformat(),
+                        }}
+                    )
+                    logger.info(
+                        f"[Canale D V2] Dipendente {nome} ({dipendente_id}) AUTO-CESSATO da cedolino: "
+                        f"diciture={cessazione_info.get('diciture_trovate')}"
+                    )
+
+                    from app.services.event_bus import propagate_event, EventTypes
+                    await propagate_event(EventTypes.DIPENDENTE_CESSATO, {
+                        "dipendente_id": dipendente_id,
+                        "nome_completo": nome,
+                        "codice_fiscale": cf,
+                        "data_cessazione": data_cess,
+                        "auto_from_cedolino": True,
+                        "cessazione_diciture": cessazione_info.get("diciture_trovate", []),
+                    }, db, source_module="cedolini_manager_v2")
+                    result["cessato_auto"] = True
+            except Exception:
+                logger.exception(f"Errore auto-cessazione canale D V2 per dip {dipendente_id}")
+
     except Exception as e:
         logger.error(f"Errore processa_cedolino_v2: {e}")
         result["errore"] = str(e)

@@ -618,6 +618,65 @@ def parse_template_zucchetti_new(text: str) -> Dict[str, Any]:
     return result
 
 
+def detect_cessazione(text: str) -> Dict[str, Any]:
+    """
+    Rileva se il cedolino è un cedolino di cessazione rapporto.
+
+    Cerca nel testo una o più delle seguenti diciture (case-insensitive):
+    - LIQUIDAZIONE TFR
+    - SALDO TFR
+    - CESSAZIONE RAPPORTO / CESSAZIONE DEL RAPPORTO
+    - TFR LIQUIDATO (variante comune)
+    - DATA CESSAZIONE (con data a seguire)
+
+    Non fa calcoli: si limita a leggere quanto stampato dal consulente.
+
+    Returns:
+        {
+            "cessato": bool,
+            "diciture_trovate": [str],  # elenco match
+            "data_cessazione_rilevata": str | None,  # se presente nel testo
+        }
+    """
+    if not text:
+        return {"cessato": False, "diciture_trovate": [], "data_cessazione_rilevata": None}
+
+    text_upper = text.upper()
+    diciture = []
+
+    # Pattern di cessazione (regex compilate)
+    patterns = [
+        (r'\bLIQUIDAZIONE\s+T\.?F\.?R\.?\b', "LIQUIDAZIONE TFR"),
+        (r'\bSALDO\s+T\.?F\.?R\.?\b', "SALDO TFR"),
+        (r'\bCESSAZIONE\s+(DEL\s+)?RAPPORTO\b', "CESSAZIONE RAPPORTO"),
+        (r'\bT\.?F\.?R\.?\s+LIQUIDATO\b', "TFR LIQUIDATO"),
+        (r'\bRAPPORTO\s+(DI\s+LAVORO\s+)?CESSATO\b', "RAPPORTO CESSATO"),
+        (r'\bFINE\s+RAPPORTO\b', "FINE RAPPORTO"),
+    ]
+
+    for pattern, label in patterns:
+        if re.search(pattern, text_upper):
+            diciture.append(label)
+
+    # Cerca data cessazione se menzionata esplicitamente
+    data_rilevata = None
+    date_match = re.search(
+        r'(?:DATA\s+)?CESSAZIONE[:\s]+(\d{1,2}[/\-\.]\d{1,2}[/\-\.]\d{2,4})',
+        text_upper
+    )
+    if date_match:
+        data_rilevata = date_match.group(1)
+        # Se appare "DATA CESSAZIONE: xx/xx/xxxx" è di per sé indicatore di cessazione
+        if not diciture:
+            diciture.append("DATA CESSAZIONE ESPLICITA")
+
+    return {
+        "cessato": bool(diciture),
+        "diciture_trovate": diciture,
+        "data_cessazione_rilevata": data_rilevata,
+    }
+
+
 def parse_busta_paga_multi(pdf_path: str) -> Dict[str, Any]:
     """
     Parser principale che rileva automaticamente il template e applica
@@ -676,6 +735,11 @@ def parse_busta_paga_multi(pdf_path: str) -> Dict[str, Any]:
     result["raw_text_length"] = len(all_text)
     result["num_pages"] = num_pages
     result["parse_success"] = True
+
+    # --- RILEVAMENTO CESSAZIONE RAPPORTO ---
+    # Cerca diciture di cessazione in TUTTO il testo del PDF (prima + altre pagine)
+    # Non fa calcoli: legge quanto stampato dal consulente del lavoro.
+    result["cessazione"] = detect_cessazione(all_text)
     
     # Validazione minima
     # Accetta anche lordo = 0 per cedolini solo trattenute
@@ -764,7 +828,8 @@ def extract_summary(parsed_data: Dict[str, Any]) -> Dict[str, Any]:
     periodo = parsed_data.get("periodo", {})
     ferie = parsed_data.get("ferie_permessi", {})
     ore_ferie = parsed_data.get("ore_ferie", {})  # Dati da pagina 2
-    
+    cessazione = parsed_data.get("cessazione", {})
+
     return {
         "template": parsed_data.get("template", "unknown"),
         "num_pages": parsed_data.get("num_pages", 1),
@@ -786,4 +851,8 @@ def extract_summary(parsed_data: Dict[str, Any]) -> Dict[str, Any]:
         "ferie_godute": ferie.get("ferie_godute") or ore_ferie.get("ferie_godute"),
         "permessi_residuo": ferie.get("permessi_residuo") or ore_ferie.get("permessi_residuo"),
         "permessi_goduti": ferie.get("permessi_goduti") or ore_ferie.get("permessi_goduti"),
+        # Rilevamento cessazione rapporto (da testo PDF)
+        "cessato": cessazione.get("cessato", False),
+        "cessazione_diciture": cessazione.get("diciture_trovate", []),
+        "data_cessazione_rilevata": cessazione.get("data_cessazione_rilevata"),
     }

@@ -265,6 +265,56 @@ async def processa_cedolino_completo(
         except Exception:
             logger.exception("Errore propagazione cedolino.importato (canale D V1)")
 
+        # --- AUTO-CESSAZIONE DA CEDOLINO (canale D V1 fallback) ---
+        # Stessa logica della V2 ma senza pdf_text: si affida solo ai campi
+        # 'cessato'/'cessazione_diciture' se già popolati dal parser upstream.
+        if cedolino_data.get("cessato") and dipendente_id:
+            try:
+                data_cess = cedolino_data.get("data_cessazione_rilevata")
+                if not data_cess:
+                    import calendar as _cal
+                    ug = _cal.monthrange(anno, mese)[1]
+                    data_cess = f"{anno:04d}-{mese:02d}-{ug:02d}"
+
+                dip_now = await db["dipendenti"].find_one(
+                    {"id": dipendente_id},
+                    {"_id": 0, "attivo": 1, "in_carico": 1, "data_cessazione": 1}
+                )
+                gia_cessato = dip_now and (
+                    dip_now.get("attivo") is False
+                    or dip_now.get("in_carico") is False
+                    or dip_now.get("data_cessazione")
+                )
+
+                if not gia_cessato:
+                    await db["dipendenti"].update_one(
+                        {"id": dipendente_id},
+                        {"$set": {
+                            "attivo": False,
+                            "in_carico": False,
+                            "data_cessazione": data_cess,
+                            "cessato_automaticamente": True,
+                            "cessazione_source": "cedolino_auto_v1",
+                            "cessazione_diciture": cedolino_data.get("cessazione_diciture", []),
+                            "updated_at": datetime.now(timezone.utc).isoformat(),
+                        }}
+                    )
+                    logger.info(
+                        f"[Canale D V1] Dipendente {nome} ({dipendente_id}) AUTO-CESSATO"
+                    )
+                    from app.services.event_bus import propagate_event as _pe, EventTypes as _et
+                    await _pe(_et.DIPENDENTE_CESSATO, {
+                        "dipendente_id": dipendente_id,
+                        "nome_completo": nome,
+                        "codice_fiscale": cf,
+                        "data_cessazione": data_cess,
+                        "auto_from_cedolino": True,
+                        "cessazione_diciture": cedolino_data.get("cessazione_diciture", []),
+                    }, db, source_module="cedolini_manager_v1")
+                    result["cessato_auto"] = True
+            except Exception:
+                logger.exception(f"Errore auto-cessazione V1 per dip {dipendente_id}")
+
     except Exception as e:
         logger.error(f"Errore processamento cedolino: {e}")
         result["errore"] = str(e)
@@ -390,9 +440,31 @@ async def processa_tutti_cedolini_pdf(db, pdf_data: str, filename: str) -> Dict[
         results["success"] = False
         results["errori"].append(f"Errore decodifica Base64: {str(e)}")
         return results
-    
+
     cedolini = []
-    
+
+    # Estrai testo grezzo del PDF (per detect_cessazione e fallback V2)
+    # Estratto una volta sola perché il parsing Document AI non espone il raw text
+    raw_text = ""
+    try:
+        import fitz  # PyMuPDF
+        import tempfile
+        import os as _os
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp:
+            tmp.write(file_content)
+            tmp_path = tmp.name
+        try:
+            doc = fitz.open(tmp_path)
+            raw_text = "\n".join(page.get_text() for page in doc)
+            doc.close()
+        finally:
+            try:
+                _os.unlink(tmp_path)
+            except Exception:
+                pass
+    except Exception as e:
+        logger.debug(f"Estrazione pdf_text fallita (non bloccante): {e}")
+
     # PRIMA SCELTA: Document AI (più accurato)
     try:
         from app.services.document_ai_extractor import extract_document_data
@@ -436,6 +508,23 @@ async def processa_tutti_cedolini_pdf(db, pdf_data: str, filename: str) -> Dict[
     
     # Processa i cedolini trovati
     for ced in cedolini:
+        # pdf_text preferenziale: _raw_text del singolo cedolino (parser_v2 regex),
+        # altrimenti il raw_text globale estratto all'inizio (Document AI path)
+        ced_pdf_text = ced.get("_raw_text", "") or raw_text
+
+        # Arricchisci cedolino_data con detect_cessazione se non già presente,
+        # così anche il fallback V1 ha il flag 'cessato' senza dover riparsare
+        if ced_pdf_text and not ced.get("cessato"):
+            try:
+                from app.parsers.busta_paga_multi_template import detect_cessazione
+                _cess = detect_cessazione(ced_pdf_text)
+                if _cess.get("cessato"):
+                    ced["cessato"] = True
+                    ced["cessazione_diciture"] = _cess.get("diciture_trovate", [])
+                    ced["data_cessazione_rilevata"] = _cess.get("data_cessazione_rilevata")
+            except Exception:
+                logger.debug("detect_cessazione arricchimento fallito (non bloccante)")
+
         # Usa processamento V2 che estrae anche ferie/ROL/contributi
         try:
             from app.services.salari_unificati_v2 import processa_cedolino_v2
@@ -443,7 +532,7 @@ async def processa_tutti_cedolini_pdf(db, pdf_data: str, filename: str) -> Dict[
             res = await processa_cedolino_v2(
                 db=db,
                 cedolino_data=ced,
-                pdf_text=ced.get("_raw_text", ""),
+                pdf_text=ced_pdf_text,
                 filename=filename,
                 pdf_data=pdf_data
             )

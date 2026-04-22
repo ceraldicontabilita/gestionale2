@@ -154,45 +154,158 @@ async def on_dipendente_updated_risolvi(event: Dict[str, Any], db) -> Optional[D
 
 async def on_dipendente_cessato(event: Dict[str, Any], db) -> Optional[Dict]:
     """
-    Quando un dipendente viene cessato, verifica se ha flussi attivi
-    (cedolini recenti, bonifici pendenti, partite aperte).
+    Quando un dipendente viene cessato esegue il ciclo completo di chiusura:
+
+    1. Termina tutti i contratti attivi (employee_contracts) con data_fine = data_cessazione
+    2. Rifiuta automaticamente richieste assenza pending con data > data_cessazione
+    3. Annulla partite aperte stipendio residue
+    4. Risolve alert aperti sul dipendente (tranne DIP_CESSATO_FLUSSI_ATTIVI nuovo)
+    5. Genera audit + eventuale alert se restano flussi anomali
+
+    Idempotente: se ricevuto due volte non duplica azioni (skip se già terminato).
     """
     from app.services.alert_engine import genera_alert
     from app.services.audit_logger import log_evento
+    from datetime import datetime, timedelta, timezone
 
     dip_id = event.get("dipendente_id", "")
     nome = event.get("nome_completo", "")
+    data_cessazione = event.get("data_cessazione") or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    source_module = event.get("source_module", "manuale")
+    auto_from_cedolino = event.get("auto_from_cedolino", False)
+    diciture = event.get("cessazione_diciture", [])
 
-    # Cerca cedolini recenti (ultimi 2 mesi)
-    from datetime import datetime, timedelta
-    due_mesi_fa = (datetime.now() - timedelta(days=60)).strftime("%Y-%m")
-    cedolini_recenti = await db["cedolini"].count_documents({
-        "dipendente_id": dip_id,
-        "$expr": {"$gte": [{"$concat": [{"$toString": "$anno"}, "-", {"$toString": "$mese"}]}, due_mesi_fa]}
-    })
+    now_iso = datetime.now(timezone.utc).isoformat()
+    azioni = {
+        "contratti_terminati": 0,
+        "richieste_future_rifiutate": 0,
+        "partite_annullate": 0,
+        "alerts_risolti": 0,
+    }
 
-    # Cerca partite stipendio aperte
-    partite_aperte = await db["partite_aperte"].count_documents({
-        "controparte_id": dip_id,
-        "tipo": "stipendio",
-        "stato": {"$in": ["aperta", "parziale"]}
-    })
-
-    if cedolini_recenti > 0 or partite_aperte > 0:
-        await genera_alert(
-            "DIP_CESSATO_FLUSSI_ATTIVI", dip_id, "dipendenti",
-            f"Dipendente '{nome}' cessato ma ha {cedolini_recenti} cedolini recenti "
-            f"e {partite_aperte} partite stipendio aperte",
-            db,
-            extra={"cedolini_recenti": cedolini_recenti, "partite_aperte": partite_aperte}
+    # 1. Termina contratti attivi
+    try:
+        r_contratti = await db["employee_contracts"].update_many(
+            {
+                "dipendente_id": dip_id,
+                "stato": {"$in": ["attivo", "in_corso", None]},
+                "$or": [
+                    {"data_fine": None},
+                    {"data_fine": {"$exists": False}},
+                    {"data_fine": ""},
+                    {"data_fine": {"$gte": data_cessazione}},
+                ],
+            },
+            {"$set": {
+                "stato": "terminato",
+                "data_fine": data_cessazione,
+                "motivo_fine": "cessazione_rapporto",
+                "terminato_automaticamente": True,
+                "terminato_at": now_iso,
+            }}
         )
+        azioni["contratti_terminati"] = r_contratti.modified_count
+    except Exception as e:
+        logger.exception(f"Errore terminazione contratti per dip {dip_id}: {e}")
+
+    # 2. Rifiuta richieste assenza future pending
+    try:
+        r_richieste = await db["richieste_assenza"].update_many(
+            {
+                "employee_id": dip_id,
+                "stato": {"$in": ["pending", "in_attesa", "inviata"]},
+                "data_inizio": {"$gte": data_cessazione},
+            },
+            {"$set": {
+                "stato": "rifiutata",
+                "rifiutata_automaticamente": True,
+                "motivo_rifiuto": "Dipendente cessato",
+                "rifiutata_at": now_iso,
+            }}
+        )
+        azioni["richieste_future_rifiutate"] = r_richieste.modified_count
+    except Exception as e:
+        logger.exception(f"Errore rifiuto richieste future per dip {dip_id}: {e}")
+
+    # 3. Annulla partite aperte stipendio residue
+    try:
+        r_partite = await db["partite_aperte"].update_many(
+            {
+                "controparte_id": dip_id,
+                "tipo": "stipendio",
+                "stato": {"$in": ["aperta", "parziale"]},
+            },
+            {"$set": {
+                "stato": "annullata",
+                "annullata_at": now_iso,
+                "motivo_annullamento": f"Dipendente {nome} cessato il {data_cessazione}",
+            }}
+        )
+        azioni["partite_annullate"] = r_partite.modified_count
+    except Exception as e:
+        logger.exception(f"Errore annullamento partite per dip {dip_id}: {e}")
+
+    # 4. Risolve alert aperti sul dipendente
+    try:
+        r_alerts = await db["alerts"].update_many(
+            {
+                "entita_id": dip_id,
+                "stato": "aperto",
+                # Non risolvere l'alert DIP_CESSATO_FLUSSI_ATTIVI che potremmo creare subito dopo
+                "codice": {"$ne": "DIP_CESSATO_FLUSSI_ATTIVI"},
+            },
+            {"$set": {
+                "stato": "risolto",
+                "risolto": True,
+                "resolved_at": now_iso,
+                "resolved_by": "cessazione",
+                "note_risoluzione": f"Dipendente {nome} cessato il {data_cessazione}",
+            }}
+        )
+        azioni["alerts_risolti"] = r_alerts.modified_count
+    except Exception as e:
+        logger.exception(f"Errore risoluzione alert per dip {dip_id}: {e}")
+
+    # 5. Check flussi residui anomali (cedolini recenti NON dovrebbero essere
+    #    un problema se la cessazione è arrivata proprio da cedolino, quindi
+    #    l'alert è generato solo se siamo in cessazione manuale)
+    if not auto_from_cedolino:
+        due_mesi_fa = (datetime.now() - timedelta(days=60)).strftime("%Y-%m")
+        cedolini_recenti = await db["cedolini"].count_documents({
+            "dipendente_id": dip_id,
+            "$expr": {"$gte": [{"$concat": [{"$toString": "$anno"}, "-", {"$toString": "$mese"}]}, due_mesi_fa]}
+        })
+        partite_aperte_post = await db["partite_aperte"].count_documents({
+            "controparte_id": dip_id,
+            "tipo": "stipendio",
+            "stato": {"$in": ["aperta", "parziale"]}
+        })
+        if cedolini_recenti > 0 or partite_aperte_post > 0:
+            await genera_alert(
+                "DIP_CESSATO_FLUSSI_ATTIVI", dip_id, "dipendenti",
+                f"Dipendente '{nome}' cessato ma ha {cedolini_recenti} cedolini recenti "
+                f"e {partite_aperte_post} partite stipendio ancora aperte dopo chiusura",
+                db,
+                extra={"cedolini_recenti": cedolini_recenti, "partite_aperte": partite_aperte_post}
+            )
+
+    # Audit log
+    dettaglio = f"Dipendente '{nome}' cessato il {data_cessazione}"
+    if auto_from_cedolino:
+        dettaglio += f" (rilevato da cedolino: {', '.join(diciture) if diciture else 'diciture cessazione'})"
+    dettaglio += (
+        f" — contratti={azioni['contratti_terminati']}, "
+        f"richieste={azioni['richieste_future_rifiutate']}, "
+        f"partite={azioni['partite_annullate']}, "
+        f"alerts={azioni['alerts_risolti']}"
+    )
 
     await log_evento(
         modulo="dipendenti", azione="cessato", entita_id=dip_id,
         entita_collection="dipendenti", db=db,
-        nuovo_stato={"stato": "cessato"},
-        fonte=event.get("source_module", "manuale"),
-        dettaglio=f"Dipendente '{nome}' cessato"
+        nuovo_stato={"stato": "cessato", "data_cessazione": data_cessazione, "azioni": azioni},
+        fonte=source_module,
+        dettaglio=dettaglio,
     )
 
-    return {"action": "cessazione_processata"}
+    return {"action": "cessazione_processata", "azioni": azioni}
