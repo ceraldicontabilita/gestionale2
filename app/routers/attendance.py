@@ -14,7 +14,7 @@ Autore: Sistema Gestionale
 Data: 22 Gennaio 2026
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Body
 from fastapi.responses import StreamingResponse
 from typing import Dict, Any
 from datetime import datetime, timezone, timedelta
