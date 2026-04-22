@@ -1,12 +1,29 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import { useHashState } from '../hooks/useHashState';
 import { CopyLinkButton } from '../components/CopyLinkButton';
 import { Link } from 'react-router-dom';
-import api from "../api";
+import api from '../api';
 import { formatDateIT, formatEuro } from '../lib/utils';
-import { useAnnoGlobale } from "../contexts/AnnoContext";
-import { PageLayout, PageSection, PageGrid, PageLoading, PageEmpty, PageError } from '../components/PageLayout';
-import { Receipt, Banknote, CreditCard, Percent, RefreshCw, Upload, Eye, Trash2, X } from 'lucide-react';
+import { useAnnoGlobale } from '../contexts/AnnoContext';
+import {
+  PageLayout,
+  PageSection,
+  PageGrid,
+  PageLoading,
+  PageEmpty,
+  PageError,
+} from '../components/PageLayout';
+import {
+  Receipt,
+  Banknote,
+  CreditCard,
+  Percent,
+  RefreshCw,
+  Upload,
+  Eye,
+  Trash2,
+  X,
+} from 'lucide-react';
 
 /**
  * PAGINA CORRISPETTIVI
@@ -17,7 +34,7 @@ export default function Corrispettivi() {
   const { anno: selectedYear } = useAnnoGlobale();
   const [corrispettivi, setCorrispettivi] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState("");
+  const [err, setErr] = useState('');
 
   // Deep link: item selezionato sincronizzato con hash (#selected=2026-04-08)
   const [hs, setHs] = useHashState({ selected: '' });
@@ -30,27 +47,28 @@ export default function Corrispettivi() {
   async function loadCorrispettivi() {
     try {
       setLoading(true);
-      setErr("");
+      setErr('');
       const r = await api.get(`/api/corrispettivi?anno=${selectedYear}&limit=2500`);
       const data = r.data || [];
       const corrispettiviArray = Array.isArray(data) ? data : [];
       corrispettiviArray.sort((a, b) => (b.data || '').localeCompare(a.data || ''));
       setCorrispettivi(corrispettiviArray);
     } catch (e) {
-      console.error("Error loading corrispettivi:", e);
-      setErr("Errore caricamento: " + (e.response?.data?.detail || e.message));
+      console.error('Error loading corrispettivi:', e);
+      setErr('Errore caricamento: ' + (e.response?.data?.detail || e.message));
     } finally {
       setLoading(false);
     }
   }
 
   async function handleDelete(id) {
-    if (!window.confirm('Eliminare questo corrispettivo? L\'operazione non può essere annullata.')) return;
+    if (!window.confirm("Eliminare questo corrispettivo? L'operazione non può essere annullata."))
+      return;
     try {
       await api.delete(`/api/corrispettivi/${id}`);
       loadCorrispettivi();
     } catch (e) {
-      setErr("Errore eliminazione: " + (e.response?.data?.detail || e.message));
+      setErr('Errore eliminazione: ' + (e.response?.data?.detail || e.message));
     }
   }
 
@@ -61,22 +79,20 @@ export default function Corrispettivi() {
   const totaleImponibile = corrispettivi.reduce((sum, c) => sum + (c.totale_imponibile || 0), 0);
 
   const KPICard = ({ icon: Icon, label, value, subtext, color, bgColor }) => (
-    <div style={{
-      background: bgColor || '#fff',
-      borderRadius: 12,
-      padding: 20,
-      border: '1px solid #e2e8f0'
-    }}>
+    <div
+      style={{
+        background: bgColor || '#fff',
+        borderRadius: 12,
+        padding: 20,
+        border: '1px solid #e2e8f0',
+      }}
+    >
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
         <Icon size={18} color={color || '#64748b'} />
         <span style={{ fontSize: 13, color: '#64748b' }}>{label}</span>
       </div>
-      <div style={{ fontSize: 26, fontWeight: 700, color: color || '#1e293b' }}>
-        {value}
-      </div>
-      {subtext && (
-        <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>{subtext}</div>
-      )}
+      <div style={{ fontSize: 26, fontWeight: 700, color: color || '#1e293b' }}>{value}</div>
+      {subtext && <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 6 }}>{subtext}</div>}
     </div>
   );
 
@@ -99,7 +115,7 @@ export default function Corrispettivi() {
               display: 'inline-flex',
               alignItems: 'center',
               gap: 6,
-              fontSize: 13
+              fontSize: 13,
             }}
           >
             <Upload size={16} /> Importa
@@ -118,7 +134,7 @@ export default function Corrispettivi() {
               fontSize: 13,
               display: 'flex',
               alignItems: 'center',
-              gap: 6
+              gap: 6,
             }}
             data-testid="corrispettivi-refresh-btn"
           >
@@ -128,7 +144,13 @@ export default function Corrispettivi() {
       }
     >
       {err && (
-        <PageError message={err} onRetry={() => { setErr(''); loadCorrispettivi(); }} />
+        <PageError
+          message={err}
+          onRetry={() => {
+            setErr('');
+            loadCorrispettivi();
+          }}
+        />
       )}
 
       {loading ? (
@@ -171,7 +193,11 @@ export default function Corrispettivi() {
 
           {/* Dettaglio selezionato */}
           {selectedItem && (
-            <PageSection title={`Dettaglio Corrispettivo ${selectedItem.data}`} icon="📋" style={{ marginTop: 20 }}>
+            <PageSection
+              title={`Dettaglio Corrispettivo ${selectedItem.data}`}
+              icon="📋"
+              style={{ marginTop: 20 }}
+            >
               <button
                 onClick={() => setHs('selected', '')}
                 style={{
@@ -181,7 +207,7 @@ export default function Corrispettivi() {
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
-                  padding: 4
+                  padding: 4,
                 }}
               >
                 <X size={20} color="#64748b" />
@@ -189,26 +215,59 @@ export default function Corrispettivi() {
 
               <PageGrid cols={3} gap={20}>
                 <div>
-                  <h4 style={{ margin: '0 0 12px 0', fontSize: 13, color: '#64748b', fontWeight: 600 }}>Dati Generali</h4>
+                  <h4
+                    style={{
+                      margin: '0 0 12px 0',
+                      fontSize: 13,
+                      color: '#64748b',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Dati Generali
+                  </h4>
                   <div style={{ fontSize: 13, lineHeight: 2 }}>
-                    <div>📅 Data: <strong>{selectedItem.data}</strong></div>
-                    <div>🔢 Matricola RT: {selectedItem.matricola_rt || "-"}</div>
-                    <div>🏢 P.IVA: {selectedItem.partita_iva || "-"}</div>
-                    <div>📄 N° Documenti: {selectedItem.numero_documenti || "-"}</div>
+                    <div>
+                      📅 Data: <strong>{selectedItem.data}</strong>
+                    </div>
+                    <div>🔢 Matricola RT: {selectedItem.matricola_rt || '-'}</div>
+                    <div>🏢 P.IVA: {selectedItem.partita_iva || '-'}</div>
+                    <div>📄 N° Documenti: {selectedItem.numero_documenti || '-'}</div>
                   </div>
                 </div>
                 <div>
-                  <h4 style={{ margin: '0 0 12px 0', fontSize: 13, color: '#64748b', fontWeight: 600 }}>Pagamenti</h4>
+                  <h4
+                    style={{
+                      margin: '0 0 12px 0',
+                      fontSize: 13,
+                      color: '#64748b',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Pagamenti
+                  </h4>
                   <div style={{ fontSize: 13, lineHeight: 2 }}>
-                    <div style={{ color: '#16a34a' }}>💵 Cassa: {formatEuro(selectedItem.pagato_contanti)}</div>
-                    <div style={{ color: '#7c3aed' }}>💳 Elettronico: {formatEuro(selectedItem.pagato_elettronico)}</div>
+                    <div style={{ color: '#16a34a' }}>
+                      💵 Cassa: {formatEuro(selectedItem.pagato_contanti)}
+                    </div>
+                    <div style={{ color: '#7c3aed' }}>
+                      💳 Elettronico: {formatEuro(selectedItem.pagato_elettronico)}
+                    </div>
                     <div style={{ fontWeight: 700, marginTop: 8, fontSize: 15 }}>
                       Totale: {formatEuro(selectedItem.totale)}
                     </div>
                   </div>
                 </div>
                 <div>
-                  <h4 style={{ margin: '0 0 12px 0', fontSize: 13, color: '#64748b', fontWeight: 600 }}>IVA</h4>
+                  <h4
+                    style={{
+                      margin: '0 0 12px 0',
+                      fontSize: 13,
+                      color: '#64748b',
+                      fontWeight: 600,
+                    }}
+                  >
+                    IVA
+                  </h4>
                   <div style={{ fontSize: 13, lineHeight: 2 }}>
                     <div>Imponibile: {formatEuro(selectedItem.totale_imponibile)}</div>
                     <div>Imposta: {formatEuro(selectedItem.totale_iva)}</div>
@@ -218,30 +277,45 @@ export default function Corrispettivi() {
 
               {selectedItem.riepilogo_iva && selectedItem.riepilogo_iva.length > 0 && (
                 <div style={{ marginTop: 20 }}>
-                  <h4 style={{ margin: '0 0 12px 0', fontSize: 13, color: '#64748b', fontWeight: 600 }}>
+                  <h4
+                    style={{
+                      margin: '0 0 12px 0',
+                      fontSize: 13,
+                      color: '#64748b',
+                      fontWeight: 600,
+                    }}
+                  >
                     Riepilogo per Aliquota IVA
                   </h4>
-                  <div style={{overflowX:'auto'}}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-                    <thead>
-                      <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-                        <th style={{ padding: 10, textAlign: 'left' }}>Aliquota</th>
-                        <th style={{ padding: 10, textAlign: 'right' }}>Imponibile</th>
-                        <th style={{ padding: 10, textAlign: 'right' }}>Imposta</th>
-                        <th style={{ padding: 10, textAlign: 'right' }}>Totale</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedItem.riepilogo_iva.map((r, i) => (
-                        <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                          <td style={{ padding: 10 }}>{r.aliquota_iva}% {r.natura && `(${r.natura})`}</td>
-                          <td style={{ padding: 10, textAlign: 'right' }}>{formatEuro(r.ammontare)}</td>
-                          <td style={{ padding: 10, textAlign: 'right' }}>{formatEuro(r.imposta)}</td>
-                          <td style={{ padding: 10, textAlign: 'right' }}>{formatEuro(r.importo_parziale)}</td>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                      <thead>
+                        <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
+                          <th style={{ padding: 10, textAlign: 'left' }}>Aliquota</th>
+                          <th style={{ padding: 10, textAlign: 'right' }}>Imponibile</th>
+                          <th style={{ padding: 10, textAlign: 'right' }}>Imposta</th>
+                          <th style={{ padding: 10, textAlign: 'right' }}>Totale</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {selectedItem.riepilogo_iva.map((r, i) => (
+                          <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                            <td style={{ padding: 10 }}>
+                              {r.aliquota_iva}% {r.natura && `(${r.natura})`}
+                            </td>
+                            <td style={{ padding: 10, textAlign: 'right' }}>
+                              {formatEuro(r.ammontare)}
+                            </td>
+                            <td style={{ padding: 10, textAlign: 'right' }}>
+                              {formatEuro(r.imposta)}
+                            </td>
+                            <td style={{ padding: 10, textAlign: 'right' }}>
+                              {formatEuro(r.importo_parziale)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               )}
@@ -257,10 +331,7 @@ export default function Corrispettivi() {
           >
             {corrispettivi.length === 0 ? (
               <div style={{ padding: 40 }}>
-                <PageEmpty
-                  icon="🧾"
-                  message="Nessun corrispettivo registrato per questo anno"
-                />
+                <PageEmpty icon="🧾" message="Nessun corrispettivo registrato per questo anno" />
                 <div style={{ textAlign: 'center', marginTop: 16 }}>
                   <Link to="/import-documenti" style={{ color: '#2563eb', fontSize: 14 }}>
                     Vai a Import Documenti per caricare i corrispettivi
@@ -269,16 +340,89 @@ export default function Corrispettivi() {
               </div>
             ) : (
               <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }} data-testid="corrispettivi-table">
+                <table
+                  style={{ width: '100%', borderCollapse: 'collapse' }}
+                  data-testid="corrispettivi-table"
+                >
                   <thead>
                     <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
-                      <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, fontSize: 12, color: '#64748b' }}>DATA</th>
-                      <th style={{ padding: '14px 16px', textAlign: 'left', fontWeight: 600, fontSize: 12, color: '#64748b' }}>MATRICOLA RT</th>
-                      <th style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 600, fontSize: 12, color: '#64748b' }}>💵 CASSA</th>
-                      <th style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 600, fontSize: 12, color: '#64748b' }}>💳 POS</th>
-                      <th style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 600, fontSize: 12, color: '#64748b' }}>TOTALE</th>
-                      <th style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 600, fontSize: 12, color: '#64748b' }}>IVA</th>
-                      <th style={{ padding: '14px 16px', textAlign: 'center', fontWeight: 600, fontSize: 12, color: '#64748b' }}>AZIONI</th>
+                      <th
+                        style={{
+                          padding: '14px 16px',
+                          textAlign: 'left',
+                          fontWeight: 600,
+                          fontSize: 12,
+                          color: '#64748b',
+                        }}
+                      >
+                        DATA
+                      </th>
+                      <th
+                        style={{
+                          padding: '14px 16px',
+                          textAlign: 'left',
+                          fontWeight: 600,
+                          fontSize: 12,
+                          color: '#64748b',
+                        }}
+                      >
+                        MATRICOLA RT
+                      </th>
+                      <th
+                        style={{
+                          padding: '14px 16px',
+                          textAlign: 'right',
+                          fontWeight: 600,
+                          fontSize: 12,
+                          color: '#64748b',
+                        }}
+                      >
+                        💵 CASSA
+                      </th>
+                      <th
+                        style={{
+                          padding: '14px 16px',
+                          textAlign: 'right',
+                          fontWeight: 600,
+                          fontSize: 12,
+                          color: '#64748b',
+                        }}
+                      >
+                        💳 POS
+                      </th>
+                      <th
+                        style={{
+                          padding: '14px 16px',
+                          textAlign: 'right',
+                          fontWeight: 600,
+                          fontSize: 12,
+                          color: '#64748b',
+                        }}
+                      >
+                        TOTALE
+                      </th>
+                      <th
+                        style={{
+                          padding: '14px 16px',
+                          textAlign: 'right',
+                          fontWeight: 600,
+                          fontSize: 12,
+                          color: '#64748b',
+                        }}
+                      >
+                        IVA
+                      </th>
+                      <th
+                        style={{
+                          padding: '14px 16px',
+                          textAlign: 'center',
+                          fontWeight: 600,
+                          fontSize: 12,
+                          color: '#64748b',
+                        }}
+                      >
+                        AZIONI
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -287,27 +431,48 @@ export default function Corrispettivi() {
                         key={c.id || i}
                         style={{
                           borderBottom: '1px solid #f1f5f9',
-                          transition: 'background 0.15s'
+                          transition: 'background 0.15s',
                         }}
-                        onMouseEnter={(e) => e.currentTarget.style.background = '#f8fafc'}
-                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                        onMouseEnter={e => (e.currentTarget.style.background = '#f8fafc')}
+                        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                       >
                         <td style={{ padding: '14px 16px', fontWeight: 600, fontSize: 14 }}>
-                          {formatDateIT(c.data) || "-"}
+                          {formatDateIT(c.data) || '-'}
                         </td>
                         <td style={{ padding: '14px 16px', fontSize: 13, color: '#64748b' }}>
-                          {c.matricola_rt || "-"}
+                          {c.matricola_rt || '-'}
                         </td>
-                        <td style={{ padding: '14px 16px', textAlign: 'right', color: '#16a34a', fontWeight: 500 }}>
+                        <td
+                          style={{
+                            padding: '14px 16px',
+                            textAlign: 'right',
+                            color: '#16a34a',
+                            fontWeight: 500,
+                          }}
+                        >
                           {formatEuro(c.pagato_contanti)}
                         </td>
-                        <td style={{ padding: '14px 16px', textAlign: 'right', color: '#7c3aed', fontWeight: 500 }}>
+                        <td
+                          style={{
+                            padding: '14px 16px',
+                            textAlign: 'right',
+                            color: '#7c3aed',
+                            fontWeight: 500,
+                          }}
+                        >
                           {formatEuro(c.pagato_elettronico)}
                         </td>
                         <td style={{ padding: '14px 16px', textAlign: 'right', fontWeight: 700 }}>
                           {formatEuro(c.totale)}
                         </td>
-                        <td style={{ padding: '14px 16px', textAlign: 'right', color: '#ea580c', fontWeight: 500 }}>
+                        <td
+                          style={{
+                            padding: '14px 16px',
+                            textAlign: 'right',
+                            color: '#ea580c',
+                            fontWeight: 500,
+                          }}
+                        >
                           {formatEuro(c.totale_iva)}
                         </td>
                         <td style={{ padding: '14px 16px', textAlign: 'center' }}>
@@ -320,7 +485,7 @@ export default function Corrispettivi() {
                               border: 'none',
                               borderRadius: 6,
                               cursor: 'pointer',
-                              marginRight: 6
+                              marginRight: 6,
                             }}
                             title="Vedi dettaglio"
                           >
@@ -334,7 +499,7 @@ export default function Corrispettivi() {
                               color: '#dc2626',
                               border: 'none',
                               borderRadius: 6,
-                              cursor: 'pointer'
+                              cursor: 'pointer',
                             }}
                             title="Elimina"
                           >
@@ -353,4 +518,3 @@ export default function Corrispettivi() {
     </PageLayout>
   );
 }
-
