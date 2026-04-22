@@ -306,13 +306,27 @@ async def get_scadenze_iva_mensile(anno: int) -> Dict[str, Any]:
     totale_da_versare = sum(s["importo_versamento"] for s in scadenze_mensili)
     totale_a_credito = sum(abs(s["saldo"]) for s in scadenze_mensili if s["saldo"] < 0)
     
+    # Calcola saldo progressivo con riporto credito dal mese precedente
+    saldo_progressivo = 0.0
+    for s in scadenze_mensili:
+        saldo_progressivo = round(saldo_progressivo + s["saldo"], 2)
+        s["saldo_progressivo"] = saldo_progressivo
+        # Il versamento F24 è dovuto solo se il progressivo è positivo
+        if saldo_progressivo > 0.005:
+            s["da_versare_effettivo"] = True
+            s["importo_versamento_effettivo"] = round(saldo_progressivo, 2)
+        else:
+            s["da_versare_effettivo"] = False
+            s["importo_versamento_effettivo"] = 0.0
+    
     return {
         "anno": anno,
         "regime": "mensile",
         "scadenze": scadenze_mensili,
         "totale_da_versare": round(totale_da_versare, 2),
         "totale_a_credito": round(totale_a_credito, 2),
-        "saldo_annuale": round(totale_da_versare - totale_a_credito, 2)
+        "saldo_annuale": round(totale_da_versare - totale_a_credito, 2),
+        "saldo_progressivo": round(saldo_progressivo, 2)
     }
 
 
