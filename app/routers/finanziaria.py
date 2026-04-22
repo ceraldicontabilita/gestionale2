@@ -1,5 +1,5 @@
 """Finanziaria router - Financial costs management."""
-from fastapi import APIRouter, status, Query
+from fastapi import APIRouter, Body, Query, status
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone, date
 from uuid import uuid4
@@ -256,7 +256,7 @@ async def get_cost_categories() -> Dict[str, List[Dict[str, str]]]:
     summary="Create financial cost"
 )
 async def create_costo(
-    data: Dict[str, Any]
+    data: Dict[str, Any] = Body(...)
 ) -> Dict[str, str]:
     """Create a financial cost entry."""
     db = Database.get_db()
