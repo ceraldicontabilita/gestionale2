@@ -389,7 +389,7 @@ async def scan_and_classify_emails(
                             payload = part.get_payload(decode=True)
                             if payload:
                                 body_text += payload.decode('utf-8', errors='replace')
-                        except:
+                        except Exception:
                             pass
                     # Raccogli nomi allegati per il matching
                     filename = part.get_filename()
