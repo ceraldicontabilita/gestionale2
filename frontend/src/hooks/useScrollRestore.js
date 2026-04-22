@@ -17,25 +17,28 @@ export function useScrollRestore() {
     setTimeout(() => {
       window.scrollTo({
         top: scrollPositionRef.current,
-        behavior: 'instant'
+        behavior: 'instant',
       });
     }, delay);
   }, []);
 
   // Wrapper per azioni che modificano dati
-  const withScrollRestore = useCallback((asyncFn) => {
-    return async (...args) => {
-      saveScrollPosition();
-      const result = await asyncFn(...args);
-      restoreScrollPosition();
-      return result;
-    };
-  }, [saveScrollPosition, restoreScrollPosition]);
+  const withScrollRestore = useCallback(
+    asyncFn => {
+      return async (...args) => {
+        saveScrollPosition();
+        const result = await asyncFn(...args);
+        restoreScrollPosition();
+        return result;
+      };
+    },
+    [saveScrollPosition, restoreScrollPosition]
+  );
 
   return {
     saveScrollPosition,
     restoreScrollPosition,
-    withScrollRestore
+    withScrollRestore,
   };
 }
 
