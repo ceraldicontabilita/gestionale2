@@ -172,6 +172,12 @@ async def processa_cedolino_completo(
             "anno": anno
         })
         
+        # movimento_id garantito in entrambi i rami (if existing_pn / if not)
+        # Necessario per publish evento sotto
+        movimento_id = None
+        if existing_pn:
+            movimento_id = existing_pn.get("id")
+
         if not existing_pn:
             movimento_id = str(uuid.uuid4())
             
@@ -237,7 +243,27 @@ async def processa_cedolino_completo(
                 "tfr_quota_mese": cedolino_data.get("tfr_quota_mese", 0),
             }, db=db, save_to_db=False)
         except Exception as ev_e:
-            logger.debug(f"[CedoliniManager] Event Bus: {ev_e}")
+            logger.debug(f"[CedoliniManager] Event Bus legacy: {ev_e}")
+
+        # ── NUOVO EVENT BUS RELAZIONALE (partita aperta + alert) ──
+        # Canale D: pipeline email_monitor_service / post_download_pipeline.
+        # Prima mancava del tutto: cedolini arrivati via email automatica non
+        # generavano partite stipendio nel sistema relazionale.
+        try:
+            from app.services.event_bus import propagate_event, EventTypes
+            await propagate_event(EventTypes.CEDOLINO_IMPORTATO, {
+                "cedolino_id": movimento_id,
+                "dipendente_id": dipendente_id,
+                "dipendente_nome": nome,
+                "codice_fiscale": cf,
+                "netto": netto,
+                "lordo": cedolino_data.get("lordo", 0),
+                "mese": mese,
+                "anno": anno,
+                "tipo_cedolino": cedolino_data.get("tipo_cedolino", "mensile"),
+            }, db, source_module="cedolini_manager_v1")
+        except Exception:
+            logger.exception("Errore propagazione cedolino.importato (canale D V1)")
 
     except Exception as e:
         logger.error(f"Errore processamento cedolino: {e}")

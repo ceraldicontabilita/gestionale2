@@ -527,7 +527,26 @@ async def upload_payslip_pdf(file: UploadFile = File(...)) -> Dict[str, Any]:
                     "needs_review": importo_lordo == 0 and importo_busta == 0
                 }
                 await db["cedolini"].insert_one(cedolino_doc.copy())
-                
+
+                # --- EVENT BUS: propaga CEDOLINO_IMPORTATO (upload PDF manuale) ---
+                # Canale A: upload PDF dalla UI Dipendente → tab Cedolini.
+                # Crea partita aperta stipendio e triggera handler correlati.
+                try:
+                    from app.services.event_bus import propagate_event, EventTypes
+                    await propagate_event(EventTypes.CEDOLINO_IMPORTATO, {
+                        "cedolino_id": payslip_id,
+                        "dipendente_id": emp_id,
+                        "dipendente_nome": nome,
+                        "codice_fiscale": cf,
+                        "netto": importo_busta,
+                        "lordo": importo_lordo,
+                        "mese": int(mese) if mese else None,
+                        "anno": int(anno) if anno else None,
+                        "tipo_cedolino": cedolino_doc.get("tipo_cedolino", "mensile"),
+                    }, db, source_module="paghe_upload_pdf")
+                except Exception:
+                    logger.exception("Errore propagazione cedolino.importato (upload PDF)")
+
                 # === AUTOMAZIONE PRIMA NOTA SALARI ===
                 # Crea automaticamente una scrittura in prima_nota_salari per ogni cedolino caricato
                 prima_nota_creata = False

@@ -441,9 +441,30 @@ async def processa_cedolino_v2(
                     "riconciliato_auto": True
                 }}
             )
-        
+
         result["success"] = True
-        
+
+        # --- EVENT BUS: propaga CEDOLINO_IMPORTATO (canale D V2) ---
+        # Questa è la funzione preferita in cedolini_manager.processa_tutti_cedolini_pdf,
+        # chiamata da email_monitor_service + post_download_pipeline.
+        # Prima non propagava niente → cedolini automatici da email bypassavano
+        # completamente l'event bus relazionale.
+        try:
+            from app.services.event_bus import propagate_event, EventTypes
+            await propagate_event(EventTypes.CEDOLINO_IMPORTATO, {
+                "cedolino_id": cedolino_id,
+                "dipendente_id": dipendente_id,
+                "dipendente_nome": nome,
+                "codice_fiscale": cf,
+                "netto": netto,
+                "lordo": lordo,
+                "mese": int(mese),
+                "anno": int(anno),
+                "tipo_cedolino": cedolino_data.get("tipo_cedolino", "mensile"),
+            }, db, source_module="cedolini_manager_v2")
+        except Exception:
+            logger.exception("Errore propagazione cedolino.importato (canale D V2)")
+
     except Exception as e:
         logger.error(f"Errore processa_cedolino_v2: {e}")
         result["errore"] = str(e)

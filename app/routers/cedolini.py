@@ -1417,17 +1417,76 @@ async def import_cedolini_da_gmail(
         await db["cedolini"].insert_one(doc_to_insert)
         imported += 1
 
+        # --- AUTOMAZIONE PRIMA NOTA SALARI (canale B Gmail) ---
+        # Prima mancava: cedolini importati da Gmail apparivano nella lista
+        # ma non avevano movimento salari collegato → zero riconciliazione
+        # possibile. Ora allinea il comportamento al canale A (upload PDF).
+        netto_val = doc_to_insert.get("netto") or doc_to_insert.get("netto_mese")
+        cf_val = doc_to_insert.get("codice_fiscale")
+        nome_val = doc_to_insert.get("nome_dipendente") or doc_to_insert.get("dipendente_nome")
+        mese_val = doc_to_insert.get("mese")
+        anno_val = doc_to_insert.get("anno")
+        if netto_val and mese_val and anno_val:
+            try:
+                import calendar as _cal
+                mese_int = int(mese_val)
+                anno_int = int(anno_val)
+                ultimo_giorno = _cal.monthrange(anno_int, mese_int)[1]
+                data_pagamento_est = f"{anno_int}-{mese_int:02d}-{ultimo_giorno:02d}"
+                # Dedup su CF+mese+anno o nome+mese+anno (come fa canale A)
+                existing_pn = await db["prima_nota_salari"].find_one({
+                    "$or": [
+                        {"codice_fiscale": cf_val, "mese": mese_int, "anno": anno_int},
+                        {"dipendente": (nome_val or "").upper(), "mese": mese_int, "anno": anno_int},
+                    ]
+                })
+                if existing_pn:
+                    await db["prima_nota_salari"].update_one(
+                        {"id": existing_pn["id"]},
+                        {"$set": {
+                            "cedolino_id": doc_to_insert.get("id"),
+                            "importo_busta": float(netto_val or 0),
+                            "codice_fiscale": cf_val,
+                            "updated_at": datetime.now(timezone.utc).isoformat(),
+                        }}
+                    )
+                else:
+                    mese_nomi = ["", "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio",
+                                 "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre",
+                                 "Novembre", "Dicembre"]
+                    movimento_salario = {
+                        "id": str(uuid.uuid4()),
+                        "dipendente": (nome_val or "").upper(),
+                        "codice_fiscale": cf_val,
+                        "cedolino_id": doc_to_insert.get("id"),
+                        "anno": anno_int,
+                        "mese": mese_int,
+                        "mese_nome": mese_nomi[mese_int] if 1 <= mese_int <= 12 else "",
+                        "data": data_pagamento_est,
+                        "importo_busta": float(netto_val or 0),
+                        "importo_bonifico": 0,
+                        "saldo": float(netto_val or 0),
+                        "progressivo": 0,
+                        "riconciliato": False,
+                        "source": "cedolino_gmail_import",
+                        "imported_at": datetime.now(timezone.utc).isoformat(),
+                    }
+                    await db["prima_nota_salari"].insert_one(movimento_salario.copy())
+            except Exception:
+                logger.exception("Errore creazione prima_nota_salari (canale B Gmail)")
+
         # --- EVENT BUS: propaga evento cedolino importato (da Gmail) ---
         try:
             from app.services.event_bus import propagate_event, EventTypes
             await propagate_event(EventTypes.CEDOLINO_IMPORTATO, {
                 "cedolino_id": doc_to_insert.get("id"),
                 "dipendente_id": doc_to_insert.get("dipendente_id"),
-                "dipendente_nome": doc_to_insert.get("nome_dipendente") or doc_to_insert.get("dipendente_nome"),
-                "netto": doc_to_insert.get("netto") or doc_to_insert.get("netto_mese"),
+                "dipendente_nome": nome_val,
+                "codice_fiscale": cf_val,
+                "netto": netto_val,
                 "lordo": doc_to_insert.get("lordo"),
-                "mese": doc_to_insert.get("mese"),
-                "anno": doc_to_insert.get("anno"),
+                "mese": mese_val,
+                "anno": anno_val,
                 "tipo_cedolino": doc_to_insert.get("tipo_cedolino", "mensile"),
             }, db, source_module="cedolini_import_gmail")
         except Exception:
