@@ -1,5 +1,5 @@
 """Bank Reconciliation router."""
-from fastapi import APIRouter, Depends, Path, status, UploadFile, File
+from fastapi import APIRouter, Body, Depends, File, Path, UploadFile, status
 from typing import Dict, Any, List
 from datetime import datetime, timezone
 from uuid import uuid4
@@ -31,7 +31,7 @@ async def get_statements(
     summary="Create bank statement"
 )
 async def create_statement(
-    data: Dict[str, Any],
+    data: Dict[str, Any] = Body(...),
     current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> Dict[str, str]:
     """Create a bank statement."""
@@ -61,7 +61,7 @@ async def delete_statement(
     summary="Reconcile transactions"
 )
 async def reconcile(
-    data: Dict[str, Any],
+    data: Dict[str, Any] = Body(...),
     current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> Dict[str, str]:
     """Reconcile bank transactions with invoices."""
