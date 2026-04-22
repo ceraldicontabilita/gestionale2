@@ -187,10 +187,11 @@ async def on_fattura_created_audit(event: Dict[str, Any], db) -> Optional[Dict]:
 async def on_fattura_pagata_risolvi(event: Dict[str, Any], db) -> Optional[Dict]:
     """
     Quando una fattura viene pagata, risolve gli alert collegati
-    e aggiorna la partita aperta.
+    e aggiorna la partita aperta (chiusura totale o parziale in base all'importo).
     """
     from app.services.alert_engine import risolvi_alert
     from app.services.audit_logger import log_evento
+    from app.services.partite_aperte_engine import chiudi_partita
 
     fattura_id = event.get("fattura_id", "")
 
@@ -199,6 +200,36 @@ async def on_fattura_pagata_risolvi(event: Dict[str, Any], db) -> Optional[Dict]
     risolti += await risolvi_alert("FAT_MP_NON_DEFINITO", fattura_id, db)
     risolti += await risolvi_alert("FAT_DA_PAGARE_SCADUTA", fattura_id, db)
     risolti += await risolvi_alert("FAT_DATI_INCOMPLETI", fattura_id, db)
+
+    # Chiudi/aggiorna partita aperta collegata alla fattura
+    # (se il pagamento non passa da riconciliazione bancaria, MATCH_CONFERMATO
+    #  non viene emesso e la partita resterebbe aperta per sempre)
+    partita_info = None
+    try:
+        partita = await db["partite_aperte"].find_one(
+            {
+                "tipo": "fattura_fornitore",
+                "documento_id": fattura_id,
+                "stato": {"$in": ["aperta", "parziale"]},
+            },
+            {"_id": 0, "id": 1, "residuo": 1}
+        )
+        if partita:
+            importo_pagato = event.get("importo")
+            if importo_pagato is None or importo_pagato <= 0:
+                # Fallback: se l'evento non porta importo, chiudi con il residuo completo
+                importo_pagato = partita.get("residuo", 0)
+            metodo = event.get("metodo_pagamento", "manuale")
+            source = event.get("source_module", "pagamento")
+            match_id_sintetico = f"manual_{source}_{fattura_id}"
+            partita_info = await chiudi_partita(
+                partita["id"],
+                match_id_sintetico,
+                float(importo_pagato),
+                db
+            )
+    except Exception:
+        logger.exception(f"Errore chiusura partita per fattura {fattura_id}")
 
     # Audit
     await log_evento(
@@ -211,13 +242,18 @@ async def on_fattura_pagata_risolvi(event: Dict[str, Any], db) -> Optional[Dict]
         nuovo_stato={
             "pagato": True,
             "metodo": event.get("metodo_pagamento"),
-            "data_pagamento": event.get("data_pagamento")
+            "data_pagamento": event.get("data_pagamento"),
+            "partita_aggiornata": partita_info if partita_info else None,
         },
         fonte=event.get("source_module", ""),
         dettaglio=f"Fattura pagata via {event.get('metodo_pagamento', 'N/D')}"
     )
 
-    return {"action": "alert_risolti", "count": risolti}
+    return {
+        "action": "alert_risolti",
+        "count": risolti,
+        "partita": partita_info
+    }
 
 
 # ============================================================
