@@ -109,7 +109,7 @@ async def get_scadenzario(
     try:
         data_oggi = datetime.strptime(oggi, "%Y-%m-%d")
     except ValueError:
-        data_oggi = datetime.now()
+        data_oggi = datetime.now(timezone.utc)
         oggi = data_oggi.strftime("%Y-%m-%d")
     
     for f in fatture:
@@ -212,7 +212,7 @@ async def get_scadenze_urgenti() -> Dict[str, Any]:
     try:
         data_oggi = datetime.strptime(oggi, "%Y-%m-%d")
     except ValueError:
-        data_oggi = datetime.now()
+        data_oggi = datetime.now(timezone.utc)
     
     for f in fatture:
         data_scad_str = f.get("data_scadenza") or f.get("invoice_date", oggi)
@@ -257,7 +257,7 @@ async def get_cash_flow_previsionale(
     """
     db = Database.get_db()
     
-    oggi = datetime.now()
+    oggi = datetime.now(timezone.utc)
     data_limite = (oggi + timedelta(days=mesi * 30)).strftime("%Y-%m-%d")
     
     # Fatture da pagare nei prossimi mesi
@@ -352,7 +352,7 @@ async def get_aging_fornitori() -> Dict[str, Any]:
     """
     db = Database.get_db()
     
-    oggi = datetime.now()
+    oggi = datetime.now(timezone.utc)
     oggi_str = oggi.strftime("%Y-%m-%d")
     
     fatture = await db["invoices"].find(
