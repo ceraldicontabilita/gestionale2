@@ -13,6 +13,11 @@ import fitz  # PyMuPDF
 
 def detect_template(text: str) -> str:
     """Rileva quale template è in uso basandosi sul contenuto del PDF."""
+    # Foglio presenze Zucchetti (Aut. 301) — NON è un cedolino
+    # Ha layout tabellare GIORNO/ORE/GIUSTIFICATIVI/TIMBRATURE
+    if ("Autorizzazione Inail n." in text and "301 del 15/01/2009" in text
+            and "GIUSTIFICATIVI" in text and "TIMBRATURE" in text):
+        return "zucchetti_presenze"
     # Template 4 (Teamsystem)
     if "Teamsystem S.p.A" in text or "Teamsystem" in text or "NETTO BUSTA" in text:
         return "teamsystem"
@@ -27,6 +32,62 @@ def detect_template(text: str) -> str:
         return "zucchetti_classic"
     # Default al classico
     return "zucchetti_classic"
+
+
+def parse_template_zucchetti_presenze(text: str) -> Dict[str, Any]:
+    """
+    Foglio presenze Zucchetti (Aut. 301) — NON è un cedolino contabile.
+    Contiene giustificativi giornalieri e timbrature.
+    Può contenere l'indicazione "Cessato il:DD-MM-YYYY" se dipendente cessato.
+
+    Ritorna struttura compatibile con extract_summary ma marcata come
+    tipo_documento='foglio_presenze' e parse_success=False sui totali
+    (non ha lordo/netto), ma True sui dati anagrafici.
+    """
+    result = {
+        "template": "zucchetti_presenze",
+        "tipo_documento": "foglio_presenze",  # Distingue dal cedolino vero
+        "dipendente": {},
+        "periodo": {},
+        "totali": {},  # volutamente vuoto: un foglio presenze non ha netto/lordo
+        "tfr": {},
+        "ferie_permessi": {},
+        "presenze": {},
+    }
+
+    # Periodo (es. "Maggio 2024", "Aprile 2023")
+    mesi = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
+            'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre']
+    for i, mese in enumerate(mesi):
+        match = re.search(rf'{mese}\s+(\d{{4}})', text)
+        if match:
+            result["periodo"]["mese"] = i + 1
+            result["periodo"]["mese_nome"] = mese
+            result["periodo"]["anno"] = int(match.group(1))
+            break
+
+    # Codice fiscale (pattern italiano)
+    cf_match = re.search(r'\b([A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z])\b', text)
+    if cf_match:
+        result["dipendente"]["codice_fiscale"] = cf_match.group(1)
+
+    # Nome: cerca dopo il pattern numerico progressivo "NNNN/NNNN/NNNN/" (es. "000026/0300006/0000000001/")
+    # La riga successiva è il nome del dipendente in MAIUSCOLO
+    nome_match = re.search(r'\d{6}/\d{7}/\d{10}/\s*\n([A-ZÀÈÌÒÙ][A-ZÀÈÌÒÙ\'\s]+?)\n', text)
+    if nome_match:
+        result["dipendente"]["nome_completo"] = nome_match.group(1).strip()
+
+    # Totali giustificativi dal riepilogo finale (es. "Ore ordinarie 120,00hm")
+    # Estrae codici e quantità per tracciare presenze
+    for m in re.finditer(r'([A-Z]{2,3}|Ore\s+\w+)\s+([\w\s\.]+?)\s+(\d+[.,]\d+)\s*(?:hm|ore|gg|ORE)?\b', text):
+        codice = m.group(1).strip()
+        descrizione = m.group(2).strip()
+        quantita = parse_importo(m.group(3))
+        result["presenze"].setdefault("giustificativi", []).append({
+            "codice": codice, "descrizione": descrizione, "quantita": quantita
+        })
+
+    return result
 
 
 def parse_importo(value_str: str) -> float:
@@ -481,15 +542,26 @@ def parse_template_zucchetti_new(text: str) -> Dict[str, Any]:
             result["periodo"]["anno"] = int(match.group(1))
             break
     
-    # Nome dipendente (pattern: D'ALMA VINCENZO o simile dopo codice)
-    nome_match = re.search(r"0300\d{3}\s*\n\s*([A-Z][A-Z'\s]+)", text)
+    # Nome dipendente — Zucchetti_new ha sempre il nome dopo il codice
+    # dipendente (formato "0300NNN\n{NOME COGNOME}\n{CF}\n")
+    # Pattern robusto: cattura solo fino a prima della riga con il CF
+    nome_match = re.search(
+        r"\b0\d{6}\s*\n\s*([A-ZÀÈÌÒÙ][A-ZÀÈÌÒÙ'\s]+?)\s*\n\s*[A-Z]{6}\d{2}[A-Z]",
+        text
+    )
     if nome_match:
-        result["dipendente"]["nome_completo"] = nome_match.group(1).strip()
+        result["dipendente"]["nome_completo"] = re.sub(r'\s+', ' ', nome_match.group(1).strip())
     else:
-        # Pattern alternativo per D'ALMA, D'ANTONIO etc
-        nome_match2 = re.search(r"(D'[A-Z]+\s+[A-Z]+)", text)
+        # Fallback: nome dopo "COGNOME E NOME" label
+        nome_match2 = re.search(
+            r"COGNOME[sE\s]*NOME\s*\n+\s*([A-ZÀÈÌÒÙ][A-ZÀÈÌÒÙ'\s]+?)\s*\n",
+            text
+        )
         if nome_match2:
-            result["dipendente"]["nome_completo"] = nome_match2.group(1)
+            candidate = re.sub(r'\s+', ' ', nome_match2.group(1).strip())
+            # Filtra etichette spurie ("CODICE", "PERIODO" ecc.)
+            if candidate and not any(k in candidate for k in ("CODICE", "PERIODO", "COGNOME", "NOME")):
+                result["dipendente"]["nome_completo"] = candidate
     
     # Codice fiscale
     cf_match = re.search(r'([A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z])', text)
@@ -620,61 +692,152 @@ def parse_template_zucchetti_new(text: str) -> Dict[str, Any]:
 
 def detect_cessazione(text: str) -> Dict[str, Any]:
     """
-    Rileva se il cedolino è un cedolino di cessazione rapporto.
+    Rileva se il cedolino indica cessazione del rapporto di lavoro.
 
-    Cerca nel testo una o più delle seguenti diciture (case-insensitive):
-    - LIQUIDAZIONE TFR
-    - SALDO TFR
-    - CESSAZIONE RAPPORTO / CESSAZIONE DEL RAPPORTO
-    - TFR LIQUIDATO (variante comune)
-    - DATA CESSAZIONE (con data a seguire)
+    Pattern REALI trovati analizzando i cedolini della Ceraldi Group
+    (Zucchetti Aut.299, Aut.301, TeamSystem Aut.92267):
 
-    Non fa calcoli: si limita a leggere quanto stampato dal consulente.
+    1. Foglio presenze Zucchetti: "Cessato il:DD-MM-YYYY"
+    2. Cedolino Zucchetti: riga anagrafica contiene DUE date consecutive
+       (Data Assunzione + Data Cessazione) separate da spazio prima di "OPE"
+       Es. "25-11-2023 24-05-2024\nOPE"
+       vs. dipendente attivo: "25-11-2023\nOPE" (solo assunzione)
+    3. Cedolino di cessazione: contiene "Licenz." nella tabella conguaglio
+       (riga riepilogativa di licenziamento/cessazione)
+    4. T.Deter.DD/MM/YYYY seguito da una data che è la fine contratto a termine
+
+    Non cerca "LIQUIDAZIONE TFR" / "SALDO TFR" perché nei cedolini reali della
+    Ceraldi Group non compaiono mai (il consulente usa le altre diciture).
 
     Returns:
         {
             "cessato": bool,
-            "diciture_trovate": [str],  # elenco match
-            "data_cessazione_rilevata": str | None,  # se presente nel testo
+            "diciture_trovate": [str],
+            "data_cessazione_rilevata": str | None  (normalizzata YYYY-MM-DD)
         }
     """
     if not text:
         return {"cessato": False, "diciture_trovate": [], "data_cessazione_rilevata": None}
 
-    text_upper = text.upper()
     diciture = []
-
-    # Pattern di cessazione (regex compilate)
-    patterns = [
-        (r'\bLIQUIDAZIONE\s+T\.?F\.?R\.?\b', "LIQUIDAZIONE TFR"),
-        (r'\bSALDO\s+T\.?F\.?R\.?\b', "SALDO TFR"),
-        (r'\bCESSAZIONE\s+(DEL\s+)?RAPPORTO\b', "CESSAZIONE RAPPORTO"),
-        (r'\bT\.?F\.?R\.?\s+LIQUIDATO\b', "TFR LIQUIDATO"),
-        (r'\bRAPPORTO\s+(DI\s+LAVORO\s+)?CESSATO\b', "RAPPORTO CESSATO"),
-        (r'\bFINE\s+RAPPORTO\b', "FINE RAPPORTO"),
-    ]
-
-    for pattern, label in patterns:
-        if re.search(pattern, text_upper):
-            diciture.append(label)
-
-    # Cerca data cessazione se menzionata esplicitamente
     data_rilevata = None
-    date_match = re.search(
-        r'(?:DATA\s+)?CESSAZIONE[:\s]+(\d{1,2}[/\-\.]\d{1,2}[/\-\.]\d{2,4})',
-        text_upper
+
+    # Pattern 1: "Cessato il:DD-MM-YYYY" (foglio presenze)
+    m1 = re.search(r'Cessat[oi]\s+il\s*:?\s*(\d{1,2}[-/\.]\d{1,2}[-/\.]\d{2,4})', text, re.IGNORECASE)
+    if m1:
+        diciture.append("CESSATO IL (foglio presenze)")
+        data_rilevata = _normalize_data(m1.group(1))
+
+    # Pattern 2: Riga anagrafica con DUE date sulla STESSA riga poi "OPE" (Zucchetti)
+    # Cedolino CESSATO:   "25-11-2023 24-05-2024\nOPE"  (date assunz+cess unite)
+    # Cedolino ATTIVO:    "02-04-1986\n18-09-2024\nOPE" (date su righe diverse)
+    # Uso [ \t]+ (non \s+) per escludere il newline.
+    m2 = re.search(
+        r'(\d{2}-\d{2}-\d{4})[ \t]+(\d{2}-\d{2}-\d{4})\s*\n\s*OPE\b',
+        text
     )
-    if date_match:
-        data_rilevata = date_match.group(1)
-        # Se appare "DATA CESSAZIONE: xx/xx/xxxx" è di per sé indicatore di cessazione
-        if not diciture:
-            diciture.append("DATA CESSAZIONE ESPLICITA")
+    if m2:
+        # La seconda data è la cessazione (la prima è assunzione)
+        diciture.append("DATA CESSAZIONE IN ANAGRAFICA (Zucchetti)")
+        if not data_rilevata:
+            data_rilevata = _normalize_data(m2.group(2))
+
+    # Pattern 3: "Licenz." nella tabella conguaglio (cedolino cessazione Zucchetti)
+    # Questo è molto affidabile: compare solo quando c'è chiusura del conguaglio IRPEF
+    if re.search(r'\bLicenz\.', text):
+        diciture.append("LICENZ. (conguaglio cessazione)")
+
+    # Pattern 4 (TeamSystem): "CESS. RAPP." nella sezione conguaglio
+    # Vale solo se seguito da valori numerici o se la data cessazione è stampata
+    # Non usato standalone perché la label fa parte del template vuoto
+    # → usato solo se c'è anche un valore di conguaglio valorizzato
+    ts_cess = re.search(r'DATA\s+CESSAZIONE\s*\n\s*[A-Z][^\n]*\n\s*(\d{2}/\d{2}/\d{2,4})', text)
+    if ts_cess:
+        diciture.append("DATA CESSAZIONE (TeamSystem)")
+        if not data_rilevata:
+            data_rilevata = _normalize_data(ts_cess.group(1))
+
+    # Pattern 4-bis (TeamSystem): 3 date consecutive sulla riga anagrafica
+    # TeamSystem stampa "DD/MM/YY DD/MM/YY DD/MM/YY" = nascita, assunzione, cessazione.
+    # Se ci sono solo 2 date = nascita + assunzione, dipendente attivo.
+    # Il pattern deve evitare match su date troppo vecchie (tipo date competenza/IRPEF)
+    # Quindi richiediamo che la prima data sia CF-compatibile (anno 40-05, cioè nati
+    # tra 1940 e 2005) e che la terza sia coerente col mese del cedolino.
+    ts_3date = re.search(
+        r'(\d{2}/\d{2}/(?:[0-9]\d))\s+(\d{2}/\d{2}/\d{2})\s+(\d{2}/\d{2}/\d{2})\b',
+        text
+    )
+    if ts_3date:
+        # Verifica che le 3 date siano plausibili (nascita prima di ass, ass prima di cess)
+        dn = _normalize_data(ts_3date.group(1))
+        da = _normalize_data(ts_3date.group(2))
+        dc = _normalize_data(ts_3date.group(3))
+        if dn and da and dc and dn < da <= dc:
+            diciture.append("3 DATE IN ANAGRAFICA (TeamSystem)")
+            if not data_rilevata:
+                data_rilevata = dc
+
+    # Pattern 4-ter (TeamSystem): nome seguito da data di cessazione sulla stessa riga
+    # Es. "ARIANTE MARCELLA                     12/07/22"
+    # Affidabile solo se data è plausibile come cessazione (futura rispetto
+    # alla data di nascita del dipendente)
+    ts_nome_data = re.search(
+        r'\b[A-Z]{3,}\s+[A-Z]{3,}\s{10,}(\d{2}/\d{2}/\d{2})\b',
+        text
+    )
+    if ts_nome_data:
+        # Distingui: se dopo la riga nome c'è un pattern tipo
+        # "CF   COMUNE   13/05/97 12/07/22" (nascita + cessazione) è cessato.
+        # Ariante ha proprio questo: "12/07/22" dopo il nome = cessazione
+        # Filtro: considera solo se la data è successiva al 2015 (dipendenti
+        # contemporanei) per evitare falsi positivi con date di nascita
+        data_candidate = ts_nome_data.group(1)
+        dc = _normalize_data(data_candidate)
+        if dc and dc >= "2015-01-01":
+            # Ulteriore conferma: presenza di "CESS. RAPP." o "CESSAZIONE" nel testo
+            if "CESS. RAPP." in text.upper() or "DATA CESSAZIONE" in text.upper():
+                # Attiva solo se non già rilevato da pattern 4/4-bis (meno specifici)
+                if not any("TeamSystem" in d for d in diciture):
+                    diciture.append("NOME + DATA CESSAZIONE (TeamSystem)")
+                    if not data_rilevata:
+                        data_rilevata = dc
+
+    # Pattern 5: contratto a termine con data coincidente con mese cedolino.
+    # Es. "T.Deter. 24/05/2024" + cedolino di Maggio 2024 → cessazione in corso
+    # Questo è informativo ma NON scatena cessazione da solo
+    # (altrimenti falso-positivo: un contratto T.Det. iniziale non è cessazione)
+    # → Si attiva solo se AFFIANCATO da altri pattern
+
+    # Pattern 6 (esplicito): "DATA CESSAZIONE: DD/MM/YYYY" come testo libero
+    m6 = re.search(
+        r'(?:DATA\s+)?CESSAZIONE\s*[:\s]+(\d{1,2}[/\-\.]\d{1,2}[/\-\.]\d{2,4})',
+        text.upper()
+    )
+    if m6 and not data_rilevata:
+        diciture.append("DATA CESSAZIONE ESPLICITA")
+        data_rilevata = _normalize_data(m6.group(1))
 
     return {
         "cessato": bool(diciture),
         "diciture_trovate": diciture,
         "data_cessazione_rilevata": data_rilevata,
     }
+
+
+def _normalize_data(d: str) -> Optional[str]:
+    """Normalizza DD-MM-YYYY o DD/MM/YYYY → YYYY-MM-DD."""
+    if not d:
+        return None
+    m = re.match(r'(\d{1,2})[-/\.](\d{1,2})[-/\.](\d{2,4})', d.strip())
+    if not m:
+        return d
+    dd, mm, yy = m.groups()
+    if len(yy) == 2:
+        yy = "20" + yy
+    try:
+        return f"{int(yy):04d}-{int(mm):02d}-{int(dd):02d}"
+    except Exception:
+        return d
 
 
 def parse_busta_paga_multi(pdf_path: str) -> Dict[str, Any]:
@@ -704,24 +867,61 @@ def parse_busta_paga_multi(pdf_path: str) -> Dict[str, Any]:
     # Usa la prima pagina per rilevare il template
     text = page_texts[0] if page_texts else ""
     
-    # Rileva il template
+    # Rileva il template dalla prima pagina
     template = detect_template(text)
-    
+
+    # Se la prima pagina è un foglio presenze (Aut.301), il cedolino vero può
+    # essere nelle pagine successive (layout comune Zucchetti: p1=presenze,
+    # p2+=cedolino). Cerca la prima pagina che NON è un foglio presenze.
+    cedolino_page_idx = 0
+    if template == "zucchetti_presenze" and num_pages > 1:
+        for pidx, pt in enumerate(page_texts):
+            sub_template = detect_template(pt)
+            if sub_template != "zucchetti_presenze":
+                cedolino_page_idx = pidx
+                template = sub_template
+                text = pt
+                break
+        else:
+            # Tutte le pagine sono presenze → parse solo presenze, no cedolino
+            cedolino_page_idx = None
+
     # Applica il parser corretto
-    if template == "csc_napoli":
-        result = parse_template_csc_napoli(text)
-    elif template == "zucchetti_new":
-        result = parse_template_zucchetti_new(text)
-    elif template == "teamsystem":
-        result = parse_template_teamsystem(text)
+    # IMPORTANTE: per zucchetti_new e zucchetti_classic passiamo il testo di
+    # TUTTE le pagine (o dal cedolino in poi) perché i totali/netto sono
+    # spesso distribuiti tra pagine 2-3 (es. Chakir 3pag il netto è a pag3,
+    # Solla 2pag il netto è a pag2).
+    if cedolino_page_idx is not None and cedolino_page_idx >= 0:
+        # Concatena da cedolino_page_idx fino a fine documento
+        # escludendo eventuali cedolini aggiuntivi (multi-contratto stesso dip.)
+        # Per ora usiamo tutto il rimanente, la separazione multi-cedolino
+        # viene fatta nell'euristica additional_cedolini più sotto
+        cedolino_text = "\n".join(page_texts[cedolino_page_idx:])
     else:
-        result = parse_template_zucchetti_classic(text)
-    
-    # Se ci sono 2+ pagine, estrai dati aggiuntivi dalla pagina 2
-    if num_pages >= 2 and len(page_texts) >= 2:
-        page2_data = parse_page2_ore_lavorate(page_texts[1])
+        cedolino_text = text
+
+    if cedolino_page_idx is None:
+        # Solo foglio presenze, nessun cedolino contabile
+        result = parse_template_zucchetti_presenze(page_texts[0])
+    elif template == "zucchetti_presenze":
+        result = parse_template_zucchetti_presenze(text)
+    elif template == "csc_napoli":
+        result = parse_template_csc_napoli(cedolino_text)
+    elif template == "zucchetti_new":
+        result = parse_template_zucchetti_new(cedolino_text)
+    elif template == "teamsystem":
+        result = parse_template_teamsystem(cedolino_text)
+    else:
+        result = parse_template_zucchetti_classic(cedolino_text)
+
+    # Se ci sono altre pagine di cedolino, estrai dati aggiuntivi
+    # (pagina 2 dei PDF nuovi contiene ferie/permessi dettagliati)
+    # Il controllo è sulla pagina successiva a quella del cedolino primario
+    next_page_idx = (cedolino_page_idx + 1) if cedolino_page_idx is not None else 1
+    if num_pages > next_page_idx and result.get("tipo_documento") != "foglio_presenze":
+        page2_data = parse_page2_ore_lavorate(page_texts[next_page_idx])
         result["ore_ferie"] = page2_data
-        
+
         # Aggiorna i totali con i dati della pagina 2
         if page2_data.get("ferie_residuo"):
             result.setdefault("ferie_permessi", {})["ferie_residuo"] = page2_data["ferie_residuo"]
@@ -731,7 +931,7 @@ def parse_busta_paga_multi(pdf_path: str) -> Dict[str, Any]:
             result.setdefault("ferie_permessi", {})["permessi_residuo"] = page2_data["permessi_residuo"]
         if page2_data.get("permessi_goduti"):
             result.setdefault("ferie_permessi", {})["permessi_goduti"] = page2_data["permessi_goduti"]
-    
+
     result["raw_text_length"] = len(all_text)
     result["num_pages"] = num_pages
     result["parse_success"] = True
@@ -740,18 +940,67 @@ def parse_busta_paga_multi(pdf_path: str) -> Dict[str, Any]:
     # Cerca diciture di cessazione in TUTTO il testo del PDF (prima + altre pagine)
     # Non fa calcoli: legge quanto stampato dal consulente del lavoro.
     result["cessazione"] = detect_cessazione(all_text)
-    
+
+    # --- RILEVAMENTO MULTI-CEDOLINO (cessazione + nuovo contratto) ---
+    # Caso tipico: lo stesso dipendente ha cessato il vecchio contratto nel mese X
+    # e ne ha iniziato uno nuovo sempre nel mese X. Il consulente stampa i due
+    # cedolini come pagine separate nello stesso PDF. Le rileviamo e popoliamo
+    # additional_cedolini[] con i dati dei cedolini aggiuntivi (oltre al primo).
+    #
+    # Euristica: due cedolini dello STESSO template con DUE date assunzione
+    # diverse rilevate nelle rispettive pagine.
+    additional_cedolini = []
+    if template in ("zucchetti_new", "zucchetti_classic") and num_pages > 1:
+        seen_assunzioni = set()
+        # Aggiungi l'assunzione del cedolino primario se rilevata
+        primary_assunz = re.search(r'\n(\d{2}-\d{2}-\d{4})[ \t]+\d{2}-\d{2}-\d{4}\s*\n\s*OPE\b', text)
+        if primary_assunz:
+            seen_assunzioni.add(primary_assunz.group(1))
+        else:
+            primary_assunz_single = re.search(r'\n(\d{2}-\d{2}-\d{4})\s*\n\s*OPE\b', text)
+            if primary_assunz_single:
+                seen_assunzioni.add(primary_assunz_single.group(1))
+
+        for pidx, pt in enumerate(page_texts):
+            if pidx == cedolino_page_idx:
+                continue
+            sub_t = detect_template(pt)
+            if sub_t not in ("zucchetti_new", "zucchetti_classic"):
+                continue
+            # Estrai assunzione da questa pagina
+            assunz_match = re.search(r'\n(\d{2}-\d{2}-\d{4})[ \t]+\d{2}-\d{2}-\d{4}\s*\n\s*OPE\b', pt)
+            if not assunz_match:
+                assunz_match = re.search(r'\n(\d{2}-\d{2}-\d{4})\s*\n\s*OPE\b', pt)
+            if not assunz_match:
+                continue
+            ass = assunz_match.group(1)
+            if ass in seen_assunzioni:
+                continue
+            seen_assunzioni.add(ass)
+            # Parsa cedolino aggiuntivo
+            if sub_t == "zucchetti_new":
+                sub_result = parse_template_zucchetti_new(pt)
+            else:
+                sub_result = parse_template_zucchetti_classic(pt)
+            sub_result["page_index"] = pidx
+            additional_cedolini.append(sub_result)
+
+    if additional_cedolini:
+        result["additional_cedolini"] = additional_cedolini
+
     # Validazione minima
     # Accetta anche lordo = 0 per cedolini solo trattenute
+    # Il foglio presenze è considerato parse_success=True anche senza netto/lordo
     totali = result.get("totali", {})
     has_netto = "netto" in totali
     has_lordo = "lordo" in totali
     is_solo_trattenute = result.get("tipo_cedolino") == "solo_trattenute"
-    
-    if not has_netto and not has_lordo and not is_solo_trattenute:
+    is_foglio_presenze = result.get("tipo_documento") == "foglio_presenze"
+
+    if not has_netto and not has_lordo and not is_solo_trattenute and not is_foglio_presenze:
         result["parse_success"] = False
         result["parse_error"] = "Nessun importo estratto"
-    
+
     return result
 
 
