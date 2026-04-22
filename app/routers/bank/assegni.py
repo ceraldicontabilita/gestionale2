@@ -1485,7 +1485,7 @@ async def sync_assegni_da_estratto_conto() -> Dict[str, Any]:
                 {"id": assegno_carnet["id"]},
                 {"$set": {"stato": "incassato", "data_incasso": data,
                           "movimento_estratto_conto_id": mov.get("id"),
-                          "updated_at": datetime.now().isoformat()}}
+                          "updated_at": datetime.now(timezone.utc).isoformat()}}
             )
             if assegno_carnet.get("fattura_collegata"):
                 fid = assegno_carnet["fattura_collegata"]
@@ -1533,8 +1533,8 @@ async def sync_assegni_da_estratto_conto() -> Dict[str, Any]:
             "fonte": "estratto_conto",
             "banca": mov.get("banca"),
             "confermato": False,
-            "created_at": datetime.now().isoformat(),
-            "updated_at": datetime.now().isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat()
         }
         
         try:
@@ -1570,7 +1570,7 @@ async def ricostruisci_dati_assegni() -> Dict[str, Any]:
     db = Database.get_db()
     
     risultati = {
-        "timestamp": datetime.now().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "assegni_processati": 0,
         "beneficiari_trovati": 0,
         "fatture_associate": 0,
@@ -1708,7 +1708,7 @@ async def ricostruisci_dati_assegni() -> Dict[str, Any]:
         
         # c) Aggiorna nel DB
         if aggiornamenti:
-            aggiornamenti["ultima_ricostruzione"] = datetime.now().isoformat()
+            aggiornamenti["ultima_ricostruzione"] = datetime.now(timezone.utc).isoformat()
             try:
                 await db[COLLECTION_ASSEGNI].update_one(
                     {"id": ass_id},
