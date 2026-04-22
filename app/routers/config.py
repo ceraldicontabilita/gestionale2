@@ -1,5 +1,5 @@
 """Config router - Application configuration endpoints."""
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Body, Depends
 from typing import Dict, Any, List
 from datetime import datetime, timezone
 import logging
@@ -29,7 +29,7 @@ async def get_email_config(
     summary="Update email config"
 )
 async def update_email_config(
-    config_data: Dict[str, Any],
+    config_data: Dict[str, Any] = Body(...),
     current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> Dict[str, str]:
     """Update email configuration."""
@@ -58,7 +58,7 @@ async def get_haccp_equipment_names(
     summary="Update HACCP equipment names"
 )
 async def update_haccp_equipment_names(
-    names: List[str],
+    names: List[str] = Body(...),
     current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> Dict[str, str]:
     """Update HACCP equipment names."""
@@ -89,7 +89,7 @@ async def get_haccp_operators(
     summary="Update HACCP operators"
 )
 async def update_haccp_operators(
-    operators: List[str],
+    operators: List[str] = Body(...),
     current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> Dict[str, str]:
     """Update HACCP operators list."""
