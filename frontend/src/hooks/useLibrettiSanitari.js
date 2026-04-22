@@ -10,7 +10,7 @@ const DEFAULT_FORM = {
   numero_libretto: '',
   data_rilascio: '',
   data_scadenza: '',
-  note: ''
+  note: '',
 };
 
 export function useLibrettiSanitari() {
@@ -22,7 +22,9 @@ export function useLibrettiSanitari() {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await api.get('/api/dipendenti/libretti-sanitari/all').catch(() => ({ data: [] }));
+      const res = await api
+        .get('/api/dipendenti/libretti-sanitari/all')
+        .catch(() => ({ data: [] }));
       setLibretti(res.data || []);
     } catch (error) {
       console.error('Error loading libretti:', error);
@@ -32,38 +34,42 @@ export function useLibrettiSanitari() {
     }
   }, []);
 
-  const handleSubmit = useCallback(async (e) => {
-    e?.preventDefault();
-    
-    if (!formData.dipendente_nome || !formData.numero_libretto) {
-      alert('Compila i campi obbligatori');
-      return false;
-    }
-    
-    try {
-      await api.post('/api/dipendenti/libretti-sanitari', formData);
-      setShowForm(false);
-      setFormData(DEFAULT_FORM);
-      await loadData();
-      return true;
-    } catch (error) {
-      alert('Errore: ' + (error.response?.data?.detail || error.message));
-      return false;
-    }
-  }, [formData, loadData]);
+  const handleSubmit = useCallback(
+    async e => {
+      e?.preventDefault();
 
-  const handleDelete = useCallback(async (librettoId) => {
-    
-    
-    try {
-      await api.delete(`/api/dipendenti/libretti-sanitari/${librettoId}`);
-      await loadData();
-      return true;
-    } catch (error) {
-      alert('Errore eliminazione: ' + (error.response?.data?.detail || error.message));
-      return false;
-    }
-  }, [loadData]);
+      if (!formData.dipendente_nome || !formData.numero_libretto) {
+        alert('Compila i campi obbligatori');
+        return false;
+      }
+
+      try {
+        await api.post('/api/dipendenti/libretti-sanitari', formData);
+        setShowForm(false);
+        setFormData(DEFAULT_FORM);
+        await loadData();
+        return true;
+      } catch (error) {
+        alert('Errore: ' + (error.response?.data?.detail || error.message));
+        return false;
+      }
+    },
+    [formData, loadData]
+  );
+
+  const handleDelete = useCallback(
+    async librettoId => {
+      try {
+        await api.delete(`/api/dipendenti/libretti-sanitari/${librettoId}`);
+        await loadData();
+        return true;
+      } catch (error) {
+        alert('Errore eliminazione: ' + (error.response?.data?.detail || error.message));
+        return false;
+      }
+    },
+    [loadData]
+  );
 
   const openForm = useCallback(() => {
     setFormData(DEFAULT_FORM);
@@ -89,6 +95,6 @@ export function useLibrettiSanitari() {
     handleDelete,
     openForm,
     closeForm,
-    updateFormField
+    updateFormField,
   };
 }
