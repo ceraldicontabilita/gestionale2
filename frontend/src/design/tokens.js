@@ -1,8 +1,8 @@
 /**
  * CERALDI ERP — DESIGN TOKENS (unica fonte di verità)
- * 
+ *
  * Importare SEMPRE da questo file, non da ceraldiDesignSystem.ts o pageLayoutStyle.js
- * 
+ *
  * COLORI: blu scuro #1535a8 come accent principale
  * FONT: Plus Jakarta Sans (UI) + JetBrains Mono (numeri)
  */
@@ -10,47 +10,47 @@
 // ─── PALETTE ──────────────────────────────────────────────
 export const COLOR = {
   // Brand / Accent
-  brand:         '#1535a8',
-  brandLight:    '#2050e8',
-  brandDark:     '#0f2785',
-  brandBg:       '#eef3ff',
-  brandBorder:   '#cfe2ff',
-  brandMid:      '#4a7cf5',
+  brand: '#1535a8',
+  brandLight: '#2050e8',
+  brandDark: '#0f2785',
+  brandBg: '#eef3ff',
+  brandBorder: '#cfe2ff',
+  brandMid: '#4a7cf5',
 
   // Stato
-  success:       '#15803d',
-  successBg:     '#dcfce7',
+  success: '#15803d',
+  successBg: '#dcfce7',
   successBorder: '#86efac',
-  warning:       '#92400e',
-  warningBg:     '#fef3c7',
+  warning: '#92400e',
+  warningBg: '#fef3c7',
   warningBorder: '#fcd34d',
-  danger:        '#991b1b',
-  dangerBg:      '#fee2e2',
-  dangerBorder:  '#fca5a5',
-  info:          '#1535a8',
-  infoBg:        '#eef3ff',
+  danger: '#991b1b',
+  dangerBg: '#fee2e2',
+  dangerBorder: '#fca5a5',
+  info: '#1535a8',
+  infoBg: '#eef3ff',
 
   // Neutrals
-  ink:           '#09152a',
-  ink2:          '#2d4466',
-  ink3:          '#6080a0',
-  ink4:          '#98b0c8',
-  border:        '#dce8f4',
-  bg:            '#f2f6fd',
-  surface:       '#ffffff',
+  ink: '#09152a',
+  ink2: '#2d4466',
+  ink3: '#6080a0',
+  ink4: '#98b0c8',
+  border: '#dce8f4',
+  bg: '#f2f6fd',
+  surface: '#ffffff',
 
   // Nav
-  navBg:         '#d9e8f8',
-  navBorder:     '#b5cff0',
+  navBg: '#d9e8f8',
+  navBorder: '#b5cff0',
 };
 
 // ─── SPACING ──────────────────────────────────────────────
 export const SPACE = {
-  xs:  4,
-  sm:  8,
-  md:  12,
-  lg:  16,
-  xl:  20,
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
   xxl: 24,
   xxxl: 32,
 };
@@ -65,23 +65,23 @@ export const RADIUS = {
 
 // ─── SHADOWS ──────────────────────────────────────────────
 export const SHADOW = {
-  sm:  '0 1px 4px rgba(8,24,80,.07)',
-  md:  '0 5px 20px rgba(8,24,80,.11)',
-  lg:  '0 12px 44px rgba(8,24,80,.16)',
+  sm: '0 1px 4px rgba(8,24,80,.07)',
+  md: '0 5px 20px rgba(8,24,80,.11)',
+  lg: '0 12px 44px rgba(8,24,80,.16)',
 };
 
 // ─── TYPOGRAPHY ───────────────────────────────────────────
 export const FONT = {
-  ui:   "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+  ui: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
   mono: "'JetBrains Mono', 'SF Mono', Monaco, Consolas, monospace",
 
-  xs:   10,
-  sm:   11,
+  xs: 10,
+  sm: 11,
   base: 12,
-  md:   13,
-  lg:   14,
-  xl:   16,
-  xxl:  18,
+  md: 13,
+  lg: 14,
+  xl: 16,
+  xxl: 18,
   xxxl: 22,
 };
 
@@ -142,11 +142,11 @@ export const STYLES = {
   // Pill / Badge
   pill: (variant = 'blue') => {
     const variants = {
-      green:   { background: COLOR.successBg,  color: COLOR.success },
-      amber:   { background: COLOR.warningBg,  color: COLOR.warning },
-      red:     { background: COLOR.dangerBg,   color: COLOR.danger  },
-      blue:    { background: COLOR.brandBg,    color: COLOR.brand   },
-      neutral: { background: '#f1f5f9',         color: COLOR.ink3   },
+      green: { background: COLOR.successBg, color: COLOR.success },
+      amber: { background: COLOR.warningBg, color: COLOR.warning },
+      red: { background: COLOR.dangerBg, color: COLOR.danger },
+      blue: { background: COLOR.brandBg, color: COLOR.brand },
+      neutral: { background: '#f1f5f9', color: COLOR.ink3 },
     };
     return {
       display: 'inline-flex',
@@ -232,16 +232,16 @@ export const STYLES = {
 // Permettono a ceraldiDesignSystem.ts e pageLayoutStyle.js di
 // essere aggiornati gradualmente senza rompere le importazioni esistenti
 export const COLORS = {
-  primary:      COLOR.brand,
+  primary: COLOR.brand,
   primaryLight: COLOR.brandLight,
-  success:      COLOR.success,
-  warning:      '#d97706',
-  danger:       COLOR.danger,
-  info:         COLOR.brand,
-  gray:         COLOR.ink3,
-  grayLight:    COLOR.border,
-  grayBg:       COLOR.bg,
-  white:        COLOR.surface,
+  success: COLOR.success,
+  warning: '#d97706',
+  danger: COLOR.danger,
+  info: COLOR.brand,
+  gray: COLOR.ink3,
+  grayLight: COLOR.border,
+  grayBg: COLOR.bg,
+  white: COLOR.surface,
 };
 
 // PAGE_WRAPPER / PAGE_CONTAINER per PageLayout.jsx
