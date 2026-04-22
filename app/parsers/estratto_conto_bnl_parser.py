@@ -398,7 +398,7 @@ class EstrattoContoBNLParser:
                 if len(year) == 2:
                     year = "20" + year if int(year) < 50 else "19" + year
                 return f"{year}-{month}-{day}"
-        except:
+        except Exception:
             pass
         return date_str
     
@@ -408,7 +408,7 @@ class EstrattoContoBNLParser:
             # Rimuovi spazi e gestisci formato italiano
             amount_str = amount_str.replace(' ', '').replace('.', '').replace(',', '.')
             return float(amount_str)
-        except:
+        except Exception:
             return 0.0
 
 
