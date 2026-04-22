@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import api from '../api';
+import api, { setAuthToken } from '../api';
 
 /**
  * AuthCallback - Gestisce il ritorno da Google OAuth
@@ -41,16 +41,15 @@ export default function AuthCallback() {
         if (response.data.success && response.data.user) {
           console.log('[AuthCallback] Login Google riuscito:', response.data.user.email);
 
-          // Salva token nel localStorage per compatibilità con AuthContext
+          // FIX: usa setAuthToken (chiave "auth_token") invece di localStorage.setItem('token', ...)
+          // in modo che AuthContext + api.js riconoscano l'utente come loggato.
           if (response.data.access_token) {
-            localStorage.setItem('token', response.data.access_token);
+            setAuthToken(response.data.access_token);
           }
 
-          // Naviga alla dashboard con i dati utente
-          navigate('/', {
-            replace: true,
-            state: { user: response.data.user },
-          });
+          // Ricarico completamente l'app così AuthProvider rilegge il token fresh
+          // e non resta bloccato con lo stato precedente.
+          window.location.replace('/');
         } else {
           throw new Error('Risposta non valida dal server');
         }

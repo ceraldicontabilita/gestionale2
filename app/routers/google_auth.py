@@ -10,7 +10,9 @@ from fastapi import APIRouter, HTTPException, Response, Request, Cookie
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Optional
+from jose import jwt
 from app.database import Database
+from app.config import settings
 
 router = APIRouter(prefix="/auth/google", tags=["Google OAuth"])
 
@@ -135,9 +137,24 @@ async def process_google_session(request: SessionRequest, response: Response):
             path="/",
             max_age=SESSION_EXPIRY_DAYS * 24 * 60 * 60
         )
-        
+
+        # --- Genera JWT aggiuntivo (compatibilità AuthContext frontend) ---
+        # Il frontend salva in localStorage e lo usa via Authorization header.
+        # Il cookie resta per il flow standard Emergent.
+        jwt_payload = {
+            "sub": user_id,
+            "email": email,
+            "name": name,
+            "role": (existing_user.get("role") if existing_user else "user") if existing_user is not None else "user",
+            "exp": datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
+            "iat": datetime.now(timezone.utc),
+        }
+        access_token = jwt.encode(jwt_payload, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+
         return {
             "success": True,
+            "access_token": access_token,
+            "token_type": "bearer",
             "user": {
                 "user_id": user_id,
                 "email": email,
