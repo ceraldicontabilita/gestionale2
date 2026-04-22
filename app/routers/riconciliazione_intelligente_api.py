@@ -603,7 +603,7 @@ async def get_statistiche() -> Dict[str, Any]:
 # =============================================================================
 
 @router.post("/migra-fatture-legacy")
-async def migra_fatture_legacy(payload: Dict[str, Any] = {}) -> Dict[str, Any]:
+async def migra_fatture_legacy(payload: Dict[str, Any] = Body(default={})) -> Dict[str, Any]:
     """
     Migra le fatture esistenti al nuovo sistema di riconciliazione intelligente.
     
