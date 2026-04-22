@@ -2,7 +2,7 @@
 Invoices router.
 Handles invoice CRUD operations and management.
 """
-from fastapi import APIRouter, Depends, Query, Path, status, UploadFile, File
+from fastapi import APIRouter, Body, Depends, Query, Path, status, UploadFile, File
 from fastapi.responses import StreamingResponse
 from openpyxl import Workbook
 import zipfile
@@ -1028,7 +1028,7 @@ async def export_invoices_to_excel(
     summary="Update invoice metadata"
 )
 async def update_metadata(
-    data: Dict[str, Any],
+    data: Dict[str, Any] = Body(...),
     current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> Dict[str, str]:
     """Update invoice metadata (payment method, checks, etc.)."""
