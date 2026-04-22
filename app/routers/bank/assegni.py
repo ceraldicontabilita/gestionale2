@@ -475,40 +475,76 @@ async def correggi_associazione_assegno(
         fattura = await db["invoices"].find_one({"id": nuova_fattura_id})
         if not fattura:
             raise HTTPException(status_code=404, detail="Fattura non trovata")
-        
+
+        numero_fattura_val = fattura.get("invoice_number") or fattura.get("numero_documento")
+        importo_fattura_val = float(fattura.get("total_amount") or fattura.get("importo_totale") or 0)
+        importo_assegno_val = float(assegno.get("importo") or 0)
+
         update_data["fattura_id"] = nuova_fattura_id
-        update_data["numero_fattura"] = fattura.get("invoice_number") or fattura.get("numero_documento")
-        
+        # FIX 1: alias per consistenza GET
+        update_data["numero_fattura"] = numero_fattura_val
+        update_data["fattura_numero"] = numero_fattura_val
+        update_data["data_fattura"] = fattura.get("invoice_date") or fattura.get("data_documento")
+        update_data["importo_fattura"] = importo_fattura_val
+
+        # FIX 3: scarto fattura/assegno
+        scarto = round(importo_fattura_val - importo_assegno_val, 2)
+        update_data["scarto_fattura_assegno"] = scarto
+
         if aggiorna_beneficiario:
             update_data["beneficiario"] = fattura.get("supplier_name") or fattura.get("fornitore_ragione_sociale")
-        
+
         if vecchia_fattura_id:
             await db["invoices"].update_one(
                 {"id": vecchia_fattura_id},
                 {"$set": {"pagato": False, "status": "imported", "assegno_id": None}}
             )
-        
+
+        # FIX 2: fattura marcata come pagata
         await db["invoices"].update_one(
             {"id": nuova_fattura_id},
-            {"$set": {"assegno_id": assegno_id}}
+            {"$set": {
+                "assegno_id": assegno_id,
+                "pagato": True,
+                "status": "paid",
+                "data_pagamento": assegno.get("data_incasso") or assegno.get("data_emissione"),
+                "metodo_pagamento_effettivo": "assegno",
+            }}
         )
-        
+
         message = f"Associazione corretta per assegno {assegno.get('numero_assegno') or assegno.get('numero')}"
     else:
         update_data["fattura_id"] = None
         update_data["numero_fattura"] = None
-        
+        update_data["fattura_numero"] = None
+        update_data["data_fattura"] = None
+        update_data["importo_fattura"] = None
+        update_data["scarto_fattura_assegno"] = None
+
         if vecchia_fattura_id:
             await db["invoices"].update_one(
                 {"id": vecchia_fattura_id},
                 {"$set": {"pagato": False, "status": "imported", "assegno_id": None}}
             )
-        
+
         message = f"Associazione rimossa per assegno {assegno.get('numero_assegno') or assegno.get('numero')}"
-    
+
     await db[COLLECTION_ASSEGNI].update_one({"id": assegno_id}, {"$set": update_data})
-    
-    return {"success": True, "message": message, "assegno_id": assegno_id, "nuova_fattura_id": nuova_fattura_id}
+
+    response: Dict[str, Any] = {
+        "success": True,
+        "message": message,
+        "assegno_id": assegno_id,
+        "nuova_fattura_id": nuova_fattura_id,
+    }
+    if nuova_fattura_id:
+        response["scarto_fattura_assegno"] = update_data.get("scarto_fattura_assegno")
+        if abs(update_data.get("scarto_fattura_assegno") or 0) > 0.01:
+            response["warning_scarto"] = (
+                f"Attenzione: scarto di {update_data['scarto_fattura_assegno']}€ tra "
+                f"importo fattura ({importo_fattura_val}€) e importo assegno ({importo_assegno_val}€)"
+            )
+    return response
 
 
 # === ROUTE AUTO-MATCH (statiche — prima delle dinamiche) ===
