@@ -211,7 +211,7 @@ def extract_f24_info(descrizione: str, data: datetime) -> Dict[str, Any]:
     if data_match:
         try:
             info["data_incasso"] = datetime.strptime(data_match.group(1), "%d/%m/%Y").strftime("%Y-%m-%d")
-        except:
+        except Exception:
             pass
     
     # Estrai riferimento (timestamp univoco)
@@ -260,7 +260,7 @@ def riconcilia_f24_con_estratto(f24_list: List[Dict], movimenti_f24: List[Dict])
         if f24_data_str:
             try:
                 f24_data = datetime.strptime(f24_data_str, "%Y-%m-%d")
-            except:
+            except Exception:
                 f24_data = None
         else:
             f24_data = None
@@ -276,7 +276,7 @@ def riconcilia_f24_con_estratto(f24_list: List[Dict], movimenti_f24: List[Dict])
             if mov_data_str:
                 try:
                     mov_data = datetime.strptime(mov_data_str, "%Y-%m-%d")
-                except:
+                except Exception:
                     mov_data = None
             else:
                 mov_data = None
