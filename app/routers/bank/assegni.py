@@ -861,6 +861,19 @@ async def incassa_assegno(
                       "metodo_pagamento": "assegno",
                       "updated_at": datetime.now(timezone.utc).isoformat()}}
         )
+        # --- EVENT BUS: propaga FATTURA_PAGATA (assegno incassato) ---
+        try:
+            from app.services.event_bus import propagate_event, EventTypes
+            await propagate_event(EventTypes.FATTURA_PAGATA, {
+                "fattura_id": fid,
+                "metodo_pagamento": "assegno",
+                "data_pagamento": data_incasso,
+                "importo": assegno.get("importo"),
+                "assegno_id": assegno["id"],
+                "assegno_numero": assegno.get("numero"),
+            }, db, source_module="assegni_incassa")
+        except Exception:
+            logger.exception("Errore propagazione fattura.pagata (incassa assegno)")
     # 5. Estratto conto → riconciliato
     if movimento_estratto_conto_id:
         await db["estratto_conto_movimenti"].update_one(
@@ -1481,6 +1494,20 @@ async def sync_assegni_da_estratto_conto() -> Dict[str, Any]:
                 await db["scadenziario_fornitori"].update_many(
                     {"fattura_id": fid, "pagato": {"$ne": True}},
                     {"$set": {"pagato": True, "data_pagamento": data}})
+                # --- EVENT BUS: propaga FATTURA_PAGATA (sync assegno da EC) ---
+                try:
+                    from app.services.event_bus import propagate_event, EventTypes
+                    await propagate_event(EventTypes.FATTURA_PAGATA, {
+                        "fattura_id": fid,
+                        "metodo_pagamento": "assegno",
+                        "data_pagamento": data,
+                        "importo": assegno_carnet.get("importo"),
+                        "assegno_id": assegno_carnet["id"],
+                        "assegno_numero": assegno_carnet.get("numero"),
+                        "movimento_id": mov.get("id"),
+                    }, db, source_module="assegni_sync_ec")
+                except Exception:
+                    logger.exception("Errore propagazione fattura.pagata (sync assegno EC)")
             if assegno_carnet.get("prima_nota_banca_id"):
                 await db["prima_nota_banca"].update_one(
                     {"id": assegno_carnet["prima_nota_banca_id"]},

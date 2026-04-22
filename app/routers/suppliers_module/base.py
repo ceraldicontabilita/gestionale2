@@ -485,7 +485,39 @@ async def delete_supplier(supplier_id: str, force: bool = Query(False)) -> Dict[
     
     await db[Collections.SUPPLIERS].delete_one({"_id": supplier["_id"]})
     await cache.clear_pattern(SUPPLIERS_CACHE_KEY)
-    
+
+    # Pulisce sistema relazionale: annulla partite aperte residue + risolve alert
+    # Solo se force=True (senza force l'operazione è già stata bloccata sopra se
+    # ci sono fatture collegate). In ogni caso ripulisce le entità relazionali
+    # orfane che puntano al fornitore cancellato.
+    try:
+        now = datetime.now(timezone.utc).isoformat()
+        supplier_id_value = supplier.get("id") or supplier_id
+        # Partite aperte collegate al fornitore come controparte
+        r_pa = await db["partite_aperte"].update_many(
+            {
+                "controparte_id": supplier_id_value,
+                "stato": {"$in": ["aperta", "parziale"]},
+            },
+            {"$set": {"stato": "annullata", "annullata_at": now,
+                      "motivo_annullamento": f"Fornitore {supplier_id_value} eliminato"}}
+        )
+        # Alert aperti sull'entità fornitore
+        r_al = await db["alerts"].update_many(
+            {"entita_id": supplier_id_value, "stato": "aperto"},
+            {"$set": {
+                "stato": "risolto", "risolto": True,
+                "resolved_at": now, "resolved_by": "cascade_delete_fornitore",
+                "note_risoluzione": f"Fornitore {supplier_id_value} eliminato",
+            }}
+        )
+        logger.info(
+            f"Cascade fornitore {supplier_id_value}: partite={r_pa.modified_count}, "
+            f"alerts={r_al.modified_count}"
+        )
+    except Exception:
+        logger.exception(f"Errore pulizia relazionale per fornitore {supplier_id}")
+
     return {"message": "Fornitore eliminato"}
 
 

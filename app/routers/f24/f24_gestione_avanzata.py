@@ -147,6 +147,17 @@ async def esegui_riconciliazione_avanzata():
                 "updated_at": datetime.now(timezone.utc)
             }}
         )
+        # --- EVENT BUS: propaga F24_PAGATO ---
+        try:
+            from app.services.event_bus import propagate_event, EventTypes
+            await propagate_event(EventTypes.F24_PAGATO, {
+                "f24_id": f24_pagato.get("id"),
+                "data_pagamento": f24_pagato.get("data_pagamento"),
+                "movimento_id": (f24_pagato.get("movimento_bancario") or {}).get("id") if isinstance(f24_pagato.get("movimento_bancario"), dict) else None,
+                "importo_totale": f24_pagato.get("importo_totale"),
+            }, db, source_module="f24_riconcilia_avanzato")
+        except Exception:
+            logger.exception("Errore propagazione f24.pagato (riconcilia-avanzato)")
     
     for f24_da_pagare in result["f24_da_pagare"]:
         await db["f24_unificato"].update_one(
