@@ -117,7 +117,63 @@ class CascadeOperations:
                 {"$unset": {"fattura_collegata": "", "numero_fattura": "", "data_fattura": ""}}
             )
             risultato["entita_eliminate"]["assegni_sganciati"] = r.modified_count
-            
+
+            # 7-bis. Pulisci sistema relazionale (partite aperte, alert, match)
+            # Fondamentale: senza questa pulizia i contatori Dashboard Relazionale
+            # restano "gonfi" con partite/alert che puntano a fatture inesistenti.
+            try:
+                # Partite aperte collegate: soft-delete se soft, hard se hard
+                if hard_delete:
+                    r_pa = await db["partite_aperte"].delete_many({
+                        "tipo": "fattura_fornitore",
+                        "documento_id": fattura_id,
+                    })
+                    risultato["entita_eliminate"]["partite_aperte"] = r_pa.deleted_count
+                else:
+                    r_pa = await db["partite_aperte"].update_many(
+                        {
+                            "tipo": "fattura_fornitore",
+                            "documento_id": fattura_id,
+                            "stato": {"$in": ["aperta", "parziale"]},
+                        },
+                        {"$set": {"stato": "annullata", "annullata_at": now,
+                                  "motivo_annullamento": f"Fattura {fattura_id} eliminata"}}
+                    )
+                    risultato["entita_eliminate"]["partite_aperte"] = r_pa.modified_count
+
+                # Alert aperti sulla fattura: sempre risolti (anche in soft delete)
+                r_al = await db["alerts"].update_many(
+                    {
+                        "entita_id": fattura_id,
+                        "stato": "aperto",
+                    },
+                    {"$set": {
+                        "stato": "risolto",
+                        "risolto": True,
+                        "resolved_at": now,
+                        "resolved_by": "cascade_delete",
+                        "note_risoluzione": f"Fattura {fattura_id} eliminata",
+                    }}
+                )
+                risultato["entita_eliminate"]["alerts_risolti"] = r_al.modified_count
+
+                # Match riconciliazione: marcati come respinti
+                r_rm = await db["riconciliazioni_match"].update_many(
+                    {
+                        "$or": [
+                            {"partita_id": {"$regex": fattura_id}},
+                            {"documento_id": fattura_id},
+                        ],
+                        "stato": {"$in": ["confermato", "candidato"]},
+                    },
+                    {"$set": {"stato": "respinto", "respinto_at": now,
+                              "motivo": "fattura eliminata"}}
+                )
+                risultato["entita_eliminate"]["match_respinti"] = r_rm.modified_count
+            except Exception as e_rel:
+                logger.exception(f"Errore pulizia sistema relazionale per fattura {fattura_id}")
+                risultato["errori"].append(f"Pulizia relazionale: {e_rel}")
+
             # 8. Infine elimina/archivia la fattura stessa
             if hard_delete:
                 # Elimina da entrambe le collezioni (invoices e fatture_ricevute)

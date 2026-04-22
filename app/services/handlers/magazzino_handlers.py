@@ -29,7 +29,9 @@ async def on_fattura_righe_magazzino(event: Dict[str, Any], db) -> Optional[Dict
     fattura_id = event.get("fattura_id")
     fornitore_id = event.get("fornitore_id")
     fornitore_nome = event.get("fornitore_ragione_sociale", "")
-    righe = event.get("righe", [])
+    # Accetta 'righe' (nome canonico), 'linee' (schema fatture parser italiano)
+    # o 'righe_linee' (legacy). Retrocompatibile con tutti i propagate_event esistenti.
+    righe = event.get("righe") or event.get("linee") or event.get("righe_linee") or []
 
     if not righe:
         return None

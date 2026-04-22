@@ -159,6 +159,7 @@ async def import_fattura_xml(file: UploadFile = File(...)) -> Dict[str, Any]:
             "data_scadenza": parsed.get("pagamento", {}).get("data_scadenza") if isinstance(parsed.get("pagamento"), dict) else None,
             "stato": fattura.get("stato"),
             "pagato": False,
+            "linee": parsed.get("linee", []),
         }, db, source_module="import_xml")
     except Exception:
         logger.exception("Errore propagazione evento fattura.created")
