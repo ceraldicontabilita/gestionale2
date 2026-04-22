@@ -54,7 +54,7 @@ def decode_header_value(value: str) -> str:
             else:
                 result += str(part)
         return result
-    except:
+    except Exception:
         return str(value)
 
 
