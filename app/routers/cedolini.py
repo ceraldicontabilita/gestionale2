@@ -727,7 +727,23 @@ async def conferma_cedolino(stima: CedolinoStima) -> Dict[str, Any]:
     }
     
     await db["cedolini"].insert_one(cedolino.copy())
-    
+
+    # --- EVENT BUS: propaga evento cedolino importato (conferma manuale) ---
+    try:
+        from app.services.event_bus import propagate_event, EventTypes
+        await propagate_event(EventTypes.CEDOLINO_IMPORTATO, {
+            "cedolino_id": cedolino["id"],
+            "dipendente_id": cedolino.get("dipendente_id"),
+            "dipendente_nome": cedolino.get("dipendente_nome"),
+            "netto": cedolino.get("netto"),
+            "lordo": cedolino.get("lordo"),
+            "mese": cedolino.get("mese"),
+            "anno": cedolino.get("anno"),
+            "tipo_cedolino": "mensile",
+        }, db, source_module="cedolini_conferma")
+    except Exception:
+        logger.exception("Errore propagazione evento cedolino.importato (conferma)")
+
     # Registra in prima nota salari
     movimento_salario = {
         "id": str(uuid.uuid4()),
@@ -1400,6 +1416,22 @@ async def import_cedolini_da_gmail(
         doc_to_insert = dict(doc)
         await db["cedolini"].insert_one(doc_to_insert)
         imported += 1
+
+        # --- EVENT BUS: propaga evento cedolino importato (da Gmail) ---
+        try:
+            from app.services.event_bus import propagate_event, EventTypes
+            await propagate_event(EventTypes.CEDOLINO_IMPORTATO, {
+                "cedolino_id": doc_to_insert.get("id"),
+                "dipendente_id": doc_to_insert.get("dipendente_id"),
+                "dipendente_nome": doc_to_insert.get("nome_dipendente") or doc_to_insert.get("dipendente_nome"),
+                "netto": doc_to_insert.get("netto") or doc_to_insert.get("netto_mese"),
+                "lordo": doc_to_insert.get("lordo"),
+                "mese": doc_to_insert.get("mese"),
+                "anno": doc_to_insert.get("anno"),
+                "tipo_cedolino": doc_to_insert.get("tipo_cedolino", "mensile"),
+            }, db, source_module="cedolini_import_gmail")
+        except Exception:
+            logger.exception("Errore propagazione evento cedolino.importato (gmail)")
 
     logger.info(f"[Gmail Import] Completato: {imported} importati, {skipped_duplicates} duplicati saltati")
 

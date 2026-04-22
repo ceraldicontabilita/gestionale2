@@ -561,7 +561,28 @@ async def create_busta_paga(data: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
         busta["id"] = str(uuid.uuid4())
         busta["created_at"] = datetime.now(timezone.utc).isoformat()
         await db["cedolini"].insert_one(busta.copy())
-    
+
+        # --- EVENT BUS: propaga evento cedolino importato (busta-paga creata) ---
+        # Solo per CREAZIONE, non per UPDATE (evita doppi alert su modifiche)
+        try:
+            from app.services.event_bus import propagate_event, EventTypes
+            # Parse mese/anno dal periodo "YYYY-MM"
+            periodo_parts = (busta.get("periodo", "") or "").split("-")
+            mese_int = int(periodo_parts[1]) if len(periodo_parts) >= 2 and periodo_parts[1].isdigit() else None
+            anno_int = int(periodo_parts[0]) if len(periodo_parts) >= 1 and periodo_parts[0].isdigit() else None
+            await propagate_event(EventTypes.CEDOLINO_IMPORTATO, {
+                "cedolino_id": busta["id"],
+                "dipendente_id": busta.get("dipendente_id"),
+                "dipendente_nome": None,  # handler cercherà in dipendenti
+                "netto": busta.get("netto"),
+                "lordo": busta.get("lordo"),
+                "mese": mese_int,
+                "anno": anno_int,
+                "tipo_cedolino": "mensile",
+            }, db, source_module="dipendenti_buste_paga")
+        except Exception:
+            logger.exception("Errore propagazione evento cedolino.importato (buste-paga)")
+
     busta.pop("_id", None)
     return busta
 

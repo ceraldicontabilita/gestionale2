@@ -651,6 +651,31 @@ async def download_pec_invoices(
             })
             logger.info(f"[PEC] Fattura importata: {invoice_data['supplier_name']} | {invoice_data['invoice_number']} | €{invoice_data['total_amount']}")
 
+            # --- EVENT BUS: propaga evento fattura creata (import PEC) ---
+            # Fondamentale: questo è il flusso principale di ingresso fatture del
+            # gestionale (scheduler orario). Senza questo, le fatture PEC
+            # saltavano completamente il sistema relazionale.
+            try:
+                from app.services.event_bus import propagate_event, EventTypes
+                await propagate_event(EventTypes.FATTURA_CREATED, {
+                    "fattura_id": invoice_doc["id"],
+                    "numero_documento": invoice_data.get("invoice_number", ""),
+                    "tipo_documento": invoice_data.get("document_type", "TD01"),
+                    "importo_totale": invoice_data.get("total_amount", 0),
+                    "fornitore_id": None,  # flusso PEC non linka fornitore, handler lo gestisce
+                    "fornitore_ragione_sociale": invoice_data.get("supplier_name", ""),
+                    "fornitore_piva": invoice_data.get("supplier_vat", ""),
+                    "fornitore_nuovo": True,  # handler alert_fornitore farà il check reale
+                    "fornitore_iban": invoice_data.get("iban"),
+                    "metodo_pagamento": invoice_data.get("payment_method") or "",
+                    "data_documento": invoice_data.get("invoice_date", ""),
+                    "data_scadenza": invoice_data.get("due_date"),
+                    "stato": "importata",
+                    "pagato": False,
+                }, db, source_module="aruba_pec_downloader")
+            except Exception:
+                logger.exception("Errore propagazione evento fattura.created (PEC)")
+
         except Exception as e:
             logger.error(f"[PEC] Errore elaborazione {item.get('filename','?')}: {e}")
             stats["errors"] += 1
