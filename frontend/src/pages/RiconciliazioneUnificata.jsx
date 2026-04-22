@@ -1203,7 +1203,7 @@ function MovimentoCard({ movimento, onConferma, onIgnora, onElimina, processing,
                 </>
               )}
               {/* Info pagamento rateale */}
-              {movimento.info_rate && movimento.info_rate.numero_rate > 1 && (
+              {movimento.info_rate && movimento?.info_rate?.numero_rate > 1 && (
                 <div
                   style={{
                     width: '100%',
@@ -1214,7 +1214,7 @@ function MovimentoCard({ movimento, onConferma, onIgnora, onElimina, processing,
                     color: '#1e40af',
                   }}
                 >
-                  📊 <b>Pagamento in {movimento.info_rate.numero_rate} rate</b>: Totale rate{' '}
+                  📊 <b>Pagamento in {movimento?.info_rate?.numero_rate} rate</b>: Totale rate{' '}
                   {formatEuro(movimento.info_rate.totale_rate)}
                   {movimento.importo_fattura > 0 && (
                     <span> su fattura di {formatEuro(movimento.importo_fattura)}</span>
@@ -1696,8 +1696,8 @@ function ArubaTab({
         operazioni,
       });
 
-      if (res.data.successo > 0) {
-        alert(`✅ ${res.data.successo} fatture confermate!`);
+      if (res?.data?.successo > 0) {
+        alert(`✅ ${res?.data?.successo} fatture confermate!`);
         setSelezionate(new Set());
         if (onRefresh) onRefresh();
       }
@@ -2033,8 +2033,8 @@ function DocumentiTab({ documenti, stats, onRefresh, processing }) {
 
       // Aggiungi campi dalla proposta
       if (selectedDoc.proposta) {
-        if (selectedDoc.proposta.anno_suggerito) campi.anno = selectedDoc.proposta.anno_suggerito;
-        if (selectedDoc.proposta.mese_suggerito) campi.mese = selectedDoc.proposta.mese_suggerito;
+        if (selectedDoc?.proposta?.anno_suggerito) campi.anno = selectedDoc?.proposta?.anno_suggerito;
+        if (selectedDoc?.proposta?.mese_suggerito) campi.mese = selectedDoc?.proposta?.mese_suggerito;
       }
 
       await api.post('/api/documenti-non-associati/associa', {
@@ -2200,7 +2200,7 @@ function DocumentiTab({ documenti, stats, onRefresh, processing }) {
                       color: '#1d4ed8',
                     }}
                   >
-                    {doc.proposta.anno_suggerito}
+                    {doc?.proposta?.anno_suggerito}
                   </span>
                 )}
               </div>
@@ -2257,7 +2257,7 @@ function DocumentiTab({ documenti, stats, onRefresh, processing }) {
 
             {/* Proposta AI */}
             {selectedDoc.proposta &&
-              (selectedDoc.proposta.anno_suggerito || selectedDoc.proposta.tipo_suggerito) && (
+              (selectedDoc?.proposta?.anno_suggerito || selectedDoc?.proposta?.tipo_suggerito) && (
                 <div
                   style={{
                     background: '#eff6ff',
@@ -2270,19 +2270,19 @@ function DocumentiTab({ documenti, stats, onRefresh, processing }) {
                   <div style={{ fontSize: 13, fontWeight: 600, color: '#1d4ed8', marginBottom: 8 }}>
                     💡 Proposta Intelligente
                   </div>
-                  {selectedDoc.proposta.tipo_suggerito && (
+                  {selectedDoc?.proposta?.tipo_suggerito && (
                     <div style={{ fontSize: 12, color: '#475569', marginBottom: 4 }}>
-                      Tipo: <strong>{selectedDoc.proposta.tipo_suggerito}</strong>
+                      Tipo: <strong>{selectedDoc?.proposta?.tipo_suggerito}</strong>
                     </div>
                   )}
-                  {selectedDoc.proposta.anno_suggerito && (
+                  {selectedDoc?.proposta?.anno_suggerito && (
                     <div style={{ fontSize: 12, color: '#475569', marginBottom: 4 }}>
-                      Anno: <strong>{selectedDoc.proposta.anno_suggerito}</strong>
+                      Anno: <strong>{selectedDoc?.proposta?.anno_suggerito}</strong>
                     </div>
                   )}
-                  {selectedDoc.proposta.mese_suggerito && (
+                  {selectedDoc?.proposta?.mese_suggerito && (
                     <div style={{ fontSize: 12, color: '#475569' }}>
-                      Mese: <strong>{selectedDoc.proposta.mese_suggerito}</strong>
+                      Mese: <strong>{selectedDoc?.proposta?.mese_suggerito}</strong>
                     </div>
                   )}
                 </div>
