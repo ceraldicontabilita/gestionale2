@@ -114,9 +114,9 @@ async def find_bank_match(db, importo: float, data_documento: str, fornitore: st
                 data_doc = datetime.strptime(data_documento, "%Y-%m-%d")
             except ValueError as e:
                 logger.warning(f"Errore parsing data documento '{data_documento}': {e}")
-                data_doc = datetime.now()
+                data_doc = datetime.now(timezone.utc)
         else:
-            data_doc = datetime.now()
+            data_doc = datetime.now(timezone.utc)
         
         data_inizio = (data_doc - timedelta(days=60)).strftime("%Y-%m-%d")
         data_fine = (data_doc + timedelta(days=30)).strftime("%Y-%m-%d")
