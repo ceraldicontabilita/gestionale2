@@ -466,6 +466,19 @@ async def import_estratto_conto(file: UploadFile = File(...)) -> Dict[str, Any]:
                     "stato_pagamento": "pagata",
                 }})
                 provvisori_riconciliati += 1
+
+                # --- EVENT BUS: propaga FATTURA_PAGATA (riconciliazione provvisori EC) ---
+                try:
+                    from app.services.event_bus import propagate_event, EventTypes
+                    await propagate_event(EventTypes.FATTURA_PAGATA, {
+                        "fattura_id": f["id"],
+                        "metodo_pagamento": "banca",
+                        "data_pagamento": match.get("data_contabile") or match.get("data") or f.get("invoice_date"),
+                        "movimento_id": match.get("id"),
+                        "importo": importo,
+                    }, db, source_module="ec_riconciliazione_provvisori")
+                except Exception:
+                    logger.exception("Errore propagazione fattura.pagata (riconcilia provvisori EC)")
         
         if provvisori_riconciliati > 0:
             logger.info(f"[EC Import] Riconciliate {provvisori_riconciliati} fatture provvisorie con EC")

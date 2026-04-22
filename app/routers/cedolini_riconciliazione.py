@@ -132,9 +132,22 @@ async def registra_pagamento_cedolino(
     else:
         await db["prima_nota_banca"].insert_one(movimento.copy())
         movimento["_collection"] = "prima_nota_banca"
-    
+
     logger.info(f"Pagamento cedolino {cedolino_id}: €{importo} via {metodo}")
-    
+
+    # --- EVENT BUS: propaga CEDOLINO_PAGATO (registra-pagamento manuale) ---
+    try:
+        from app.services.event_bus import propagate_event, EventTypes
+        await propagate_event(EventTypes.CEDOLINO_PAGATO, {
+            "cedolino_id": cedolino_id,
+            "dipendente_id": cedolino.get("dipendente_id"),
+            "metodo_pagamento": metodo,
+            "data_pagamento": data_pag,
+            "importo": importo,
+        }, db, source_module="cedolini_registra_pagamento")
+    except Exception:
+        logger.exception("Errore propagazione cedolino.pagato (registra-pagamento)")
+
     return {
         "success": True,
         "cedolino_id": cedolino_id,

@@ -244,6 +244,20 @@ async def auto_riconcilia_tutto(
                         {"$set": {"stato": "pagato"}}
                     )
                     applicati += 1
+
+                    # --- EVENT BUS: propaga FATTURA_PAGATA (auto-riconcilia batch) ---
+                    # Chiude la partita aperta e risolve alert a cascata.
+                    try:
+                        from app.services.event_bus import propagate_event, EventTypes
+                        await propagate_event(EventTypes.FATTURA_PAGATA, {
+                            "fattura_id": f.get("id"),
+                            "metodo_pagamento": "banca",
+                            "data_pagamento": mov.get("data") or datetime.now(timezone.utc).isoformat()[:10],
+                            "movimento_id": mov.get("id"),
+                            "importo": importo,
+                        }, db, source_module="batch_auto_riconcilia")
+                    except Exception:
+                        logger.exception("Errore propagazione fattura.pagata (auto-riconcilia)")
                 break
     
     return {
