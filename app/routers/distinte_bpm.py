@@ -21,7 +21,7 @@ Formato CSV atteso (separatore ;):
 - Causale
 """
 
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, Body, File, HTTPException, UploadFile
 from typing import Optional
 import csv
 import io
@@ -277,9 +277,9 @@ async def import_distinte_bpm(
 
 @router.post("/riconcilia-pagamento-manuale")
 async def riconcilia_pagamento_manuale(
-    dipendente_nome: str,
-    importo: float,
-    data_pagamento: str
+    dipendente_nome: str = Body(...),
+    importo: float = Body(...),
+    data_pagamento: str = Body(...)
 ):
     """
     Riconcilia manualmente un pagamento con una busta paga.
