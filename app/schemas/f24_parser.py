@@ -367,7 +367,7 @@ def trova_f24_da_movimento_bancario(
                     "f24": f24,
                     "score": diff_giorni + (diff_importo * 10)  # Score: più basso = migliore
                 })
-            except:
+            except Exception:
                 # Se la data non è parsabile, considera solo l'importo
                 if diff_importo <= tolleranza_importo:
                     candidati.append({
