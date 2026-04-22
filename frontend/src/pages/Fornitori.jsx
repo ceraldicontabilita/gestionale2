@@ -184,7 +184,7 @@ function SupplierModal({ isOpen, onClose, supplier, onSave, saving }) {
       justifyContent: 'center',
       zIndex: 99999,
       padding: '20px'
-    }}>
+    }} onClick={onClose}>
       <div style={{
         backgroundColor: 'white',
         borderRadius: '16px',
@@ -193,7 +193,7 @@ function SupplierModal({ isOpen, onClose, supplier, onSave, saving }) {
         maxHeight: '85vh',
         overflow: 'hidden',
         boxShadow: '0 20px 50px rgba(0,0,0,0.3)'
-      }}>
+      }} onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div style={{
           background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
@@ -1779,7 +1779,7 @@ export default function Fornitori() {
             justifyContent: 'center',
             zIndex: 99999,
             padding: '20px'
-          }}>
+          }} onClick={() => setFatturatoModal({ open: false, data: null, loading: false })}>
           <div style={{
             backgroundColor: 'white',
             borderRadius: '16px',
@@ -1787,7 +1787,7 @@ export default function Fornitori() {
             maxWidth: '500px',
             overflow: 'hidden',
             boxShadow: '0 20px 50px rgba(0,0,0,0.3)'
-          }}>
+          }} onClick={e => e.stopPropagation()}>
             {/* Header */}
             <div style={{
               background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
@@ -2294,12 +2294,12 @@ export default function Fornitori() {
             position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
             background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
             zIndex: 9999
-          }}>
+          }} onClick={() => setSchedeTecnicheModal({ open: false, fornitore: null, schede: [], loading: false })}>
             <div style={{
               background: 'white', borderRadius: 16, width: '90%', maxWidth: 800,
               maxHeight: '85vh', overflow: 'hidden', display: 'flex', flexDirection: 'column',
               boxShadow: '0 25px 50px rgba(0,0,0,0.25)'
-            }}>
+            }} onClick={e => e.stopPropagation()}>
               {/* Header */}
               <div style={{
                 padding: '20px 24px', borderBottom: '1px solid #e5e7eb',
