@@ -384,7 +384,7 @@ async def delete_all_corrispettivi(
         {"status": {"$ne": "sent_ade"}},
         {"$set": {
             "entity_status": EntityStatus.DELETED.value,
-            "deleted_at": datetime.now().isoformat()
+            "deleted_at": datetime.now(timezone.utc).isoformat()
         }}
     )
     
@@ -433,7 +433,7 @@ async def delete_corrispettivo(
         {"id": corrispettivo_id},
         {"$set": {
             "entity_status": EntityStatus.DELETED.value,
-            "deleted_at": datetime.now().isoformat()
+            "deleted_at": datetime.now(timezone.utc).isoformat()
         }}
     )
     
