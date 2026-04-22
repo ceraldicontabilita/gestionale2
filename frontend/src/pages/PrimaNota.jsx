@@ -660,13 +660,7 @@ function PrimaNotaDesktop() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 10, marginBottom: 16 }}>
             <MiniCard title={`Entrate (DARE) ${selectedYear}`} value={formatEuro(cassaData.totale_entrate)} color="#4caf50" />
             <MiniCard title={`Uscite (AVERE) ${selectedYear}`} value={formatEuro(cassaData.totale_uscite)} color="#ef4444" />
-            <MiniCard title={`Saldo ${selectedYear}`} value={formatEuro(cassaData.saldo_anno || (cassaData.totale_entrate - cassaData.totale_uscite))} color={(cassaData.saldo_anno || (cassaData.totale_entrate - cassaData.totale_uscite)) >= 0 ? '#4caf50' : '#ef4444'} highlight />
-            {cassaData.saldo_precedente !== 0 && cassaData.saldo_precedente !== undefined && (
-              <MiniCard title="Riporto Anni Prec." value={formatEuro(cassaData.saldo_precedente)} color="#6b7280" />
-            )}
-            {cassaData.saldo_precedente !== 0 && cassaData.saldo_precedente !== undefined && (
-              <MiniCard title="Saldo Cumulativo" value={formatEuro(cassaData.saldo)} color="#1e3a5f" highlight />
-            )}
+            <MiniCard title={`Saldo Cassa ${selectedYear}`} value={formatEuro(cassaData.saldo_anno || (cassaData.totale_entrate - cassaData.totale_uscite))} color={(cassaData.saldo_anno || (cassaData.totale_entrate - cassaData.totale_uscite)) >= 0 ? '#4caf50' : '#ef4444'} highlight />
           </div>
 
           {/* Logica Corrispettivi - Toolbar Ricostruzione */}
@@ -816,7 +810,7 @@ function PrimaNotaDesktop() {
             onDelete={(id) => handleDeleteMovimento('cassa', id)}
             onEdit={(updated) => handleEditMovimento('cassa', updated)}
             onSposta={handleSpostaMovimento}
-            saldoPrecedente={cassaData.saldo_precedente || 0}
+            saldoPrecedente={0}
           />
         </section>
       )}
@@ -845,10 +839,10 @@ function PrimaNotaDesktop() {
               icon="📊"
               subtitle={`Accrediti - Pagamenti ${selectedYear}`}
             />
-            {bancaData.saldo_precedente !== undefined && bancaData.saldo_precedente !== 0 && bancaData.saldo_precedente > 0 && (
+            {bancaData.saldo_precedente !== undefined && bancaData.saldo_precedente !== 0 && (
               <SummaryCard title="Saldo Cumulativo" value={formatEuro(bancaData.saldo)} color="#1e3a5f" icon="🏦" subtitle="Saldo totale complessivo" highlight />
             )}
-            {bancaData.saldo_precedente !== undefined && bancaData.saldo_precedente !== 0 && bancaData.saldo_precedente > 0 && (
+            {bancaData.saldo_precedente !== undefined && bancaData.saldo_precedente !== 0 && (
               <SummaryCard title="Riporto Anni Prec." value={formatEuro(bancaData.saldo_precedente)} color="#6b7280" icon="📅" subtitle="Saldo al 31/12 anno prec." />
             )}
           </div>
