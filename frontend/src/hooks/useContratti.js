@@ -12,7 +12,7 @@ const DEFAULT_CONTRATTO = {
   data_fine: '',
   ore_settimanali: '',
   retribuzione: '',
-  note: ''
+  note: '',
 };
 
 export function useContratti() {
@@ -27,7 +27,9 @@ export function useContratti() {
       setLoading(true);
       const [contrattiRes, scadenzeRes] = await Promise.all([
         api.get('/api/dipendenti/contratti').catch(() => ({ data: [] })),
-        api.get('/api/dipendenti/contratti/scadenze').catch(() => ({ data: { scaduti: [], in_scadenza: [] } }))
+        api
+          .get('/api/dipendenti/contratti/scadenze')
+          .catch(() => ({ data: { scaduti: [], in_scadenza: [] } })),
       ]);
       setContratti(contrattiRes.data || []);
       setScadenze(scadenzeRes.data || { scaduti: [], in_scadenza: [] });
@@ -39,54 +41,61 @@ export function useContratti() {
     }
   }, []);
 
-  const handleSubmit = useCallback(async (e) => {
-    e?.preventDefault();
-    
-    if (!formData.dipendente_id || !formData.tipologia || !formData.data_inizio) {
-      alert('Compila i campi obbligatori');
-      return false;
-    }
-    
-    try {
-      await api.post('/api/dipendenti/contratti', formData);
-      setShowForm(false);
-      setFormData(DEFAULT_CONTRATTO);
-      await loadData();
-      return true;
-    } catch (error) {
-      alert('Errore: ' + (error.response?.data?.detail || error.message));
-      return false;
-    }
-  }, [formData, loadData]);
+  const handleSubmit = useCallback(
+    async e => {
+      e?.preventDefault();
 
-  const handleTerminate = useCallback(async (contrattoId) => {
-    
-    
-    try {
-      const oggi = new Date().toISOString().split('T')[0];
-      await api.post(`/api/dipendenti/contratti/${contrattoId}/termina?data_fine=${oggi}`);
-      await loadData();
-      return true;
-    } catch (error) {
-      alert('Errore: ' + (error.response?.data?.detail || error.message));
-      return false;
-    }
-  }, [loadData]);
+      if (!formData.dipendente_id || !formData.tipologia || !formData.data_inizio) {
+        alert('Compila i campi obbligatori');
+        return false;
+      }
 
-  const handleImport = useCallback(async (file) => {
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await api.post('/api/dipendenti/contratti/import-excel', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
-      await loadData();
-      return res.data;
-    } catch (error) {
-      alert('Errore import: ' + (error.response?.data?.detail || error.message));
-      return null;
-    }
-  }, [loadData]);
+      try {
+        await api.post('/api/dipendenti/contratti', formData);
+        setShowForm(false);
+        setFormData(DEFAULT_CONTRATTO);
+        await loadData();
+        return true;
+      } catch (error) {
+        alert('Errore: ' + (error.response?.data?.detail || error.message));
+        return false;
+      }
+    },
+    [formData, loadData]
+  );
+
+  const handleTerminate = useCallback(
+    async contrattoId => {
+      try {
+        const oggi = new Date().toISOString().split('T')[0];
+        await api.post(`/api/dipendenti/contratti/${contrattoId}/termina?data_fine=${oggi}`);
+        await loadData();
+        return true;
+      } catch (error) {
+        alert('Errore: ' + (error.response?.data?.detail || error.message));
+        return false;
+      }
+    },
+    [loadData]
+  );
+
+  const handleImport = useCallback(
+    async file => {
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await api.post('/api/dipendenti/contratti/import-excel', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        await loadData();
+        return res.data;
+      } catch (error) {
+        alert('Errore import: ' + (error.response?.data?.detail || error.message));
+        return null;
+      }
+    },
+    [loadData]
+  );
 
   const openForm = useCallback(() => {
     setFormData(DEFAULT_CONTRATTO);
@@ -114,6 +123,6 @@ export function useContratti() {
     handleImport,
     openForm,
     closeForm,
-    updateFormField
+    updateFormField,
   };
 }
