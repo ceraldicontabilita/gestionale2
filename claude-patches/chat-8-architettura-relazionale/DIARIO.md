@@ -24,15 +24,75 @@ Definizione architettura relazionale completa del gestionale.
    - Mappa relazionale visuale dei moduli
    - Regole di sviluppo permanenti
 
-### Cosa NON è stato fatto (rimandato a Chat 9)
-- Nessun codice implementato
-- Nessuna patch creata
-
-### Prossimo passo — Chat 9
-Fase 1: implementare i 6 servizi core (`event_bus.py`, `alert_engine.py`, `audit_logger.py`, `deduplica.py`, `partite_aperte_engine.py`, `riconciliazione_engine.py`) + aggiornare `db_collections.py` e `database.py` con nuove collezioni e indici.
+### Aggiornamento .md (secondo commit)
+6. **Verificato piano vs README**: trovate e corrette 3 incoerenze:
+   - `warehouse_stocks` → `warehouse_inventory` (canonica reale da db_collections.py)
+   - Colori design system: viola nella memoria → navy #0f2744 + oro #b8860b (reale in utils.js)
+   - Regole mancanti nel README (6-8): db_collections.py, patch Claude, propagate_event
+7. **Riscritti tutti i .md del repo**:
+   - `README.md` — sezione architettura relazionale + servizi core
+   - `memoria/INDEX.md` — collezioni aggiornate ai volumi reali + servizi core + 16 regole
+   - `memoria/PRD.md` — stato aggiornato + piano Chat 9-16
+   - `memoria/LOGICA_OPERATIVA.md` — sezione 5 completa: event bus, partite, riconciliazione, alert, mappa
+   - `memoria/BACKLOG.md` — nota collegamento piano relazionale
 
 ### File di riferimento
 - `PIANO_LAVORO_RELAZIONALE.md` — piano completo (salvato in outputs)
 - Specifiche `.txt` — 10 documenti operativi forniti da Enzo
+
+---
+
+## Chat 9 — 22 Aprile 2026
+
+### Obiettivo
+Implementare tutti gli handler eventi + dashboard frontend per il sistema relazionale.
+
+### Cosa è stato fatto (5 commit)
+
+**Commit 9a — Handler Fatture↔Fornitori:**
+- `fattura_handlers.py`: 5 handler (crea partita, alert fornitore, audit, pagata→risolvi, fornitore aggiornato→cascata)
+
+**Commit 9b — Handler Banca↔Riconciliazione:**
+- `banca_handlers.py`: 3 handler (cerca match scoring 4 livelli, match confermato→propaga effetti, audit)
+- Propagazione match: aggiorna fattura/F24/cedolino/POS come pagato + risolve alert
+
+**Commit 9c — Handler F24, Cedolini, Corrispettivi, Trasferimenti:**
+- `f24_handlers.py`: 2 handler (partita F24 + alert scadenza, pagato→risolvi)
+- `cedolino_handlers.py`: 2 handler (partita stipendio + alert dip non trovato, pagato→risolvi)
+- `corrispettivo_handlers.py`: 1 handler (split contanti→cassa + POS→partita attesa banca)
+- `trasferimento_handlers.py`: 1 handler (crea lato opposto cassa↔banca idempotente)
+
+**Commit 9d — Handler Dipendenti, Magazzino, Documenti (copertura 10/10):**
+- `dipendente_handlers.py`: 3 handler (deduplica CF+nome, alert incompleto/IBAN/contratto, cessato flussi attivi)
+- `magazzino_handlers.py`: 2 handler (matching prodotto 3 livelli esatto→normalizzato→fuzzy, verifica sotto scorta)
+- `documento_handlers.py`: 2 handler (classificazione auto XML/F24/cedolino/verbale, instradamento+deduplica hash)
+- `deduplica_dipendente_patch.py`: funzione cerca_duplicato_dipendente per deduplica.py
+
+**Commit 9e — Dashboard Relazionale Frontend + API:**
+- `DashboardRelazionale.jsx`: 4 tab (Panoramica, Alert, Partite Aperte, Riconciliazione)
+- `partite_aperte_api.py`: GET /stats, /lista, /scadute
+- `riconciliazione_stats_api.py`: GET /stats
+
+### Verifica finale
+- 21/21 Python syntax check ✅
+- 8/8 funzioni importate verificate ✅
+- 29/29 codici alert nel catalogo ✅
+- 16/16 EventTypes definiti ✅
+- 13/13 import frontend da utils.js ✅
+- 4/4 endpoint API coerenti ✅
+- 3 __init__.py mancanti → aggiunti
+
+### Totali
+- 39 file, ~7.500 righe
+- 6 servizi core + 20 handler su 13 tipi evento + 48 codici alert
+- 2 router API nuovi + 1 pagina frontend
+- 10/10 specifiche operative coperte
+
+### Prossimo passo — Chat 10
+Emergent applica le patch, poi si può lavorare su:
+- Dashboard principale con widget alert integrato
+- Fascicolo dipendente unificato
+- Scheda fornitore arricchita
+- Backlog P0/P1 (Piano Conti, Controllo Mensile, Cespiti)
 
 ---
