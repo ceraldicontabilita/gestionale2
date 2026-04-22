@@ -174,7 +174,7 @@ class InvoiceXMLParser:
             if due_date_str and not due_date:
                 try:
                     due_date = datetime.strptime(due_date_str, "%Y-%m-%d").date()
-                except:
+                except Exception:
                     pass
             
             methods.append({
