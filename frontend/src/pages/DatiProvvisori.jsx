@@ -1,6 +1,6 @@
 /**
  * DatiProvvisori.jsx
- * 
+ *
  * NUOVA LOGICA WORKFLOW:
  * 1. Tutte le fatture da email arrivano qui
  * 2. Utente sceglie manualmente: CASSA o BANCA
@@ -15,9 +15,16 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
 import { toast } from 'sonner';
-import { 
-  FileText, Wallet, Building2, Check, X, RefreshCw, 
-  ChevronDown, AlertCircle, ArrowRight 
+import {
+  FileText,
+  Wallet,
+  Building2,
+  Check,
+  X,
+  RefreshCw,
+  ChevronDown,
+  AlertCircle,
+  ArrowRight,
 } from 'lucide-react';
 import { STYLES, COLORS, button, badge, formatEuro, formatDateIT } from '../lib/utils';
 import { PageLayout } from '../components/PageLayout';
@@ -47,7 +54,7 @@ export default function DatiProvvisori() {
     }
   };
 
-  const handleSpostaCassa = async (item) => {
+  const handleSpostaCassa = async item => {
     try {
       setProcessing(true);
       await api.post('/api/dati-provvisori/sposta-cassa', {
@@ -56,9 +63,9 @@ export default function DatiProvvisori() {
         numero_documento: item.numero_documento,
         data_documento: item.data_documento,
         importo: item.importo,
-        descrizione: item.descrizione
+        descrizione: item.descrizione,
       });
-      
+
       toast.success(`Spostato in Prima Nota Cassa: ${item.fornitore} - €${item.importo}`);
       loadData();
     } catch (error) {
@@ -68,7 +75,7 @@ export default function DatiProvvisori() {
     }
   };
 
-  const handleSpostaBanca = async (item) => {
+  const handleSpostaBanca = async item => {
     try {
       setProcessing(true);
       await api.post('/api/dati-provvisori/sposta-banca', {
@@ -77,9 +84,9 @@ export default function DatiProvvisori() {
         numero_documento: item.numero_documento,
         data_documento: item.data_documento,
         importo: item.importo,
-        descrizione: item.descrizione
+        descrizione: item.descrizione,
       });
-      
+
       toast.success(`Spostato in Prima Nota Banca: ${item.fornitore} - €${item.importo}`);
       loadData();
     } catch (error) {
@@ -89,9 +96,9 @@ export default function DatiProvvisori() {
     }
   };
 
-  const handleElimina = async (id) => {
+  const handleElimina = async id => {
     if (!confirm('Eliminare questo dato provvisorio?')) return;
-    
+
     try {
       await api.delete(`/api/dati-provvisori/${id}`);
       toast.success('Dato eliminato');
@@ -105,9 +112,9 @@ export default function DatiProvvisori() {
     try {
       setProcessing(true);
       toast.info('Scarico email Aruba...');
-      
+
       const res = await api.post('/api/documenti/scarica-fatture-aruba?since_days=30');
-      
+
       toast.success(`${res.data.fatture_create} nuove fatture scaricate`);
       loadData();
     } catch (error) {
@@ -128,10 +135,7 @@ export default function DatiProvvisori() {
   }
 
   return (
-    <PageLayout 
-      title="Dati Provvisori"
-      subtitle="Fatture da email in attesa di classificazione"
-    >
+    <PageLayout title="Dati Provvisori" subtitle="Fatture da email in attesa di classificazione">
       {/* Header Actions */}
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -141,16 +145,11 @@ export default function DatiProvvisori() {
           </div>
         </div>
 
-        <button
-          onClick={handleSyncEmail}
-          disabled={processing}
-          className={button.primary}
-        >
+        <button onClick={handleSyncEmail} disabled={processing} className={button.primary}>
           <RefreshCw size={16} className={processing ? 'animate-spin' : ''} />
           Scarica Email Aruba
         </button>
       </div>
-
 
       {/* Nota compatta */}
 
@@ -163,7 +162,7 @@ export default function DatiProvvisori() {
         </div>
       ) : (
         <div className="space-y-3">
-          {datiProvvisori.map((item) => (
+          {datiProvvisori.map(item => (
             <div
               key={item.id}
               className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
@@ -172,14 +171,10 @@ export default function DatiProvvisori() {
                 {/* Info Fattura */}
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <h3 className="font-semibold text-gray-900">
-                      {item.fornitore}
-                    </h3>
-                    <span className={badge.default}>
-                      {item.tipo || 'Email'}
-                    </span>
+                    <h3 className="font-semibold text-gray-900">{item.fornitore}</h3>
+                    <span className={badge.default}>{item.tipo || 'Email'}</span>
                   </div>
-                  
+
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                     <div>
                       <span className="text-gray-500">Numero:</span>
