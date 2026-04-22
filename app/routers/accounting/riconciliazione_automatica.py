@@ -10,7 +10,7 @@ REGOLE FONDAMENTALI:
 """
 from fastapi import APIRouter, HTTPException
 from typing import Dict, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 import uuid
 import logging
 import re

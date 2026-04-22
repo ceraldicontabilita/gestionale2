@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 import os, uuid
 from datetime import datetime, timezone
+import uuid
 
 router = APIRouter(prefix="/ordini-fornitori", tags=["Ordini Fornitori"])
 

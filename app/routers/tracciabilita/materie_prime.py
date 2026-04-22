@@ -14,6 +14,7 @@ from typing import List, Optional
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 import os, re, uuid
+import uuid
 
 
 router = APIRouter(prefix="/materie-prime", tags=["Materie Prime"])

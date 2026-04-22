@@ -10,7 +10,7 @@ Gestisce:
 
 from fastapi import APIRouter, Query, HTTPException, Body
 from typing import Dict, Any, List, Optional
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from app.database import Database, Collections
 import logging
 import uuid

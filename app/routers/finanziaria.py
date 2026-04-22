@@ -1,7 +1,7 @@
 """Finanziaria router - Financial costs management."""
 from fastapi import APIRouter, status, Query
 from typing import Dict, Any, List, Optional
-from datetime import datetime, date
+from datetime import datetime, timezone, date
 from uuid import uuid4
 import logging
 

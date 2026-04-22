@@ -13,6 +13,7 @@ import os, re, uuid, logging
 from datetime import datetime, timezone, timedelta
 from motor.motor_asyncio import AsyncIOMotorClient
 from fastapi import APIRouter
+import uuid
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/haccp-auto-manuale", tags=["HACCP Manuale Automatico"])

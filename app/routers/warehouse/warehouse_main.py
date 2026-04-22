@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Query, status, Body, Path
 from pydantic import BaseModel
 from fastapi import HTTPException
 from typing import List, Dict, Any, Optional
-from datetime import datetime, date
+from datetime import datetime, timezone, date
 import logging
 
 from app.database import Database, Collections
