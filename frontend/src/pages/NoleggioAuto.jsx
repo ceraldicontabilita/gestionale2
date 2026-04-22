@@ -972,14 +972,14 @@ export default function NoleggioAuto() {
           alignItems: 'center', 
           justifyContent: 'center',
           zIndex: 1000
-        }}>
+        }} onClick={() => setShowAddVeicolo(false)}>
           <div style={{ 
             background: 'white', 
             borderRadius: 12, 
             padding: 24, 
             width: '100%', 
             maxWidth: 500
-          }}>
+          }} onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <h2 style={{ margin: 0, fontSize: 18 }}>➕ Aggiungi Veicolo</h2>
               <button onClick={() => setShowAddVeicolo(false)} style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer' }}>✕</button>
