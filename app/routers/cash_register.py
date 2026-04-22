@@ -1,5 +1,5 @@
 """Cash Register router - Cash movements and corrispettivi."""
-from fastapi import APIRouter, Depends, Query, Path, status
+from fastapi import APIRouter, Body, Depends, Path, Query, status
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 import logging
@@ -46,7 +46,7 @@ async def get_movements(
     summary="Create cash movement"
 )
 async def create_movement(
-    movement_data: Dict[str, Any],
+    movement_data: Dict[str, Any] = Body(...),
     current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> Dict[str, str]:
     """Create a new cash movement."""
