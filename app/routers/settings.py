@@ -1,5 +1,5 @@
 """Settings router - Application settings management."""
-from fastapi import APIRouter, Depends, UploadFile, File, Response
+from fastapi import APIRouter, Body, Depends, File, Response, UploadFile
 from typing import Dict, Any
 from datetime import datetime, timezone
 import logging
@@ -137,7 +137,7 @@ async def upload_logo(
     summary="Update settings"
 )
 async def update_settings(
-    settings_data: Dict[str, Any],
+    settings_data: Dict[str, Any] = Body(...),
     current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> Dict[str, str]:
     """Update application settings."""
@@ -172,7 +172,7 @@ async def get_user_preferences(
 
 @router.put("/user-preferences", summary="Update user preferences")
 async def update_user_preferences(
-    data: Dict[str, Any],
+    data: Dict[str, Any] = Body(...),
     current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> Dict[str, str]:
     """Save user preferences to MongoDB (not localStorage)."""
@@ -185,4 +185,3 @@ async def update_user_preferences(
         upsert=True
     )
     return {"message": "Preferences updated"}
-
