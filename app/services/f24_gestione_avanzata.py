@@ -365,7 +365,7 @@ def riconcilia_f24_avanzato(
                     f24_non_pagato["scadenza_stimata"] = scadenza.isoformat()
                     
                     # Alert se scadenza vicina o passata
-                    oggi = datetime.now()
+                    oggi = datetime.now(timezone.utc)
                     if scadenza < oggi:
                         result["alert"].append({
                             "tipo": "SCADUTO",
