@@ -8,7 +8,7 @@ Questo router gestisce:
 4. Calcolo automatico costo del personale da cedolini + F24
 """
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Body, Query
 from typing import Dict, Any, List
 from datetime import datetime, timezone
 import logging
