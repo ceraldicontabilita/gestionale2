@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
 import {
@@ -34,6 +35,7 @@ export default function PrimaNota() {
 
 function PrimaNotaDesktop() {
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const { anno: selectedYear } = useAnnoGlobale();
   const currentYear = new Date().getFullYear();
 
@@ -582,6 +584,23 @@ function PrimaNotaDesktop() {
             title="Importa fatture pagate in Prima Nota"
           >
             {syncing ? '...' : '📤 Sync Fatture'}
+          </button>
+
+          <button
+            onClick={() => navigate('/prima-nota/pulizia')}
+            style={{
+              padding: '6px 12px',
+              background: '#b8860b',
+              color: 'white',
+              border: 'none',
+              borderRadius: 6,
+              cursor: 'pointer',
+              fontWeight: '600',
+              fontSize: 12,
+            }}
+            title="Pulisci duplicati fatture e corrispettivi mancanti"
+          >
+            🧹 Pulisci duplicati
           </button>
 
           <button

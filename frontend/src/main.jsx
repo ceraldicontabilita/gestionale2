@@ -27,6 +27,7 @@ const DashboardHub = lazy(() => import("./pages/hub/DashboardHub.jsx"));
   // Ciclo Passivo hub rimosso - import avviene da Import Documenti
 const FornitoriHub = lazy(() => import("./pages/hub/FornitoriHub.jsx"));
 const PrimaNotaHub = lazy(() => import("./pages/hub/PrimaNotaHub.jsx"));
+const PuliziaPrimaNota = lazy(() => import("./pages/PuliziaPrimaNota.jsx"));
 const DipendentiHub = lazy(() => import("./pages/hr/HRPresenze.jsx"));
 const HRDipendenti = lazy(() => import("./pages/hr/HRDipendenti.jsx"));
 const HRCedolini = lazy(() => import("./pages/hr/HRCedolini.jsx"));
@@ -101,6 +102,7 @@ const router = createBrowserRouter([
       
       // === PRIMA NOTA ===
       { path: "prima-nota", element: <LazyPage><PrimaNotaHub /></LazyPage> },
+      { path: "prima-nota/pulizia", element: <LazyPage><PuliziaPrimaNota /></LazyPage> },
       { path: "prima-nota/:tipo", element: <LazyPage><PrimaNotaHub /></LazyPage> },
       { path: "prima-nota/:tipo/:anno/:mese", element: <LazyPage><PrimaNotaHub /></LazyPage> },
       { path: "dati-provvisori", element: <LazyPage><DatiProvvisoriPage /></LazyPage> },
