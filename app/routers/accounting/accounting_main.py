@@ -207,7 +207,7 @@ async def get_accounting_dashboard(
     
     # Get current month
     from datetime import datetime, timezone
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
     current_month = now.strftime("%m-%Y")
     
     # Get summaries
