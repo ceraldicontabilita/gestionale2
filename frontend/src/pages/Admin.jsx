@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import api from "../api";
+import api from '../api';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
-import { STYLES, COLORS, button, badge, formatEuro , useIsMobile, RG, pagePad } from '../lib/utils';
+import { STYLES, COLORS, button, badge, formatEuro, useIsMobile, RG, pagePad } from '../lib/utils';
 import { PageLayout } from '../components/PageLayout';
 import { useHashState } from '../hooks/useHashState';
 
@@ -25,7 +25,7 @@ export default function Admin() {
   const [hs, setHs] = useHashState({ tab: getTabFromPath() });
   const activeTab = hs.tab;
 
-  const handleTabChange = (tabId) => {
+  const handleTabChange = tabId => {
     setHs('tab', tabId);
     navigate(`/admin/${tabId}`);
   };
@@ -35,7 +35,7 @@ export default function Admin() {
     if (tab !== activeTab) setHs('tab', tab);
   }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
   const [triggerLoading, setTriggerLoading] = useState(false);
-  
+
   // Email accounts
   const [emailAccounts, setEmailAccounts] = useState([]);
   const [loadingEmails, setLoadingEmails] = useState(false);
@@ -48,17 +48,17 @@ export default function Admin() {
     imap_server: 'imap.gmail.com',
     imap_port: 993,
     parole_chiave: [],
-    cartelle: ['INBOX']
+    cartelle: ['INBOX'],
   });
   const [showNewForm, setShowNewForm] = useState(false);
   const [testingConnection, setTestingConnection] = useState(null);
   const [newKeywordInput, setNewKeywordInput] = useState('');
   const [editKeywordInput, setEditKeywordInput] = useState('');
-  
+
   // Parole chiave globali
   const [paroleChiave, setParoleChiave] = useState({});
   const [newKeyword, setNewKeyword] = useState({ categoria: 'generale', parola: '' });
-  
+
   // PEC Aruba
   const [pecAccount, setPecAccount] = useState(null);
   const [pecPassword, setPecPassword] = useState('');
@@ -66,7 +66,7 @@ export default function Admin() {
   const [savingPec, setSavingPec] = useState(false);
   const [testingPec, setTestingPec] = useState(false);
   const [pecMsg, setPecMsg] = useState(null);
-  
+
   // Sincronizzazione dati
   const [syncStatus, setSyncStatus] = useState(null);
   const [syncLoading, setSyncLoading] = useState(false);
@@ -77,7 +77,7 @@ export default function Admin() {
   const loadDashboardSummary = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const r = await api.get("/api/admin/dashboard-summary").catch(() => ({ data: null }));
+      const r = await api.get('/api/admin/dashboard-summary').catch(() => ({ data: null }));
       if (r.data) {
         if (r.data.stats) setStats(r.data.stats);
         if (r.data.health) setDbStatus(r.data.health);
@@ -85,7 +85,7 @@ export default function Admin() {
         // alert count e agenti count vengono gestiti da AgentiPanel/NotificationBell
       }
     } catch (e) {
-      console.error("Error loading dashboard summary:", e);
+      console.error('Error loading dashboard summary:', e);
     } finally {
       if (!silent) setLoading(false);
       setInitialLoad(false);
@@ -107,10 +107,10 @@ export default function Admin() {
   async function loadStats() {
     try {
       setLoading(true);
-      const r = await api.get("/api/admin/stats").catch(() => ({ data: null }));
+      const r = await api.get('/api/admin/stats').catch(() => ({ data: null }));
       setStats(r.data);
     } catch (e) {
-      console.error("Error loading stats:", e);
+      console.error('Error loading stats:', e);
     } finally {
       setLoading(false);
     }
@@ -118,10 +118,10 @@ export default function Admin() {
 
   async function checkHealth() {
     try {
-      const r = await api.get("/api/health");
+      const r = await api.get('/api/health');
       setDbStatus(r.data);
     } catch (e) {
-      setDbStatus({ status: "error", database: "disconnected" });
+      setDbStatus({ status: 'error', database: 'disconnected' });
     }
   }
 
@@ -133,10 +133,10 @@ export default function Admin() {
   async function loadEmailAccounts() {
     setLoadingEmails(true);
     try {
-      const r = await api.get("/api/config/email-accounts");
+      const r = await api.get('/api/config/email-accounts');
       setEmailAccounts(r.data || []);
     } catch (e) {
-      console.error("Error loading email accounts:", e);
+      console.error('Error loading email accounts:', e);
     } finally {
       setLoadingEmails(false);
     }
@@ -144,19 +144,19 @@ export default function Admin() {
 
   async function loadParoleChiave() {
     try {
-      const r = await api.get("/api/config/parole-chiave");
+      const r = await api.get('/api/config/parole-chiave');
       setParoleChiave(r.data || {});
     } catch (e) {
-      console.error("Error loading parole chiave:", e);
+      console.error('Error loading parole chiave:', e);
     }
   }
 
   async function loadPecAccount() {
     try {
-      const r = await api.get("/api/config/pec-account");
+      const r = await api.get('/api/config/pec-account');
       setPecAccount(r.data || null);
     } catch (e) {
-      console.error("Error loading PEC account:", e);
+      console.error('Error loading PEC account:', e);
     }
   }
 
@@ -168,7 +168,7 @@ export default function Admin() {
     setSavingPec(true);
     setPecMsg(null);
     try {
-      await api.put("/api/config/pec-account", { app_password: pecPassword });
+      await api.put('/api/config/pec-account', { app_password: pecPassword });
       setPecMsg({ ok: true, testo: 'Credenziali PEC salvate correttamente nel database' });
       setPecPassword('');
       loadPecAccount();
@@ -183,9 +183,12 @@ export default function Admin() {
     setTestingPec(true);
     setPecMsg(null);
     try {
-      const r = await api.post("/api/config/pec-account/test");
+      const r = await api.post('/api/config/pec-account/test');
       if (r.data.success) {
-        setPecMsg({ ok: true, testo: `Connessione PEC riuscita! Email in casella: ${r.data.email_count}` });
+        setPecMsg({
+          ok: true,
+          testo: `Connessione PEC riuscita! Email in casella: ${r.data.email_count}`,
+        });
       } else {
         setPecMsg({ ok: false, testo: r.data.message || 'Connessione PEC fallita' });
       }
@@ -201,25 +204,32 @@ export default function Admin() {
       if (account.id) {
         await api.put(`/api/config/email-accounts/${account.id}`, account);
       } else {
-        await api.post("/api/config/email-accounts", account);
+        await api.post('/api/config/email-accounts', account);
       }
       loadEmailAccounts();
       setEditingAccount(null);
       setShowNewForm(false);
-      setNewAccount({ nome: '', email: '', app_password: '', imap_server: 'imap.gmail.com', imap_port: 993, parole_chiave: [], cartelle: ['INBOX'] });
+      setNewAccount({
+        nome: '',
+        email: '',
+        app_password: '',
+        imap_server: 'imap.gmail.com',
+        imap_port: 993,
+        parole_chiave: [],
+        cartelle: ['INBOX'],
+      });
       setNewKeywordInput('');
     } catch (e) {
-      alert("Errore: " + (e.response?.data?.detail || e.message));
+      alert('Errore: ' + (e.response?.data?.detail || e.message));
     }
   }
 
   async function deleteEmailAccount(accountId) {
-    
     try {
       await api.delete(`/api/config/email-accounts/${accountId}`);
       loadEmailAccounts();
     } catch (e) {
-      alert("Errore: " + (e.response?.data?.detail || e.message));
+      alert('Errore: ' + (e.response?.data?.detail || e.message));
     }
   }
 
@@ -233,7 +243,7 @@ export default function Admin() {
         alert(`❌ Connessione fallita:\n${r.data.message}`);
       }
     } catch (e) {
-      alert("Errore test: " + (e.response?.data?.detail || e.message));
+      alert('Errore test: ' + (e.response?.data?.detail || e.message));
     } finally {
       setTestingConnection(null);
     }
@@ -242,20 +252,24 @@ export default function Admin() {
   async function addParolaChiave() {
     if (!newKeyword.parola.trim()) return;
     try {
-      await api.post(`/api/config/parole-chiave/aggiungi?categoria=${newKeyword.categoria}&parola=${encodeURIComponent(newKeyword.parola)}`);
+      await api.post(
+        `/api/config/parole-chiave/aggiungi?categoria=${newKeyword.categoria}&parola=${encodeURIComponent(newKeyword.parola)}`
+      );
       loadParoleChiave();
       setNewKeyword({ ...newKeyword, parola: '' });
     } catch (e) {
-      alert("Errore: " + (e.response?.data?.detail || e.message));
+      alert('Errore: ' + (e.response?.data?.detail || e.message));
     }
   }
 
   async function removeParolaChiave(categoria, parola) {
     try {
-      await api.delete(`/api/config/parole-chiave/rimuovi?categoria=${categoria}&parola=${encodeURIComponent(parola)}`);
+      await api.delete(
+        `/api/config/parole-chiave/rimuovi?categoria=${categoria}&parola=${encodeURIComponent(parola)}`
+      );
       loadParoleChiave();
     } catch (e) {
-      alert("Errore: " + (e.response?.data?.detail || e.message));
+      alert('Errore: ' + (e.response?.data?.detail || e.message));
     }
   }
 
@@ -265,7 +279,7 @@ export default function Admin() {
   };
 
   // Aggiungi parola chiave all'account (nuovo o in modifica)
-  const addKeywordToAccount = (isEditing) => {
+  const addKeywordToAccount = isEditing => {
     const input = isEditing ? editKeywordInput : newKeywordInput;
     if (!input.trim()) return;
     if (isEditing && editingAccount) {
@@ -288,76 +302,80 @@ export default function Admin() {
     if (isEditing && editingAccount) {
       setEditingAccount({
         ...editingAccount,
-        parole_chiave: (editingAccount.parole_chiave || []).filter(k => k !== keyword)
+        parole_chiave: (editingAccount.parole_chiave || []).filter(k => k !== keyword),
       });
     } else {
       setNewAccount({
         ...newAccount,
-        parole_chiave: (newAccount.parole_chiave || []).filter(k => k !== keyword)
+        parole_chiave: (newAccount.parole_chiave || []).filter(k => k !== keyword),
       });
     }
   };
 
   // ========== FUNZIONI SINCRONIZZAZIONE ==========
-  
+
   async function loadSyncStatus() {
     try {
-      const r = await api.get("/api/sync/stato-sincronizzazione");
+      const r = await api.get('/api/sync/stato-sincronizzazione');
       setSyncStatus(r.data);
     } catch (e) {
-      console.error("Error loading sync status:", e);
+      console.error('Error loading sync status:', e);
     }
   }
-  
+
   async function verificaEntrateCorrette() {
     setSyncLoading(true);
     try {
       const r = await api.get(`/api/prima-nota/cassa/verifica-entrate-corrispettivi?anno=${anno}`);
       setVerificaCorrispettivi(r.data);
     } catch (e) {
-      console.error("Error verifica:", e);
+      console.error('Error verifica:', e);
     }
     setSyncLoading(false);
   }
-  
+
   async function correggiCorrispettivi() {
-    
     setSyncLoading(true);
     try {
       const r = await api.post(`/api/prima-nota/cassa/fix-corrispettivi-importo?anno=${anno}`);
-      alert(`Corretti ${r.data.corretti} movimenti.\nDifferenza totale: €${r.data.totale_differenza_euro?.toLocaleString('it-IT')}`);
+      alert(
+        `Corretti ${r.data.corretti} movimenti.\nDifferenza totale: €${r.data.totale_differenza_euro?.toLocaleString('it-IT')}`
+      );
       await verificaEntrateCorrette();
       await loadSyncStatus();
     } catch (e) {
-      console.error("Error fix:", e);
-      alert("Errore durante la correzione");
+      console.error('Error fix:', e);
+      alert('Errore durante la correzione');
     }
     setSyncLoading(false);
   }
-  
+
   async function matchFattureCassa() {
     setSyncLoading(true);
     try {
-      const r = await api.post("/api/sync/match-fatture-cassa");
-      alert(`Match completato:\n- Trovate: ${r.data.matched}\n- Non trovate: ${r.data.not_matched}`);
+      const r = await api.post('/api/sync/match-fatture-cassa');
+      alert(
+        `Match completato:\n- Trovate: ${r.data.matched}\n- Non trovate: ${r.data.not_matched}`
+      );
       await loadSyncStatus();
     } catch (e) {
-      console.error("Error match:", e);
-      alert("Errore durante il match");
+      console.error('Error match:', e);
+      alert('Errore durante il match');
     }
     setSyncLoading(false);
   }
-  
-  async function impostaFattureBanca() {
 
+  async function impostaFattureBanca() {
     setSyncLoading(true);
     try {
-      const r = await api.post("/api/admin/fatture-set-metodo-pagamento", { metodo_pagamento: "Bonifico" });
+      const r = await api.post('/api/admin/fatture-set-metodo-pagamento', {
+        metodo_pagamento: 'Bonifico',
+      });
       alert(`Aggiornate ${r.data.updated || r.data.modified_count || 0} fatture`);
       await loadSyncStatus();
     } catch (e) {
-      console.error("Error:", e);
-      alert("Errore");
+      console.error('Error:', e);
+      alert('Errore');
     }
     setSyncLoading(false);
   }
@@ -365,20 +383,22 @@ export default function Admin() {
   async function matchFattureBanca() {
     setSyncLoading(true);
     try {
-      const r = await api.post("/api/sync/match-fatture-banca");
-      alert(`Match completato:\n- Associate: ${r.data.matched}\n- Non trovate: ${r.data.not_matched}`);
+      const r = await api.post('/api/sync/match-fatture-banca');
+      alert(
+        `Match completato:\n- Associate: ${r.data.matched}\n- Non trovate: ${r.data.not_matched}`
+      );
       await loadSyncStatus();
     } catch (e) {
-      console.error("Error match banca:", e);
-      alert("Errore durante il match");
+      console.error('Error match banca:', e);
+      alert('Errore durante il match');
     }
     setSyncLoading(false);
   }
 
-  const fmt = (n) => n?.toLocaleString('it-IT') || '0';
+  const fmt = n => n?.toLocaleString('it-IT') || '0';
 
   // Styles
-  const tabStyle = (isActive) => ({
+  const tabStyle = isActive => ({
     padding: '10px 16px',
     borderRadius: 8,
     border: 'none',
@@ -388,23 +408,23 @@ export default function Admin() {
     fontWeight: isActive ? 'bold' : 'normal',
     display: 'flex',
     alignItems: 'center',
-    gap: 8
+    gap: 8,
   });
 
   const cardStyle = {
     background: 'white',
     borderRadius: 12,
     boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-    overflow: 'hidden'
+    overflow: 'hidden',
   };
 
   const cardHeaderStyle = {
     padding: '12px 16px',
-    borderBottom: '1px solid #e5e7eb'
+    borderBottom: '1px solid #e5e7eb',
   };
 
   const cardContentStyle = {
-    padding: 16
+    padding: 16,
   };
 
   const inputStyle = {
@@ -412,7 +432,7 @@ export default function Admin() {
     padding: '8px 12px',
     border: '1px solid #e2e8f0',
     borderRadius: 6,
-    fontSize: 14
+    fontSize: 14,
   };
 
   const buttonStyle = (bg, color = 'white') => ({
@@ -426,7 +446,7 @@ export default function Admin() {
     fontSize: 13,
     display: 'inline-flex',
     alignItems: 'center',
-    gap: 6
+    gap: 6,
   });
 
   const smallButtonStyle = (bg, color = 'white') => ({
@@ -437,405 +457,754 @@ export default function Admin() {
     borderRadius: 6,
     cursor: 'pointer',
     fontWeight: '500',
-    fontSize: 12
+    fontSize: 12,
   });
 
   return (
-    <PageLayout title="Amministrazione" icon="⚙️" subtitle="Configurazione sistema, email e parametri">
+    <PageLayout
+      title="Amministrazione"
+      icon="⚙️"
+      subtitle="Configurazione sistema, email e parametri"
+    >
       {/* Tabs */}
-      <div style={{ marginBottom: 16, background: '#f1f5f9', padding: 4, borderRadius: 12, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-        <button onClick={() => handleTabChange('email')} style={tabStyle(activeTab === 'email')}>📧 Email</button>
-        <button onClick={() => handleTabChange('keywords')} style={tabStyle(activeTab === 'keywords')}>🔑 Parole Chiave</button>
-        <button onClick={() => handleTabChange('fatture')} style={tabStyle(activeTab === 'fatture')}>📄 Fatture</button>
-        <button onClick={() => handleTabChange('system')} style={tabStyle(activeTab === 'system')}>🗄️ Sistema</button>
+      <div
+        style={{
+          marginBottom: 16,
+          background: '#f1f5f9',
+          padding: 4,
+          borderRadius: 12,
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 4,
+        }}
+      >
+        <button onClick={() => handleTabChange('email')} style={tabStyle(activeTab === 'email')}>
+          📧 Email
+        </button>
+        <button
+          onClick={() => handleTabChange('keywords')}
+          style={tabStyle(activeTab === 'keywords')}
+        >
+          🔑 Parole Chiave
+        </button>
+        <button
+          onClick={() => handleTabChange('fatture')}
+          style={tabStyle(activeTab === 'fatture')}
+        >
+          📄 Fatture
+        </button>
+        <button onClick={() => handleTabChange('system')} style={tabStyle(activeTab === 'system')}>
+          🗄️ Sistema
+        </button>
       </div>
 
       {/* TAB EMAIL */}
       {activeTab === 'email' && (
         <div style={{ display: 'grid', gap: 16 }}>
-        <div style={cardStyle}>
-          <div style={{ ...cardHeaderStyle, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: 16 }}>Account Email Configurati</h3>
-            <button onClick={() => setShowNewForm(true)} style={buttonStyle('#4f46e5')}>➕ Aggiungi Email</button>
-          </div>
-          <div style={cardContentStyle}>
-            {loadingEmails ? (
-              <div style={{ textAlign: 'center', padding: 20, color: '#6b7280' }}>Caricamento...</div>
-            ) : emailAccounts.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: 20, color: '#6b7280' }}>Nessun account email configurato</div>
-            ) : (
-              <div style={{ display: 'grid', gap: 12 }}>
-                {emailAccounts.map(acc => (
-                  <div key={acc.id} style={{ 
-                    border: '1px solid #e2e8f0', 
-                    borderRadius: 8, 
-                    padding: 16, 
-                    background: acc.is_env_default ? '#f0f9ff' : '#f8fafc' 
-                  }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontWeight: 600, fontSize: 14 }}>
-                          📧 {acc.nome}
-                          {acc.is_env_default && (
-                            <span style={{ fontSize: 10, background: '#dbeafe', color: '#1d4ed8', padding: '2px 8px', borderRadius: 4 }}>
-                              Principale (da .env)
-                            </span>
-                          )}
-                          {acc.attivo ? (
-                            <span style={{ fontSize: 10, background: '#dcfce7', color: '#166534', padding: '2px 8px', borderRadius: 4 }}>Attivo</span>
-                          ) : (
-                            <span style={{ fontSize: 10, background: '#fee2e2', color: '#991b1b', padding: '2px 8px', borderRadius: 4 }}>Disattivo</span>
+          <div style={cardStyle}>
+            <div
+              style={{
+                ...cardHeaderStyle,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <h3 style={{ margin: 0, fontSize: 16 }}>Account Email Configurati</h3>
+              <button onClick={() => setShowNewForm(true)} style={buttonStyle('#4f46e5')}>
+                ➕ Aggiungi Email
+              </button>
+            </div>
+            <div style={cardContentStyle}>
+              {loadingEmails ? (
+                <div style={{ textAlign: 'center', padding: 20, color: '#6b7280' }}>
+                  Caricamento...
+                </div>
+              ) : emailAccounts.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: 20, color: '#6b7280' }}>
+                  Nessun account email configurato
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gap: 12 }}>
+                  {emailAccounts.map(acc => (
+                    <div
+                      key={acc.id}
+                      style={{
+                        border: '1px solid #e2e8f0',
+                        borderRadius: 8,
+                        padding: 16,
+                        background: acc.is_env_default ? '#f0f9ff' : '#f8fafc',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'flex-start',
+                          marginBottom: 12,
+                        }}
+                      >
+                        <div>
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 8,
+                              fontWeight: 600,
+                              fontSize: 14,
+                            }}
+                          >
+                            📧 {acc.nome}
+                            {acc.is_env_default && (
+                              <span
+                                style={{
+                                  fontSize: 10,
+                                  background: '#dbeafe',
+                                  color: '#1d4ed8',
+                                  padding: '2px 8px',
+                                  borderRadius: 4,
+                                }}
+                              >
+                                Principale (da .env)
+                              </span>
+                            )}
+                            {acc.attivo ? (
+                              <span
+                                style={{
+                                  fontSize: 10,
+                                  background: '#dcfce7',
+                                  color: '#166534',
+                                  padding: '2px 8px',
+                                  borderRadius: 4,
+                                }}
+                              >
+                                Attivo
+                              </span>
+                            ) : (
+                              <span
+                                style={{
+                                  fontSize: 10,
+                                  background: '#fee2e2',
+                                  color: '#991b1b',
+                                  padding: '2px 8px',
+                                  borderRadius: 4,
+                                }}
+                              >
+                                Disattivo
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>
+                            {acc.email}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: 4 }}>
+                          <button
+                            onClick={() => testEmailConnection(acc.id)}
+                            disabled={testingConnection === acc.id}
+                            style={smallButtonStyle('#e5e7eb', '#374151')}
+                          >
+                            {testingConnection === acc.id ? '⏳' : 'Test'}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditingAccount({ ...acc });
+                              setEditKeywordInput('');
+                            }}
+                            style={smallButtonStyle('#e5e7eb', '#374151')}
+                          >
+                            Modifica
+                          </button>
+                          {!acc.is_env_default && (
+                            <button
+                              onClick={() => deleteEmailAccount(acc.id)}
+                              style={smallButtonStyle('#fee2e2', '#dc2626')}
+                            >
+                              🗑️
+                            </button>
                           )}
                         </div>
-                        <div style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>{acc.email}</div>
                       </div>
-                      <div style={{ display: 'flex', gap: 4 }}>
-                        <button onClick={() => testEmailConnection(acc.id)} disabled={testingConnection === acc.id} style={smallButtonStyle('#e5e7eb', '#374151')}>
-                          {testingConnection === acc.id ? '⏳' : 'Test'}
-                        </button>
-                        <button onClick={() => { setEditingAccount({...acc}); setEditKeywordInput(''); }} style={smallButtonStyle('#e5e7eb', '#374151')}>
-                          Modifica
-                        </button>
-                        {!acc.is_env_default && (
-                          <button onClick={() => deleteEmailAccount(acc.id)} style={smallButtonStyle('#fee2e2', '#dc2626')}>
-                            🗑️
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Password */}
-                    <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span>App Password:</span>
-                      <span style={{ fontFamily: 'monospace' }}>{showPassword[acc.id] ? acc.app_password : acc.app_password_masked}</span>
-                      <button 
-                        onClick={() => setShowPassword({...showPassword, [acc.id]: !showPassword[acc.id]})} 
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#1e3a5f' }}
+
+                      {/* Password */}
+                      <div
+                        style={{
+                          fontSize: 12,
+                          color: '#6b7280',
+                          marginBottom: 8,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                        }}
                       >
-                        {showPassword[acc.id] ? '🙈' : '👁️'}
-                      </button>
+                        <span>App Password:</span>
+                        <span style={{ fontFamily: 'monospace' }}>
+                          {showPassword[acc.id] ? acc.app_password : acc.app_password_masked}
+                        </span>
+                        <button
+                          onClick={() =>
+                            setShowPassword({ ...showPassword, [acc.id]: !showPassword[acc.id] })
+                          }
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: '#1e3a5f',
+                          }}
+                        >
+                          {showPassword[acc.id] ? '🙈' : '👁️'}
+                        </button>
+                      </div>
+
+                      {/* Parole chiave come tag separati */}
+                      <div style={{ fontSize: 12 }}>
+                        <span style={{ fontWeight: 500 }}>Parole Chiave:</span>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+                          {(acc.parole_chiave || []).map((kw, i) => (
+                            <span
+                              key={i}
+                              style={{
+                                background: '#e0e7ff',
+                                color: '#3730a3',
+                                padding: '4px 10px',
+                                borderRadius: 20,
+                                fontSize: 11,
+                                fontWeight: 500,
+                              }}
+                            >
+                              {kw}
+                            </span>
+                          ))}
+                          {(!acc.parole_chiave || acc.parole_chiave.length === 0) && (
+                            <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>
+                              Nessuna (accetta tutte le email)
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    
-                    {/* Parole chiave come tag separati */}
-                    <div style={{ fontSize: 12 }}>
-                      <span style={{ fontWeight: 500 }}>Parole Chiave:</span>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
-                        {(acc.parole_chiave || []).map((kw, i) => (
-                          <span key={i} style={{ 
-                            background: '#e0e7ff', 
-                            color: '#3730a3', 
-                            padding: '4px 10px', 
-                            borderRadius: 20, 
-                            fontSize: 11,
-                            fontWeight: 500
-                          }}>
+                  ))}
+                </div>
+              )}
+
+              {/* Form Nuovo Account */}
+              {showNewForm && (
+                <div style={{ marginTop: 20, borderTop: '1px solid #e2e8f0', paddingTop: 20 }}>
+                  <h4 style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>
+                    ➕ Nuovo Account Email
+                  </h4>
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <label
+                        style={{ fontSize: 11, fontWeight: 500, display: 'block', marginBottom: 4 }}
+                      >
+                        Nome Account
+                      </label>
+                      <input
+                        value={newAccount.nome}
+                        onChange={e => setNewAccount({ ...newAccount, nome: e.target.value })}
+                        placeholder="es. Commercialista"
+                        style={inputStyle}
+                      />
+                    </div>
+                    <div>
+                      <label
+                        style={{ fontSize: 11, fontWeight: 500, display: 'block', marginBottom: 4 }}
+                      >
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        value={newAccount.email}
+                        onChange={e => setNewAccount({ ...newAccount, email: e.target.value })}
+                        placeholder="email@esempio.com"
+                        style={inputStyle}
+                      />
+                    </div>
+                    <div>
+                      <label
+                        style={{ fontSize: 11, fontWeight: 500, display: 'block', marginBottom: 4 }}
+                      >
+                        App Password
+                      </label>
+                      <input
+                        type="password"
+                        value={newAccount.app_password}
+                        onChange={e =>
+                          setNewAccount({ ...newAccount, app_password: e.target.value })
+                        }
+                        placeholder="Password app Google"
+                        style={inputStyle}
+                      />
+                    </div>
+                    <div>
+                      <label
+                        style={{ fontSize: 11, fontWeight: 500, display: 'block', marginBottom: 4 }}
+                      >
+                        Server IMAP
+                      </label>
+                      <input
+                        value={newAccount.imap_server}
+                        onChange={e =>
+                          setNewAccount({ ...newAccount, imap_server: e.target.value })
+                        }
+                        style={inputStyle}
+                      />
+                    </div>
+
+                    {/* Parole Chiave - Campi separati */}
+                    <div style={{ gridColumn: 'span 2' }}>
+                      <label
+                        style={{ fontSize: 11, fontWeight: 500, display: 'block', marginBottom: 4 }}
+                      >
+                        Parole Chiave
+                      </label>
+                      <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                        <input
+                          value={newKeywordInput}
+                          onChange={e => setNewKeywordInput(e.target.value)}
+                          placeholder="Aggiungi parola chiave..."
+                          onKeyDown={e =>
+                            e.key === 'Enter' && (e.preventDefault(), addKeywordToAccount(false))
+                          }
+                          style={inputStyle}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => addKeywordToAccount(false)}
+                          style={smallButtonStyle('#4f46e5')}
+                        >
+                          ➕
+                        </button>
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        {(newAccount.parole_chiave || []).map((kw, i) => (
+                          <span
+                            key={i}
+                            style={{
+                              background: '#e0e7ff',
+                              color: '#3730a3',
+                              padding: '4px 10px',
+                              borderRadius: 20,
+                              fontSize: 11,
+                              fontWeight: 500,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 6,
+                            }}
+                          >
                             {kw}
+                            <button
+                              onClick={() => removeKeywordFromAccount(kw, false)}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                padding: 0,
+                                color: '#ef4444',
+                              }}
+                            >
+                              ✕
+                            </button>
                           </span>
                         ))}
-                        {(!acc.parole_chiave || acc.parole_chiave.length === 0) && (
-                          <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>Nessuna (accetta tutte le email)</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+                    <button
+                      onClick={() => saveEmailAccount(newAccount)}
+                      style={buttonStyle('#16a34a')}
+                    >
+                      ✔️ Salva
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowNewForm(false);
+                        setNewKeywordInput('');
+                      }}
+                      style={buttonStyle('#e5e7eb', '#374151')}
+                    >
+                      ✕ Annulla
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Form Modifica Account */}
+              {editingAccount && (
+                <div style={{ marginTop: 20, borderTop: '1px solid #e2e8f0', paddingTop: 20 }}>
+                  <h4 style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>
+                    ✏️ Modifica Account: {editingAccount.nome}
+                    {editingAccount.is_env_default && (
+                      <span style={{ fontSize: 10, color: '#6b7280', marginLeft: 8 }}>
+                        (Email Principale da .env)
+                      </span>
+                    )}
+                  </h4>{' '}
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <label
+                        style={{ fontSize: 11, fontWeight: 500, display: 'block', marginBottom: 4 }}
+                      >
+                        Nome Account
+                      </label>
+                      <input
+                        value={editingAccount.nome}
+                        onChange={e =>
+                          setEditingAccount({ ...editingAccount, nome: e.target.value })
+                        }
+                        style={inputStyle}
+                      />
+                    </div>
+                    <div>
+                      <label
+                        style={{ fontSize: 11, fontWeight: 500, display: 'block', marginBottom: 4 }}
+                      >
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        value={editingAccount.email}
+                        onChange={e =>
+                          setEditingAccount({ ...editingAccount, email: e.target.value })
+                        }
+                        disabled={editingAccount.is_env_default}
+                        style={inputStyle}
+                      />
+                    </div>
+                    <div>
+                      <label
+                        style={{ fontSize: 11, fontWeight: 500, display: 'block', marginBottom: 4 }}
+                      >
+                        App Password
+                      </label>
+                      <input
+                        type="password"
+                        value={editingAccount.app_password || ''}
+                        onChange={e =>
+                          setEditingAccount({ ...editingAccount, app_password: e.target.value })
+                        }
+                        placeholder="Lascia vuoto per non modificare"
+                        style={inputStyle}
+                      />
+                    </div>
+                    <div>
+                      <label
+                        style={{ fontSize: 11, fontWeight: 500, display: 'block', marginBottom: 4 }}
+                      >
+                        Attivo
+                      </label>
+                      <select
+                        value={editingAccount.attivo ? 'true' : 'false'}
+                        onChange={e =>
+                          setEditingAccount({
+                            ...editingAccount,
+                            attivo: e.target.value === 'true',
+                          })
+                        }
+                        style={inputStyle}
+                      >
+                        <option value="true">Si</option>
+                        <option value="false">No</option>
+                      </select>
+                    </div>
+
+                    {/* Parole Chiave - Campi separati */}
+                    <div style={{ gridColumn: 'span 2' }}>
+                      <label
+                        style={{ fontSize: 11, fontWeight: 500, display: 'block', marginBottom: 4 }}
+                      >
+                        Parole Chiave
+                      </label>
+                      <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                        <input
+                          value={editKeywordInput}
+                          onChange={e => setEditKeywordInput(e.target.value)}
+                          placeholder="Aggiungi parola chiave..."
+                          onKeyDown={e =>
+                            e.key === 'Enter' && (e.preventDefault(), addKeywordToAccount(true))
+                          }
+                          style={inputStyle}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => addKeywordToAccount(true)}
+                          style={smallButtonStyle('#4f46e5')}
+                        >
+                          ➕
+                        </button>
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        {(editingAccount.parole_chiave || []).map((kw, i) => (
+                          <span
+                            key={i}
+                            style={{
+                              background: '#e0e7ff',
+                              color: '#3730a3',
+                              padding: '4px 10px',
+                              borderRadius: 20,
+                              fontSize: 11,
+                              fontWeight: 500,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 6,
+                            }}
+                          >
+                            {kw}
+                            <button
+                              onClick={() => removeKeywordFromAccount(kw, true)}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                padding: 0,
+                                color: '#ef4444',
+                              }}
+                            >
+                              ✕
+                            </button>
+                          </span>
+                        ))}
+                        {(!editingAccount.parole_chiave ||
+                          editingAccount.parole_chiave.length === 0) && (
+                          <span style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: 12 }}>
+                            Nessuna parola chiave (accetta tutte le email)
+                          </span>
                         )}
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
-
-            {/* Form Nuovo Account */}
-            {showNewForm && (
-              <div style={{ marginTop: 20, borderTop: '1px solid #e2e8f0', paddingTop: 20 }}>
-                <h4 style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>➕ Nuovo Account Email</h4>
-                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 12 }}>
-                  <div>
-                    <label style={{ fontSize: 11, fontWeight: 500, display: 'block', marginBottom: 4 }}>Nome Account</label>
-                    <input 
-                      value={newAccount.nome} 
-                      onChange={e => setNewAccount({...newAccount, nome: e.target.value})} 
-                      placeholder="es. Commercialista" 
-                      style={inputStyle}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: 11, fontWeight: 500, display: 'block', marginBottom: 4 }}>Email</label>
-                    <input 
-                      type="email" 
-                      value={newAccount.email} 
-                      onChange={e => setNewAccount({...newAccount, email: e.target.value})} 
-                      placeholder="email@esempio.com" 
-                      style={inputStyle}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: 11, fontWeight: 500, display: 'block', marginBottom: 4 }}>App Password</label>
-                    <input 
-                      type="password" 
-                      value={newAccount.app_password} 
-                      onChange={e => setNewAccount({...newAccount, app_password: e.target.value})} 
-                      placeholder="Password app Google" 
-                      style={inputStyle}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: 11, fontWeight: 500, display: 'block', marginBottom: 4 }}>Server IMAP</label>
-                    <input 
-                      value={newAccount.imap_server} 
-                      onChange={e => setNewAccount({...newAccount, imap_server: e.target.value})} 
-                      style={inputStyle}
-                    />
-                  </div>
-                  
-                  {/* Parole Chiave - Campi separati */}
-                  <div style={{ gridColumn: 'span 2' }}>
-                    <label style={{ fontSize: 11, fontWeight: 500, display: 'block', marginBottom: 4 }}>Parole Chiave</label>
-                    <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                      <input 
-                        value={newKeywordInput} 
-                        onChange={e => setNewKeywordInput(e.target.value)} 
-                        placeholder="Aggiungi parola chiave..." 
-                        onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addKeywordToAccount(false))}
-                        style={inputStyle}
-                      />
-                      <button type="button" onClick={() => addKeywordToAccount(false)} style={smallButtonStyle('#4f46e5')}>➕</button>
-                    </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                      {(newAccount.parole_chiave || []).map((kw, i) => (
-                        <span key={i} style={{ 
-                          background: '#e0e7ff', 
-                          color: '#3730a3', 
-                          padding: '4px 10px', 
-                          borderRadius: 20, 
-                          fontSize: 11,
-                          fontWeight: 500,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 6
-                        }}>
-                          {kw}
-                          <button 
-                            onClick={() => removeKeywordFromAccount(kw, false)} 
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#ef4444' }}
-                          >
-                            ✕
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-                  <button onClick={() => saveEmailAccount(newAccount)} style={buttonStyle('#16a34a')}>✔️ Salva</button>
-                  <button onClick={() => { setShowNewForm(false); setNewKeywordInput(''); }} style={buttonStyle('#e5e7eb', '#374151')}>✕ Annulla</button>
-                </div>
-              </div>
-            )}
-
-            {/* Form Modifica Account */}
-            {editingAccount && (
-              <div style={{ marginTop: 20, borderTop: '1px solid #e2e8f0', paddingTop: 20 }}>
-                <h4 style={{ fontSize: 14, fontWeight: 600, marginBottom: 16 }}>
-                  ✏️ Modifica Account: {editingAccount.nome}
-                  {editingAccount.is_env_default && <span style={{ fontSize: 10, color: '#6b7280', marginLeft: 8 }}>(Email Principale da .env)</span>}
-                </h4>                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 12 }}>
-                  <div>
-                    <label style={{ fontSize: 11, fontWeight: 500, display: 'block', marginBottom: 4 }}>Nome Account</label>
-                    <input 
-                      value={editingAccount.nome} 
-                      onChange={e => setEditingAccount({...editingAccount, nome: e.target.value})} 
-                      style={inputStyle}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: 11, fontWeight: 500, display: 'block', marginBottom: 4 }}>Email</label>
-                    <input 
-                      type="email" 
-                      value={editingAccount.email} 
-                      onChange={e => setEditingAccount({...editingAccount, email: e.target.value})} 
-                      disabled={editingAccount.is_env_default}
-                      style={inputStyle}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: 11, fontWeight: 500, display: 'block', marginBottom: 4 }}>App Password</label>
-                    <input 
-                      type="password" 
-                      value={editingAccount.app_password || ''} 
-                      onChange={e => setEditingAccount({...editingAccount, app_password: e.target.value})} 
-                      placeholder="Lascia vuoto per non modificare" 
-                      style={inputStyle}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: 11, fontWeight: 500, display: 'block', marginBottom: 4 }}>Attivo</label>
-                    <select 
-                      value={editingAccount.attivo ? 'true' : 'false'} 
-                      onChange={e => setEditingAccount({...editingAccount, attivo: e.target.value === 'true'})} 
-                      style={inputStyle}
+                  <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+                    <button
+                      onClick={() => saveEmailAccount(editingAccount)}
+                      style={buttonStyle('#16a34a')}
                     >
-                      <option value="true">Si</option>
-                      <option value="false">No</option>
-                    </select>
-                  </div>
-                  
-                  {/* Parole Chiave - Campi separati */}
-                  <div style={{ gridColumn: 'span 2' }}>
-                    <label style={{ fontSize: 11, fontWeight: 500, display: 'block', marginBottom: 4 }}>Parole Chiave</label>
-                    <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                      <input 
-                        value={editKeywordInput} 
-                        onChange={e => setEditKeywordInput(e.target.value)} 
-                        placeholder="Aggiungi parola chiave..." 
-                        onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addKeywordToAccount(true))}
-                        style={inputStyle}
-                      />
-                      <button type="button" onClick={() => addKeywordToAccount(true)} style={smallButtonStyle('#4f46e5')}>➕</button>
-                    </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                      {(editingAccount.parole_chiave || []).map((kw, i) => (
-                        <span key={i} style={{ 
-                          background: '#e0e7ff', 
-                          color: '#3730a3', 
-                          padding: '4px 10px', 
-                          borderRadius: 20, 
-                          fontSize: 11,
-                          fontWeight: 500,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 6
-                        }}>
-                          {kw}
-                          <button 
-                            onClick={() => removeKeywordFromAccount(kw, true)} 
-                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#ef4444' }}
-                          >
-                            ✕
-                          </button>
-                        </span>
-                      ))}
-                      {(!editingAccount.parole_chiave || editingAccount.parole_chiave.length === 0) && (
-                        <span style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: 12 }}>Nessuna parola chiave (accetta tutte le email)</span>
-                      )}
-                    </div>
+                      ✔️ Salva Modifiche
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditingAccount(null);
+                        setEditKeywordInput('');
+                      }}
+                      style={buttonStyle('#e5e7eb', '#374151')}
+                    >
+                      ✕ Annulla
+                    </button>
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-                  <button onClick={() => saveEmailAccount(editingAccount)} style={buttonStyle('#16a34a')}>✔️ Salva Modifiche</button>
-                  <button onClick={() => { setEditingAccount(null); setEditKeywordInput(''); }} style={buttonStyle('#e5e7eb', '#374151')}>✕ Annulla</button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* CARD PEC ARUBA */}
-        <div style={cardStyle} data-testid="pec-aruba-card">
-          <div style={{ ...cardHeaderStyle, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h3 style={{ margin: 0, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-              📮 PEC Aruba — Fatturazione Elettronica SDI
-              {pecAccount?.app_password_masked && pecAccount.app_password_masked !== 'Non impostata' ? (
-                <span style={{ fontSize: 10, background: '#dcfce7', color: '#166534', padding: '2px 8px', borderRadius: 4 }}>Configurata</span>
-              ) : (
-                <span style={{ fontSize: 10, background: '#fef3c7', color: '#92400e', padding: '2px 8px', borderRadius: 4 }}>Non configurata</span>
               )}
-            </h3>
-          </div>
-          <div style={cardContentStyle}>
-            <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 16, lineHeight: 1.6 }}>
-              Inserisci la password per permettere al sistema di scaricare automaticamente le fatture XML ricevute tramite
-              il Sistema di Interscambio (SDI). La password viene salvata nel database (non nel codice).
-            </p>
-
-            {/* Campi fissi */}
-            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 12, marginBottom: 16 }}>
-              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 6, padding: '8px 12px' }}>
-                <div style={{ fontSize: 10, color: '#6b7280', marginBottom: 2, fontWeight: 500 }}>Email PEC</div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#1e293b' }}>
-                  {pecAccount?.email || 'fatturazioneceraldi@pec.it'}
-                </div>
-              </div>
-              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 6, padding: '8px 12px' }}>
-                <div style={{ fontSize: 10, color: '#6b7280', marginBottom: 2, fontWeight: 500 }}>Server IMAP</div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#1e293b' }}>
-                  {pecAccount?.imap_server || 'imaps.pec.aruba.it'}
-                </div>
-              </div>
-              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 6, padding: '8px 12px' }}>
-                <div style={{ fontSize: 10, color: '#6b7280', marginBottom: 2, fontWeight: 500 }}>Porta</div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#1e293b' }}>
-                  {pecAccount?.imap_port || 993}
-                </div>
-              </div>
             </div>
+          </div>
 
-            {/* Password attuale mascherata */}
-            {pecAccount?.app_password_masked && (
-              <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span>Password attuale:</span>
-                <span style={{ fontFamily: 'monospace', background: '#f1f5f9', padding: '2px 8px', borderRadius: 4 }}>
-                  {pecAccount.app_password_masked}
-                </span>
-              </div>
-            )}
+          {/* CARD PEC ARUBA */}
+          <div style={cardStyle} data-testid="pec-aruba-card">
+            <div
+              style={{
+                ...cardHeaderStyle,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <h3
+                style={{ margin: 0, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8 }}
+              >
+                📮 PEC Aruba — Fatturazione Elettronica SDI
+                {pecAccount?.app_password_masked &&
+                pecAccount.app_password_masked !== 'Non impostata' ? (
+                  <span
+                    style={{
+                      fontSize: 10,
+                      background: '#dcfce7',
+                      color: '#166534',
+                      padding: '2px 8px',
+                      borderRadius: 4,
+                    }}
+                  >
+                    Configurata
+                  </span>
+                ) : (
+                  <span
+                    style={{
+                      fontSize: 10,
+                      background: '#fef3c7',
+                      color: '#92400e',
+                      padding: '2px 8px',
+                      borderRadius: 4,
+                    }}
+                  >
+                    Non configurata
+                  </span>
+                )}
+              </h3>
+            </div>
+            <div style={cardContentStyle}>
+              <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 16, lineHeight: 1.6 }}>
+                Inserisci la password per permettere al sistema di scaricare automaticamente le
+                fatture XML ricevute tramite il Sistema di Interscambio (SDI). La password viene
+                salvata nel database (non nel codice).
+              </p>
 
-            {/* Input nuova password */}
-            <div style={{ marginBottom: 12 }}>
-              <label style={{ fontSize: 11, fontWeight: 500, display: 'block', marginBottom: 4 }}>
-                Nuova App Password PEC
-              </label>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input
-                  data-testid="pec-password-input"
-                  type={showPecPassword ? 'text' : 'password'}
-                  value={pecPassword}
-                  onChange={e => setPecPassword(e.target.value)}
-                  placeholder="Inserisci la password PEC..."
-                  style={{ ...inputStyle, flex: 1, fontFamily: 'monospace' }}
-                />
-                <button
-                  onClick={() => setShowPecPassword(s => !s)}
-                  style={{ ...smallButtonStyle('#e5e7eb', '#374151'), flexShrink: 0 }}
+              {/* Campi fissi */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+                  gap: 12,
+                  marginBottom: 16,
+                }}
+              >
+                <div
+                  style={{
+                    background: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: 6,
+                    padding: '8px 12px',
+                  }}
                 >
-                  {showPecPassword ? '🙈 Nascondi' : '👁️ Mostra'}
+                  <div style={{ fontSize: 10, color: '#6b7280', marginBottom: 2, fontWeight: 500 }}>
+                    Email PEC
+                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#1e293b' }}>
+                    {pecAccount?.email || 'fatturazioneceraldi@pec.it'}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    background: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: 6,
+                    padding: '8px 12px',
+                  }}
+                >
+                  <div style={{ fontSize: 10, color: '#6b7280', marginBottom: 2, fontWeight: 500 }}>
+                    Server IMAP
+                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#1e293b' }}>
+                    {pecAccount?.imap_server || 'imaps.pec.aruba.it'}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    background: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: 6,
+                    padding: '8px 12px',
+                  }}
+                >
+                  <div style={{ fontSize: 10, color: '#6b7280', marginBottom: 2, fontWeight: 500 }}>
+                    Porta
+                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#1e293b' }}>
+                    {pecAccount?.imap_port || 993}
+                  </div>
+                </div>
+              </div>
+
+              {/* Password attuale mascherata */}
+              {pecAccount?.app_password_masked && (
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: '#6b7280',
+                    marginBottom: 12,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 8,
+                  }}
+                >
+                  <span>Password attuale:</span>
+                  <span
+                    style={{
+                      fontFamily: 'monospace',
+                      background: '#f1f5f9',
+                      padding: '2px 8px',
+                      borderRadius: 4,
+                    }}
+                  >
+                    {pecAccount.app_password_masked}
+                  </span>
+                </div>
+              )}
+
+              {/* Input nuova password */}
+              <div style={{ marginBottom: 12 }}>
+                <label style={{ fontSize: 11, fontWeight: 500, display: 'block', marginBottom: 4 }}>
+                  Nuova App Password PEC
+                </label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    data-testid="pec-password-input"
+                    type={showPecPassword ? 'text' : 'password'}
+                    value={pecPassword}
+                    onChange={e => setPecPassword(e.target.value)}
+                    placeholder="Inserisci la password PEC..."
+                    style={{ ...inputStyle, flex: 1, fontFamily: 'monospace' }}
+                  />
+                  <button
+                    onClick={() => setShowPecPassword(s => !s)}
+                    style={{ ...smallButtonStyle('#e5e7eb', '#374151'), flexShrink: 0 }}
+                  >
+                    {showPecPassword ? '🙈 Nascondi' : '👁️ Mostra'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Messaggio feedback */}
+              {pecMsg && (
+                <div
+                  style={{
+                    marginBottom: 12,
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    background: pecMsg.ok ? '#f0fdf4' : '#fef2f2',
+                    border: `1px solid ${pecMsg.ok ? '#bbf7d0' : '#fecaca'}`,
+                    fontSize: 13,
+                    color: pecMsg.ok ? '#16a34a' : '#dc2626',
+                  }}
+                >
+                  {pecMsg.ok ? '✓ ' : '✗ '}
+                  {pecMsg.testo}
+                </div>
+              )}
+
+              {/* Pulsanti */}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  data-testid="pec-save-btn"
+                  onClick={savePecAccount}
+                  disabled={savingPec || !pecPassword.trim()}
+                  style={buttonStyle(savingPec || !pecPassword.trim() ? '#9ca3af' : '#1e3a5f')}
+                >
+                  {savingPec ? '⏳ Salvataggio...' : '💾 Salva credenziali'}
+                </button>
+                <button
+                  data-testid="pec-test-btn"
+                  onClick={testPecConnection}
+                  disabled={testingPec}
+                  style={buttonStyle(
+                    testingPec ? '#9ca3af' : '#e5e7eb',
+                    testingPec ? 'white' : '#374151'
+                  )}
+                >
+                  {testingPec ? '⏳ Test in corso...' : '🔌 Testa connessione'}
                 </button>
               </div>
             </div>
-
-            {/* Messaggio feedback */}
-            {pecMsg && (
-              <div style={{
-                marginBottom: 12,
-                padding: '8px 12px',
-                borderRadius: 8,
-                background: pecMsg.ok ? '#f0fdf4' : '#fef2f2',
-                border: `1px solid ${pecMsg.ok ? '#bbf7d0' : '#fecaca'}`,
-                fontSize: 13,
-                color: pecMsg.ok ? '#16a34a' : '#dc2626'
-              }}>
-                {pecMsg.ok ? '✓ ' : '✗ '}{pecMsg.testo}
-              </div>
-            )}
-
-            {/* Pulsanti */}
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button
-                data-testid="pec-save-btn"
-                onClick={savePecAccount}
-                disabled={savingPec || !pecPassword.trim()}
-                style={buttonStyle(savingPec || !pecPassword.trim() ? '#9ca3af' : '#1e3a5f')}
-              >
-                {savingPec ? '⏳ Salvataggio...' : '💾 Salva credenziali'}
-              </button>
-              <button
-                data-testid="pec-test-btn"
-                onClick={testPecConnection}
-                disabled={testingPec}
-                style={buttonStyle(testingPec ? '#9ca3af' : '#e5e7eb', testingPec ? 'white' : '#374151')}
-              >
-                {testingPec ? '⏳ Test in corso...' : '🔌 Testa connessione'}
-              </button>
-            </div>
           </div>
-        </div>
         </div>
       )}
 
@@ -847,14 +1216,15 @@ export default function Admin() {
           </div>
           <div style={cardContentStyle}>
             <p style={{ fontSize: 12, color: '#6b7280', marginBottom: 16 }}>
-              Queste parole chiave vengono usate per categorizzare automaticamente i documenti scaricati dalle email.
+              Queste parole chiave vengono usate per categorizzare automaticamente i documenti
+              scaricati dalle email.
             </p>
-            
+
             {/* Aggiungi nuova */}
             <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-              <select 
-                value={newKeyword.categoria} 
-                onChange={e => setNewKeyword({...newKeyword, categoria: e.target.value})} 
+              <select
+                value={newKeyword.categoria}
+                onChange={e => setNewKeyword({ ...newKeyword, categoria: e.target.value })}
                 style={{ ...inputStyle, minWidth: 120, width: 'auto' }}
               >
                 <option value="generale">Generale</option>
@@ -862,38 +1232,65 @@ export default function Admin() {
                 <option value="f24">F24</option>
                 <option value="buste_paga">Buste Paga</option>
               </select>
-              <input 
-                value={newKeyword.parola} 
-                onChange={e => setNewKeyword({...newKeyword, parola: e.target.value})} 
-                placeholder="Nuova parola chiave..." 
+              <input
+                value={newKeyword.parola}
+                onChange={e => setNewKeyword({ ...newKeyword, parola: e.target.value })}
+                placeholder="Nuova parola chiave..."
                 style={{ ...inputStyle, flex: 1 }}
-                onKeyDown={e => e.key === 'Enter' && addParolaChiave()} 
+                onKeyDown={e => e.key === 'Enter' && addParolaChiave()}
               />
-              <button onClick={addParolaChiave} style={buttonStyle('#4f46e5')}>➕ Aggiungi</button>
+              <button onClick={addParolaChiave} style={buttonStyle('#4f46e5')}>
+                ➕ Aggiungi
+              </button>
             </div>
 
             {/* Lista per categoria */}
-            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 16 }}>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+                gap: 16,
+              }}
+            >
               {['generale', 'fatture', 'f24', 'buste_paga'].map(cat => (
-                <div key={cat} style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: 12 }}>
-                  <h5 style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, textTransform: 'capitalize' }}>
+                <div
+                  key={cat}
+                  style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: 12 }}
+                >
+                  <h5
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 600,
+                      marginBottom: 8,
+                      textTransform: 'capitalize',
+                    }}
+                  >
                     {cat.replace('_', ' ')}
                   </h5>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {(paroleChiave[cat] || []).map((kw) => (
-                      <span key={`${cat}-${kw}`} style={{ 
-                        background: '#f1f5f9', 
-                        padding: '4px 10px', 
-                        borderRadius: 20, 
-                        fontSize: 11,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 6
-                      }}>
+                    {(paroleChiave[cat] || []).map(kw => (
+                      <span
+                        key={`${cat}-${kw}`}
+                        style={{
+                          background: '#f1f5f9',
+                          padding: '4px 10px',
+                          borderRadius: 20,
+                          fontSize: 11,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 6,
+                        }}
+                      >
                         {kw}
-                        <button 
-                          onClick={() => removeParolaChiave(cat, kw)} 
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#ef4444' }}
+                        <button
+                          onClick={() => removeParolaChiave(cat, kw)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: 0,
+                            color: '#ef4444',
+                          }}
                           data-testid={`remove-keyword-${cat}-${kw}`}
                         >
                           ✕
@@ -901,7 +1298,9 @@ export default function Admin() {
                       </span>
                     ))}
                     {(!paroleChiave[cat] || paroleChiave[cat].length === 0) && (
-                      <span style={{ color: '#94a3b8', fontSize: 11, fontStyle: 'italic' }}>Nessuna parola chiave</span>
+                      <span style={{ color: '#94a3b8', fontSize: 11, fontStyle: 'italic' }}>
+                        Nessuna parola chiave
+                      </span>
                     )}
                   </div>
                 </div>
@@ -912,30 +1311,45 @@ export default function Admin() {
       )}
 
       {/* TAB FATTURE */}
-      {activeTab === 'fatture' && (
-        <FattureAdminTab />
-      )}
+      {activeTab === 'fatture' && <FattureAdminTab />}
 
       {/* TAB SISTEMA */}
       {activeTab === 'system' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: 16,
+          }}
+        >
           {/* Stato Sistema */}
           <div style={cardStyle}>
             <div style={cardHeaderStyle}>
-              <h3 style={{ margin: 0, fontSize: 14, display: 'flex', alignItems: 'center', gap: 8 }}>🖥️ Stato Sistema</h3>
+              <h3
+                style={{ margin: 0, fontSize: 14, display: 'flex', alignItems: 'center', gap: 8 }}
+              >
+                🖥️ Stato Sistema
+              </h3>
             </div>
             <div style={cardContentStyle}>
               {dbStatus && (
                 <div style={{ display: 'grid', gap: 8, fontSize: 13 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span>Stato:</span>
-                    <span style={{ fontWeight: 600, color: dbStatus.status === 'healthy' ? '#16a34a' : '#dc2626' }}>
+                    <span
+                      style={{
+                        fontWeight: 600,
+                        color: dbStatus.status === 'healthy' ? '#16a34a' : '#dc2626',
+                      }}
+                    >
                       {dbStatus.status === 'healthy' ? '✅ Online' : '❌ Offline'}
                     </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span>Database:</span>
-                    <span style={{ color: dbStatus.database === 'connected' ? '#16a34a' : '#dc2626' }}>
+                    <span
+                      style={{ color: dbStatus.database === 'connected' ? '#16a34a' : '#dc2626' }}
+                    >
                       {dbStatus.database}
                     </span>
                   </div>
@@ -946,7 +1360,9 @@ export default function Admin() {
                   {dbStatus.timestamp && (
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span>Timestamp:</span>
-                      <span style={{ fontSize: 11 }}>{new Date(dbStatus.timestamp).toLocaleString('it-IT')}</span>
+                      <span style={{ fontSize: 11 }}>
+                        {new Date(dbStatus.timestamp).toLocaleString('it-IT')}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -961,13 +1377,33 @@ export default function Admin() {
             </div>
             <div style={cardContentStyle}>
               {loading ? (
-                <div style={{ textAlign: 'center', padding: 20, color: '#6b7280' }}>Caricamento...</div>
+                <div style={{ textAlign: 'center', padding: 20, color: '#6b7280' }}>
+                  Caricamento...
+                </div>
               ) : stats ? (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))', gap: 8 }}>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))',
+                    gap: 8,
+                  }}
+                >
                   {Object.entries(stats).map(([key, value]) => (
-                    <div key={key} style={{ background: '#f8fafc', padding: '8px 10px', borderRadius: 6, textAlign: 'center' }}>
-                      <div style={{ fontSize: 16, fontWeight: 700, color: '#1e3a5f' }}>{fmt(value)}</div>
-                      <div style={{ fontSize: 9, color: '#6b7280', textTransform: 'capitalize' }}>{key.replace(/_/g, ' ')}</div>
+                    <div
+                      key={key}
+                      style={{
+                        background: '#f8fafc',
+                        padding: '8px 10px',
+                        borderRadius: 6,
+                        textAlign: 'center',
+                      }}
+                    >
+                      <div style={{ fontSize: 16, fontWeight: 700, color: '#1e3a5f' }}>
+                        {fmt(value)}
+                      </div>
+                      <div style={{ fontSize: 9, color: '#6b7280', textTransform: 'capitalize' }}>
+                        {key.replace(/_/g, ' ')}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -980,11 +1416,11 @@ export default function Admin() {
       )}
 
       {/* TAB SINCRONIZZAZIONE */}
-      
+
       {/* TAB MANUTENZIONE - Logiche Intelligenti */}
-      
+
       {/* TAB ESPORTAZIONI */}
-          </PageLayout>
+    </PageLayout>
   );
 }
 
@@ -999,16 +1435,16 @@ function FattureAdminTab() {
     background: 'white',
     borderRadius: 12,
     boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-    overflow: 'hidden'
+    overflow: 'hidden',
   };
 
   const cardHeaderStyle = {
     padding: '12px 16px',
-    borderBottom: '1px solid #e5e7eb'
+    borderBottom: '1px solid #e5e7eb',
   };
 
   const cardContentStyle = {
-    padding: 16
+    padding: 16,
   };
 
   const buttonStyle = (bg, color = 'white') => ({
@@ -1024,7 +1460,7 @@ function FattureAdminTab() {
     alignItems: 'center',
     gap: 6,
     width: '100%',
-    justifyContent: 'center'
+    justifyContent: 'center',
   });
 
   const smallButtonStyle = (bg, color = 'white') => ({
@@ -1035,7 +1471,7 @@ function FattureAdminTab() {
     borderRadius: 6,
     cursor: 'pointer',
     fontWeight: '500',
-    fontSize: 12
+    fontSize: 12,
   });
 
   const loadFattureStats = useCallback(async () => {
@@ -1053,15 +1489,17 @@ function FattureAdminTab() {
     loadFattureStats();
   }, [loadFattureStats]);
 
-  const handleSetMetodoPagamento = async (metodo) => {
+  const handleSetMetodoPagamento = async metodo => {
     if (!confirmAction) {
       setConfirmAction({ type: 'set_metodo', metodo });
       return;
     }
-    
+
     setUpdating(true);
     try {
-      const res = await api.post('/api/admin/fatture-set-metodo-pagamento', { metodo_pagamento: metodo });
+      const res = await api.post('/api/admin/fatture-set-metodo-pagamento', {
+        metodo_pagamento: metodo,
+      });
       alert(`✅ ${res.data.message}\n\nFatture aggiornate: ${res.data.updated}`);
       loadFattureStats();
     } catch (e) {
@@ -1072,38 +1510,64 @@ function FattureAdminTab() {
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+        gap: 16,
+      }}
+    >
       {/* Stats Metodi Pagamento */}
       <div style={cardStyle}>
         <div style={cardHeaderStyle}>
-          <h3 style={{ margin: 0, fontSize: 14, display: 'flex', alignItems: 'center', gap: 8 }}>📄 Metodi di Pagamento Fatture</h3>
+          <h3 style={{ margin: 0, fontSize: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+            📄 Metodi di Pagamento Fatture
+          </h3>
         </div>
         <div style={cardContentStyle}>
           {loading ? (
             <div style={{ textAlign: 'center', padding: 20, color: '#6b7280' }}>Caricamento...</div>
           ) : fattureStats ? (
             <div style={{ display: 'grid', gap: 8, fontSize: 13 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f1f5f9' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  padding: '8px 0',
+                  borderBottom: '1px solid #f1f5f9',
+                }}
+              >
                 <span style={{ fontWeight: 600 }}>Totale Fatture:</span>
                 <span style={{ fontWeight: 700, color: '#1e40af' }}>{fattureStats.totale}</span>
               </div>
-              
+
               {fattureStats.metodi_pagamento?.map((m, i) => (
-                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
+                <div
+                  key={i}
+                  style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}
+                >
                   <span>{m._id || '(Nessuno)'}</span>
                   <span style={{ fontWeight: 500 }}>{m.count}</span>
                 </div>
               ))}
-              
-              <div style={{ 
-                marginTop: 12, 
-                padding: 12, 
-                background: fattureStats.senza_metodo > 0 ? '#fef3c7' : '#dcfce7', 
-                borderRadius: 8,
-                border: `1px solid ${fattureStats.senza_metodo > 0 ? '#fcd34d' : '#86efac'}`
-              }}>
-                <div style={{ fontWeight: 600, color: fattureStats.senza_metodo > 0 ? '#92400e' : '#166534' }}>
-                  {fattureStats.senza_metodo > 0 ? '⚠️' : '✅'} Fatture SENZA metodo: {fattureStats.senza_metodo}
+
+              <div
+                style={{
+                  marginTop: 12,
+                  padding: 12,
+                  background: fattureStats.senza_metodo > 0 ? '#fef3c7' : '#dcfce7',
+                  borderRadius: 8,
+                  border: `1px solid ${fattureStats.senza_metodo > 0 ? '#fcd34d' : '#86efac'}`,
+                }}
+              >
+                <div
+                  style={{
+                    fontWeight: 600,
+                    color: fattureStats.senza_metodo > 0 ? '#92400e' : '#166534',
+                  }}
+                >
+                  {fattureStats.senza_metodo > 0 ? '⚠️' : '✅'} Fatture SENZA metodo:{' '}
+                  {fattureStats.senza_metodo}
                 </div>
               </div>
             </div>
@@ -1116,25 +1580,28 @@ function FattureAdminTab() {
       {/* Azioni Massive */}
       <div style={cardStyle}>
         <div style={cardHeaderStyle}>
-          <h3 style={{ margin: 0, fontSize: 14, display: 'flex', alignItems: 'center', gap: 8 }}>⚙️ Azioni Massive</h3>
+          <h3 style={{ margin: 0, fontSize: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+            ⚙️ Azioni Massive
+          </h3>
         </div>
         <div style={cardContentStyle}>
           <div style={{ display: 'grid', gap: 12 }}>
             <div style={{ padding: 12, background: '#f8fafc', borderRadius: 8 }}>
               <p style={{ fontSize: 12, color: '#475569', marginBottom: 8 }}>
-                Imposta metodo di pagamento <strong>&quot;Bonifico&quot;</strong> per tutte le fatture che non hanno un metodo specificato.
+                Imposta metodo di pagamento <strong>&quot;Bonifico&quot;</strong> per tutte le
+                fatture che non hanno un metodo specificato.
               </p>
-              
+
               {confirmAction?.type === 'set_metodo' ? (
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button 
+                  <button
                     onClick={() => handleSetMetodoPagamento(confirmAction.metodo)}
                     disabled={updating}
                     style={{ ...buttonStyle('#16a34a'), flex: 1 }}
                   >
                     {updating ? '⏳ Aggiornando...' : '✓ Conferma'}
                   </button>
-                  <button 
+                  <button
                     onClick={() => setConfirmAction(null)}
                     disabled={updating}
                     style={smallButtonStyle('#e5e7eb', '#374151')}
@@ -1143,19 +1610,29 @@ function FattureAdminTab() {
                   </button>
                 </div>
               ) : (
-                <button 
+                <button
                   onClick={() => handleSetMetodoPagamento('Bonifico')}
-                  disabled={loading || (fattureStats?.senza_metodo === 0)}
-                  style={buttonStyle(loading || (fattureStats?.senza_metodo === 0) ? '#ccc' : '#4f46e5')}
+                  disabled={loading || fattureStats?.senza_metodo === 0}
+                  style={buttonStyle(
+                    loading || fattureStats?.senza_metodo === 0 ? '#ccc' : '#4f46e5'
+                  )}
                 >
                   🏦 Imposta &quot;Bonifico&quot; ({fattureStats?.senza_metodo || 0} fatture)
                 </button>
               )}
             </div>
-            
-            <div style={{ padding: 12, background: '#fef2f2', borderRadius: 8, border: '1px solid #fecaca' }}>
+
+            <div
+              style={{
+                padding: 12,
+                background: '#fef2f2',
+                borderRadius: 8,
+                border: '1px solid #fecaca',
+              }}
+            >
               <p style={{ fontSize: 12, color: '#991b1b', marginBottom: 0 }}>
-                <strong>⚠️ Attenzione:</strong> Le azioni massive modificano molti record. Usa con cautela.
+                <strong>⚠️ Attenzione:</strong> Le azioni massive modificano molti record. Usa con
+                cautela.
               </p>
             </div>
           </div>
@@ -1165,7 +1642,11 @@ function FattureAdminTab() {
       {/* Refresh */}
       <div style={{ ...cardStyle, gridColumn: 'span 2' }}>
         <div style={{ ...cardContentStyle, display: 'flex', justifyContent: 'flex-end' }}>
-          <button onClick={loadFattureStats} disabled={loading} style={smallButtonStyle('#e5e7eb', '#374151')}>
+          <button
+            onClick={loadFattureStats}
+            disabled={loading}
+            style={smallButtonStyle('#e5e7eb', '#374151')}
+          >
             🔄 Aggiorna Stats
           </button>
         </div>
