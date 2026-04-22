@@ -137,7 +137,7 @@ class VerbaliEmailScanner:
         if self.connection:
             try:
                 self.connection.logout()
-            except:
+            except Exception:
                 pass
             self.connection = None
     
@@ -206,7 +206,7 @@ class VerbaliEmailScanner:
                         content = part.get_payload(decode=True)
                         if content and len(content) > 100:  # Minimo 100 bytes
                             pdfs.append((filename, content))
-                    except:
+                    except Exception:
                         pass
         
         return pdfs
@@ -230,7 +230,7 @@ class VerbaliEmailScanner:
             status, _ = self.connection.select(f'"{numero_verbale}"')
             if status == "OK":
                 folders_to_search.append(numero_verbale)
-        except:
+        except Exception:
             pass
         
         # Aggiungi folder passato come parametro
@@ -265,7 +265,7 @@ class VerbaliEmailScanner:
                                 try:
                                     body = part.get_payload(decode=True).decode('utf-8', errors='replace')
                                     break
-                                except:
+                                except Exception:
                                     pass
                     
                     # Verifica se è una quietanza
@@ -440,7 +440,7 @@ class VerbaliEmailScanner:
                                     try:
                                         body = part.get_payload(decode=True).decode('utf-8', errors='replace')
                                         break
-                                    except:
+                                    except Exception:
                                         pass
                         
                         # Estrai numero verbale
@@ -596,12 +596,12 @@ class VerbaliEmailScanner:
                         if part.get_content_type() == "text/plain":
                             try:
                                 body = part.get_payload(decode=True).decode('utf-8', errors='replace')
-                            except:
+                            except Exception:
                                 pass
                         elif part.get_content_type() == "text/html" and not body:
                             try:
                                 body = part.get_payload(decode=True).decode('utf-8', errors='replace')
-                            except:
+                            except Exception:
                                 pass
                 
                 full_text = f"{subject} {body}"
@@ -632,7 +632,7 @@ class VerbaliEmailScanner:
                             if "pagamento eseguito" in subj or "quietanza" in subj:
                                 is_pagato = True
                                 break
-                    except:
+                    except Exception:
                         pass
                 
                 # Estrai PDF
