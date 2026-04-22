@@ -500,7 +500,11 @@ async def _get_fatture_in_scadenza(db, anno: int, include_passate: bool, giorni_
             (f.get("fornitore", {}) or {}).get("ragione_sociale", "") or
             ""
         )
-        importo = f.get("total_amount") or f.get("importo_totale") or 0
+        importo_raw = f.get("total_amount") or f.get("importo_totale") or f.get("importo") or f.get("totale_documento") or 0
+        try:
+            importo = abs(float(importo_raw)) if importo_raw else 0
+        except (ValueError, TypeError):
+            importo = 0
         numero_fatt = f.get("invoice_number") or f.get("numero_documento") or f.get("numero_fattura", "")
         fattura_id = f.get("id")
         
