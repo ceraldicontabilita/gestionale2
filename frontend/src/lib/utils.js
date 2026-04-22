@@ -14,59 +14,66 @@ export function cn(...inputs) {
 /* ---------- PALETTE CHIAVE ---------- */
 export const COLORS = {
   /* Primari */
-  primary:       '#0f2744',   // navy profondo — brand
-  primaryLight:  '#1e3a5f',
-  primaryDark:   '#081425',
-  primarySoft:   '#e8eef7',   // bg tab attivo chiaro
+  primary: '#0f2744', // navy profondo — brand
+  primaryLight: '#1e3a5f',
+  primaryDark: '#081425',
+  primarySoft: '#e8eef7', // bg tab attivo chiaro
   /* Accent oro */
-  accent:        '#b8860b',
-  accentLight:   '#d4a017',
-  accentSoft:    '#fdf6e3',
+  accent: '#b8860b',
+  accentLight: '#d4a017',
+  accentSoft: '#fdf6e3',
   /* Stato */
-  success:       '#15803d',
-  successLight:  '#dcfce7',
-  warning:       '#b45309',
-  warningLight:  '#fef3c7',
-  danger:        '#b91c1c',
-  dangerLight:   '#fee2e2',
-  info:          '#1d4ed8',
-  infoLight:     '#dbeafe',
+  success: '#15803d',
+  successLight: '#dcfce7',
+  warning: '#b45309',
+  warningLight: '#fef3c7',
+  danger: '#b91c1c',
+  dangerLight: '#fee2e2',
+  info: '#1d4ed8',
+  infoLight: '#dbeafe',
   /* Neutri */
-  bg:            '#f1f5f9',   // sfondo pagina
-  bgAlt:         '#f8fafc',
-  card:          '#ffffff',
-  border:        '#e2e8f0',
-  borderDark:    '#cbd5e1',
-  text:          '#0f172a',
-  textMuted:     '#64748b',
-  textSubtle:    '#94a3b8',
+  bg: '#f1f5f9', // sfondo pagina
+  bgAlt: '#f8fafc',
+  card: '#ffffff',
+  border: '#e2e8f0',
+  borderDark: '#cbd5e1',
+  text: '#0f172a',
+  textMuted: '#64748b',
+  textSubtle: '#94a3b8',
   /* Grays */
   gray: {
-    50:  '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 300: '#cbd5e1',
-    400: '#94a3b8', 500: '#64748b', 600: '#475569', 700: '#334155',
-    800: '#1e293b', 900: '#0f172a',
+    50: '#f8fafc',
+    100: '#f1f5f9',
+    200: '#e2e8f0',
+    300: '#cbd5e1',
+    400: '#94a3b8',
+    500: '#64748b',
+    600: '#475569',
+    700: '#334155',
+    800: '#1e293b',
+    900: '#0f172a',
   },
   /* Legacy aliases (per retro-compatibilità) */
-  white:       '#ffffff',
-  grayLight:   '#e2e8f0',
-  grayBg:      '#f8fafc',
-  purple:      '#7c3aed',
+  white: '#ffffff',
+  grayLight: '#e2e8f0',
+  grayBg: '#f8fafc',
+  purple: '#7c3aed',
 };
 
 /* Theme alias: usato in diverse pagine legacy */
 export const THEME = {
-  primary:       COLORS.primary,
-  primaryLight:  COLORS.primaryLight,
-  primaryDark:   COLORS.primaryDark,
-  success:       COLORS.success,
-  successLight:  COLORS.successLight,
-  warning:       COLORS.warning,
-  warningLight:  COLORS.warningLight,
-  error:         COLORS.danger,
-  errorLight:    COLORS.dangerLight,
-  info:          COLORS.info,
-  infoLight:     COLORS.infoLight,
-  gray:          COLORS.gray,
+  primary: COLORS.primary,
+  primaryLight: COLORS.primaryLight,
+  primaryDark: COLORS.primaryDark,
+  success: COLORS.success,
+  successLight: COLORS.successLight,
+  warning: COLORS.warning,
+  warningLight: COLORS.warningLight,
+  error: COLORS.danger,
+  errorLight: COLORS.dangerLight,
+  info: COLORS.info,
+  infoLight: COLORS.infoLight,
+  gray: COLORS.gray,
 };
 
 /* ---------- SPAZIATURE ---------- */
@@ -85,8 +92,9 @@ export const BORDER_RADIUS = { sm: 6, md: 8, lg: 10, xl: 14, full: 9999 };
 
 /* ---------- TIPOGRAFIA ---------- */
 export const FONT = {
-  family: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
-  mono:   "'SF Mono', Menlo, Monaco, Consolas, 'Courier New', monospace",
+  family:
+    "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+  mono: "'SF Mono', Menlo, Monaco, Consolas, 'Courier New', monospace",
 };
 
 /* ================================================================
@@ -335,7 +343,8 @@ export function button(type = 'primary', disabled = false) {
     justifyContent: 'center',
     gap: 7,
     lineHeight: 1.2,
-    transition: 'background 140ms ease, border-color 140ms ease, color 140ms ease, box-shadow 140ms ease',
+    transition:
+      'background 140ms ease, border-color 140ms ease, color 140ms ease, box-shadow 140ms ease',
     fontFamily: FONT.family,
     whiteSpace: 'nowrap',
   };
@@ -347,7 +356,12 @@ export function button(type = 'primary', disabled = false) {
     return { ...base, background: COLORS.card, color: COLORS.text, borderColor: COLORS.border };
   }
   if (type === 'ghost') {
-    return { ...base, background: 'transparent', color: COLORS.textMuted, borderColor: 'transparent' };
+    return {
+      ...base,
+      background: 'transparent',
+      color: COLORS.textMuted,
+      borderColor: 'transparent',
+    };
   }
   if (type === 'success') {
     return { ...base, background: COLORS.success, color: '#fff', borderColor: COLORS.success };
@@ -362,7 +376,12 @@ export function button(type = 'primary', disabled = false) {
     return { ...base, background: COLORS.warning, color: '#fff', borderColor: COLORS.warning };
   }
   if (type === 'outline') {
-    return { ...base, background: 'transparent', color: COLORS.primary, borderColor: COLORS.primary };
+    return {
+      ...base,
+      background: 'transparent',
+      color: COLORS.primary,
+      borderColor: COLORS.primary,
+    };
   }
   return base;
 }
@@ -381,13 +400,15 @@ export function badge(type) {
     textTransform: 'uppercase',
     lineHeight: 1.4,
   };
-  if (type === 'success') return { ...base, background: COLORS.successLight, color: COLORS.success };
-  if (type === 'warning') return { ...base, background: COLORS.warningLight, color: COLORS.warning };
-  if (type === 'danger')  return { ...base, background: COLORS.dangerLight,  color: COLORS.danger  };
-  if (type === 'info')    return { ...base, background: COLORS.infoLight,    color: COLORS.info    };
-  if (type === 'neutral') return { ...base, background: COLORS.gray[100],    color: COLORS.gray[700] };
-  if (type === 'primary') return { ...base, background: COLORS.primarySoft,  color: COLORS.primary };
-  if (type === 'accent')  return { ...base, background: COLORS.accentSoft,   color: COLORS.accent  };
+  if (type === 'success')
+    return { ...base, background: COLORS.successLight, color: COLORS.success };
+  if (type === 'warning')
+    return { ...base, background: COLORS.warningLight, color: COLORS.warning };
+  if (type === 'danger') return { ...base, background: COLORS.dangerLight, color: COLORS.danger };
+  if (type === 'info') return { ...base, background: COLORS.infoLight, color: COLORS.info };
+  if (type === 'neutral') return { ...base, background: COLORS.gray[100], color: COLORS.gray[700] };
+  if (type === 'primary') return { ...base, background: COLORS.primarySoft, color: COLORS.primary };
+  if (type === 'accent') return { ...base, background: COLORS.accentSoft, color: COLORS.accent };
   return { ...base, background: COLORS.gray[100], color: COLORS.gray[700] };
 }
 
@@ -401,7 +422,9 @@ export function formatDateIT(dateStr) {
     const parts = datePart.split('-');
     if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
     return dateStr;
-  } catch { return dateStr; }
+  } catch {
+    return dateStr;
+  }
 }
 
 export function parseDateIT(dateStr) {
@@ -410,13 +433,17 @@ export function parseDateIT(dateStr) {
     const parts = dateStr.split('/');
     if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
     return dateStr;
-  } catch { return dateStr; }
+  } catch {
+    return dateStr;
+  }
 }
 
 export function formatEuro(amount) {
   if (amount === null || amount === undefined) return '€ 0,00';
   return `€ ${new Intl.NumberFormat('it-IT', {
-    minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: true,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    useGrouping: true,
   }).format(parseFloat(amount))}`;
 }
 
@@ -425,10 +452,15 @@ export function formatDateTimeIT(dateStr) {
   try {
     const date = new Date(dateStr);
     return date.toLocaleString('it-IT', {
-      day: '2-digit', month: '2-digit', year: 'numeric',
-      hour: '2-digit', minute: '2-digit',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
-  } catch { return dateStr; }
+  } catch {
+    return dateStr;
+  }
 }
 
 export function formatDateShort(dateStr) {
@@ -438,13 +470,17 @@ export function formatDateShort(dateStr) {
     const parts = datePart.split('-');
     if (parts.length === 3) return `${parts[2]}/${parts[1]}`;
     return dateStr;
-  } catch { return dateStr; }
+  } catch {
+    return dateStr;
+  }
 }
 
 export function formatEuroShort(amount) {
   if (amount === null || amount === undefined) return '0,00';
   return new Intl.NumberFormat('it-IT', {
-    minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: true,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    useGrouping: true,
   }).format(parseFloat(amount));
 }
 
@@ -456,21 +492,48 @@ export function formatEuroStr(amount) {
 /* ================================================================
    COSTANTI MESI
    ================================================================ */
-export const MESI_SHORT = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
-export const MESI_FULL  = ['','Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+export const MESI_SHORT = [
+  'Gen',
+  'Feb',
+  'Mar',
+  'Apr',
+  'Mag',
+  'Giu',
+  'Lug',
+  'Ago',
+  'Set',
+  'Ott',
+  'Nov',
+  'Dic',
+];
+export const MESI_FULL = [
+  '',
+  'Gennaio',
+  'Febbraio',
+  'Marzo',
+  'Aprile',
+  'Maggio',
+  'Giugno',
+  'Luglio',
+  'Agosto',
+  'Settembre',
+  'Ottobre',
+  'Novembre',
+  'Dicembre',
+];
 export const MESI = [
-  { key: '01', value: 1,  label: 'Gennaio',   short: 'Gen' },
-  { key: '02', value: 2,  label: 'Febbraio',  short: 'Feb' },
-  { key: '03', value: 3,  label: 'Marzo',     short: 'Mar' },
-  { key: '04', value: 4,  label: 'Aprile',    short: 'Apr' },
-  { key: '05', value: 5,  label: 'Maggio',    short: 'Mag' },
-  { key: '06', value: 6,  label: 'Giugno',    short: 'Giu' },
-  { key: '07', value: 7,  label: 'Luglio',    short: 'Lug' },
-  { key: '08', value: 8,  label: 'Agosto',    short: 'Ago' },
-  { key: '09', value: 9,  label: 'Settembre', short: 'Set' },
-  { key: '10', value: 10, label: 'Ottobre',   short: 'Ott' },
-  { key: '11', value: 11, label: 'Novembre',  short: 'Nov' },
-  { key: '12', value: 12, label: 'Dicembre',  short: 'Dic' },
+  { key: '01', value: 1, label: 'Gennaio', short: 'Gen' },
+  { key: '02', value: 2, label: 'Febbraio', short: 'Feb' },
+  { key: '03', value: 3, label: 'Marzo', short: 'Mar' },
+  { key: '04', value: 4, label: 'Aprile', short: 'Apr' },
+  { key: '05', value: 5, label: 'Maggio', short: 'Mag' },
+  { key: '06', value: 6, label: 'Giugno', short: 'Giu' },
+  { key: '07', value: 7, label: 'Luglio', short: 'Lug' },
+  { key: '08', value: 8, label: 'Agosto', short: 'Ago' },
+  { key: '09', value: 9, label: 'Settembre', short: 'Set' },
+  { key: '10', value: 10, label: 'Ottobre', short: 'Ott' },
+  { key: '11', value: 11, label: 'Novembre', short: 'Nov' },
+  { key: '12', value: 12, label: 'Dicembre', short: 'Dic' },
 ];
 
 /* ================================================================
@@ -497,12 +560,12 @@ export function rg(isMobile, desktopCols) {
 
 /** Preset grid responsive */
 export const RG = {
-  col2:  (m) => ({ display:'grid', gridTemplateColumns: m ? '1fr'     : '1fr 1fr',          gap: 16 }),
-  col3:  (m) => ({ display:'grid', gridTemplateColumns: m ? '1fr'     : 'repeat(3,1fr)',    gap: 16 }),
-  col4:  (m) => ({ display:'grid', gridTemplateColumns: m ? '1fr 1fr' : 'repeat(4,1fr)',    gap: 12 }),
-  col24: (m) => ({ display:'grid', gridTemplateColumns: m ? '1fr'     : '2fr 4fr',          gap: 16 }),
-  kpi:   (m) => ({ display:'grid', gridTemplateColumns: m ? '1fr 1fr' : 'repeat(4,1fr)',    gap: 12 }),
-  form:  (m) => ({ display:'grid', gridTemplateColumns: m ? '1fr'     : '1fr 1fr',          gap: 16 }),
+  col2: m => ({ display: 'grid', gridTemplateColumns: m ? '1fr' : '1fr 1fr', gap: 16 }),
+  col3: m => ({ display: 'grid', gridTemplateColumns: m ? '1fr' : 'repeat(3,1fr)', gap: 16 }),
+  col4: m => ({ display: 'grid', gridTemplateColumns: m ? '1fr 1fr' : 'repeat(4,1fr)', gap: 12 }),
+  col24: m => ({ display: 'grid', gridTemplateColumns: m ? '1fr' : '2fr 4fr', gap: 16 }),
+  kpi: m => ({ display: 'grid', gridTemplateColumns: m ? '1fr 1fr' : 'repeat(4,1fr)', gap: 12 }),
+  form: m => ({ display: 'grid', gridTemplateColumns: m ? '1fr' : '1fr 1fr', gap: 16 }),
 };
 
 /** Padding pagina responsive */
