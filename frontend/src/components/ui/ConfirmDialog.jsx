@@ -14,11 +14,11 @@ export function ConfirmProvider({ children }) {
     confirmText: 'Conferma',
     cancelText: 'Annulla',
     variant: 'default', // default, danger, warning
-    resolve: null
+    resolve: null,
   });
 
   const confirm = useCallback(({ title, message, confirmText, cancelText, variant } = {}) => {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       setConfirmState({
         isOpen: true,
         title: title || 'Conferma',
@@ -26,7 +26,7 @@ export function ConfirmProvider({ children }) {
         confirmText: confirmText || 'Conferma',
         cancelText: cancelText || 'Annulla',
         variant: variant || 'default',
-        resolve
+        resolve,
       });
     });
   }, []);
@@ -49,14 +49,14 @@ export function ConfirmProvider({ children }) {
       fontSize: 14,
       cursor: 'pointer',
       border: 'none',
-      transition: 'all 0.2s'
+      transition: 'all 0.2s',
     };
 
     if (!isConfirm) {
       return {
         ...base,
         background: '#f1f5f9',
-        color: '#475569'
+        color: '#475569',
       };
     }
 
@@ -73,9 +73,9 @@ export function ConfirmProvider({ children }) {
   return (
     <ConfirmContext.Provider value={confirm}>
       {children}
-      
+
       {confirmState.isOpen && (
-        <div 
+        <div
           style={{
             position: 'fixed',
             inset: 0,
@@ -84,11 +84,11 @@ export function ConfirmProvider({ children }) {
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 99999,
-            animation: 'fadeIn 0.15s ease-out'
+            animation: 'fadeIn 0.15s ease-out',
           }}
           onClick={handleCancel}
         >
-          <div 
+          <div
             style={{
               background: 'white',
               borderRadius: 12,
@@ -96,34 +96,40 @@ export function ConfirmProvider({ children }) {
               maxWidth: 400,
               width: '90%',
               boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
-              animation: 'slideUp 0.2s ease-out'
+              animation: 'slideUp 0.2s ease-out',
             }}
             onClick={e => e.stopPropagation()}
           >
-            <h3 style={{ 
-              margin: '0 0 12px 0', 
-              fontSize: 18, 
-              fontWeight: 700,
-              color: '#1e293b'
-            }}>
+            <h3
+              style={{
+                margin: '0 0 12px 0',
+                fontSize: 18,
+                fontWeight: 700,
+                color: '#1e293b',
+              }}
+            >
               {confirmState.title}
             </h3>
-            
-            <p style={{ 
-              margin: '0 0 20px 0', 
-              color: '#64748b',
-              fontSize: 14,
-              lineHeight: 1.5,
-              whiteSpace: 'pre-line'
-            }}>
+
+            <p
+              style={{
+                margin: '0 0 20px 0',
+                color: '#64748b',
+                fontSize: 14,
+                lineHeight: 1.5,
+                whiteSpace: 'pre-line',
+              }}
+            >
               {confirmState.message}
             </p>
-            
-            <div style={{ 
-              display: 'flex', 
-              gap: 10, 
-              justifyContent: 'flex-end' 
-            }}>
+
+            <div
+              style={{
+                display: 'flex',
+                gap: 10,
+                justifyContent: 'flex-end',
+              }}
+            >
               <button
                 onClick={handleCancel}
                 style={getButtonStyle(confirmState.variant, false)}
@@ -142,7 +148,7 @@ export function ConfirmProvider({ children }) {
           </div>
         </div>
       )}
-      
+
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; }
@@ -161,7 +167,7 @@ export function useConfirm() {
   const context = useContext(ConfirmContext);
   if (!context) {
     // Fallback per componenti non wrapped - usa confirm sincrono
-    return async (opts) => true;
+    return async opts => true;
   }
   return context;
 }
