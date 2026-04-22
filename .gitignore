@@ -46,3 +46,12 @@ frontend/node_modules/.cache/
 *token.json*
 *credentials.json*
 # (rimossi blocchi .env ripetuti — i file .env DEVONO stare nel repo per deployment Emergent)
+-e 
+# Environment and credential files
+.env
+.env.*
+*.env
+credentials.json
+*.pem
+*.key
+.credentials
