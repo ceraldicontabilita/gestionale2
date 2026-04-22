@@ -68,7 +68,7 @@ class EmailDownloader:
         if self.connection:
             try:
                 self.connection.logout()
-            except:
+            except Exception:
                 pass
     
     def decode_header_value(self, value: str) -> str:
