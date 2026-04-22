@@ -364,7 +364,7 @@ async def execute_quick_action(action_id: str):
     elif action_id == "prossime_scadenze":
         # Prossime scadenze
         from datetime import timedelta
-        oggi = datetime.now()
+        oggi = datetime.now(timezone.utc)
         fra_30_giorni = oggi + timedelta(days=30)
         
         scadenze = await db.scadenze.find({
