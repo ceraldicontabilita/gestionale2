@@ -1,9 +1,24 @@
-import React, { useState, useEffect } from "react";
-import api from "../api";
-import { useAnnoGlobale } from "../contexts/AnnoContext";
+import React, { useState, useEffect } from 'react';
+import api from '../api';
+import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { formatEuro } from '../lib/utils';
-import { PageLayout, PageSection, PageGrid, PageLoading, PageEmpty } from '../components/PageLayout';
-import { TrendingUp, TrendingDown, Wallet, Building2, Users, Receipt, AlertCircle, Info } from 'lucide-react';
+import {
+  PageLayout,
+  PageSection,
+  PageGrid,
+  PageLoading,
+  PageEmpty,
+} from '../components/PageLayout';
+import {
+  TrendingUp,
+  TrendingDown,
+  Wallet,
+  Building2,
+  Users,
+  Receipt,
+  AlertCircle,
+  Info,
+} from 'lucide-react';
 
 export default function Finanziaria() {
   const { anno: selectedYear } = useAnnoGlobale();
@@ -17,38 +32,42 @@ export default function Finanziaria() {
   async function loadSummary() {
     try {
       setLoading(true);
-      const r = await api.get(`/api/finanziaria/summary?anno=${selectedYear}`).catch(() => ({ data: null }));
+      const r = await api
+        .get(`/api/finanziaria/summary?anno=${selectedYear}`)
+        .catch(() => ({ data: null }));
       setSummary(r.data);
     } catch (e) {
-      console.error("Error loading financial summary:", e);
+      console.error('Error loading financial summary:', e);
     } finally {
       setLoading(false);
     }
   }
 
   const KPICard = ({ icon: Icon, label, value, subtext, color, bgColor }) => (
-    <div style={{ 
-      background: bgColor || '#f8fafc', 
-      borderRadius: 12, 
-      padding: 20,
-      border: '1px solid #e2e8f0'
-    }}>
+    <div
+      style={{
+        background: bgColor || '#f8fafc',
+        borderRadius: 12,
+        padding: 20,
+        border: '1px solid #e2e8f0',
+      }}
+    >
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
         <Icon size={18} color={color || '#64748b'} />
         <span style={{ fontSize: 13, color: '#64748b' }}>{label}</span>
       </div>
-      <div style={{ fontSize: 28, fontWeight: 700, color: color || '#1e293b' }}>
-        {value}
-      </div>
-      {subtext && (
-        <div style={{ fontSize: 12, color: '#64748b', marginTop: 6 }}>{subtext}</div>
-      )}
+      <div style={{ fontSize: 28, fontWeight: 700, color: color || '#1e293b' }}>{value}</div>
+      {subtext && <div style={{ fontSize: 12, color: '#64748b', marginTop: 6 }}>{subtext}</div>}
     </div>
   );
 
   if (loading) {
     return (
-      <PageLayout title="Situazione Finanziaria" icon="📊" subtitle={`Riepilogo finanziario ${selectedYear}`}>
+      <PageLayout
+        title="Situazione Finanziaria"
+        icon="📊"
+        subtitle={`Riepilogo finanziario ${selectedYear}`}
+      >
         <PageLoading message={`Caricamento dati finanziari per ${selectedYear}...`} />
       </PageLayout>
     );
@@ -57,35 +76,39 @@ export default function Finanziaria() {
   const hasNoData = summary?.total_income === 0 && summary?.total_expenses === 0;
 
   return (
-    <PageLayout 
-      title="Situazione Finanziaria" 
+    <PageLayout
+      title="Situazione Finanziaria"
       icon="📊"
       subtitle={`Riepilogo finanziario con IVA da Corrispettivi e Fatture - Anno ${selectedYear}`}
       actions={
-        <div style={{ 
-          background: '#dbeafe', 
-          padding: '10px 20px', 
-          borderRadius: 8, 
-          color: '#1e40af', 
-          fontWeight: 600,
-          fontSize: 14
-        }}>
+        <div
+          style={{
+            background: '#dbeafe',
+            padding: '10px 20px',
+            borderRadius: 8,
+            color: '#1e40af',
+            fontWeight: 600,
+            fontSize: 14,
+          }}
+        >
           📅 Anno: {selectedYear}
         </div>
       }
     >
       {/* Avviso nessun dato */}
       {hasNoData && (
-        <div style={{ 
-          background: '#fff3cd', 
-          borderRadius: 12, 
-          padding: 16, 
-          marginBottom: 20, 
-          border: '1px solid #ffc107',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12
-        }}>
+        <div
+          style={{
+            background: '#fff3cd',
+            borderRadius: 12,
+            padding: 16,
+            marginBottom: 20,
+            border: '1px solid #ffc107',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+          }}
+        >
           <AlertCircle size={24} color="#856404" />
           <div>
             <div style={{ fontWeight: 600, color: '#856404' }}>
@@ -100,7 +123,7 @@ export default function Finanziaria() {
 
       {/* KPI Principali */}
       <PageGrid cols={3} gap={16}>
-        <KPICard 
+        <KPICard
           icon={TrendingUp}
           label="Entrate Totali"
           value={formatEuro(summary?.total_income)}
@@ -108,7 +131,7 @@ export default function Finanziaria() {
           color="#16a34a"
           bgColor="#f0fdf4"
         />
-        <KPICard 
+        <KPICard
           icon={TrendingDown}
           label="Uscite Totali"
           value={formatEuro(summary?.total_expenses)}
@@ -116,7 +139,7 @@ export default function Finanziaria() {
           color="#dc2626"
           bgColor="#fef2f2"
         />
-        <KPICard 
+        <KPICard
           icon={Wallet}
           label="Saldo"
           value={formatEuro(summary?.balance)}
@@ -157,30 +180,36 @@ export default function Finanziaria() {
               Totale acquisti: {formatEuro(summary?.fatture?.totale)}
             </div>
           </div>
-          <div style={{ 
-            background: summary?.vat_balance > 0 ? '#fef2f2' : '#f0fdf4', 
-            padding: 16, 
-            borderRadius: 8 
-          }}>
+          <div
+            style={{
+              background: summary?.vat_balance > 0 ? '#fef2f2' : '#f0fdf4',
+              padding: 16,
+              borderRadius: 8,
+            }}
+          >
             <div style={{ fontSize: 12, fontWeight: 600, color: '#64748b', marginBottom: 4 }}>
               ⚖️ Saldo IVA
             </div>
-            <div style={{ 
-              fontSize: 24, 
-              fontWeight: 700, 
-              color: summary?.vat_balance > 0 ? '#dc2626' : '#16a34a' 
-            }}>
+            <div
+              style={{
+                fontSize: 24,
+                fontWeight: 700,
+                color: summary?.vat_balance > 0 ? '#dc2626' : '#16a34a',
+              }}
+            >
               {formatEuro(summary?.vat_balance)}
             </div>
             <div style={{ marginTop: 8 }}>
-              <span style={{ 
-                background: summary?.vat_balance > 0 ? '#dc2626' : '#16a34a',
-                color: 'white',
-                padding: '3px 10px',
-                borderRadius: 12,
-                fontSize: 11,
-                fontWeight: 600
-              }}>
+              <span
+                style={{
+                  background: summary?.vat_balance > 0 ? '#dc2626' : '#16a34a',
+                  color: 'white',
+                  padding: '3px 10px',
+                  borderRadius: 12,
+                  fontSize: 11,
+                  fontWeight: 600,
+                }}
+              >
                 {summary?.vat_status || '-'}
               </span>
             </div>
@@ -256,11 +285,13 @@ export default function Finanziaria() {
               <td style={{ padding: 12, textAlign: 'right', color: '#dc2626' }}>
                 {formatEuro(summary?.total_expenses)}
               </td>
-              <td style={{ 
-                padding: 12, 
-                textAlign: 'right',
-                color: summary?.balance >= 0 ? '#16a34a' : '#dc2626'
-              }}>
+              <td
+                style={{
+                  padding: 12,
+                  textAlign: 'right',
+                  color: summary?.balance >= 0 ? '#16a34a' : '#dc2626',
+                }}
+              >
                 {formatEuro(summary?.balance)}
               </td>
             </tr>
@@ -271,14 +302,16 @@ export default function Finanziaria() {
       {/* Situazione Debiti/Crediti */}
       <PageSection title="Situazione Debiti/Crediti" icon="📋" style={{ marginTop: 20 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
-            padding: 12,
-            background: '#fef2f2',
-            borderRadius: 8
-          }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: 12,
+              background: '#fef2f2',
+              borderRadius: 8,
+            }}
+          >
             <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <Receipt size={16} color="#dc2626" />
               Fatture da pagare (debiti vs fornitori)
@@ -287,14 +320,16 @@ export default function Finanziaria() {
               {formatEuro(summary?.payables)}
             </span>
           </div>
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
-            padding: 12,
-            background: '#f0fdf4',
-            borderRadius: 8
-          }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: 12,
+              background: '#f0fdf4',
+              borderRadius: 8,
+            }}
+          >
             <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <Receipt size={16} color="#16a34a" />
               Fatture da incassare (crediti vs clienti)
@@ -303,19 +338,23 @@ export default function Finanziaria() {
               {formatEuro(summary?.receivables)}
             </span>
           </div>
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
-            padding: 12,
-            background: summary?.vat_balance > 0 ? '#fef2f2' : '#f0fdf4',
-            borderRadius: 8
-          }}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: 12,
+              background: summary?.vat_balance > 0 ? '#fef2f2' : '#f0fdf4',
+              borderRadius: 8,
+            }}
+          >
             <span>🧾 IVA {summary?.vat_balance > 0 ? 'da versare' : 'a credito'}</span>
-            <span style={{ 
-              fontWeight: 700,
-              color: summary?.vat_balance > 0 ? '#dc2626' : '#16a34a'
-            }}>
+            <span
+              style={{
+                fontWeight: 700,
+                color: summary?.vat_balance > 0 ? '#dc2626' : '#16a34a',
+              }}
+            >
               {formatEuro(Math.abs(summary?.vat_balance || 0))}
             </span>
           </div>
@@ -323,13 +362,28 @@ export default function Finanziaria() {
       </PageSection>
 
       {/* Info */}
-      <PageSection title="Come vengono calcolati i dati" icon={<Info size={18} />} style={{ marginTop: 20 }}>
+      <PageSection
+        title="Come vengono calcolati i dati"
+        icon={<Info size={18} />}
+        style={{ marginTop: 20 }}
+      >
         <ul style={{ paddingLeft: 20, lineHeight: 2, margin: 0, color: '#475569', fontSize: 13 }}>
-          <li><strong>Entrate/Uscite:</strong> Somma movimenti Prima Nota Cassa + Banca</li>
-          <li><strong>IVA Debito:</strong> Estratta dai file XML dei Corrispettivi giornalieri (vendite)</li>
-          <li><strong>IVA Credito:</strong> Estratta dai file XML delle Fatture (acquisti fornitori)</li>
-          <li><strong>Saldo IVA:</strong> IVA Debito - IVA Credito = importo da versare o a credito</li>
-          <li><strong>Fatture da pagare:</strong> Fatture con stato diverso da "Pagata"</li>
+          <li>
+            <strong>Entrate/Uscite:</strong> Somma movimenti Prima Nota Cassa + Banca
+          </li>
+          <li>
+            <strong>IVA Debito:</strong> Estratta dai file XML dei Corrispettivi giornalieri
+            (vendite)
+          </li>
+          <li>
+            <strong>IVA Credito:</strong> Estratta dai file XML delle Fatture (acquisti fornitori)
+          </li>
+          <li>
+            <strong>Saldo IVA:</strong> IVA Debito - IVA Credito = importo da versare o a credito
+          </li>
+          <li>
+            <strong>Fatture da pagare:</strong> Fatture con stato diverso da "Pagata"
+          </li>
         </ul>
       </PageSection>
     </PageLayout>
