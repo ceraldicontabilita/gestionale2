@@ -13,6 +13,7 @@ import {
   ChevronRight,
   Search,
   Filter,
+  Receipt,
 } from 'lucide-react';
 import api from '../../api';
 import { COLORS, useIsMobile } from '../../lib/utils';
@@ -320,7 +321,7 @@ export default function HRCedolini() {
               border: 'none',
               borderRadius: 8,
               fontSize: 13,
-              background: importing ? COLORS.border : '#1a40b5',
+              background: importing ? COLORS.border : '#0f2744',
               color: 'white',
               cursor: importing ? 'not-allowed' : 'pointer',
               display: 'flex',
@@ -389,36 +390,36 @@ export default function HRCedolini() {
             label: 'Cedolini',
             value: cedolini.length,
             icon: <FileText size={18} />,
-            color: '#2563eb',
+            color: COLORS.primary,
           },
           {
             label: 'Dipendenti',
             value: numDipendenti,
             icon: <Users size={18} />,
-            color: '#7c3aed',
+            color: COLORS.accent,
           },
           {
             label: 'Netto Totale',
             value: formatEuroAlways(totaleNetto),
-            icon: <span style={{ fontSize: 16 }}>💰</span>,
-            color: '#059669',
+            icon: <CheckCircle size={18} />,
+            color: COLORS.success,
           },
           {
             label: 'Da Pagare',
             value: formatEuroAlways(daPagare),
-            icon: <span style={{ fontSize: 16 }}>⏳</span>,
-            color: daPagare > 0 ? '#ea580c' : '#64748b',
+            icon: <AlertCircle size={18} />,
+            color: daPagare > 0 ? COLORS.warning : COLORS.textMuted,
             highlight: daPagare > 0,
           },
         ].map(s => (
           <div
             key={s.label}
             style={{
-              background: 'white',
-              border: `1px solid ${s.highlight ? s.color + '40' : COLORS.border}`,
+              background: COLORS.card,
+              border: `1px solid ${COLORS.border}`,
               borderRadius: 12,
               padding: '16px 20px',
-              borderLeft: `4px solid ${s.color}`,
+              borderTop: `3px solid ${s.color}`,
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
@@ -435,7 +436,16 @@ export default function HRCedolini() {
                 {s.label}
               </span>
             </div>
-            <div style={{ fontSize: 22, fontWeight: 700, color: s.color }}>{s.value}</div>
+            <div
+              style={{
+                fontSize: 22,
+                fontWeight: 700,
+                color: COLORS.text,
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
+              {s.value}
+            </div>
           </div>
         ))}
       </div>
@@ -452,7 +462,7 @@ export default function HRCedolini() {
         >
           {[
             { id: 'cedolini', label: 'Cedolini / Buste Paga', icon: <FileText size={14} /> },
-            { id: 'f24', label: 'Distinte F24', icon: <span style={{ fontSize: 12 }}>📋</span> },
+            { id: 'f24', label: 'Distinte F24', icon: <Receipt size={14} /> },
           ].map(t => (
             <button
               key={t.id}
@@ -462,8 +472,8 @@ export default function HRCedolini() {
                 padding: '14px 20px',
                 background: 'none',
                 border: 'none',
-                borderBottom: tab === t.id ? `3px solid #1a40b5` : '3px solid transparent',
-                color: tab === t.id ? '#1a40b5' : COLORS.textMuted,
+                borderBottom: tab === t.id ? `3px solid #0f2744` : '3px solid transparent',
+                color: tab === t.id ? '#0f2744' : COLORS.textMuted,
                 fontWeight: tab === t.id ? 700 : 500,
                 cursor: 'pointer',
                 fontSize: 13,
@@ -491,12 +501,12 @@ export default function HRCedolini() {
                   onClick={() => setViewMode(v.id)}
                   style={{
                     padding: '6px 12px',
-                    border: `1px solid ${viewMode === v.id ? '#1a40b5' : COLORS.border}`,
+                    border: `1px solid ${viewMode === v.id ? '#0f2744' : COLORS.border}`,
                     borderRadius: 6,
                     fontSize: 12,
                     cursor: 'pointer',
-                    background: viewMode === v.id ? '#1a40b510' : 'white',
-                    color: viewMode === v.id ? '#1a40b5' : COLORS.textMuted,
+                    background: viewMode === v.id ? '#0f274410' : 'white',
+                    color: viewMode === v.id ? '#0f2744' : COLORS.textMuted,
                     fontWeight: viewMode === v.id ? 600 : 400,
                     display: 'flex',
                     alignItems: 'center',
@@ -554,10 +564,10 @@ export default function HRCedolini() {
                 onClick={() => setSelectedMese(null)}
                 style={{
                   padding: '6px 12px',
-                  border: `1px solid #1a40b5`,
+                  border: `1px solid #0f2744`,
                   borderRadius: 8,
-                  background: '#1a40b510',
-                  color: '#1a40b5',
+                  background: '#0f274410',
+                  color: '#0f2744',
                   fontSize: 12,
                   fontWeight: 600,
                   cursor: 'pointer',
@@ -619,7 +629,7 @@ export default function HRCedolini() {
                       }}
                     >
                       {expandedMonths[group.mese] ? (
-                        <ChevronDown size={16} color="#1a40b5" />
+                        <ChevronDown size={16} color="#0f2744" />
                       ) : (
                         <ChevronRight size={16} color={COLORS.textMuted} />
                       )}
@@ -628,7 +638,7 @@ export default function HRCedolini() {
                           style={{
                             fontSize: 15,
                             fontWeight: 700,
-                            color: expandedMonths[group.mese] ? '#1a40b5' : COLORS.text,
+                            color: expandedMonths[group.mese] ? '#0f2744' : COLORS.text,
                           }}
                         >
                           {group.label} {anno}
@@ -829,8 +839,8 @@ export default function HRCedolini() {
                                             transition: 'all 0.15s',
                                           }}
                                           onMouseEnter={e => {
-                                            e.currentTarget.style.borderColor = '#1a40b5';
-                                            e.currentTarget.style.color = '#1a40b5';
+                                            e.currentTarget.style.borderColor = '#0f2744';
+                                            e.currentTarget.style.color = '#0f2744';
                                           }}
                                           onMouseLeave={e => {
                                             e.currentTarget.style.borderColor = COLORS.border;
@@ -958,9 +968,7 @@ export default function HRCedolini() {
             tab === 'f24' &&
             (f24.length === 0 ? (
               <div style={{ padding: 60, textAlign: 'center', color: COLORS.textMuted }}>
-                <span style={{ fontSize: 40, display: 'block', marginBottom: 12, opacity: 0.3 }}>
-                  📋
-                </span>
+                <Receipt size={48} style={{ marginBottom: 16, opacity: 0.3 }} />
                 <div style={{ fontSize: 15, fontWeight: 600 }}>
                   Nessuna distinta F24 per il {anno}
                 </div>
