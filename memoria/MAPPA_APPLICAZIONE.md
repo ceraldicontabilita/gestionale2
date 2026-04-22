@@ -1,5 +1,5 @@
 # CERALDI ERP — MAPPA APPLICAZIONE COMPLETA
-## Aggiornata: 22 Aprile 2026
+## Aggiornata: 22 Aprile 2026 — Fix Body() applicato su 19 router
 
 ## ARCHITETTURA
 
@@ -191,7 +191,7 @@ Cedolini PDF → Parser Zucchetti → Collezione "cedolini"
 
 ## BUG PATTERN COMUNI
 
-1. **Body() mancante**: funzioni POST registrate con add_api_route che hanno payload: Dict senza Body(...) → 502 al primo click
+1. **Body() mancante**: ✅ FIXATO 22/04/2026 — scan automatico su 215 router, fixati 18 file critici (accounting_extended, admin, bank_reconciliation, cash_register, config, buste_paga, shifts, staff, finanziaria, invoices_emesse, learning_machine_cdc, ocr_assegni, payroll, pianificazione, settings, warehouse/products, giustificativi, warehouse_main, invoices_main). Tutti i router ora hanno Body importato e Body(...) sui parametri.
 2. **Campi mancanti in response**: il backend non restituisce campi che il frontend mostra → €0,00 o vuoto
 3. **Modali senza overlay click-to-close**: l'utente non riesce a chiudere il modale
 4. **DELETE senza confirm**: cancellazione irreversibile senza conferma
