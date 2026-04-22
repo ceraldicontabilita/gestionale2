@@ -274,7 +274,7 @@ async def get_f24_dashboard(db, username: str, month_year: str = None) -> Dict:
                 }
                 for k, v in codici_tributo_non_pagati.items()
             },
-            "alert_attivi": len([f for f in non_pagati if (datetime.fromisoformat(f.get("scadenza", datetime.now().isoformat()).replace("Z", "+00:00")).date() - datetime.now().date()).days <= 7])
+            "alert_attivi": len([f for f in non_pagati if (datetime.fromisoformat(f.get("scadenza", datetime.now(timezone.utc).isoformat()).replace("Z", "+00:00")).date() - datetime.now().date()).days <= 7])
         }
         
     except Exception as e:
