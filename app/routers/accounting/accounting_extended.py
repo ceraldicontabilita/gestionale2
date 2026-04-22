@@ -1,5 +1,5 @@
 """Accounting Extended router - Chart of accounts and reports."""
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Body, Depends, Query
 from typing import Dict, Any, List
 from datetime import datetime, timezone
 import logging
@@ -74,7 +74,7 @@ async def get_income_statement(
     summary="Run tax simulation"
 )
 async def run_tax_simulation(
-    data: Dict[str, Any],
+    data: Dict[str, Any] = Body(...),
     current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> Dict[str, Any]:
     """Run tax simulation."""
