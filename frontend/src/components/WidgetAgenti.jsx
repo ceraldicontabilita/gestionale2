@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api';
 
 const TIPI = [
-  { key: 'urgente',     label: 'Urgenti',      color: '#ef4444', bg: '#fef2f2' },
-  { key: 'avviso',      label: 'Avvisi',       color: '#f59e0b', bg: '#fffbeb' },
-  { key: 'info',        label: 'Info',         color: '#3b82f6', bg: '#eff6ff' },
-  { key: 'suggerimento',label: 'Suggerimenti', color: '#22c55e', bg: '#f0fdf4' },
+  { key: 'urgente', label: 'Urgenti', color: '#ef4444', bg: '#fef2f2' },
+  { key: 'avviso', label: 'Avvisi', color: '#f59e0b', bg: '#fffbeb' },
+  { key: 'info', label: 'Info', color: '#3b82f6', bg: '#eff6ff' },
+  { key: 'suggerimento', label: 'Suggerimenti', color: '#22c55e', bg: '#f0fdf4' },
 ];
 
 function minutiFa(iso) {
@@ -20,7 +20,13 @@ function minutiFa(iso) {
 
 export default function WidgetAgenti() {
   const navigate = useNavigate();
-  const [summary, setSummary] = useState({ urgente: 0, avviso: 0, info: 0, suggerimento: 0, totale: 0 });
+  const [summary, setSummary] = useState({
+    urgente: 0,
+    avviso: 0,
+    info: 0,
+    suggerimento: 0,
+    totale: 0,
+  });
   const [lastUpdate, setLastUpdate] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -58,15 +64,36 @@ export default function WidgetAgenti() {
       }}
     >
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: 12,
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{
-            width: 28, height: 28, borderRadius: 7, background: '#1e3a5f',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7dd3fc" strokeWidth="2.5">
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+          <div
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: 7,
+              background: '#1e3a5f',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#7dd3fc"
+              strokeWidth="2.5"
+            >
+              <circle cx="12" cy="12" r="3" />
+              <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" />
             </svg>
           </div>
           <span style={{ fontWeight: 700, fontSize: 13, color: '#0f172a' }}>Agenti AI</span>
@@ -93,19 +120,27 @@ export default function WidgetAgenti() {
               transition: 'transform 0.1s',
               textAlign: 'center',
             }}
-            onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03)'}
-            onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+            onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.03)')}
+            onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
           >
-            <div style={{
-              fontSize: 20,
-              fontWeight: 800,
-              color: summary[t.key] > 0 ? t.color : '#cbd5e1',
-              lineHeight: 1,
-              marginBottom: 3,
-            }}>
+            <div
+              style={{
+                fontSize: 20,
+                fontWeight: 800,
+                color: summary[t.key] > 0 ? t.color : '#cbd5e1',
+                lineHeight: 1,
+                marginBottom: 3,
+              }}
+            >
               {summary[t.key]}
             </div>
-            <div style={{ fontSize: 10, color: summary[t.key] > 0 ? t.color : '#94a3b8', fontWeight: 600 }}>
+            <div
+              style={{
+                fontSize: 10,
+                color: summary[t.key] > 0 ? t.color : '#94a3b8',
+                fontWeight: 600,
+              }}
+            >
               {t.label}
             </div>
           </button>
