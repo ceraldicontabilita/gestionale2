@@ -543,7 +543,7 @@ export default function Commercialista() {
     // Summary
     doc.setFontSize(12);
     doc.setTextColor(0);
-    doc.text(`Numero Assegni: ${carnet.assegni.length}`, 14, 45);
+    doc.text(`Numero Assegni: ${carnet?.assegni?.length}`, 14, 45);
     doc.setFontSize(14);
     doc.setTextColor(76, 175, 80);
     doc.text(`Totale: ${formatEuroStr(carnet.totale)}}`, 14, 55);
@@ -636,7 +636,7 @@ export default function Commercialista() {
     doc.setFontSize(12);
     doc.setTextColor(100);
     doc.text(
-      `${carnetsArray.length} carnet - ${carnetsArray.reduce((sum, c) => sum + c.assegni.length, 0)} assegni`,
+      `${carnetsArray.length} carnet - ${carnetsArray.reduce((sum, c) => sum + c?.assegni?.length, 0)} assegni`,
       14,
       30
     );
@@ -660,7 +660,7 @@ export default function Commercialista() {
       doc.setFontSize(12);
       doc.setTextColor(76, 175, 80);
       doc.text(
-        `Carnet ${carnet.id} - ${carnet.assegni.length} assegni - ${formatEuroStr(carnet.totale)}`,
+        `Carnet ${carnet.id} - ${carnet?.assegni?.length} assegni - ${formatEuroStr(carnet.totale)}`,
         14,
         currentY
       );
@@ -737,7 +737,7 @@ export default function Commercialista() {
           doc = generateCarnetMultiPDF(carnetData);
           endpoint = '/api/commercialista/invia-carnet';
           payload.carnet_id = carnetData.map(c => c.id).join(', ');
-          payload.assegni_count = carnetData.reduce((sum, c) => sum + c.assegni.length, 0);
+          payload.assegni_count = carnetData.reduce((sum, c) => sum + c?.assegni?.length, 0);
           payload.totale_importo = carnetData.reduce((sum, c) => sum + c.totale, 0);
           break;
         default:
@@ -753,10 +753,10 @@ export default function Commercialista() {
       const res = await api.post(endpoint, payload);
 
       if (res.data.success) {
-        showMessage(`✅ ${res.data.message}`);
+        showMessage(`✅ ${res?.data?.message}`);
         loadConfig(); // Refresh log and alert status
       } else {
-        showMessage(`❌ Errore: ${res.data.message}`, 'error');
+        showMessage(`❌ Errore: ${res?.data?.message}`, 'error');
       }
     } catch (e) {
       showMessage(`❌ Errore invio: ${e.response?.data?.detail || e.message}`, 'error');
@@ -1310,7 +1310,7 @@ export default function Commercialista() {
                                 Carnet {c.id}
                               </div>
                               <div style={{ fontSize: 12, color: '#64748b' }}>
-                                {c.assegni.length} assegni • {formatEuro(c.totale)}
+                                {c?.assegni?.length} assegni • {formatEuro(c.totale)}
                               </div>
                             </div>
                           </label>
@@ -1348,7 +1348,7 @@ export default function Commercialista() {
                           <strong>
                             {carnets
                               .filter(c => selectedCarnets.includes(c.id))
-                              .reduce((sum, c) => sum + c.assegni.length, 0)}
+                              .reduce((sum, c) => sum + c?.assegni?.length, 0)}
                           </strong>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
