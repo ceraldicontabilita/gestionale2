@@ -1,7 +1,17 @@
 import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import api from '../api';
-import { formatEuro, formatDateIT, STYLES, COLORS, button, badge , useIsMobile, RG, pagePad } from '../lib/utils';
+import {
+  formatEuro,
+  formatDateIT,
+  STYLES,
+  COLORS,
+  button,
+  badge,
+  useIsMobile,
+  RG,
+  pagePad,
+} from '../lib/utils';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
 import { ExportButton } from '../components/ExportButton';
 import { PageLayout } from '../components/PageLayout';
@@ -10,7 +20,7 @@ const RiconciliazionePaypalLazy = lazy(() => import('./RiconciliazionePaypal.jsx
 
 /**
  * RICONCILIAZIONE UNIFICATA
- * 
+ *
  * Una sola pagina smart con:
  * - Dashboard riepilogo
  * - Tab: Banca | Assegni | F24 | Fatture Aruba | Stipendi
@@ -35,7 +45,7 @@ export default function RiconciliazioneUnificata() {
   const { anno } = useAnnoGlobale();
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   // Ottieni tab dall'URL (es. /riconciliazione-unificata/banca -> banca)
   const getTabFromPath = () => {
     const path = location.pathname;
@@ -45,14 +55,14 @@ export default function RiconciliazioneUnificata() {
     }
     return 'dashboard';
   };
-  
+
   const [activeTab, setActiveTab] = useState(getTabFromPath());
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [processing, setProcessing] = useState(null);
-  
+
   // Aggiorna URL quando cambia tab
-  const handleTabChange = (tabId) => {
+  const handleTabChange = tabId => {
     setActiveTab(tabId);
     if (tabId === 'dashboard') {
       navigate('/riconciliazione-unificata');
@@ -60,7 +70,7 @@ export default function RiconciliazioneUnificata() {
       navigate(`/riconciliazione-unificata/${tabId}`);
     }
   };
-  
+
   // Sincronizza tab con URL al mount e quando cambia URL
   useEffect(() => {
     const tab = getTabFromPath();
@@ -68,7 +78,7 @@ export default function RiconciliazioneUnificata() {
       setActiveTab(tab);
     }
   }, [location.pathname]);
-  
+
   // Dati per ogni sezione
   const [stats, setStats] = useState({});
   const [movimentiBanca, setMovimentiBanca] = useState([]);
@@ -78,11 +88,11 @@ export default function RiconciliazioneUnificata() {
   const [stipendiPendenti, setStipendiPendenti] = useState([]);
   const [documentiNonAssociati, setDocumentiNonAssociati] = useState([]);
   const [documentiStats, setDocumentiStats] = useState(null);
-  
+
   // Paginazione
   const [currentLimit, setCurrentLimit] = useState(25);
   const [hasMore, setHasMore] = useState(true);
-  
+
   // Filtri avanzati
   const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
@@ -90,27 +100,27 @@ export default function RiconciliazioneUnificata() {
     dataTo: '',
     importoMin: '',
     importoMax: '',
-    search: ''
+    search: '',
   });
-  
+
   // Auto-match stats
   const [autoMatchStats, setAutoMatchStats] = useState({ matched: 0, pending: 0 });
 
   // Applica filtri ai movimenti
-  const applyFilters = (movimenti) => {
+  const applyFilters = movimenti => {
     return movimenti.filter(m => {
       // Usa data o data_emissione
       const dataMovimento = m.data || m.data_emissione;
-      
+
       // Filtro data
       if (filters.dataFrom && dataMovimento < filters.dataFrom) return false;
       if (filters.dataTo && dataMovimento > filters.dataTo) return false;
-      
+
       // Filtro importo
       const importo = Math.abs(parseFloat(m.importo) || 0);
       if (filters.importoMin && importo < parseFloat(filters.importoMin)) return false;
       if (filters.importoMax && importo > parseFloat(filters.importoMax)) return false;
-      
+
       // Filtro ricerca testo
       if (filters.search) {
         const search = filters.search.toLowerCase();
@@ -118,7 +128,7 @@ export default function RiconciliazioneUnificata() {
         const tipo = (m.tipo || '').toLowerCase();
         if (!desc.includes(search) && !tipo.includes(search)) return false;
       }
-      
+
       return true;
     });
   };
@@ -127,7 +137,7 @@ export default function RiconciliazioneUnificata() {
   const movimentiBancaFiltrati = applyFilters(movimentiBanca);
   const assegniFiltrati = applyFilters(assegni);
   const stipendiFiltrati = applyFilters(stipendiPendenti);
-  
+
   // Stato per auto-riparazione
   const [autoRepairStatus, setAutoRepairStatus] = useState(null);
   const [autoRepairRunning, setAutoRepairRunning] = useState(false);
@@ -167,10 +177,18 @@ export default function RiconciliazioneUnificata() {
     try {
       // Carica dati primari: usa /smart/analizza per suggerimenti + assegni da banca-veloce
       const [analizzaRes, assegniRes, arubaRes, stipendiRes] = await Promise.all([
-        api.get(`/api/operazioni-da-confermare/smart/analizza?limit=${limit}`).catch(() => ({ data: { movimenti: [], stats: {} } })),
-        api.get(`/api/operazioni-da-confermare/smart/banca-veloce?limit=50`).catch(() => ({ data: { movimenti: [], stats: {}, assegni: [] } })),
-        api.get('/api/operazioni-da-confermare/aruba-pendenti').catch(() => ({ data: { operazioni: [] } })),
-        api.get('/api/operazioni-da-confermare/smart/cerca-stipendi').catch(() => ({ data: { stipendi: [] } }))
+        api
+          .get(`/api/operazioni-da-confermare/smart/analizza?limit=${limit}`)
+          .catch(() => ({ data: { movimenti: [], stats: {} } })),
+        api
+          .get(`/api/operazioni-da-confermare/smart/banca-veloce?limit=50`)
+          .catch(() => ({ data: { movimenti: [], stats: {}, assegni: [] } })),
+        api
+          .get('/api/operazioni-da-confermare/aruba-pendenti')
+          .catch(() => ({ data: { operazioni: [] } })),
+        api
+          .get('/api/operazioni-da-confermare/smart/cerca-stipendi')
+          .catch(() => ({ data: { stipendi: [] } })),
       ]);
 
       const movimenti = analizzaRes.data?.movimenti || [];
@@ -178,62 +196,76 @@ export default function RiconciliazioneUnificata() {
         ...a,
         numero_assegno: a.numero_assegno || a.numero,
         data: a.data || a.data_emissione,
-        descrizione: a.descrizione || a.causale || a.beneficiario || `Assegno ${a.numero || a.numero_assegno || ''}`
+        descrizione:
+          a.descrizione ||
+          a.causale ||
+          a.beneficiario ||
+          `Assegno ${a.numero || a.numero_assegno || ''}`,
       }));
-      
+
       setHasMore(movimenti.length >= limit);
       setCurrentLimit(limit);
       setStats(assegniRes.data?.stats || analizzaRes.data?.stats || {});
-      
+
       // Movimenti banca (escludi prelievi assegno)
-      setMovimentiBanca(movimenti.filter(m => !m.descrizione?.toUpperCase()?.includes('PRELIEVO ASSEGNO')));
-      
+      setMovimentiBanca(
+        movimenti.filter(m => !m.descrizione?.toUpperCase()?.includes('PRELIEVO ASSEGNO'))
+      );
+
       // Assegni da riconciliare (già filtrati dal backend)
       setAssegni(assegniDaApi);
-      
+
       const stipendi = stipendiRes.data?.stipendi || [];
       const aruba = arubaRes.data?.operazioni || [];
-      
+
       setStipendiPendenti(stipendi);
       setFattureAruba(aruba);
-      
+
       // Aggiorna stats iniziali (F24 caricato su richiesta)
       setStats({
         totale: movimenti.length,
         banca: movimenti.length,
         assegni: assegniDaApi.length,
-        f24: 0,  // Caricato su richiesta manuale
+        f24: 0, // Caricato su richiesta manuale
         aruba: aruba.length,
         stipendi: stipendi.length,
         documenti: 0, // Caricato dopo
-        fatture_da_pagare: assegniRes.data?.stats?.fatture_da_pagare || 0
+        fatture_da_pagare: assegniRes.data?.stats?.fatture_da_pagare || 0,
       });
-      
+
       // Auto-match stats (da analizza)
       setAutoMatchStats({
         matched: analizzaRes.data?.stats?.riconciliati || assegniRes.data?.stats?.riconciliati || 0,
-        pending: analizzaRes.data?.stats?.non_riconciliati || assegniRes.data?.stats?.non_riconciliati || 0
+        pending:
+          analizzaRes.data?.stats?.non_riconciliati ||
+          assegniRes.data?.stats?.non_riconciliati ||
+          0,
       });
-      
+
       setLoading(false);
-      
+
       // F24: RIMOSSO dal caricamento automatico (prendeva ~35s e causava un "reload visivo")
       // Caricato solo quando l'utente apre il tab F24 — vedi loadF24OnDemand()
-      
-      // Carica Documenti Non Associati in background
-      api.get('/api/documenti-non-associati/lista?limit=100').then(docsRes => {
-        const docs = docsRes.data?.documenti || [];
-        setDocumentiNonAssociati(docs);
-        setStats(prev => ({ ...prev, documenti: docs.length }));
-      }).catch(() => {
-        console.warn('Documenti non caricati');
-      });
-      
-      // Carica statistiche documenti
-      api.get('/api/documenti-non-associati/statistiche').then(statsRes => {
-        setDocumentiStats(statsRes.data);
-      }).catch(() => {});
 
+      // Carica Documenti Non Associati in background
+      api
+        .get('/api/documenti-non-associati/lista?limit=100')
+        .then(docsRes => {
+          const docs = docsRes.data?.documenti || [];
+          setDocumentiNonAssociati(docs);
+          setStats(prev => ({ ...prev, documenti: docs.length }));
+        })
+        .catch(() => {
+          console.warn('Documenti non caricati');
+        });
+
+      // Carica statistiche documenti
+      api
+        .get('/api/documenti-non-associati/statistiche')
+        .then(statsRes => {
+          setDocumentiStats(statsRes.data);
+        })
+        .catch(() => {});
     } catch (e) {
       console.error('Errore caricamento:', e);
       setLoading(false);
@@ -245,19 +277,27 @@ export default function RiconciliazioneUnificata() {
     const newLimit = currentLimit + 25;
     setLoadingMore(true);
     try {
-      const bancaRes = await api.get(`/api/operazioni-da-confermare/smart/banca-veloce?limit=${newLimit}`);
+      const bancaRes = await api.get(
+        `/api/operazioni-da-confermare/smart/banca-veloce?limit=${newLimit}`
+      );
       const movimenti = bancaRes.data?.movimenti || [];
       const assegniDaApi = (bancaRes.data?.assegni || []).map(a => ({
         ...a,
         numero_assegno: a.numero_assegno || a.numero,
         data: a.data || a.data_emissione,
-        descrizione: a.descrizione || a.causale || a.beneficiario || `Assegno ${a.numero || a.numero_assegno || ''}`
+        descrizione:
+          a.descrizione ||
+          a.causale ||
+          a.beneficiario ||
+          `Assegno ${a.numero || a.numero_assegno || ''}`,
       }));
-      
+
       setHasMore(movimenti.length >= newLimit);
       setCurrentLimit(newLimit);
-      
-      setMovimentiBanca(movimenti.filter(m => !m.descrizione?.toUpperCase()?.includes('PRELIEVO ASSEGNO')));
+
+      setMovimentiBanca(
+        movimenti.filter(m => !m.descrizione?.toUpperCase()?.includes('PRELIEVO ASSEGNO'))
+      );
       setAssegni(assegniDaApi);
       setStats(bancaRes.data?.stats || {});
     } catch (e) {
@@ -288,7 +328,7 @@ export default function RiconciliazioneUnificata() {
   const handleAutoRiconcilia = async () => {
     setProcessing('auto');
     let matched = 0;
-    
+
     try {
       // 1. Auto-conferma POS e commissioni
       const autoMovs = movimentiBanca.filter(m => m.associazione_automatica);
@@ -298,18 +338,19 @@ export default function RiconciliazioneUnificata() {
             movimento_id: m.movimento_id,
             tipo: m.tipo,
             associazioni: m.suggerimenti?.slice(0, 1) || [],
-            categoria: m.categoria
+            categoria: m.categoria,
           });
           matched++;
         } catch (e) {
           console.error('Errore auto-riconcilia:', e);
         }
       }
-      
+
       // 2. Auto-conferma assegni con match esatto
-      const assegniExact = assegni.filter(m => 
-        m.suggerimenti?.length > 0 &&
-        Math.abs(Math.abs(m.importo) - Math.abs(m.suggerimenti[0]?.importo || 0)) < 0.01
+      const assegniExact = assegni.filter(
+        m =>
+          m.suggerimenti?.length > 0 &&
+          Math.abs(Math.abs(m.importo) - Math.abs(m.suggerimenti[0]?.importo || 0)) < 0.01
       );
       for (const m of assegniExact) {
         try {
@@ -317,18 +358,17 @@ export default function RiconciliazioneUnificata() {
             movimento_id: m.movimento_id,
             tipo: m.tipo,
             associazioni: m.suggerimenti?.slice(0, 1) || [],
-            categoria: m.categoria
+            categoria: m.categoria,
           });
           matched++;
         } catch (e) {
           console.error('Errore auto-riconcilia assegno:', e);
         }
       }
-      
+
       setAutoMatchStats({ matched, pending: stats.totale - matched });
       alert(`✅ Auto-riconciliati ${matched} movimenti`);
       loadAllData();
-      
     } catch (e) {
       alert('Errore: ' + e.message);
     } finally {
@@ -344,7 +384,7 @@ export default function RiconciliazioneUnificata() {
         movimento_id: movimento.movimento_id,
         tipo: tipo || movimento.tipo,
         associazioni: associazioni || movimento.suggerimenti?.slice(0, 1) || [],
-        categoria: movimento.categoria
+        categoria: movimento.categoria,
       });
       loadAllData();
     } catch (e) {
@@ -360,7 +400,7 @@ export default function RiconciliazioneUnificata() {
     try {
       await api.post(`/api/operazioni-da-confermare/${op.id}/conferma`, {
         operazione_id: op.id,
-        metodo_pagamento: metodo
+        metodo_pagamento: metodo,
       });
       loadAllData();
     } catch (e) {
@@ -371,11 +411,11 @@ export default function RiconciliazioneUnificata() {
   };
 
   // Ignora movimento
-  const handleIgnora = async (movimento) => {
+  const handleIgnora = async movimento => {
     setProcessing(movimento.movimento_id || movimento.id);
     try {
-      await api.post('/api/operazioni-da-confermare/smart/ignora', { 
-        movimento_id: movimento.movimento_id 
+      await api.post('/api/operazioni-da-confermare/smart/ignora', {
+        movimento_id: movimento.movimento_id,
       });
       loadAllData();
     } catch (e) {
@@ -386,17 +426,17 @@ export default function RiconciliazioneUnificata() {
   };
 
   // Elimina movimento (rimuove completamente dal database)
-  const handleElimina = async (movimento) => {
+  const handleElimina = async movimento => {
     const movId = movimento.id || movimento.movimento_id;
     if (!movId) {
       alert('ID movimento non trovato');
       return;
     }
-    
+
     if (!window.confirm('Eliminare definitivamente questo movimento?')) {
       return;
     }
-    
+
     setProcessing(movId);
     try {
       await api.delete(`/api/estratto-conto-movimenti/${movId}`);
@@ -409,12 +449,12 @@ export default function RiconciliazioneUnificata() {
   };
 
   // Incassa assegno (segna come incassato e crea movimento in Prima Nota Banca)
-  const handleIncassaAssegno = async (assegno) => {
+  const handleIncassaAssegno = async assegno => {
     setProcessing(assegno.id);
     try {
       // 1. Segna assegno come incassato
       await api.post(`/api/assegni/${assegno.id}/incassa`);
-      
+
       // 2. Se vuoi anche creare movimento in Prima Nota Banca, decommentare:
       // await api.post('/api/prima-nota-banca/crea', {
       //   data: assegno.data || new Date().toISOString().split('T')[0],
@@ -423,7 +463,7 @@ export default function RiconciliazioneUnificata() {
       //   descrizione: `Assegno ${assegno.numero || ''} - ${assegno.beneficiario || ''}`,
       //   categoria: 'assegno'
       // });
-      
+
       loadAllData();
     } catch (e) {
       alert('Errore: ' + (e.response?.data?.detail || e.message));
@@ -438,15 +478,17 @@ export default function RiconciliazioneUnificata() {
     try {
       const res = await api.post('/api/riconciliazione-auto/assegna-metodi-aruba');
       const data = res.data;
-      
-      alert(`✅ Assegnazione completata!\n\n` +
-        `📊 Risultati:\n` +
-        `• Bonifico: ${data.assegnate_bonifico || 0}\n` +
-        `• Assegno: ${data.assegnate_assegno || 0}\n` +
-        `• Cassa: ${data.assegnate_cassa || 0}\n` +
-        `• Sospese: ${data.lasciate_sospese || 0}\n` +
-        `\n📅 Ultimo estratto conto: ${data.data_ultimo_estratto_conto || 'N/D'}`);
-      
+
+      alert(
+        `✅ Assegnazione completata!\n\n` +
+          `📊 Risultati:\n` +
+          `• Bonifico: ${data.assegnate_bonifico || 0}\n` +
+          `• Assegno: ${data.assegnate_assegno || 0}\n` +
+          `• Cassa: ${data.assegnate_cassa || 0}\n` +
+          `• Sospese: ${data.lasciate_sospese || 0}\n` +
+          `\n📅 Ultimo estratto conto: ${data.data_ultimo_estratto_conto || 'N/D'}`
+      );
+
       loadAllData();
     } catch (e) {
       alert('Errore: ' + (e.response?.data?.detail || e.message));
@@ -459,16 +501,18 @@ export default function RiconciliazioneUnificata() {
     return (
       <div style={{ padding: 'clamp(12px, 3vw, 20px)' }}>
         {/* Header con Gradiente anche durante il caricamento */}
-        <div style={{ 
-          marginBottom: 20, 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          padding: '15px 20px',
-          background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
-          borderRadius: 12,
-          color: 'white'
-        }}>
+        <div
+          style={{
+            marginBottom: 20,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '15px 20px',
+            background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
+            borderRadius: 12,
+            color: 'white',
+          }}
+        >
           <div>
             <h1 style={{ margin: 0, fontSize: 'clamp(18px, 4vw, 22px)', fontWeight: 'bold' }}>
               🔗 Riconciliazione Unificata
@@ -488,16 +532,17 @@ export default function RiconciliazioneUnificata() {
 
   return (
     <div style={{ position: 'relative', padding: '16px' }}>
-      
       {/* Action Bar - senza cornice blu */}
-      <div style={{ 
-        marginBottom: 16, 
-        display: 'flex', 
-        justifyContent: 'flex-end', 
-        alignItems: 'center', 
-        flexWrap: 'wrap', 
-        gap: 8
-      }}>
+      <div
+        style={{
+          marginBottom: 16,
+          display: 'flex',
+          justifyContent: 'flex-end',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 8,
+        }}
+      >
         <button
           onClick={eseguiAutoRiparazione}
           disabled={autoRepairRunning}
@@ -516,130 +561,176 @@ export default function RiconciliazioneUnificata() {
           {autoRepairRunning ? '⏳ Riparazione...' : '🔧 Auto-Ripara'}
         </button>
         {autoRepairStatus && autoRepairStatus.riconciliazioni_auto > 0 && (
-          <span style={{ 
-            padding: '6px 10px', 
-            background: '#dcfce7', 
-            color: '#16a34a', 
-            borderRadius: 6, 
-            fontSize: 11,
-            fontWeight: 600,
-          }}>
+          <span
+            style={{
+              padding: '6px 10px',
+              background: '#dcfce7',
+              color: '#16a34a',
+              borderRadius: 6,
+              fontSize: 11,
+              fontWeight: 600,
+            }}
+          >
             ✓ {autoRepairStatus.riconciliazioni_auto} riparazioni
           </span>
         )}
-        
+
         {/* Pulsante Auto-Riconcilia */}
-          <button
-            onClick={handleAutoRiconcilia}
-            disabled={processing}
-            style={{
-              padding: '10px 20px',
-              background: '#10b981',
-              color: 'white',
-              border: 'none',
-              borderRadius: 8,
-              fontWeight: 600,
-              cursor: 'pointer'
-            }}
-          >
-            {processing === 'auto' ? '⏳' : '⚡'} Auto-Riconcilia
-          </button>
-          <button
-            onClick={loadAllData}
-            disabled={processing}
-            style={{
-              padding: '10px 16px',
-              background: 'rgba(255,255,255,0.9)',
-              color: '#1e3a5f',
-              border: 'none',
-              borderRadius: 8,
-              cursor: 'pointer',
-              fontWeight: 600
-            }}
-          >
-            🔄 Aggiorna
-          </button>
-          
-          {/* Bottone Filtri */}
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            style={{
-              padding: '10px 16px',
-              background: showFilters ? '#3b82f6' : '#f1f5f9',
-              color: showFilters ? 'white' : '#374151',
-              border: 'none',
-              borderRadius: 8,
-              cursor: 'pointer',
-              fontWeight: 600
-            }}
-          >
-            🔍 Filtri {showFilters ? '▲' : '▼'}
-          </button>
+        <button
+          onClick={handleAutoRiconcilia}
+          disabled={processing}
+          style={{
+            padding: '10px 20px',
+            background: '#10b981',
+            color: 'white',
+            border: 'none',
+            borderRadius: 8,
+            fontWeight: 600,
+            cursor: 'pointer',
+          }}
+        >
+          {processing === 'auto' ? '⏳' : '⚡'} Auto-Riconcilia
+        </button>
+        <button
+          onClick={loadAllData}
+          disabled={processing}
+          style={{
+            padding: '10px 16px',
+            background: 'rgba(255,255,255,0.9)',
+            color: '#1e3a5f',
+            border: 'none',
+            borderRadius: 8,
+            cursor: 'pointer',
+            fontWeight: 600,
+          }}
+        >
+          🔄 Aggiorna
+        </button>
+
+        {/* Bottone Filtri */}
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          style={{
+            padding: '10px 16px',
+            background: showFilters ? '#3b82f6' : '#f1f5f9',
+            color: showFilters ? 'white' : '#374151',
+            border: 'none',
+            borderRadius: 8,
+            cursor: 'pointer',
+            fontWeight: 600,
+          }}
+        >
+          🔍 Filtri {showFilters ? '▲' : '▼'}
+        </button>
       </div>
 
       {/* Pannello Filtri Avanzati */}
       {showFilters && (
-        <div style={{
-          background: 'white',
-          borderRadius: 12,
-          padding: 16,
-          marginBottom: 16,
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-          gap: 12
-        }}>
+        <div
+          style={{
+            background: 'white',
+            borderRadius: 12,
+            padding: 16,
+            marginBottom: 16,
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: 12,
+          }}
+        >
           <div>
-            <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 4 }}>📅 Data Da</label>
+            <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 4 }}>
+              📅 Data Da
+            </label>
             <input
               type="date"
               value={filters.dataFrom}
-              onChange={(e) => setFilters({...filters, dataFrom: e.target.value})}
-              style={{ width: '100%', padding: 8, border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13 }}
+              onChange={e => setFilters({ ...filters, dataFrom: e.target.value })}
+              style={{
+                width: '100%',
+                padding: 8,
+                border: '1px solid #e5e7eb',
+                borderRadius: 6,
+                fontSize: 13,
+              }}
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 4 }}>📅 Data A</label>
+            <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 4 }}>
+              📅 Data A
+            </label>
             <input
               type="date"
               value={filters.dataTo}
-              onChange={(e) => setFilters({...filters, dataTo: e.target.value})}
-              style={{ width: '100%', padding: 8, border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13 }}
+              onChange={e => setFilters({ ...filters, dataTo: e.target.value })}
+              style={{
+                width: '100%',
+                padding: 8,
+                border: '1px solid #e5e7eb',
+                borderRadius: 6,
+                fontSize: 13,
+              }}
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 4 }}>Importo Min (€)</label>
+            <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 4 }}>
+              Importo Min (€)
+            </label>
             <input
               type="number"
               placeholder="0"
               value={filters.importoMin}
-              onChange={(e) => setFilters({...filters, importoMin: e.target.value})}
-              style={{ width: '100%', padding: 8, border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13 }}
+              onChange={e => setFilters({ ...filters, importoMin: e.target.value })}
+              style={{
+                width: '100%',
+                padding: 8,
+                border: '1px solid #e5e7eb',
+                borderRadius: 6,
+                fontSize: 13,
+              }}
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 4 }}>Importo Max (€)</label>
+            <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 4 }}>
+              Importo Max (€)
+            </label>
             <input
               type="number"
               placeholder="999999"
               value={filters.importoMax}
-              onChange={(e) => setFilters({...filters, importoMax: e.target.value})}
-              style={{ width: '100%', padding: 8, border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13 }}
+              onChange={e => setFilters({ ...filters, importoMax: e.target.value })}
+              style={{
+                width: '100%',
+                padding: 8,
+                border: '1px solid #e5e7eb',
+                borderRadius: 6,
+                fontSize: 13,
+              }}
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 4 }}>🔎 Cerca</label>
+            <label style={{ display: 'block', fontSize: 12, color: '#64748b', marginBottom: 4 }}>
+              🔎 Cerca
+            </label>
             <input
               type="text"
               placeholder="Descrizione, tipo..."
               value={filters.search}
-              onChange={(e) => setFilters({...filters, search: e.target.value})}
-              style={{ width: '100%', padding: 8, border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13 }}
+              onChange={e => setFilters({ ...filters, search: e.target.value })}
+              style={{
+                width: '100%',
+                padding: 8,
+                border: '1px solid #e5e7eb',
+                borderRadius: 6,
+                fontSize: 13,
+              }}
             />
           </div>
           <div style={{ display: 'flex', alignItems: 'flex-end' }}>
             <button
-              onClick={() => setFilters({ dataFrom: '', dataTo: '', importoMin: '', importoMax: '', search: '' })}
+              onClick={() =>
+                setFilters({ dataFrom: '', dataTo: '', importoMin: '', importoMax: '', search: '' })
+              }
               style={{
                 padding: '8px 16px',
                 background: '#fee2e2',
@@ -648,7 +739,7 @@ export default function RiconciliazioneUnificata() {
                 borderRadius: 6,
                 cursor: 'pointer',
                 fontWeight: 600,
-                fontSize: 13
+                fontSize: 13,
               }}
             >
               ✕ Reset
@@ -658,16 +749,18 @@ export default function RiconciliazioneUnificata() {
       )}
 
       {/* Tab Navigation */}
-      <div style={{ 
-        display: 'flex', 
-        gap: 8, 
-        marginBottom: 20, 
-        flexWrap: 'wrap',
-        background: 'white',
-        padding: 8,
-        borderRadius: 12,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          gap: 8,
+          marginBottom: 20,
+          flexWrap: 'wrap',
+          background: 'white',
+          padding: 8,
+          borderRadius: 12,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        }}
+      >
         {TABS.map(tab => {
           const count = tab.id === 'dashboard' ? null : stats[tab.id] || 0;
           return (
@@ -685,18 +778,20 @@ export default function RiconciliazioneUnificata() {
                 fontSize: 13,
                 display: 'flex',
                 alignItems: 'center',
-                gap: 8
+                gap: 8,
               }}
             >
               {tab.label}
               {count !== null && (
-                <span style={{
-                  background: activeTab === tab.id ? 'rgba(255,255,255,0.3)' : tab.color,
-                  color: activeTab === tab.id ? 'white' : 'white',
-                  padding: '2px 8px',
-                  borderRadius: 10,
-                  fontSize: 11
-                }}>
+                <span
+                  style={{
+                    background: activeTab === tab.id ? 'rgba(255,255,255,0.3)' : tab.color,
+                    color: activeTab === tab.id ? 'white' : 'white',
+                    padding: '2px 8px',
+                    borderRadius: 10,
+                    fontSize: 11,
+                  }}
+                >
                   {count}
                 </span>
               )}
@@ -706,13 +801,20 @@ export default function RiconciliazioneUnificata() {
       </div>
 
       {/* Tab Content */}
-      <div style={{ background: 'white', borderRadius: 12, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
+      <div
+        style={{
+          background: 'white',
+          borderRadius: 12,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          overflow: 'hidden',
+        }}
+      >
         {activeTab === 'dashboard' && (
           <DashboardTab stats={stats} autoMatchStats={autoMatchStats} />
         )}
         {activeTab === 'banca' && (
-          <MovimentiTab 
-            movimenti={movimentiBancaFiltrati} 
+          <MovimentiTab
+            movimenti={movimentiBancaFiltrati}
             onConferma={handleConferma}
             onIgnora={handleIgnora}
             onElimina={handleElimina}
@@ -722,8 +824,8 @@ export default function RiconciliazioneUnificata() {
           />
         )}
         {activeTab === 'assegni' && (
-          <MovimentiTab 
-            movimenti={assegniFiltrati} 
+          <MovimentiTab
+            movimenti={assegniFiltrati}
             onConferma={handleIncassaAssegno}
             onIgnora={handleIgnora}
             onElimina={handleElimina}
@@ -734,10 +836,15 @@ export default function RiconciliazioneUnificata() {
           />
         )}
         {activeTab === 'f24' && (
-          <F24Tab f24={f24Pendenti} processing={processing} onLoadF24={loadF24OnDemand} f24Loading={f24Loading} />
+          <F24Tab
+            f24={f24Pendenti}
+            processing={processing}
+            onLoadF24={loadF24OnDemand}
+            f24Loading={f24Loading}
+          />
         )}
         {activeTab === 'aruba' && (
-          <ArubaTab 
+          <ArubaTab
             fatture={fattureAruba}
             onConferma={handleConfermaAruba}
             processing={processing}
@@ -747,8 +854,8 @@ export default function RiconciliazioneUnificata() {
           />
         )}
         {activeTab === 'stipendi' && (
-          <MovimentiTab 
-            movimenti={stipendiFiltrati} 
+          <MovimentiTab
+            movimenti={stipendiFiltrati}
             onConferma={handleConferma}
             onIgnora={handleIgnora}
             onElimina={handleElimina}
@@ -758,7 +865,7 @@ export default function RiconciliazioneUnificata() {
           />
         )}
         {activeTab === 'documenti' && (
-          <DocumentiTab 
+          <DocumentiTab
             documenti={documentiNonAssociati}
             stats={documentiStats}
             onRefresh={loadAllData}
@@ -766,12 +873,24 @@ export default function RiconciliazioneUnificata() {
           />
         )}
         {activeTab === 'paypal' && (
-          <Suspense fallback={
-            <div style={{ padding: 40, textAlign: 'center', color: '#6b7280' }}>
-              <div style={{ width: 36, height: 36, border: '3px solid #e2e8f0', borderTop: '3px solid #003087', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 12px' }} />
-              Caricamento PayPal...
-            </div>
-          }>
+          <Suspense
+            fallback={
+              <div style={{ padding: 40, textAlign: 'center', color: '#6b7280' }}>
+                <div
+                  style={{
+                    width: 36,
+                    height: 36,
+                    border: '3px solid #e2e8f0',
+                    borderTop: '3px solid #003087',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
+                    margin: '0 auto 12px',
+                  }}
+                />
+                Caricamento PayPal...
+              </div>
+            }
+          >
             <div style={{ padding: 20 }}>
               <RiconciliazionePaypalLazy />
             </div>
@@ -794,7 +913,7 @@ export default function RiconciliazioneUnificata() {
               fontWeight: 600,
               fontSize: 14,
               cursor: loadingMore ? 'wait' : 'pointer',
-              transition: 'all 0.2s'
+              transition: 'all 0.2s',
             }}
           >
             {loadingMore ? '⏳ Caricamento...' : `📥 Carica altri (${currentLimit} caricati)`}
@@ -812,28 +931,32 @@ export default function RiconciliazioneUnificata() {
 function DashboardTab({ stats, autoMatchStats }) {
   return (
     <div style={{ padding: 24, textAlign: 'center' }}>
-      <div style={{ 
-        padding: 40, 
-        background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', 
-        borderRadius: 16, 
-        color: 'white',
-        maxWidth: 500,
-        margin: '0 auto'
-      }}>
+      <div
+        style={{
+          padding: 40,
+          background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+          borderRadius: 16,
+          color: 'white',
+          maxWidth: 500,
+          margin: '0 auto',
+        }}
+      >
         <div style={{ fontSize: 48, marginBottom: 16 }}>📊</div>
         <div style={{ fontSize: 20, fontWeight: 600, marginBottom: 8 }}>Riconciliazione</div>
         <div style={{ fontSize: 14, opacity: 0.9, marginBottom: 16 }}>
           Seleziona una sezione dal menu per iniziare la riconciliazione
         </div>
         {autoMatchStats.matched > 0 && (
-          <div style={{ 
-            fontSize: 13, 
-            marginTop: 16, 
-            padding: '8px 16px',
-            background: 'rgba(255,255,255,0.2)',
-            borderRadius: 8,
-            display: 'inline-block'
-          }}>
+          <div
+            style={{
+              fontSize: 13,
+              marginTop: 16,
+              padding: '8px 16px',
+              background: 'rgba(255,255,255,0.2)',
+              borderRadius: 8,
+              display: 'inline-block',
+            }}
+          >
             ✅ {autoMatchStats.matched} elementi auto-riconciliati
           </div>
         )}
@@ -842,7 +965,16 @@ function DashboardTab({ stats, autoMatchStats }) {
   );
 }
 
-function MovimentiTab({ movimenti, onConferma, onIgnora, onElimina, processing, title, emptyText, showFattura }) {
+function MovimentiTab({
+  movimenti,
+  onConferma,
+  onIgnora,
+  onElimina,
+  processing,
+  title,
+  emptyText,
+  showFattura,
+}) {
   if (movimenti.length === 0) {
     return (
       <div style={{ padding: 60, textAlign: 'center', color: '#94a3b8' }}>
@@ -855,11 +987,13 @@ function MovimentiTab({ movimenti, onConferma, onIgnora, onElimina, processing, 
   return (
     <div>
       <div style={{ padding: 16, background: '#f8fafc', borderBottom: '1px solid #e5e7eb' }}>
-        <h3 style={{ margin: 0, fontSize: 16 }}>{title} ({movimenti.length})</h3>
+        <h3 style={{ margin: 0, fontSize: 16 }}>
+          {title} ({movimenti.length})
+        </h3>
       </div>
       <div style={{ maxHeight: 800, overflow: 'auto' }}>
         {movimenti.map((m, idx) => (
-          <MovimentoCard 
+          <MovimentoCard
             key={m.movimento_id || m.id || idx}
             movimento={m}
             onConferma={onConferma}
@@ -877,129 +1011,192 @@ function MovimentiTab({ movimenti, onConferma, onIgnora, onElimina, processing, 
 function MovimentoCard({ movimento, onConferma, onIgnora, onElimina, processing, showFattura }) {
   const suggerimento = movimento.suggerimenti?.[0];
   const hasMatch = movimento.associazione_automatica && suggerimento;
-  
+
   // Estrai info extra dal movimento
-  const ragioneSociale = movimento.ragione_sociale || movimento.fornitore || movimento.dipendente?.nome_completo || movimento.dipendente || movimento.nome_estratto;
+  const ragioneSociale =
+    movimento.ragione_sociale ||
+    movimento.fornitore ||
+    movimento.dipendente?.nome_completo ||
+    movimento.dipendente ||
+    movimento.nome_estratto;
   const numeroFattura = movimento.numero_fattura || movimento.fattura_collegata;
   const datiIncompleti = movimento.dati_incompleti || movimento.stato === 'vuoto';
 
   return (
-    <div style={{ 
-      padding: 16, 
-      borderBottom: '1px solid #f1f5f9',
-      opacity: processing ? 0.5 : 1,
-      background: hasMatch ? '#f0fdf4' : datiIncompleti ? '#fef3c7' : 'white'
-    }}>
+    <div
+      style={{
+        padding: 16,
+        borderBottom: '1px solid #f1f5f9',
+        opacity: processing ? 0.5 : 1,
+        background: hasMatch ? '#f0fdf4' : datiIncompleti ? '#fef3c7' : 'white',
+      }}
+    >
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <div style={{ 
-          width: 44, height: 44, borderRadius: 10, 
-          background: hasMatch ? '#dcfce7' : datiIncompleti ? '#fef3c7' : ragioneSociale ? '#e0f2fe' : '#f1f5f9',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 20
-        }}>
+        <div
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 10,
+            background: hasMatch
+              ? '#dcfce7'
+              : datiIncompleti
+                ? '#fef3c7'
+                : ragioneSociale
+                  ? '#e0f2fe'
+                  : '#f1f5f9',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 20,
+          }}
+        >
           {hasMatch ? '✅' : datiIncompleti ? '⚠️' : ragioneSociale ? '👤' : '📝'}
         </div>
-        
+
         <div style={{ flex: 1 }}>
           {/* NOME DIPENDENTE/FORNITORE - In evidenza */}
           {ragioneSociale && (
-            <div style={{ 
-              fontWeight: 700, 
-              fontSize: 15, 
-              color: '#1e293b',
-              marginBottom: 4
-            }}>
+            <div
+              style={{
+                fontWeight: 700,
+                fontSize: 15,
+                color: '#1e293b',
+                marginBottom: 4,
+              }}
+            >
               {ragioneSociale}
             </div>
           )}
-          
-          <div style={{ fontWeight: 500, fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, color: '#64748b' }}>
-            <span>{(movimento.data || movimento.data_emissione) ? formatDateIT(movimento.data || movimento.data_emissione) : 'Data N/D'}</span>
+
+          <div
+            style={{
+              fontWeight: 500,
+              fontSize: 13,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              color: '#64748b',
+            }}
+          >
+            <span>
+              {movimento.data || movimento.data_emissione
+                ? formatDateIT(movimento.data || movimento.data_emissione)
+                : 'Data N/D'}
+            </span>
             <span>•</span>
-            <span style={{ color: movimento.importo < 0 ? '#dc2626' : '#15803d', fontWeight: 700, fontSize: 15 }}>
+            <span
+              style={{
+                color: movimento.importo < 0 ? '#dc2626' : '#15803d',
+                fontWeight: 700,
+                fontSize: 15,
+              }}
+            >
               {movimento.importo ? formatEuro(Math.abs(movimento.importo)) : '€ 0,00'}
             </span>
             {movimento.periodo && (
               <>
                 <span>•</span>
-                <span style={{ fontSize: 11, color: '#64748b' }}>Periodo: {movimento.periodo || movimento.mese_riferimento}</span>
+                <span style={{ fontSize: 11, color: '#64748b' }}>
+                  Periodo: {movimento.periodo || movimento.mese_riferimento}
+                </span>
               </>
             )}
             {datiIncompleti && (
-              <span style={{ 
-                fontSize: 10, 
-                padding: '2px 6px', 
-                background: '#fef3c7', 
-                color: '#92400e',
-                borderRadius: 4,
-                fontWeight: 500
-              }}>
+              <span
+                style={{
+                  fontSize: 10,
+                  padding: '2px 6px',
+                  background: '#fef3c7',
+                  color: '#92400e',
+                  borderRadius: 4,
+                  fontWeight: 500,
+                }}
+              >
                 DATI INCOMPLETI
               </span>
             )}
           </div>
-          
+
           {/* Descrizione */}
           <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>
-            {movimento.descrizione?.substring(0, 100) || movimento.descrizione_originale?.substring(0, 100) || '-'}
+            {movimento.descrizione?.substring(0, 100) ||
+              movimento.descrizione_originale?.substring(0, 100) ||
+              '-'}
           </div>
-          
+
           {/* Numero Fattura */}
           {numeroFattura && (
-            <div style={{ 
-              marginTop: 2, 
-              fontSize: 11, 
-              color: '#8b5cf6'
-            }}>
+            <div
+              style={{
+                marginTop: 2,
+                fontSize: 11,
+                color: '#8b5cf6',
+              }}
+            >
               📄 Fattura: {numeroFattura}
             </div>
           )}
-          
+
           {/* Info assegno se presente */}
           {movimento.numero_assegno && (
-            <div style={{ 
-              marginTop: 4, 
-              fontSize: 11, 
-              color: '#f59e0b',
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 8,
-              alignItems: 'center'
-            }}>
+            <div
+              style={{
+                marginTop: 4,
+                fontSize: 11,
+                color: '#f59e0b',
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 8,
+                alignItems: 'center',
+              }}
+            >
               <span>📝 Assegno N. {movimento.numero_assegno}</span>
               <span>• Stato: {movimento.stato || 'N/D'}</span>
               {movimento.beneficiario && (
-                <span style={{ color: '#3b82f6', fontWeight: 600 }}>• 👤 {movimento.beneficiario}</span>
+                <span style={{ color: '#3b82f6', fontWeight: 600 }}>
+                  • 👤 {movimento.beneficiario}
+                </span>
               )}
               {movimento.fornitore && !movimento.beneficiario && (
-                <span style={{ color: '#3b82f6', fontWeight: 600 }}>• 👤 {movimento.fornitore}</span>
+                <span style={{ color: '#3b82f6', fontWeight: 600 }}>
+                  • 👤 {movimento.fornitore}
+                </span>
               )}
             </div>
           )}
-          
+
           {/* Confronto importi per assegni con fattura */}
           {movimento.numero_assegno && movimento.numero_fattura && (
-            <div style={{ 
-              marginTop: 6,
-              padding: '6px 10px',
-              background: '#fef3c7',
-              borderRadius: 6,
-              fontSize: 11,
-              display: 'inline-flex',
-              flexWrap: 'wrap',
-              gap: 12,
-              alignItems: 'center'
-            }}>
-              <span><b>Assegno:</b> {formatEuro(Math.abs(movimento.importo || 0))}</span>
+            <div
+              style={{
+                marginTop: 6,
+                padding: '6px 10px',
+                background: '#fef3c7',
+                borderRadius: 6,
+                fontSize: 11,
+                display: 'inline-flex',
+                flexWrap: 'wrap',
+                gap: 12,
+                alignItems: 'center',
+              }}
+            >
+              <span>
+                <b>Assegno:</b> {formatEuro(Math.abs(movimento.importo || 0))}
+              </span>
               {movimento.importo_fattura !== undefined && (
                 <>
                   <span>•</span>
-                  <span>📄 <b>Fattura:</b> {formatEuro(Math.abs(movimento.importo_fattura || 0))}</span>
+                  <span>
+                    📄 <b>Fattura:</b> {formatEuro(Math.abs(movimento.importo_fattura || 0))}
+                  </span>
                   {Math.abs((movimento.importo || 0) - (movimento.importo_fattura || 0)) > 0.01 && (
                     <>
                       <span>•</span>
                       <span style={{ color: '#dc2626', fontWeight: 600 }}>
-                        ⚠️ Diff: {formatEuro(Math.abs((movimento.importo || 0) - (movimento.importo_fattura || 0)))}
+                        ⚠️ Diff:{' '}
+                        {formatEuro(
+                          Math.abs((movimento.importo || 0) - (movimento.importo_fattura || 0))
+                        )}
                       </span>
                     </>
                   )}
@@ -1007,16 +1204,18 @@ function MovimentoCard({ movimento, onConferma, onIgnora, onElimina, processing,
               )}
               {/* Info pagamento rateale */}
               {movimento.info_rate && movimento.info_rate.numero_rate > 1 && (
-                <div style={{ 
-                  width: '100%', 
-                  marginTop: 4,
-                  padding: '4px 8px',
-                  background: '#dbeafe',
-                  borderRadius: 4,
-                  color: '#1e40af'
-                }}>
-                  📊 <b>Pagamento in {movimento.info_rate.numero_rate} rate</b>: 
-                  Totale rate {formatEuro(movimento.info_rate.totale_rate)} 
+                <div
+                  style={{
+                    width: '100%',
+                    marginTop: 4,
+                    padding: '4px 8px',
+                    background: '#dbeafe',
+                    borderRadius: 4,
+                    color: '#1e40af',
+                  }}
+                >
+                  📊 <b>Pagamento in {movimento.info_rate.numero_rate} rate</b>: Totale rate{' '}
+                  {formatEuro(movimento.info_rate.totale_rate)}
                   {movimento.importo_fattura > 0 && (
                     <span> su fattura di {formatEuro(movimento.importo_fattura)}</span>
                   )}
@@ -1024,41 +1223,48 @@ function MovimentoCard({ movimento, onConferma, onIgnora, onElimina, processing,
               )}
               {/* Nota TD24 */}
               {movimento.nota_td24 && (
-                <div style={{ 
-                  width: '100%', 
-                  marginTop: 4,
-                  padding: '4px 8px',
-                  background: '#fce7f3',
-                  borderRadius: 4,
-                  color: '#9d174d'
-                }}>
+                <div
+                  style={{
+                    width: '100%',
+                    marginTop: 4,
+                    padding: '4px 8px',
+                    background: '#fce7f3',
+                    borderRadius: 4,
+                    color: '#9d174d',
+                  }}
+                >
                   ℹ️ {movimento.nota_td24}
                 </div>
               )}
             </div>
           )}
-          
+
           {/* Info beneficiario per assegni senza numero */}
           {!movimento.numero_assegno && movimento.beneficiario && (
-            <div style={{ 
-              marginTop: 2, 
-              fontSize: 11, 
-              color: '#f59e0b'
-            }}>
+            <div
+              style={{
+                marginTop: 2,
+                fontSize: 11,
+                color: '#f59e0b',
+              }}
+            >
               👤 Beneficiario: {movimento.beneficiario}
             </div>
           )}
-          
+
           {hasMatch && suggerimento && (
-            <div style={{ 
-              marginTop: 8, 
-              padding: '6px 10px', 
-              background: '#dcfce7', 
-              borderRadius: 6,
-              fontSize: 12,
-              display: 'inline-block'
-            }}>
-              🔗 {suggerimento.fornitore || suggerimento.nome || suggerimento.dipendente || 'Match'}: {formatEuro(suggerimento.importo || 0)}
+            <div
+              style={{
+                marginTop: 8,
+                padding: '6px 10px',
+                background: '#dcfce7',
+                borderRadius: 6,
+                fontSize: 12,
+                display: 'inline-block',
+              }}
+            >
+              🔗 {suggerimento.fornitore || suggerimento.nome || suggerimento.dipendente || 'Match'}
+              : {formatEuro(suggerimento.importo || 0)}
             </div>
           )}
         </div>
@@ -1075,7 +1281,7 @@ function MovimentoCard({ movimento, onConferma, onIgnora, onElimina, processing,
               borderRadius: 6,
               fontWeight: 600,
               cursor: 'pointer',
-              fontSize: 12
+              fontSize: 12,
             }}
           >
             {processing ? '⏳' : '✓'} Conferma
@@ -1090,7 +1296,7 @@ function MovimentoCard({ movimento, onConferma, onIgnora, onElimina, processing,
               border: 'none',
               borderRadius: 6,
               cursor: 'pointer',
-              fontSize: 12
+              fontSize: 12,
             }}
           >
             ✕
@@ -1108,7 +1314,7 @@ function MovimentoCard({ movimento, onConferma, onIgnora, onElimina, processing,
                 border: 'none',
                 borderRadius: 6,
                 cursor: 'pointer',
-                fontSize: 12
+                fontSize: 12,
               }}
             >
               🗑️
@@ -1124,10 +1330,10 @@ function F24Tab({ f24, onConfermaF24, processing, onLoadF24, f24Loading }) {
   const [selezionati, setSelezionati] = useState(new Set());
   const [metodoBatch, setMetodoBatch] = useState('banca');
   const [salvandoBatch, setSalvandoBatch] = useState(false);
-  
+
   // Filtra F24 con importo > 0
   const f24Validi = f24.filter(f => (f.importo_totale || f.importo || 0) > 0);
-  
+
   if (f24Validi.length === 0) {
     return (
       <div style={{ padding: 60, textAlign: 'center', color: '#94a3b8' }}>
@@ -1138,7 +1344,16 @@ function F24Tab({ f24, onConfermaF24, processing, onLoadF24, f24Loading }) {
             data-testid="btn-carica-f24"
             onClick={onLoadF24}
             disabled={f24Loading}
-            style={{ marginTop: 16, padding: '10px 20px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: 8, cursor: f24Loading ? 'wait' : 'pointer', fontWeight: 600 }}
+            style={{
+              marginTop: 16,
+              padding: '10px 20px',
+              background: '#3b82f6',
+              color: 'white',
+              border: 'none',
+              borderRadius: 8,
+              cursor: f24Loading ? 'wait' : 'pointer',
+              fontWeight: 600,
+            }}
           >
             {f24Loading ? '⏳ Caricamento F24...' : '🔍 Carica F24 pendenti'}
           </button>
@@ -1152,7 +1367,7 @@ function F24Tab({ f24, onConfermaF24, processing, onLoadF24, f24Loading }) {
     .filter(f => selezionati.has(f.id))
     .reduce((sum, f) => sum + (f.importo_totale || f.importo || 0), 0);
 
-  const toggleSelezione = (id) => {
+  const toggleSelezione = id => {
     setSelezionati(prev => {
       const newSet = new Set(prev);
       if (newSet.has(id)) {
@@ -1177,7 +1392,7 @@ function F24Tab({ f24, onConfermaF24, processing, onLoadF24, f24Loading }) {
       alert('Seleziona almeno un F24');
       return;
     }
-    
+
     setSalvandoBatch(true);
     try {
       const operazioni = f24Validi
@@ -1185,9 +1400,9 @@ function F24Tab({ f24, onConfermaF24, processing, onLoadF24, f24Loading }) {
         .map(f => ({
           operazione_id: f.id,
           metodo_pagamento: metodoBatch,
-          tipo: 'f24'
+          tipo: 'f24',
         }));
-      
+
       await api.post('/api/riconciliazione-intelligente/conferma-multipla', { operazioni });
       alert(`✅ Confermati ${selezionati.size} F24`);
       setSelezionati(new Set());
@@ -1203,11 +1418,13 @@ function F24Tab({ f24, onConfermaF24, processing, onLoadF24, f24Loading }) {
   const confermaF24Singolo = async (f24Item, metodo) => {
     try {
       await api.post('/api/riconciliazione-intelligente/conferma-multipla', {
-        operazioni: [{
-          operazione_id: f24Item.id,
-          metodo_pagamento: metodo,
-          tipo: 'f24'
-        }]
+        operazioni: [
+          {
+            operazione_id: f24Item.id,
+            metodo_pagamento: metodo,
+            tipo: 'f24',
+          },
+        ],
       });
       loadAllData();
     } catch (e) {
@@ -1218,67 +1435,99 @@ function F24Tab({ f24, onConfermaF24, processing, onLoadF24, f24Loading }) {
   return (
     <div>
       <div style={{ padding: 16, background: '#fef2f2', borderBottom: '1px solid #fecaca' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-          <h3 style={{ margin: 0, fontSize: 16, color: '#991b1b' }}>📄 F24 Pendenti ({f24Validi.length})</h3>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 12,
+          }}
+        >
+          <h3 style={{ margin: 0, fontSize: 16, color: '#991b1b' }}>
+            📄 F24 Pendenti ({f24Validi.length})
+          </h3>
           <div style={{ fontWeight: 700, color: '#dc2626' }}>Totale: {formatEuro(totale)}</div>
         </div>
-        
+
         {/* Azioni batch */}
-        <div style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          <button 
+        <div
+          style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}
+        >
+          <button
             onClick={toggleTutti}
-            style={{ padding: '8px 12px', background: '#e5e7eb', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}
+            style={{
+              padding: '8px 12px',
+              background: '#e5e7eb',
+              border: 'none',
+              borderRadius: 6,
+              cursor: 'pointer',
+              fontSize: 12,
+            }}
           >
             {selezionati.size === f24Validi.length ? '☐ Deseleziona' : '☑ Seleziona tutti'}
           </button>
-          
+
           {selezionati.size > 0 && (
             <>
-              <span style={{ 
-                padding: '8px 12px', 
-                border: '1px solid #dc2626', 
-                borderRadius: 6, 
-                fontSize: 13, 
-                background: '#fee2e2',
-                fontWeight: 600,
-                color: '#991b1b'
-              }}>
-                🏦 Pagamento Banca
-              </span>
-              
-              <button 
-                onClick={confermaBatch}
-                disabled={salvandoBatch}
-                style={{ 
-                  padding: '8px 16px', 
-                  background: '#dc2626', 
-                  color: 'white', 
-                  border: 'none', 
-                  borderRadius: 6, 
-                  cursor: 'pointer', 
+              <span
+                style={{
+                  padding: '8px 12px',
+                  border: '1px solid #dc2626',
+                  borderRadius: 6,
+                  fontSize: 13,
+                  background: '#fee2e2',
                   fontWeight: 600,
-                  fontSize: 13
+                  color: '#991b1b',
                 }}
               >
-                {salvandoBatch ? '⏳' : '✅'} Conferma {selezionati.size} ({formatEuro(totaleSelezionati)})
+                🏦 Pagamento Banca
+              </span>
+
+              <button
+                onClick={confermaBatch}
+                disabled={salvandoBatch}
+                style={{
+                  padding: '8px 16px',
+                  background: '#dc2626',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: 13,
+                }}
+              >
+                {salvandoBatch ? '⏳' : '✅'} Conferma {selezionati.size} (
+                {formatEuro(totaleSelezionati)})
               </button>
             </>
           )}
         </div>
       </div>
-      
+
       <div style={{ maxHeight: 800, overflow: 'auto' }}>
         {f24Validi.map((f, idx) => {
           const importo = f.importo_totale || f.importo || 0;
           const scadenzaStr = formatDateIT(f.data_scadenza);
-          
+
           return (
-            <div key={f.id || idx} style={{ 
-              padding: 16, 
-              borderBottom: '1px solid #f1f5f9',
-              background: selezionati.has(f.id) ? '#fef2f2' : 'white'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+            <div
+              key={f.id || idx}
+              style={{
+                padding: 16,
+                borderBottom: '1px solid #f1f5f9',
+                background: selezionati.has(f.id) ? '#fef2f2' : 'white',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  gap: 12,
+                }}
+              >
                 {/* Checkbox */}
                 <input
                   type="checkbox"
@@ -1286,7 +1535,7 @@ function F24Tab({ f24, onConfermaF24, processing, onLoadF24, f24Loading }) {
                   onChange={() => toggleSelezione(f.id)}
                   style={{ marginTop: 4, width: 18, height: 18, cursor: 'pointer' }}
                 />
-                
+
                 {/* Info F24 */}
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 600 }}>
@@ -1301,16 +1550,26 @@ function F24Tab({ f24, onConfermaF24, processing, onLoadF24, f24Loading }) {
                     Periodo: {f.periodo || '-'} • Scadenza: {scadenzaStr}
                   </div>
                 </div>
-                
+
                 {/* Importo e azioni */}
                 <div style={{ textAlign: 'right' }}>
                   <div style={{ fontWeight: 700, fontSize: 18, color: '#dc2626' }}>
                     {formatEuro(importo)}
                   </div>
-                  <div style={{ display: 'flex', gap: 4, marginTop: 8, justifyContent: 'flex-end' }}>
+                  <div
+                    style={{ display: 'flex', gap: 4, marginTop: 8, justifyContent: 'flex-end' }}
+                  >
                     <button
                       onClick={() => confermaF24Singolo(f, 'banca')}
-                      style={{ padding: '4px 8px', background: '#10b981', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: 11 }}
+                      style={{
+                        padding: '4px 8px',
+                        background: '#10b981',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: 4,
+                        cursor: 'pointer',
+                        fontSize: 11,
+                      }}
                       title="Conferma pagamento F24 tramite Banca"
                     >
                       🏦 Paga con Banca
@@ -1325,16 +1584,18 @@ function F24Tab({ f24, onConfermaF24, processing, onLoadF24, f24Loading }) {
                           alert('PDF non disponibile. Carica il PDF F24 dalla sezione Import.');
                         }
                       }}
-                      style={{ 
-                        padding: '4px 8px', 
-                        background: f.pdf_url || f.file_path ? '#6366f1' : '#94a3b8', 
-                        color: 'white', 
-                        border: 'none', 
-                        borderRadius: 4, 
-                        cursor: 'pointer', 
-                        fontSize: 11 
+                      style={{
+                        padding: '4px 8px',
+                        background: f.pdf_url || f.file_path ? '#6366f1' : '#94a3b8',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: 4,
+                        cursor: 'pointer',
+                        fontSize: 11,
                       }}
-                      title={f.pdf_url || f.file_path ? "Visualizza PDF F24" : "PDF non disponibile"}
+                      title={
+                        f.pdf_url || f.file_path ? 'Visualizza PDF F24' : 'PDF non disponibile'
+                      }
                     >
                       👁️ Vedi PDF
                     </button>
@@ -1349,7 +1610,14 @@ function F24Tab({ f24, onConfermaF24, processing, onLoadF24, f24Loading }) {
   );
 }
 
-function ArubaTab({ fatture, onConferma, processing, fornitori = [], onRefresh, onAssegnaMetodiAuto }) {
+function ArubaTab({
+  fatture,
+  onConferma,
+  processing,
+  fornitori = [],
+  onRefresh,
+  onAssegnaMetodiAuto,
+}) {
   const [preferenze, setPreferenze] = useState({});
   const [filtroFornitore, setFiltroFornitore] = useState('');
   const [selezionate, setSelezionate] = useState(new Set());
@@ -1363,7 +1631,9 @@ function ArubaTab({ fatture, onConferma, processing, fornitori = [], onRefresh, 
       for (const op of fatture) {
         if (op.fornitore && !preferenze[op.fornitore]) {
           try {
-            const res = await api.get(`/api/operazioni-da-confermare/fornitore-preferenza/${encodeURIComponent(op.fornitore)}`);
+            const res = await api.get(
+              `/api/operazioni-da-confermare/fornitore-preferenza/${encodeURIComponent(op.fornitore)}`
+            );
             if (res.data?.found) {
               newPref[op.fornitore] = res.data.metodo_preferito;
             }
@@ -1382,12 +1652,12 @@ function ArubaTab({ fatture, onConferma, processing, fornitori = [], onRefresh, 
   }, [fatture]);
 
   // Filtra fatture
-  const fattureFiltrate = filtroFornitore 
+  const fattureFiltrate = filtroFornitore
     ? fatture.filter(f => f.fornitore?.toLowerCase().includes(filtroFornitore.toLowerCase()))
     : fatture;
 
   // Toggle selezione
-  const toggleSelezione = (id) => {
+  const toggleSelezione = id => {
     setSelezionate(prev => {
       const newSet = new Set(prev);
       if (newSet.has(id)) {
@@ -1419,17 +1689,19 @@ function ArubaTab({ fatture, onConferma, processing, fornitori = [], onRefresh, 
     try {
       const operazioni = Array.from(selezionate).map(id => ({
         operazione_id: id,
-        metodo_pagamento: metodoBatch
+        metodo_pagamento: metodoBatch,
       }));
 
-      const res = await api.post('/api/riconciliazione-intelligente/conferma-multipla', { operazioni });
-      
+      const res = await api.post('/api/riconciliazione-intelligente/conferma-multipla', {
+        operazioni,
+      });
+
       if (res.data.successo > 0) {
         alert(`✅ ${res.data.successo} fatture confermate!`);
         setSelezionate(new Set());
         if (onRefresh) onRefresh();
       }
-      
+
       if (res.data.errori > 0) {
         console.error('Errori batch:', res.data.dettagli);
       }
@@ -1445,7 +1717,9 @@ function ArubaTab({ fatture, onConferma, processing, fornitori = [], onRefresh, 
       <div style={{ padding: 60, textAlign: 'center', color: '#94a3b8' }}>
         <div style={{ fontSize: 48, marginBottom: 12, opacity: 0.5 }}>🧾</div>
         <div>Nessuna fattura Aruba da confermare</div>
-        <div style={{ fontSize: 12, marginTop: 8 }}>Le fatture già inserite in Prima Nota vengono automaticamente saltate</div>
+        <div style={{ fontSize: 12, marginTop: 8 }}>
+          Le fatture già inserite in Prima Nota vengono automaticamente saltate
+        </div>
       </div>
     );
   }
@@ -1460,8 +1734,18 @@ function ArubaTab({ fatture, onConferma, processing, fornitori = [], onRefresh, 
     <div>
       {/* Header con filtri e azioni batch */}
       <div style={{ padding: 16, background: '#f5f3ff', borderBottom: '1px solid #e9d5ff' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-          <h3 style={{ margin: 0, fontSize: 16, color: '#7c3aed' }}>🧾 Fatture Aruba ({fattureFiltrate.length})</h3>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 12,
+          }}
+        >
+          <h3 style={{ margin: 0, fontSize: 16, color: '#7c3aed' }}>
+            🧾 Fatture Aruba ({fattureFiltrate.length})
+          </h3>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <button
               onClick={onAssegnaMetodiAuto}
@@ -1474,7 +1758,7 @@ function ArubaTab({ fatture, onConferma, processing, fornitori = [], onRefresh, 
                 borderRadius: 6,
                 cursor: 'pointer',
                 fontSize: 12,
-                fontWeight: 500
+                fontWeight: 500,
               }}
               title="Assegna automaticamente metodi in base all'estratto conto"
             >
@@ -1483,106 +1767,145 @@ function ArubaTab({ fatture, onConferma, processing, fornitori = [], onRefresh, 
             <div style={{ fontWeight: 700, color: '#7c3aed' }}>Totale: {formatEuro(totale)}</div>
           </div>
         </div>
-        
+
         {/* Filtro fornitore */}
-        <div style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          <select 
+        <div
+          style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}
+        >
+          <select
             value={filtroFornitore}
             onChange={e => setFiltroFornitore(e.target.value)}
-            style={{ padding: '8px 12px', border: '1px solid #e5e7eb', borderRadius: 6, fontSize: 13 }}
+            style={{
+              padding: '8px 12px',
+              border: '1px solid #e5e7eb',
+              borderRadius: 6,
+              fontSize: 13,
+            }}
           >
             <option value="">Tutti i fornitori ({fatture.length})</option>
             {fornitori.map(f => (
-              <option key={f} value={f}>{f}</option>
+              <option key={f} value={f}>
+                {f}
+              </option>
             ))}
           </select>
-          
+
           {/* Azioni batch */}
-          <button 
+          <button
             onClick={toggleTutte}
-            style={{ padding: '8px 12px', background: '#e5e7eb', border: 'none', borderRadius: 6, cursor: 'pointer', fontSize: 12 }}
+            style={{
+              padding: '8px 12px',
+              background: '#e5e7eb',
+              border: 'none',
+              borderRadius: 6,
+              cursor: 'pointer',
+              fontSize: 12,
+            }}
           >
             {selezionate.size === fattureFiltrate.length ? '☐ Deseleziona' : '☑ Seleziona tutte'}
           </button>
-          
+
           {selezionate.size > 0 && (
             <>
-              <select 
+              <select
                 value={metodoBatch}
                 onChange={e => setMetodoBatch(e.target.value)}
-                style={{ padding: '8px 12px', border: '1px solid #10b981', borderRadius: 6, fontSize: 13, background: '#d1fae5' }}
+                style={{
+                  padding: '8px 12px',
+                  border: '1px solid #10b981',
+                  borderRadius: 6,
+                  fontSize: 13,
+                  background: '#d1fae5',
+                }}
               >
                 <option value="cassa">Cassa</option>
                 <option value="bonifico">🏦 Bonifico</option>
                 <option value="carta_credito">💳 Carta/POS</option>
                 <option value="assegno">📝 Assegno</option>
               </select>
-              
-              <button 
+
+              <button
                 onClick={confermaBatch}
                 disabled={salvandoBatch}
-                style={{ 
-                  padding: '8px 16px', 
-                  background: '#10b981', 
-                  color: 'white', 
-                  border: 'none', 
-                  borderRadius: 6, 
-                  cursor: 'pointer', 
+                style={{
+                  padding: '8px 16px',
+                  background: '#10b981',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: 'pointer',
                   fontWeight: 600,
-                  fontSize: 13
+                  fontSize: 13,
                 }}
               >
-                {salvandoBatch ? '⏳' : '✅'} Conferma {selezionate.size} ({formatEuro(totaleSelezionate)})
+                {salvandoBatch ? '⏳' : '✅'} Conferma {selezionate.size} (
+                {formatEuro(totaleSelezionate)})
               </button>
             </>
           )}
         </div>
       </div>
-      
+
       {/* Lista fatture */}
       <div style={{ maxHeight: 800, overflow: 'auto' }}>
         {fattureFiltrate.map((op, idx) => {
           const metodoPreferito = preferenze[op.fornitore] || op.metodo_pagamento_proposto;
-          
+
           return (
-            <div key={op.id || idx} style={{ 
-              padding: 16, 
-              borderBottom: '1px solid #f1f5f9',
-              opacity: processing === op.id ? 0.5 : 1,
-              background: selezionate.has(op.id) ? '#f0fdf4' : 'white'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+            <div
+              key={op.id || idx}
+              style={{
+                padding: 16,
+                borderBottom: '1px solid #f1f5f9',
+                opacity: processing === op.id ? 0.5 : 1,
+                background: selezionate.has(op.id) ? '#f0fdf4' : 'white',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  gap: 12,
+                }}
+              >
                 {/* Checkbox selezione */}
                 <input
                   type="checkbox"
                   checked={selezionate.has(op.id)}
                   onChange={() => toggleSelezione(op.id)}
-                  style={{ 
-                    width: 18, 
-                    height: 18, 
+                  style={{
+                    width: 18,
+                    height: 18,
                     marginTop: 2,
                     cursor: 'pointer',
-                    accentColor: '#10b981'
+                    accentColor: '#10b981',
                   }}
                 />
-                
+
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, fontSize: 15 }}>{op.fornitore || 'Fornitore N/A'}</div>
+                  <div style={{ fontWeight: 600, fontSize: 15 }}>
+                    {op.fornitore || 'Fornitore N/A'}
+                  </div>
                   <div style={{ fontSize: 12, color: '#64748b', marginTop: 4 }}>
-                    Fatt. {op.numero_fattura} • {op.data_documento ? formatDateIT(op.data_documento) : '-'}
+                    Fatt. {op.numero_fattura} •{' '}
+                    {op.data_documento ? formatDateIT(op.data_documento) : '-'}
                   </div>
                   {metodoPreferito && (
-                    <span style={{
-                      display: 'inline-block',
-                      marginTop: 8,
-                      padding: '4px 10px',
-                      background: preferenze[op.fornitore] ? '#dcfce7' : '#dbeafe',
-                      color: preferenze[op.fornitore] ? '#166534' : '#1e40af',
-                      borderRadius: 4,
-                      fontSize: 11,
-                      fontWeight: 600
-                    }}>
-                      {preferenze[op.fornitore] ? '🧠 Preferito' : '💡 Proposto'}: {metodoPreferito.toUpperCase()}
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        marginTop: 8,
+                        padding: '4px 10px',
+                        background: preferenze[op.fornitore] ? '#dcfce7' : '#dbeafe',
+                        color: preferenze[op.fornitore] ? '#166534' : '#1e40af',
+                        borderRadius: 4,
+                        fontSize: 11,
+                        fontWeight: 600,
+                      }}
+                    >
+                      {preferenze[op.fornitore] ? '🧠 Preferito' : '💡 Proposto'}:{' '}
+                      {metodoPreferito.toUpperCase()}
                     </span>
                   )}
                 </div>
@@ -1592,14 +1915,14 @@ function ArubaTab({ fatture, onConferma, processing, fornitori = [], onRefresh, 
                   </div>
                 </div>
               </div>
-              
+
               {/* Bottoni metodo pagamento - evidenzia preferito */}
               <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
                 <button
                   onClick={() => onConferma(op, 'cassa')}
                   disabled={processing === op.id}
                   style={metodoBtn(
-                    metodoPreferito === 'cassa' ? '#dcfce7' : '#fef3c7', 
+                    metodoPreferito === 'cassa' ? '#dcfce7' : '#fef3c7',
                     metodoPreferito === 'cassa' ? '#166534' : '#92400e',
                     metodoPreferito === 'cassa'
                   )}
@@ -1610,7 +1933,7 @@ function ArubaTab({ fatture, onConferma, processing, fornitori = [], onRefresh, 
                   onClick={() => onConferma(op, 'bonifico')}
                   disabled={processing === op.id}
                   style={metodoBtn(
-                    metodoPreferito === 'bonifico' ? '#dcfce7' : '#dbeafe', 
+                    metodoPreferito === 'bonifico' ? '#dcfce7' : '#dbeafe',
                     metodoPreferito === 'bonifico' ? '#166534' : '#1e40af',
                     metodoPreferito === 'bonifico'
                   )}
@@ -1621,7 +1944,7 @@ function ArubaTab({ fatture, onConferma, processing, fornitori = [], onRefresh, 
                   onClick={() => onConferma(op, 'carta_credito')}
                   disabled={processing === op.id}
                   style={metodoBtn(
-                    metodoPreferito === 'carta_credito' ? '#dcfce7' : '#e0f2fe', 
+                    metodoPreferito === 'carta_credito' ? '#dcfce7' : '#e0f2fe',
                     metodoPreferito === 'carta_credito' ? '#166534' : '#0369a1',
                     metodoPreferito === 'carta_credito'
                   )}
@@ -1632,7 +1955,7 @@ function ArubaTab({ fatture, onConferma, processing, fornitori = [], onRefresh, 
                   onClick={() => onConferma(op, 'assegno')}
                   disabled={processing === op.id}
                   style={metodoBtn(
-                    metodoPreferito === 'assegno' ? '#dcfce7' : '#f3e8ff', 
+                    metodoPreferito === 'assegno' ? '#dcfce7' : '#f3e8ff',
                     metodoPreferito === 'assegno' ? '#166534' : '#7c3aed',
                     metodoPreferito === 'assegno'
                   )}
@@ -1657,7 +1980,7 @@ const metodoBtn = (bg, color, isPreferred = false) => ({
   fontWeight: 600,
   cursor: 'pointer',
   fontSize: 13,
-  boxShadow: isPreferred ? '0 0 0 2px rgba(16, 185, 129, 0.2)' : 'none'
+  boxShadow: isPreferred ? '0 0 0 2px rgba(16, 185, 129, 0.2)' : 'none',
 });
 
 // ============================================
@@ -1670,7 +1993,7 @@ function DocumentiTab({ documenti, stats, onRefresh, processing }) {
   const [associazioneForm, setAssociazioneForm] = useState({ collezione: '', campiJson: '' });
   const [message, setMessage] = useState(null);
   const [loadingCollezioni, setLoadingCollezioni] = useState(false);
-  
+
   // Carica collezioni disponibili
   useEffect(() => {
     const loadCollezioni = async () => {
@@ -1685,18 +2008,18 @@ function DocumentiTab({ documenti, stats, onRefresh, processing }) {
     };
     loadCollezioni();
   }, []);
-  
-  const handleViewPdf = (doc) => {
+
+  const handleViewPdf = doc => {
     const url = `${import.meta.env.VITE_BACKEND_URL || ''}/api/documenti-non-associati/pdf/${doc.id}`;
     window.open(url, '_blank');
   };
-  
+
   const handleAssocia = async () => {
     if (!selectedDoc || !associazioneForm.collezione) {
       setMessage({ type: 'error', text: 'Seleziona una collezione' });
       return;
     }
-    
+
     try {
       let campi = {};
       if (associazioneForm.campiJson) {
@@ -1707,20 +2030,20 @@ function DocumentiTab({ documenti, stats, onRefresh, processing }) {
           return;
         }
       }
-      
+
       // Aggiungi campi dalla proposta
       if (selectedDoc.proposta) {
         if (selectedDoc.proposta.anno_suggerito) campi.anno = selectedDoc.proposta.anno_suggerito;
         if (selectedDoc.proposta.mese_suggerito) campi.mese = selectedDoc.proposta.mese_suggerito;
       }
-      
+
       await api.post('/api/documenti-non-associati/associa', {
         documento_id: selectedDoc.id,
         collezione_target: associazioneForm.collezione,
         crea_nuovo: true,
-        campi_associazione: campi
+        campi_associazione: campi,
       });
-      
+
       setMessage({ type: 'success', text: 'Documento associato!' });
       setSelectedDoc(null);
       setAssociazioneForm({ collezione: '', campiJson: '' });
@@ -1729,10 +2052,10 @@ function DocumentiTab({ documenti, stats, onRefresh, processing }) {
       setMessage({ type: 'error', text: e.response?.data?.detail || 'Errore associazione' });
     }
   };
-  
-  const handleDelete = async (docId) => {
+
+  const handleDelete = async docId => {
     if (!window.confirm('Eliminare questo documento?')) return;
-    
+
     try {
       await api.delete(`/api/documenti-non-associati/${docId}`);
       setMessage({ type: 'success', text: 'Documento eliminato' });
@@ -1742,63 +2065,91 @@ function DocumentiTab({ documenti, stats, onRefresh, processing }) {
       setMessage({ type: 'error', text: 'Errore eliminazione' });
     }
   };
-  
-  const getCategoryColor = (category) => {
+
+  const getCategoryColor = category => {
     const colors = {
-      'fattura': '#3b82f6',
-      'f24': '#ef4444',
-      'busta_paga': '#22c55e',
-      'verbale': '#f97316',
-      'cartella': '#8b5cf6'
+      fattura: '#3b82f6',
+      f24: '#ef4444',
+      busta_paga: '#22c55e',
+      verbale: '#f97316',
+      cartella: '#8b5cf6',
     };
     return colors[category] || '#64748b';
   };
-  
+
   if (documenti.length === 0) {
     return (
       <div style={{ padding: 60, textAlign: 'center', color: '#94a3b8' }}>
         <div style={{ fontSize: 48, marginBottom: 12, opacity: 0.5 }}>📎</div>
         <div>Nessun documento da associare</div>
-        <div style={{ fontSize: 12, marginTop: 8 }}>Tutti i documenti scaricati sono stati associati</div>
+        <div style={{ fontSize: 12, marginTop: 8 }}>
+          Tutti i documenti scaricati sono stati associati
+        </div>
       </div>
     );
   }
-  
+
   return (
     <div>
       {/* Header con stats */}
       <div style={{ padding: 16, background: '#fdf4ff', borderBottom: '1px solid #f5d0fe' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-          <h3 style={{ margin: 0, fontSize: 16, color: '#a21caf' }}>📎 Documenti Non Associati ({documenti.length})</h3>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 12,
+          }}
+        >
+          <h3 style={{ margin: 0, fontSize: 16, color: '#a21caf' }}>
+            📎 Documenti Non Associati ({documenti.length})
+          </h3>
           {stats && (
             <div style={{ display: 'flex', gap: 16, fontSize: 13 }}>
-              <span style={{ color: '#64748b' }}>Totali: <strong>{stats.totale || 0}</strong></span>
-              <span style={{ color: '#16a34a' }}>Associati: <strong>{stats.associati || 0}</strong></span>
-              <span style={{ color: '#dc2626' }}>Da fare: <strong>{stats.da_associare || 0}</strong></span>
+              <span style={{ color: '#64748b' }}>
+                Totali: <strong>{stats.totale || 0}</strong>
+              </span>
+              <span style={{ color: '#16a34a' }}>
+                Associati: <strong>{stats.associati || 0}</strong>
+              </span>
+              <span style={{ color: '#dc2626' }}>
+                Da fare: <strong>{stats.da_associare || 0}</strong>
+              </span>
             </div>
           )}
         </div>
       </div>
-      
+
       {/* Message */}
       {message && (
-        <div style={{
-          padding: 12,
-          margin: 12,
-          borderRadius: 8,
-          background: message.type === 'success' ? '#dcfce7' : '#fee2e2',
-          color: message.type === 'success' ? '#15803d' : '#dc2626',
-          fontSize: 13
-        }}>
+        <div
+          style={{
+            padding: 12,
+            margin: 12,
+            borderRadius: 8,
+            background: message.type === 'success' ? '#dcfce7' : '#fee2e2',
+            color: message.type === 'success' ? '#15803d' : '#dc2626',
+            fontSize: 13,
+          }}
+        >
           {message.text}
         </div>
       )}
-      
+
       {/* Layout a due colonne */}
-      <div style={{ display: 'grid', gridTemplateColumns: selectedDoc ? '1fr 1fr' : '1fr', gap: 0 }}>
+      <div
+        style={{ display: 'grid', gridTemplateColumns: selectedDoc ? '1fr 1fr' : '1fr', gap: 0 }}
+      >
         {/* Lista documenti */}
-        <div style={{ maxHeight: 600, overflow: 'auto', borderRight: selectedDoc ? '1px solid #e5e7eb' : 'none' }}>
-          {documenti.map((doc) => (
+        <div
+          style={{
+            maxHeight: 600,
+            overflow: 'auto',
+            borderRight: selectedDoc ? '1px solid #e5e7eb' : 'none',
+          }}
+        >
+          {documenti.map(doc => (
             <div
               key={doc.id}
               onClick={() => setSelectedDoc(doc)}
@@ -1807,35 +2158,48 @@ function DocumentiTab({ documenti, stats, onRefresh, processing }) {
                 borderBottom: '1px solid #f1f5f9',
                 cursor: 'pointer',
                 background: selectedDoc?.id === doc.id ? '#fdf4ff' : 'white',
-                borderLeft: selectedDoc?.id === doc.id ? '3px solid #a21caf' : '3px solid transparent'
+                borderLeft:
+                  selectedDoc?.id === doc.id ? '3px solid #a21caf' : '3px solid transparent',
               }}
             >
-              <div style={{ 
-                fontSize: 14, 
-                fontWeight: 500, 
-                color: '#1e293b',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                marginBottom: 4
-              }}>
+              <div
+                style={{
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: '#1e293b',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  marginBottom: 4,
+                }}
+              >
                 {doc.filename}
               </div>
               <div style={{ fontSize: 12, color: '#64748b', marginBottom: 6 }}>
                 {doc.email_subject?.substring(0, 60) || 'Nessun oggetto'}
               </div>
               <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                <span style={{
-                  padding: '2px 8px',
-                  fontSize: 11,
-                  borderRadius: 4,
-                  background: getCategoryColor(doc.category) + '20',
-                  color: getCategoryColor(doc.category)
-                }}>
+                <span
+                  style={{
+                    padding: '2px 8px',
+                    fontSize: 11,
+                    borderRadius: 4,
+                    background: getCategoryColor(doc.category) + '20',
+                    color: getCategoryColor(doc.category),
+                  }}
+                >
                   {doc.category || 'altro'}
                 </span>
                 {doc.proposta?.anno_suggerito && (
-                  <span style={{ padding: '2px 8px', fontSize: 11, borderRadius: 4, background: '#dbeafe', color: '#1d4ed8' }}>
+                  <span
+                    style={{
+                      padding: '2px 8px',
+                      fontSize: 11,
+                      borderRadius: 4,
+                      background: '#dbeafe',
+                      color: '#1d4ed8',
+                    }}
+                  >
                     {doc.proposta.anno_suggerito}
                   </span>
                 )}
@@ -1843,7 +2207,7 @@ function DocumentiTab({ documenti, stats, onRefresh, processing }) {
             </div>
           ))}
         </div>
-        
+
         {/* Pannello dettaglio */}
         {selectedDoc && (
           <div style={{ padding: 16, background: '#fafafa' }}>
@@ -1864,90 +2228,115 @@ function DocumentiTab({ documenti, stats, onRefresh, processing }) {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: 8
+                  gap: 8,
                 }}
               >
                 👁️ Apri PDF
               </button>
             </div>
-            
+
             {/* Info file */}
             <div style={{ marginBottom: 12 }}>
               <div style={{ fontSize: 12, color: '#64748b', marginBottom: 2 }}>File</div>
-              <div style={{ fontSize: 14, fontWeight: 500, wordBreak: 'break-all' }}>{selectedDoc.filename}</div>
+              <div style={{ fontSize: 14, fontWeight: 500, wordBreak: 'break-all' }}>
+                {selectedDoc.filename}
+              </div>
             </div>
-            
+
             <div style={{ marginBottom: 12 }}>
               <div style={{ fontSize: 12, color: '#64748b', marginBottom: 2 }}>Categoria</div>
               <div style={{ fontSize: 14 }}>{selectedDoc.category || 'Non classificato'}</div>
             </div>
-            
+
             <div style={{ marginBottom: 12 }}>
               <div style={{ fontSize: 12, color: '#64748b', marginBottom: 2 }}>Dimensione</div>
-              <div style={{ fontSize: 14 }}>{Math.round((selectedDoc.size_bytes || selectedDoc.pdf_size || 0) / 1024)} KB</div>
-            </div>
-            
-            {/* Proposta AI */}
-            {selectedDoc.proposta && (selectedDoc.proposta.anno_suggerito || selectedDoc.proposta.tipo_suggerito) && (
-              <div style={{ 
-                background: '#eff6ff', 
-                border: '1px solid #bfdbfe', 
-                borderRadius: 8, 
-                padding: 12, 
-                marginBottom: 16 
-              }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#1d4ed8', marginBottom: 8 }}>💡 Proposta Intelligente</div>
-                {selectedDoc.proposta.tipo_suggerito && (
-                  <div style={{ fontSize: 12, color: '#475569', marginBottom: 4 }}>Tipo: <strong>{selectedDoc.proposta.tipo_suggerito}</strong></div>
-                )}
-                {selectedDoc.proposta.anno_suggerito && (
-                  <div style={{ fontSize: 12, color: '#475569', marginBottom: 4 }}>Anno: <strong>{selectedDoc.proposta.anno_suggerito}</strong></div>
-                )}
-                {selectedDoc.proposta.mese_suggerito && (
-                  <div style={{ fontSize: 12, color: '#475569' }}>Mese: <strong>{selectedDoc.proposta.mese_suggerito}</strong></div>
-                )}
+              <div style={{ fontSize: 14 }}>
+                {Math.round((selectedDoc.size_bytes || selectedDoc.pdf_size || 0) / 1024)} KB
               </div>
-            )}
-            
+            </div>
+
+            {/* Proposta AI */}
+            {selectedDoc.proposta &&
+              (selectedDoc.proposta.anno_suggerito || selectedDoc.proposta.tipo_suggerito) && (
+                <div
+                  style={{
+                    background: '#eff6ff',
+                    border: '1px solid #bfdbfe',
+                    borderRadius: 8,
+                    padding: 12,
+                    marginBottom: 16,
+                  }}
+                >
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#1d4ed8', marginBottom: 8 }}>
+                    💡 Proposta Intelligente
+                  </div>
+                  {selectedDoc.proposta.tipo_suggerito && (
+                    <div style={{ fontSize: 12, color: '#475569', marginBottom: 4 }}>
+                      Tipo: <strong>{selectedDoc.proposta.tipo_suggerito}</strong>
+                    </div>
+                  )}
+                  {selectedDoc.proposta.anno_suggerito && (
+                    <div style={{ fontSize: 12, color: '#475569', marginBottom: 4 }}>
+                      Anno: <strong>{selectedDoc.proposta.anno_suggerito}</strong>
+                    </div>
+                  )}
+                  {selectedDoc.proposta.mese_suggerito && (
+                    <div style={{ fontSize: 12, color: '#475569' }}>
+                      Mese: <strong>{selectedDoc.proposta.mese_suggerito}</strong>
+                    </div>
+                  )}
+                </div>
+              )}
+
             {/* Form associazione */}
             <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 12, color: '#64748b', marginBottom: 4 }}>Associa a collezione</div>
+              <div style={{ fontSize: 12, color: '#64748b', marginBottom: 4 }}>
+                Associa a collezione
+              </div>
               <select
                 value={associazioneForm.collezione}
-                onChange={(e) => setAssociazioneForm({...associazioneForm, collezione: e.target.value})}
-                style={{ 
-                  width: '100%', 
-                  padding: 10, 
-                  fontSize: 14, 
-                  border: '1px solid #e2e8f0', 
+                onChange={e =>
+                  setAssociazioneForm({ ...associazioneForm, collezione: e.target.value })
+                }
+                style={{
+                  width: '100%',
+                  padding: 10,
+                  fontSize: 14,
+                  border: '1px solid #e2e8f0',
                   borderRadius: 6,
-                  marginBottom: 12
+                  marginBottom: 12,
                 }}
               >
                 <option value="">-- Seleziona --</option>
-                {collezioni.map((c) => (
-                  <option key={c.value} value={c.value}>{c.label}</option>
+                {collezioni.map(c => (
+                  <option key={c.value} value={c.value}>
+                    {c.label}
+                  </option>
                 ))}
               </select>
-              
-              <div style={{ fontSize: 12, color: '#64748b', marginBottom: 4 }}>Campi aggiuntivi (JSON)</div>
+
+              <div style={{ fontSize: 12, color: '#64748b', marginBottom: 4 }}>
+                Campi aggiuntivi (JSON)
+              </div>
               <textarea
                 value={associazioneForm.campiJson}
-                onChange={(e) => setAssociazioneForm({...associazioneForm, campiJson: e.target.value})}
+                onChange={e =>
+                  setAssociazioneForm({ ...associazioneForm, campiJson: e.target.value })
+                }
                 placeholder='{"anno": 2024, "importo": 150.00}'
-                style={{ 
-                  width: '100%', 
-                  padding: 10, 
-                  fontSize: 13, 
+                style={{
+                  width: '100%',
+                  padding: 10,
+                  fontSize: 13,
                   fontFamily: 'monospace',
-                  border: '1px solid #e2e8f0', 
+                  border: '1px solid #e2e8f0',
                   borderRadius: 6,
                   minHeight: 60,
-                  resize: 'vertical'
+                  resize: 'vertical',
                 }}
               />
             </div>
-            
+
             {/* Bottoni azione */}
             <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
               <button
@@ -1962,7 +2351,7 @@ function DocumentiTab({ documenti, stats, onRefresh, processing }) {
                   borderRadius: 6,
                   fontWeight: 600,
                   cursor: associazioneForm.collezione ? 'pointer' : 'not-allowed',
-                  fontSize: 13
+                  fontSize: 13,
                 }}
               >
                 ✓ Associa
@@ -1976,7 +2365,7 @@ function DocumentiTab({ documenti, stats, onRefresh, processing }) {
                   border: 'none',
                   borderRadius: 6,
                   cursor: 'pointer',
-                  fontSize: 13
+                  fontSize: 13,
                 }}
               >
                 🗑️
