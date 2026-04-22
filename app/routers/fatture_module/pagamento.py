@@ -306,15 +306,35 @@ async def aggiorna_metodi_pagamento_da_fornitori() -> Dict[str, Any]:
     riconciliate = 0
     METODI_BANCA = {"banca", "bonifico", "sepa", "bonifico bancario", "bonif.", "mp05", "mp19"}
 
+    # OTTIMIZZAZIONE: carica TUTTI i fornitori in una sola query (no N+1)
+    pive_necessarie = set()
+    for f in fatture:
+        p = f.get("fornitore_partita_iva") or f.get("supplier_vat") or f.get("fornitore_piva")
+        if p:
+            pive_necessarie.add(p)
+    
+    fornitori_map = {}
+    if pive_necessarie:
+        async for forn in db[COL_FORNITORI].find(
+            {"$or": [
+                {"partita_iva": {"$in": list(pive_necessarie)}},
+                {"piva": {"$in": list(pive_necessarie)}}
+            ]},
+            {"_id": 0, "partita_iva": 1, "piva": 1, "metodo_pagamento": 1}
+        ):
+            p1 = forn.get("partita_iva")
+            p2 = forn.get("piva")
+            if p1:
+                fornitori_map[p1] = forn
+            if p2 and p2 != p1:
+                fornitori_map[p2] = forn
+
     for f in fatture:
         piva = f.get("fornitore_partita_iva") or f.get("supplier_vat") or f.get("fornitore_piva")
         if not piva:
             continue
         
-        fornitore = await db[COL_FORNITORI].find_one(
-            {"$or": [{"partita_iva": piva}, {"piva": piva}]},
-            {"_id": 0, "metodo_pagamento": 1}
-        )
+        fornitore = fornitori_map.get(piva)
         if not fornitore:
             continue
         
