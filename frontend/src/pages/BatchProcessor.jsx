@@ -373,7 +373,7 @@ export default function BatchProcessor() {
         if (result.fatture_create)
           addLog(`  → Fatture create: ${result.fatture_create}`, 'success');
         if (result.riconciliati) addLog(`  → Riconciliati: ${result.riconciliati}`, 'success');
-        if (result.errors?.length) addLog(`  → Errori: ${result.errors.length}`, 'warning');
+        if (result.errors?.length) addLog(`  → Errori: ${result?.errors?.length}`, 'warning');
 
         return true;
       } catch (error) {
@@ -605,8 +605,8 @@ export default function BatchProcessor() {
                     {result?.data && (
                       <div style={{ fontSize: 12, color: COLORS.gray, marginTop: 4 }}>
                         {result.data.processed && `Processati: ${result.data.processed}`}
-                        {result.data.fatture_create && ` | Creati: ${result.data.fatture_create}`}
-                        {result.data.riconciliati && ` | Riconciliati: ${result.data.riconciliati}`}
+                        {result?.data?.fatture_create && ` | Creati: ${result?.data?.fatture_create}`}
+                        {result?.data?.riconciliati && ` | Riconciliati: ${result?.data?.riconciliati}`}
                       </div>
                     )}
                   </div>
