@@ -328,7 +328,7 @@ def valida_registrazione_contabile(movimento: Dict[str, Any]) -> Dict[str, Any]:
             data_parsed = datetime.fromisoformat(data_mov.replace("Z", "+00:00"))
             if data_parsed > datetime.now(timezone.utc):
                 warnings.append("Data movimento nel futuro")
-        except:
+        except Exception:
             errori.append("Formato data non valido")
     
     return {
