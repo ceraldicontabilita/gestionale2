@@ -4,7 +4,7 @@ ATTENDANCE - Presenze e Assenze
 Gestione calendario presenze, assenze, ferie, permessi.
 """
 
-from fastapi import APIRouter, HTTPException, Query, UploadFile, File
+from fastapi import APIRouter, HTTPException, Query, UploadFile, File, Body
 from typing import Dict, Any
 from datetime import datetime, timezone, timedelta
 import uuid
@@ -91,7 +91,7 @@ async def get_presenze_calendario(anno: int, mese: int) -> Dict[str, Any]:
 
 @router.post("/set-presenza")
 @handle_errors
-async def set_presenza(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def set_presenza(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """
     Imposta lo stato presenza per un dipendente in una data.
     """
@@ -199,7 +199,7 @@ async def get_dashboard_presenze(data: str = Query(None)) -> Dict[str, Any]:
 
 @router.post("/richiesta-assenza")
 @handle_errors
-async def crea_richiesta_assenza(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def crea_richiesta_assenza(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """
     Crea una richiesta di assenza (ferie, permesso, malattia).
     """
@@ -315,7 +315,7 @@ async def approva_richiesta_assenza(richiesta_id: str, payload: Dict[str, Any] =
 
 @router.put("/richiesta-assenza/{richiesta_id}/rifiuta")
 @handle_errors
-async def rifiuta_richiesta_assenza(richiesta_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+async def rifiuta_richiesta_assenza(richiesta_id: str, payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """Rifiuta una richiesta di assenza."""
     db = Database.get_db()
     
@@ -499,7 +499,7 @@ async def get_storico_ore(
 
 @router.post("/imposta-tutti-presenti")
 @handle_errors
-async def imposta_tutti_presenti(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def imposta_tutti_presenti(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """
     Imposta tutti i giorni lavorativi come 'presente' per tutti i dipendenti.
     Salta weekend e giorni che hanno già uno stato diverso da vuoto/riposo.
@@ -595,7 +595,7 @@ async def get_turni(
 
 @router.post("/turni/assegna")
 @handle_errors
-async def assegna_turno(payload: Dict[str, Any]) -> Dict[str, str]:
+async def assegna_turno(payload: Dict[str, Any] = Body(...)) -> Dict[str, str]:
     """Assegna un dipendente a un turno/mansione."""
     db = Database.get_db()
     

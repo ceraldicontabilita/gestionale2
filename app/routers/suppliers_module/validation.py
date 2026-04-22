@@ -2,7 +2,7 @@
 Suppliers validation endpoints.
 Validazione P0, dizionario metodi pagamento.
 """
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Body
 from typing import Dict, Any, List
 from datetime import datetime, timezone
 
@@ -131,7 +131,7 @@ async def get_dizionario_metodi_pagamento() -> Dict[str, Any]:
 
 
 @router.post("/aggiorna-dizionario-metodo")
-async def aggiorna_dizionario_metodo(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def aggiorna_dizionario_metodo(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """
     Aggiorna il dizionario metodi pagamento per un fornitore.
     Usato dalla Learning Machine per apprendere nuove associazioni.

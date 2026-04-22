@@ -801,14 +801,25 @@ async def get_fatture_fornitore(
         estratto = []
         totale_importo = 0
         for f in fatture:
-            importo = f.get("importo_totale") or f.get("total_amount") or 0
+            importo = float(f.get("importo_totale") or f.get("total_amount") or 0)
+            imponibile = float(f.get("imponibile") or f.get("importo_imponibile") or f.get("taxable_amount") or 0)
+            iva = float(f.get("iva") or f.get("importo_iva") or f.get("vat_amount") or 0)
+            tipo_doc = f.get("tipo_documento", "TD01")
+            is_nc = tipo_doc in ("TD04", "TD05", "TD08", "NC")
             estratto.append({
                 "id": f.get("id"),
                 "data": f.get("data_documento") or f.get("invoice_date") or "",
                 "numero": f.get("numero_documento") or f.get("invoice_number") or "",
                 "importo_totale": importo,
+                "imponibile": round(imponibile, 2),
+                "iva": round(iva, 2),
+                "tipo_documento": tipo_doc,
+                "is_nota_credito": is_nc,
                 "pagato": f.get("pagato", False),
-                "metodo_pagamento": f.get("metodo_pagamento") or fornitore.get("metodo_pagamento") or "-"
+                "riconciliato": f.get("riconciliato", False),
+                "stato_pagamento": f.get("stato_pagamento", ""),
+                "metodo_pagamento": f.get("metodo_pagamento") or f.get("metodo_pagamento_effettivo") or fornitore.get("metodo_pagamento") or "-",
+                "data_pagamento": f.get("data_pagamento", ""),
             })
             totale_importo += importo
         

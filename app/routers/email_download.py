@@ -2,7 +2,7 @@
 Router per Download Completo Email e Gestione Documenti Non Associati
 """
 
-from fastapi import APIRouter, HTTPException, BackgroundTasks, Query
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Query, Body
 from typing import Dict, Any, Optional
 from datetime import datetime, timezone
 import logging
@@ -978,7 +978,7 @@ async def check_mittente(from_addr: str, canale: str = "gmail") -> Dict[str, Any
 
 
 @router.post("/mittenti")
-async def add_mittente(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def add_mittente(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """Aggiunge un nuovo mittente personalizzato."""
     import uuid
     db = Database.get_db()
@@ -1028,7 +1028,7 @@ async def delete_mittente(mittente_id: str) -> Dict[str, Any]:
 
 
 @router.put("/mittenti/{mittente_id}")
-async def update_mittente(mittente_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+async def update_mittente(mittente_id: str, payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """Aggiorna un mittente (attivo, descrizione). I builtin non possono cambiare pattern/tipo."""
     db = Database.get_db()
 

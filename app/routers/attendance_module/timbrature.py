@@ -4,7 +4,7 @@ ATTENDANCE - Timbrature
 Gestione timbrature dipendenti (entrata/uscita/pause).
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Body
 from typing import Dict, Any
 from datetime import datetime, timezone
 import uuid
@@ -31,7 +31,7 @@ PAUSA_PRANZO_MINUTI = 60
 # =============================================================================
 
 @router.post("/timbratura")
-async def registra_timbratura(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def registra_timbratura(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """
     Registra una timbratura (entrata, uscita, pausa).
     

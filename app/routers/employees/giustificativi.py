@@ -12,7 +12,7 @@ Autore: Sistema Gestionale
 Data: 22 Gennaio 2026
 """
 
-from fastapi import APIRouter, HTTPException, Query, UploadFile, File
+from fastapi import APIRouter, HTTPException, Query, UploadFile, File, Body
 from typing import Dict, Any, List
 from datetime import datetime, timezone
 import uuid
@@ -200,7 +200,7 @@ async def get_giustificativi(
 
 @router.put("/giustificativi/{codice}")
 @handle_errors
-async def update_giustificativo(codice: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+async def update_giustificativo(codice: str, payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """
     Aggiorna un giustificativo (limiti, descrizione, etc).
     
@@ -492,7 +492,7 @@ async def set_limiti_custom_dipendente(
 
 @router.post("/valida-giustificativo")
 @handle_errors
-async def valida_giustificativo(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def valida_giustificativo(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """
     Valida se è possibile inserire un giustificativo per un dipendente.
     Verifica i limiti annuali e mensili.
@@ -1577,7 +1577,7 @@ async def get_riepilogo_progressivo(
 
 @router.post("/salva-saldi-finali")
 @handle_errors
-async def salva_saldi_finali(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def salva_saldi_finali(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """
     Salva i saldi finali di ferie/permessi per un dipendente.
     

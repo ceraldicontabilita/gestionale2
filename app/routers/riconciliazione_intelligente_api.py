@@ -14,7 +14,7 @@ Endpoints:
 - GET /stato-estratto - Info su copertura estratto conto
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Body
 from typing import Dict, Any
 from datetime import datetime, timezone
 
@@ -170,7 +170,7 @@ async def get_dashboard_riconciliazione() -> Dict[str, Any]:
 # =============================================================================
 
 @router.post("/conferma-pagamento")
-async def conferma_pagamento(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def conferma_pagamento(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """
     Conferma il metodo di pagamento per una fattura.
     
@@ -213,7 +213,7 @@ async def conferma_pagamento(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 
 @router.post("/conferma-multipla")
-async def conferma_pagamento_multipla(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def conferma_pagamento_multipla(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """
     Conferma il metodo di pagamento per multiple fatture.
     
@@ -281,7 +281,7 @@ async def conferma_pagamento_multipla(payload: Dict[str, Any]) -> Dict[str, Any]
 # =============================================================================
 
 @router.post("/applica-spostamento")
-async def applica_spostamento(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def applica_spostamento(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """
     Applica o rifiuta lo spostamento da Cassa a Banca.
     
@@ -453,7 +453,7 @@ async def get_stato_estratto() -> Dict[str, Any]:
 # =============================================================================
 
 @router.post("/lock-manuale")
-async def lock_manuale(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def lock_manuale(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """
     Blocca una fattura per evitare verifiche automatiche.
     
@@ -493,7 +493,7 @@ async def lock_manuale(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 
 @router.post("/sblocca")
-async def sblocca_fattura(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def sblocca_fattura(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """
     Sblocca una fattura e la rimette in verifica.
     
@@ -694,7 +694,7 @@ async def migra_fatture_legacy(payload: Dict[str, Any] = {}) -> Dict[str, Any]:
 
 
 @router.post("/imposta-stato-fattura")
-async def imposta_stato_fattura(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def imposta_stato_fattura(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """
     Imposta manualmente lo stato di una fattura.
     Utile per correzioni manuali.
@@ -742,7 +742,7 @@ async def imposta_stato_fattura(payload: Dict[str, Any]) -> Dict[str, Any]:
 # =============================================================================
 
 @router.post("/pagamento-parziale")
-async def registra_pagamento_parziale(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def registra_pagamento_parziale(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """
     Registra un pagamento parziale su una fattura.
     
@@ -784,7 +784,7 @@ async def registra_pagamento_parziale(payload: Dict[str, Any]) -> Dict[str, Any]
 
 
 @router.post("/applica-nota-credito")
-async def applica_nota_credito(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def applica_nota_credito(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """
     Applica una nota di credito a una fattura.
     
@@ -815,7 +815,7 @@ async def applica_nota_credito(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 
 @router.post("/cerca-bonifico-cumulativo")
-async def cerca_bonifico_cumulativo(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def cerca_bonifico_cumulativo(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """
     Cerca fatture che matchano un bonifico cumulativo.
     
@@ -844,7 +844,7 @@ async def cerca_bonifico_cumulativo(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 
 @router.post("/riconcilia-bonifico-cumulativo")
-async def riconcilia_bonifico_cumulativo(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def riconcilia_bonifico_cumulativo(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """
     Riconcilia un bonifico cumulativo con multiple fatture.
     
@@ -875,7 +875,7 @@ async def riconcilia_bonifico_cumulativo(payload: Dict[str, Any]) -> Dict[str, A
 
 
 @router.post("/pagamento-con-sconto")
-async def registra_pagamento_con_sconto(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def registra_pagamento_con_sconto(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """
     Registra un pagamento con sconto cassa.
     
@@ -921,7 +921,7 @@ async def registra_pagamento_con_sconto(payload: Dict[str, Any]) -> Dict[str, An
 # =============================================================================
 
 @router.post("/assegni-multipli")
-async def registra_assegni_multipli(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def registra_assegni_multipli(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """
     Registra pagamento con assegni multipli.
     
@@ -968,7 +968,7 @@ async def registra_assegni_multipli(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 
 @router.post("/riconcilia-con-arrotondamento")
-async def riconcilia_con_arrotondamento(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def riconcilia_con_arrotondamento(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """
     Riconcilia fattura con tolleranza per arrotondamenti.
     
@@ -1010,7 +1010,7 @@ async def riconcilia_con_arrotondamento(payload: Dict[str, Any]) -> Dict[str, An
 
 
 @router.post("/pagamento-anticipato")
-async def registra_pagamento_anticipato(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def registra_pagamento_anticipato(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """
     Registra un pagamento anticipato (prima della fattura).
     
@@ -1069,7 +1069,7 @@ async def get_pagamenti_anticipati() -> Dict[str, Any]:
 
 
 @router.post("/cerca-pagamenti-anticipati")
-async def cerca_pagamenti_anticipati_per_fattura(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def cerca_pagamenti_anticipati_per_fattura(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """
     Cerca pagamenti anticipati che potrebbero corrispondere a una fattura.
     
@@ -1089,7 +1089,7 @@ async def cerca_pagamenti_anticipati_per_fattura(payload: Dict[str, Any]) -> Dic
 
 
 @router.post("/collega-pagamento-anticipato")
-async def collega_pagamento_anticipato(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def collega_pagamento_anticipato(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """
     Collega un pagamento anticipato a una fattura.
     

@@ -83,7 +83,7 @@ GIORNI_ROL_ANNUALI = 72  # in ore
 
 @router.post("/timbratura")
 @handle_errors
-async def registra_timbratura(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def registra_timbratura(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """
     Registra una timbratura (entrata, uscita, pausa).
     
@@ -257,7 +257,7 @@ async def get_timbrature_giorno(data: str) -> Dict[str, Any]:
 
 @router.post("/richiesta-assenza")
 @handle_errors
-async def crea_richiesta_assenza(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def crea_richiesta_assenza(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """
     Crea una richiesta di assenza (ferie, permesso, malattia, ecc.).
     
@@ -399,7 +399,7 @@ async def approva_richiesta_assenza(richiesta_id: str, payload: Dict[str, Any] =
 
 @router.put("/richiesta-assenza/{richiesta_id}/rifiuta")
 @handle_errors
-async def rifiuta_richiesta_assenza(richiesta_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+async def rifiuta_richiesta_assenza(richiesta_id: str, payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """
     Rifiuta una richiesta di assenza.
     """

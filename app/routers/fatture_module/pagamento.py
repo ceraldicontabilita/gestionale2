@@ -1,7 +1,7 @@
 """
 Fatture Module - Operazioni di pagamento e riconciliazione.
 """
-from fastapi import HTTPException, File, UploadFile
+from fastapi import HTTPException, File, UploadFile, Body
 from typing import Dict, Any
 from datetime import datetime, timezone
 import uuid
@@ -11,7 +11,7 @@ from app.routers.fatture_module.ciclo_utils import COL_SCADENZIARIO
 from .common import COL_FORNITORI, COL_FATTURE_RICEVUTE, logger
 
 
-async def paga_fattura_manuale(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def paga_fattura_manuale(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """Registra pagamento manuale di una fattura (Cassa o Banca).
     Se metodo=banca, marca automaticamente come riconciliata.
     """
@@ -113,7 +113,7 @@ async def paga_fattura_manuale(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 
 
-async def cambia_metodo_pagamento_fattura(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def cambia_metodo_pagamento_fattura(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """Modifica il metodo di pagamento di una fattura."""
     db = Database.get_db()
     
@@ -166,7 +166,7 @@ async def cambia_metodo_pagamento_fattura(payload: Dict[str, Any]) -> Dict[str, 
     }
 
 
-async def riconcilia_fattura_con_estratto_conto(payload: Dict[str, Any]) -> Dict[str, Any]:
+async def riconcilia_fattura_con_estratto_conto(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
     """Riconcilia fattura con movimento estratto conto."""
     db = Database.get_db()
     
