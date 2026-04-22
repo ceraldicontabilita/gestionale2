@@ -3,7 +3,7 @@ Report PDF Router - Generazione report PDF mensili e annuali.
 """
 from fastapi import APIRouter, Query
 from fastapi.responses import StreamingResponse
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from io import BytesIO
 import logging
 
@@ -357,7 +357,7 @@ async def generate_report_scadenze(giorni: int = Query(30, description="Giorni p
     """
     db = Database.get_db()
     
-    oggi = datetime.now()
+    oggi = datetime.now(timezone.utc)
     limite = (oggi + timedelta(days=giorni)).strftime('%Y-%m-%d')
     oggi_str = oggi.strftime('%Y-%m-%d')
     
