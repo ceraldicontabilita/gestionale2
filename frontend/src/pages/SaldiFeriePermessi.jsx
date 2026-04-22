@@ -493,14 +493,14 @@ export default function SaldiFeriePermessi() {
               alignItems: 'center',
               justifyContent: 'center',
               zIndex: 1000
-            }}>
+            }} onClick={() => setShowEditModal(false)}>
               <div style={{
                 background: 'white',
                 borderRadius: 16,
                 padding: 24,
                 width: '100%',
                 maxWidth: 400
-              }}>
+              }} onClick={e => e.stopPropagation()}>
                 <h3 style={{ margin: '0 0 20px 0' }}>Modifica Saldi Finali</h3>
                 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
