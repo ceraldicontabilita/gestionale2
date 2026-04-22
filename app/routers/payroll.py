@@ -2,7 +2,7 @@
 import io
 from openpyxl import load_workbook
 import re
-from fastapi import HTTPException
+from fastapi import Body, HTTPException
 
 from fastapi import APIRouter, Depends, Path, status, UploadFile, File, Query
 from typing import Dict, Any, List
@@ -36,7 +36,7 @@ async def get_prima_nota(
     summary="Create prima nota entry"
 )
 async def create_prima_nota(
-    data: Dict[str, Any],
+    data: Dict[str, Any] = Body(...),
     current_user: Dict[str, Any] = Depends(get_current_user)
 ) -> Dict[str, str]:
     """Create a prima nota entry."""
