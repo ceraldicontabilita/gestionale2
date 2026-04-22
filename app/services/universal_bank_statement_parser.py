@@ -477,7 +477,7 @@ class UniversalBankStatementParser:
                                 "importo": avere - dare,
                                 "banca": "GENERICA"
                             })
-                    except:
+                    except Exception:
                         continue
         
         # Se nessuna tabella ha funzionato, prova regex
@@ -578,7 +578,7 @@ class UniversalBankStatementParser:
                             return f"{year}-{month:02d}-{day:02d}"
             
             return None
-        except:
+        except Exception:
             return None
     
     def _parse_amount(self, amount_str: str) -> float:
@@ -602,7 +602,7 @@ class UniversalBankStatementParser:
             
             value = float(amount_str)
             return -value if is_negative else value
-        except:
+        except Exception:
             return 0.0
 
 
