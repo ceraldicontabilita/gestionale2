@@ -10,7 +10,7 @@ Estrae: Paga Base, Contingenza, TFR, Ferie, Permessi, ROL
 import pdfplumber
 import re
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Any
 
 # Mapping mesi italiano -> numero
@@ -417,7 +417,7 @@ def extract_busta_paga_data(pdf_path: str) -> Dict[str, Any]:
         'netto_mese': 0.0,
         'lordo_mese': 0.0,
         'format_detected': 'unknown',
-        'parsed_at': datetime.now().isoformat()
+        'parsed_at': datetime.now(timezone.utc).isoformat()
     }
     
     try:
