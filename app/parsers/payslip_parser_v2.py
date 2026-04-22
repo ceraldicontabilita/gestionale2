@@ -62,7 +62,7 @@ class PayslipParserMultiFormat:
         value = value.replace(' ', '').replace('.', '').replace(',', '.').replace('€', '').replace('+', '').replace('-', '')
         try:
             return float(value)
-        except:
+        except Exception:
             return 0.0
     
     def _extract_mese_anno(self, text: str) -> Dict[str, int]:
