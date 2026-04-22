@@ -104,7 +104,19 @@ async def paga_fattura_manuale(payload: Dict[str, Any] = Body(...)) -> Dict[str,
         await db[COL_FATTURE_RICEVUTE].update_one({"id": fattura_id}, {"$set": update_fields})
         await db["invoices"].update_one({"id": fattura_id}, {"$set": update_fields})
         logger.info(f"Pagamento {'e riconciliazione ' if auto_riconciliato else ''}registrato: {fattura_id} -> {collection}, €{importo}")
-        
+
+        # --- EVENT BUS: propaga evento fattura pagata ---
+        try:
+            from app.services.event_bus import propagate_event, EventTypes
+            await propagate_event(EventTypes.FATTURA_PAGATA, {
+                "fattura_id": fattura_id,
+                "metodo_pagamento": metodo,
+                "data_pagamento": data_pagamento,
+                "importo": importo,
+            }, db, source_module="pagamento_manuale")
+        except Exception:
+            logger.exception("Errore propagazione evento fattura.pagata (manuale)")
+
     except Exception as e:
         logger.error(f"Errore pagamento manuale: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -220,7 +232,19 @@ async def riconcilia_fattura_con_estratto_conto(payload: Dict[str, Any] = Body(.
                 "updated_at": datetime.now(timezone.utc).isoformat()
             }}
         )
-    
+
+    # --- EVENT BUS: propaga evento fattura pagata (via riconciliazione estratto conto) ---
+    try:
+        from app.services.event_bus import propagate_event, EventTypes
+        await propagate_event(EventTypes.FATTURA_PAGATA, {
+            "fattura_id": fattura_id,
+            "metodo_pagamento": "banca",
+            "data_pagamento": datetime.now(timezone.utc).isoformat(),
+            "movimento_id": movimento_id,
+        }, db, source_module="riconciliazione_estratto_conto")
+    except Exception:
+        logger.exception("Errore propagazione evento fattura.pagata (riconcilia EC)")
+
     return {
         "success": True,
         "fattura_id": fattura_id,
@@ -488,6 +512,18 @@ async def backfill_autoroute_da_metodo_fornitore() -> Dict[str, Any]:
                 await db[other_coll].update_one(
                     {"id": fattura_id}, {"$set": update_fields}
                 )
+
+                # --- EVENT BUS: propaga evento fattura pagata (via backfill auto-route) ---
+                try:
+                    from app.services.event_bus import propagate_event, EventTypes
+                    await propagate_event(EventTypes.FATTURA_PAGATA, {
+                        "fattura_id": fattura_id,
+                        "metodo_pagamento": dest,
+                        "data_pagamento": data_pag,
+                        "importo": importo,
+                    }, db, source_module="backfill_autoroute")
+                except Exception:
+                    logger.exception("Errore propagazione evento fattura.pagata (backfill)")
 
             except Exception as e:
                 report["errori"] += 1

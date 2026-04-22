@@ -367,6 +367,21 @@ async def sposta_movimento(req: SpostaMovimentoRequest) -> Dict:
             # Assicura che sia un'uscita (addebito) o entrata (accredito) coerente
             await db[dest_coll].insert_one(mov)
             await db["estratto_conto_movimenti"].delete_one({"id": movimento_id})
+
+            # --- EVENT BUS: propaga evento trasferimento (ramo EC→prima_nota) ---
+            try:
+                from app.services.event_bus import propagate_event, EventTypes
+                await propagate_event(EventTypes.TRASFERIMENTO_CREATO, {
+                    "movimento_id": movimento_id,
+                    "origine": da,
+                    "destinazione": a,
+                    "importo": mov.get("importo"),
+                    "data": mov.get("data"),
+                    "descrizione": mov.get("descrizione"),
+                }, db, source_module="prima_nota_sposta_movimento")
+            except Exception:
+                logger.exception("Errore propagazione evento trasferimento.creato (EC)")
+
             return {
                 "success": True,
                 "message": f"Movimento spostato da estratto conto banca a {a}",
@@ -382,6 +397,20 @@ async def sposta_movimento(req: SpostaMovimentoRequest) -> Dict:
 
     await db[dest_coll].insert_one(mov)
     await db[source_coll].delete_one({"id": movimento_id})
+
+    # --- EVENT BUS: propaga evento trasferimento (ramo standard) ---
+    try:
+        from app.services.event_bus import propagate_event, EventTypes
+        await propagate_event(EventTypes.TRASFERIMENTO_CREATO, {
+            "movimento_id": movimento_id,
+            "origine": da,
+            "destinazione": a,
+            "importo": mov.get("importo"),
+            "data": mov.get("data"),
+            "descrizione": mov.get("descrizione"),
+        }, db, source_module="prima_nota_sposta_movimento")
+    except Exception:
+        logger.exception("Errore propagazione evento trasferimento.creato")
 
     return {
         "success": True,

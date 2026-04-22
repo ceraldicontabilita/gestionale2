@@ -86,6 +86,21 @@ async def _salva_documento_generico(db, from_addr: str, subject: str, tipo: str,
         await db["documents_inbox"].insert_one(doc)
         logger.info(f"[Gmail] Salvato documento {tipo}: {filename} da {from_addr}")
 
+        # --- EVENT BUS: propaga evento documento acquisito ---
+        try:
+            from app.services.event_bus import propagate_event, EventTypes
+            await propagate_event(EventTypes.DOCUMENTO_ACQUISITO, {
+                "documento_id": doc.get("id") or doc.get("_id"),
+                "filename": filename,
+                "origine": "gmail",
+                "mime_type": "application/pdf",
+                "hash_file": doc.get("file_hash") or doc.get("hash_file"),
+                "mittente": from_addr,
+                "category": tipo,
+            }, db, source_module="email_monitor_service")
+        except Exception:
+            logger.exception("Errore propagazione evento documento.acquisito (monitor)")
+
 
 async def sync_email_documents(db, giorni: int = 30) -> Dict[str, Any]:
     """

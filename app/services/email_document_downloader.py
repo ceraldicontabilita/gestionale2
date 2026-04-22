@@ -863,7 +863,22 @@ async def download_documents_from_email(
                 logger.info(f"Nuovo documento: {doc['filename']} - Periodo: {doc.get('periodo_raw', 'N/D')} - Cat: {doc['category']}")
             else:
                 logger.info(f"Nuovo documento: {doc['filename']} - Cat: {doc['category']}")
-            
+
+            # --- EVENT BUS: propaga evento documento acquisito ---
+            try:
+                from app.services.event_bus import propagate_event, EventTypes
+                await propagate_event(EventTypes.DOCUMENTO_ACQUISITO, {
+                    "documento_id": doc_to_insert.get("id") or doc_to_insert.get("_id"),
+                    "filename": doc_to_insert.get("filename"),
+                    "origine": "gmail",
+                    "mime_type": doc_to_insert.get("mime_type") or "application/pdf",
+                    "hash_file": doc_to_insert.get("file_hash") or doc_to_insert.get("hash_file"),
+                    "mittente": doc_to_insert.get("from_addr") or doc_to_insert.get("mittente"),
+                    "category": doc_to_insert.get("category"),
+                }, db, source_module="email_document_downloader")
+            except Exception:
+                logger.exception("Errore propagazione evento documento.acquisito")
+
             new_documents.append(doc)
         
         stats["new_documents"] = len(new_documents)

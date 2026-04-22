@@ -385,7 +385,20 @@ async def conferma_match(match_id: str, db, confirmed_by: str = "utente") -> Dic
     )
     
     logger.info(f"Match {match_id} confermato da {confirmed_by}")
-    
+
+    # --- EVENT BUS: propaga evento match confermato ---
+    # Attiva gli handler che aggiornano fattura/F24/cedolino/POS collegati
+    try:
+        from app.services.event_bus import propagate_event, EventTypes
+        await propagate_event(EventTypes.MATCH_CONFERMATO, {
+            "match_id": match_id,
+            "partita_id": match_doc.get("partita_id"),
+            "movimento_id": match_doc.get("movimento_id"),
+            "importo_riconciliato": match_doc.get("importo_riconciliato"),
+        }, db, source_module="riconciliazione_engine", user=confirmed_by)
+    except Exception:
+        logger.exception("Errore propagazione evento match.confermato")
+
     return {
         "success": True,
         "match_id": match_id,

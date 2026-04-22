@@ -1250,6 +1250,21 @@ async def sync_filesystem_pdfs_to_db(db: AsyncIOMotorDatabase, base_dir: str = "
                 
                 await db["documents_inbox"].insert_one(new_doc)
                 stats["new_added"] += 1
+
+                # --- EVENT BUS: propaga evento documento acquisito ---
+                try:
+                    from app.services.event_bus import propagate_event, EventTypes
+                    await propagate_event(EventTypes.DOCUMENTO_ACQUISITO, {
+                        "documento_id": new_doc.get("id") or new_doc.get("_id"),
+                        "filename": new_doc.get("filename"),
+                        "origine": "filesystem",
+                        "mime_type": new_doc.get("mime_type") or "application/pdf",
+                        "hash_file": new_doc.get("file_hash"),
+                        "mittente": new_doc.get("mittente"),
+                        "category": new_doc.get("category"),
+                    }, db, source_module="email_full_download")
+                except Exception:
+                    logger.exception("Errore propagazione evento documento.acquisito (fs sync)")
                 
             except Exception as e:
                 logger.error(f"Errore sync file {filepath}: {e}")
