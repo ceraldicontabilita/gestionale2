@@ -29,10 +29,9 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       // Token scaduto o invalido - redirect a login
       localStorage.removeItem("auth_token");
-      // DISABILITATO - Login rimandato al deploy
-      // if (!window.location.pathname.includes("/login")) {
-      //   window.location.href = "/login";
-      // }
+      if (!window.location.pathname.includes("/login")) {
+        window.location.href = "/login";
+      }
     }
     return Promise.reject(error);
   }

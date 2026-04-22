@@ -319,31 +319,41 @@ const TopNav = memo(function TopNav() {
 
 export default TopNav;
 
-/* ─── Campana notifiche minimale (senza polling) ─── */
+/* ─── Campana notifiche — usa /api/alerts/summary (sistema relazionale) ─── */
 const NotificationBellMinimal = memo(function NotificationBellMinimal() {
-  const [count, setCount] = useState(0);
+  const [summary, setSummary] = useState({ totale_aperti: 0, per_severita: { critical: 0, warning: 0, info: 0 }, critical_recenti: [], per_modulo: {} });
   const [open, setOpen] = useState(false);
-  const [alerts, setAlerts] = useState([]);
-  const hasFetched = useRef(false);
 
-  // Fetch solo la prima volta che si apre, non ad ogni render
-  const handleOpen = useCallback(async () => {
-    setOpen((prev) => {
-      const next = !prev;
-      if (next && !hasFetched.current) {
-        hasFetched.current = true;
-        import('../../api').then(({ default: api }) => {
-          api.get('/api/alerts/lista?limit=15')
-            .then(r => {
-              setAlerts(r.data.alerts || []);
-              setCount(r.data.stats?.non_letti || 0);
-            })
-            .catch(() => {});
-        });
-      }
-      return next;
-    });
+  const fetchSummary = useCallback(async () => {
+    try {
+      const { default: api } = await import('../../api');
+      const r = await api.get('/api/alerts/summary');
+      setSummary(r.data || { totale_aperti: 0, per_severita: {}, critical_recenti: [], per_modulo: {} });
+    } catch (e) {
+      // Silenzioso: se non autenticati il badge resta a 0
+    }
   }, []);
+
+  // Polling ogni 60s + fetch iniziale
+  useEffect(() => {
+    fetchSummary();
+    const interval = setInterval(fetchSummary, 60000);
+    return () => clearInterval(interval);
+  }, [fetchSummary]);
+
+  const handleOpen = useCallback(() => {
+    setOpen((prev) => !prev);
+    // Refresh immediato all'apertura
+    if (!open) fetchSummary();
+  }, [open, fetchSummary]);
+
+  const critical = summary.per_severita?.critical || 0;
+  const warning = summary.per_severita?.warning || 0;
+  const totale = summary.totale_aperti || 0;
+  const hasAlerts = totale > 0;
+
+  // Colore del pallino badge: rosso se ci sono critical, arancione se solo warning, blu se solo info
+  const badgeColor = critical > 0 ? '#ef4444' : warning > 0 ? '#f59e0b' : '#3b82f6';
 
   return (
     <div style={{ position: 'relative' }}>
@@ -363,21 +373,31 @@ const NotificationBellMinimal = memo(function NotificationBellMinimal() {
           color: 'rgba(255,255,255,0.85)',
           transition: 'background 0.15s',
         }}
-        title="Notifiche"
+        title={hasAlerts ? `${totale} alert aperti` : 'Nessun alert'}
         data-testid="notification-bell-btn"
       >
         <Bell size={15} />
-        {count > 0 && (
+        {hasAlerts && (
           <span style={{
             position: 'absolute',
-            top: 4,
-            right: 4,
-            width: 7,
-            height: 7,
-            background: '#ef4444',
-            borderRadius: '50%',
+            top: -4,
+            right: -4,
+            minWidth: 16,
+            height: 16,
+            padding: '0 4px',
+            background: badgeColor,
+            color: '#fff',
+            fontSize: 10,
+            fontWeight: 700,
+            borderRadius: 8,
             border: '1px solid #1e3a5f',
-          }} />
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            lineHeight: 1,
+          }}>
+            {totale > 99 ? '99+' : totale}
+          </span>
         )}
       </button>
 
@@ -386,7 +406,7 @@ const NotificationBellMinimal = memo(function NotificationBellMinimal() {
           position: 'absolute',
           top: 'calc(100% + 8px)',
           right: 0,
-          width: 300,
+          width: 340,
           background: '#fff',
           borderRadius: 10,
           boxShadow: '0 12px 32px rgba(15,39,68,0.18)',
@@ -395,32 +415,72 @@ const NotificationBellMinimal = memo(function NotificationBellMinimal() {
           overflow: 'hidden',
           animation: 'navDropIn 0.15s ease',
         }} data-testid="notification-dropdown">
-          <div style={{ padding: '12px 16px', borderBottom: '1px solid #f3f4f6', fontWeight: 700, fontSize: 13, color: COLORS.primary }}>
-            Notifiche {count > 0 && <span style={{ color: '#ef4444' }}>({count})</span>}
+          <div style={{ padding: '12px 16px', borderBottom: '1px solid #f3f4f6', fontWeight: 700, fontSize: 13, color: COLORS.primary, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>Alert di sistema</span>
+            {hasAlerts && (
+              <span style={{ fontSize: 11, fontWeight: 600, color: '#64748b' }}>
+                {critical > 0 && <span style={{ color: '#ef4444', marginRight: 6 }}>🔴 {critical}</span>}
+                {warning > 0 && <span style={{ color: '#f59e0b', marginRight: 6 }}>🟡 {warning}</span>}
+                {(summary.per_severita?.info || 0) > 0 && <span style={{ color: '#3b82f6' }}>🔵 {summary.per_severita.info}</span>}
+              </span>
+            )}
           </div>
+
           <div style={{ maxHeight: 320, overflowY: 'auto' }}>
-            {alerts.length === 0 ? (
+            {!hasAlerts ? (
               <div style={{ padding: 20, textAlign: 'center', color: '#9ca3af', fontSize: 13 }}>
-                Nessuna notifica
+                ✓ Nessun alert aperto
               </div>
-            ) : alerts.slice(0, 8).map((a, i) => (
-              <div key={a.id || i} style={{
-                padding: '10px 16px',
-                borderBottom: '1px solid #f9fafb',
-                fontSize: 12,
-                color: a.letto ? '#9ca3af' : '#374151',
-                fontWeight: a.letto ? 400 : 600,
-              }}>
-                {a.titolo || a.messaggio || 'Notifica'}
+            ) : summary.critical_recenti && summary.critical_recenti.length > 0 ? (
+              <>
+                <div style={{ padding: '8px 16px', background: '#fef2f2', fontSize: 10, fontWeight: 700, color: '#b91c1c', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  Alert critici recenti
+                </div>
+                {summary.critical_recenti.map((a, i) => (
+                  <div key={a.id || i} style={{
+                    padding: '10px 16px',
+                    borderBottom: '1px solid #f9fafb',
+                    fontSize: 12,
+                    color: '#374151',
+                  }}>
+                    <div style={{ fontWeight: 600, marginBottom: 2 }}>{a.titolo || a.codice || 'Alert'}</div>
+                    {a.dettaglio && <div style={{ fontSize: 11, color: '#6b7280' }}>{a.dettaglio.slice(0, 120)}</div>}
+                    {a.modulo && <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 2 }}>{a.modulo}</div>}
+                  </div>
+                ))}
+              </>
+            ) : (
+              <div style={{ padding: 16, fontSize: 12, color: '#6b7280' }}>
+                {Object.entries(summary.per_modulo || {}).slice(0, 8).map(([modulo, count]) => (
+                  <div key={modulo} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #f9fafb' }}>
+                    <span style={{ textTransform: 'capitalize' }}>{modulo}</span>
+                    <span style={{ fontWeight: 700, color: COLORS.primary }}>{count}</span>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
-          <button
+
+          <a
+            href="/dashboard-relazionale"
             onClick={() => setOpen(false)}
-            style={{ width: '100%', padding: '10px', background: '#f9fafb', border: 'none', cursor: 'pointer', fontSize: 12, color: '#6b7280', borderTop: '1px solid #f3f4f6' }}
+            style={{
+              display: 'block',
+              width: '100%',
+              padding: '10px',
+              background: COLORS.primary,
+              color: '#fff',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: 12,
+              fontWeight: 600,
+              textAlign: 'center',
+              textDecoration: 'none',
+              borderTop: '1px solid #f3f4f6',
+            }}
           >
-            Chiudi
-          </button>
+            Apri Dashboard Relazionale →
+          </a>
         </div>
       )}
     </div>
