@@ -5,7 +5,7 @@ API per controllare la consistenza dei dati tra le varie sezioni del gestionale.
 
 from fastapi import APIRouter, Query, HTTPException
 from typing import Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from app.database import Database
 from app.services.verifica_coerenza import (
     VerificaCoerenza, 
@@ -263,7 +263,7 @@ async def riepilogo_verifiche_giornaliero() -> Dict[str, Any]:
         verifica = await verificatore.verifica_completa(anno)
         
         # Aggiungi info extra
-        verifica["data_verifica"] = datetime.now().isoformat()
+        verifica["data_verifica"] = datetime.now(timezone.utc).isoformat()
         verifica["mese_corrente"] = MESI_NOMI[mese]
         
         # Stato generale
