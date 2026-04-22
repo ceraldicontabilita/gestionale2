@@ -12,18 +12,18 @@ import { COLORS } from '../lib/utils';
  * @param {string} subtitle - Sottotitolo opzionale
  * @param {function} onClick - Handler click opzionale
  */
-export function StatCard({ 
-  icon, 
-  label, 
-  value, 
-  color = '#1f2937', 
-  bgColor = '#f8fafc', 
+export function StatCard({
+  icon,
+  label,
+  value,
+  color = '#1f2937',
+  bgColor = '#f8fafc',
   highlight = false,
   subtitle,
-  onClick
+  onClick,
 }) {
   return (
-    <div 
+    <div
       onClick={onClick}
       style={{
         background: bgColor,
@@ -33,13 +33,13 @@ export function StatCard({
         cursor: onClick ? 'pointer' : 'default',
         transition: 'transform 0.2s, box-shadow 0.2s',
       }}
-      onMouseEnter={(e) => {
+      onMouseEnter={e => {
         if (onClick) {
           e.currentTarget.style.transform = 'translateY(-2px)';
           e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
         }
       }}
-      onMouseLeave={(e) => {
+      onMouseLeave={e => {
         if (onClick) {
           e.currentTarget.style.transform = 'translateY(0)';
           e.currentTarget.style.boxShadow = 'none';
@@ -50,19 +50,17 @@ export function StatCard({
         {icon && <span style={{ fontSize: 20 }}>{icon}</span>}
         <span style={{ color: '#6b7280', fontSize: 12, fontWeight: 500 }}>{label}</span>
       </div>
-      <div style={{ 
-        fontSize: 24, 
-        fontWeight: 700, 
-        color: color, 
-        marginTop: 4 
-      }}>
+      <div
+        style={{
+          fontSize: 24,
+          fontWeight: 700,
+          color: color,
+          marginTop: 4,
+        }}
+      >
         {value}
       </div>
-      {subtitle && (
-        <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>
-          {subtitle}
-        </div>
-      )}
+      {subtitle && <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>{subtitle}</div>}
     </div>
   );
 }
@@ -72,15 +70,17 @@ export function StatCard({
  */
 export function StatCardCompact({ icon, label, value, color = '#1f2937' }) {
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: 12,
-      padding: '12px 16px',
-      background: '#f8fafc',
-      borderRadius: 8,
-      border: '1px solid #e5e7eb'
-    }}>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        padding: '12px 16px',
+        background: '#f8fafc',
+        borderRadius: 8,
+        border: '1px solid #e5e7eb',
+      }}
+    >
       {icon && <span style={{ fontSize: 18 }}>{icon}</span>}
       <div>
         <div style={{ fontSize: 11, color: '#6b7280' }}>{label}</div>
@@ -95,11 +95,13 @@ export function StatCardCompact({ icon, label, value, color = '#1f2937' }) {
  */
 export function StatGrid({ children, columns = 4 }) {
   return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: `repeat(auto-fit, minmax(${Math.floor(100/columns)}%, 1fr))`,
-      gap: 16
-    }}>
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: `repeat(auto-fit, minmax(${Math.floor(100 / columns)}%, 1fr))`,
+        gap: 16,
+      }}
+    >
       {children}
     </div>
   );
