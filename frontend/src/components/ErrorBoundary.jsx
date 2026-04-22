@@ -36,41 +36,46 @@ class ErrorBoundary extends React.Component {
       }
 
       return (
-        <div style={{
-          padding: '40px',
-          textAlign: 'center',
-          minHeight: '300px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '16px',
-          backgroundColor: '#fef2f2',
-          borderRadius: '12px',
-          margin: '20px',
-          border: '1px solid #fecaca'
-        }}>
+        <div
+          style={{
+            padding: '40px',
+            textAlign: 'center',
+            minHeight: '300px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '16px',
+            backgroundColor: '#fef2f2',
+            borderRadius: '12px',
+            margin: '20px',
+            border: '1px solid #fecaca',
+          }}
+        >
           <div style={{ fontSize: '48px' }}>⚠️</div>
           <h2 style={{ color: '#991b1b', margin: 0, fontSize: '20px' }}>
             Si è verificato un errore
           </h2>
           <p style={{ color: '#7f1d1d', maxWidth: '500px', margin: 0 }}>
-            {this.props.message || 'Qualcosa è andato storto in questa sezione. Puoi provare a ricaricare.'}
+            {this.props.message ||
+              'Qualcosa è andato storto in questa sezione. Puoi provare a ricaricare.'}
           </p>
-          
+
           {/* Mostra dettagli errore solo in development */}
           {import.meta.env.DEV && this.state.error && (
-            <details style={{
-              textAlign: 'left',
-              maxWidth: '600px',
-              width: '100%',
-              padding: '12px',
-              backgroundColor: '#fff',
-              borderRadius: '8px',
-              border: '1px solid #e5e7eb',
-              fontSize: '12px',
-              color: '#6b7280'
-            }}>
+            <details
+              style={{
+                textAlign: 'left',
+                maxWidth: '600px',
+                width: '100%',
+                padding: '12px',
+                backgroundColor: '#fff',
+                borderRadius: '8px',
+                border: '1px solid #e5e7eb',
+                fontSize: '12px',
+                color: '#6b7280',
+              }}
+            >
               <summary style={{ cursor: 'pointer', fontWeight: 'bold', color: '#374151' }}>
                 Dettagli errore (dev)
               </summary>
@@ -91,7 +96,7 @@ class ErrorBoundary extends React.Component {
                 backgroundColor: '#fff',
                 cursor: 'pointer',
                 fontSize: '14px',
-                color: '#374151'
+                color: '#374151',
               }}
             >
               Riprova
@@ -105,7 +110,7 @@ class ErrorBoundary extends React.Component {
                 backgroundColor: '#dc2626',
                 color: '#fff',
                 cursor: 'pointer',
-                fontSize: '14px'
+                fontSize: '14px',
               }}
             >
               Ricarica pagina
