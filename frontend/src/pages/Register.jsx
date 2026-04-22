@@ -7,19 +7,19 @@ export default function Register() {
     email: '',
     password: '',
     confirmPassword: '',
-    name: ''
+    name: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
 
-  const handleChange = (e) => {
+  const handleChange = e => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setError('');
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
     setError('');
 
@@ -45,15 +45,18 @@ export default function Register() {
       await api.post('/api/auth/register', {
         email: formData.email,
         password: formData.password,
-        name: formData.name
+        name: formData.name,
       });
-      
+
       setSuccess(true);
       setTimeout(() => {
         navigate('/login');
       }, 2000);
     } catch (err) {
-      const msg = err.response?.data?.message || err.response?.data?.detail || 'Errore durante la registrazione';
+      const msg =
+        err.response?.data?.message ||
+        err.response?.data?.detail ||
+        'Errore durante la registrazione';
       setError(typeof msg === 'string' ? msg : 'Errore durante la registrazione');
     } finally {
       setLoading(false);
@@ -61,23 +64,30 @@ export default function Register() {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
-      padding: '20px',
-    }}>
-      <div style={{
+    <div
+      style={{
+        minHeight: '100vh',
         display: 'flex',
-        width: '100%',
-        maxWidth: 900,
-        gap: 60,
         alignItems: 'center',
-      }}>
+        justifyContent: 'center',
+        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
+        padding: '20px',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          width: '100%',
+          maxWidth: 900,
+          gap: 60,
+          alignItems: 'center',
+        }}
+      >
         {/* Left side - Branding */}
-        <div style={{ flex: 1, display: 'none', '@media (min-width: 768px)': { display: 'block' } }} className="hidden md:block">
+        <div
+          style={{ flex: 1, display: 'none', '@media (min-width: 768px)': { display: 'block' } }}
+          className="hidden md:block"
+        >
           <h1 style={{ fontSize: 42, fontWeight: 700, color: '#f8fafc', marginBottom: 8 }}>
             Ceraldi<span style={{ color: '#3b82f6' }}>.</span>
           </h1>
@@ -100,15 +110,17 @@ export default function Register() {
         </div>
 
         {/* Right side - Registration Form */}
-        <div style={{
-          flex: 1,
-          maxWidth: 400,
-          background: 'rgba(30, 41, 59, 0.5)',
-          backdropFilter: 'blur(10px)',
-          borderRadius: 16,
-          padding: 32,
-          border: '1px solid rgba(148, 163, 184, 0.1)',
-        }}>
+        <div
+          style={{
+            flex: 1,
+            maxWidth: 400,
+            background: 'rgba(30, 41, 59, 0.5)',
+            backdropFilter: 'blur(10px)',
+            borderRadius: 16,
+            padding: 32,
+            border: '1px solid rgba(148, 163, 184, 0.1)',
+          }}
+        >
           <h2 style={{ color: '#f8fafc', fontSize: 24, fontWeight: 600, marginBottom: 8 }}>
             Registrati
           </h2>
@@ -117,34 +129,40 @@ export default function Register() {
           </p>
 
           {success ? (
-            <div style={{
-              background: 'rgba(34, 197, 94, 0.1)',
-              border: '1px solid rgba(34, 197, 94, 0.3)',
-              borderRadius: 8,
-              padding: 16,
-              color: '#22c55e',
-              textAlign: 'center',
-            }}>
+            <div
+              style={{
+                background: 'rgba(34, 197, 94, 0.1)',
+                border: '1px solid rgba(34, 197, 94, 0.3)',
+                borderRadius: 8,
+                padding: 16,
+                color: '#22c55e',
+                textAlign: 'center',
+              }}
+            >
               ✅ Registrazione completata! Reindirizzamento al login...
             </div>
           ) : (
             <form onSubmit={handleSubmit}>
               {error && (
-                <div style={{
-                  background: 'rgba(239, 68, 68, 0.1)',
-                  border: '1px solid rgba(239, 68, 68, 0.3)',
-                  borderRadius: 8,
-                  padding: 12,
-                  marginBottom: 16,
-                  color: '#ef4444',
-                  fontSize: 14,
-                }}>
+                <div
+                  style={{
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    borderRadius: 8,
+                    padding: 12,
+                    marginBottom: 16,
+                    color: '#ef4444',
+                    fontSize: 14,
+                  }}
+                >
                   ⚠️ {error}
                 </div>
               )}
 
               <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', color: '#94a3b8', fontSize: 13, marginBottom: 6 }}>
+                <label
+                  style={{ display: 'block', color: '#94a3b8', fontSize: 13, marginBottom: 6 }}
+                >
                   Nome completo
                 </label>
                 <input
@@ -168,7 +186,9 @@ export default function Register() {
               </div>
 
               <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', color: '#94a3b8', fontSize: 13, marginBottom: 6 }}>
+                <label
+                  style={{ display: 'block', color: '#94a3b8', fontSize: 13, marginBottom: 6 }}
+                >
                   Email
                 </label>
                 <input
@@ -192,7 +212,9 @@ export default function Register() {
               </div>
 
               <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', color: '#94a3b8', fontSize: 13, marginBottom: 6 }}>
+                <label
+                  style={{ display: 'block', color: '#94a3b8', fontSize: 13, marginBottom: 6 }}
+                >
                   Password
                 </label>
                 <input
@@ -216,7 +238,9 @@ export default function Register() {
               </div>
 
               <div style={{ marginBottom: 24 }}>
-                <label style={{ display: 'block', color: '#94a3b8', fontSize: 13, marginBottom: 6 }}>
+                <label
+                  style={{ display: 'block', color: '#94a3b8', fontSize: 13, marginBottom: 6 }}
+                >
                   Conferma Password
                 </label>
                 <input
@@ -263,8 +287,8 @@ export default function Register() {
 
               <p style={{ textAlign: 'center', color: '#94a3b8', fontSize: 14 }}>
                 Hai già un account?{' '}
-                <Link 
-                  to="/login" 
+                <Link
+                  to="/login"
                   style={{ color: '#3b82f6', textDecoration: 'none' }}
                   data-testid="goto-login-link"
                 >
@@ -274,12 +298,14 @@ export default function Register() {
             </form>
           )}
 
-          <p style={{ 
-            textAlign: 'center', 
-            color: '#64748b', 
-            fontSize: 11, 
-            marginTop: 24 
-          }}>
+          <p
+            style={{
+              textAlign: 'center',
+              color: '#64748b',
+              fontSize: 11,
+              marginTop: 24,
+            }}
+          >
             Impresasempliceonline © 2026 Ceraldi Group
           </p>
         </div>
