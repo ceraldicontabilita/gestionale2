@@ -16,7 +16,7 @@ Data: 22 Gennaio 2026
 
 from fastapi import APIRouter, HTTPException, Query, Body
 from fastapi.responses import StreamingResponse
-from typing import Dict, Any
+from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone, timedelta
 from enum import Enum
 import uuid
@@ -1061,15 +1061,48 @@ async def get_month_grid(anno: int, mese: int) -> Dict[str, Any]:
     Solo celle con stato presente vengono restituite (quelle senza presenza
     sono implicitamente vuote nella griglia). Il frontend mostra la cella
     vuota se la chiave non esiste.
+
+    NOTA: la collection `presenze` contiene due schemi diversi:
+
+      1) Schema "flat" (scritto da batch-insert e inserimento manuale):
+         { employee_id, data: "YYYY-MM-DD", stato, ore, protocollo, note }
+
+      2) Schema "nested" (scritto da /api/attendance/libro-unico/import-pdf):
+         { anno, mese, codice_fiscale, cognome, nome,
+           giorni: [ { giorno, ore_ordinarie, giustificativi: [{codice, ore}], ... } ],
+           source: "pdf_libro_unico" }
+
+    Entrambi vengono appiattiti nello stesso formato flat per il frontend.
+    I documenti nested richiedono lookup da codice_fiscale a employee_id
+    tramite la collection `dipendenti`.
     """
     if mese < 1 or mese > 12:
         raise HTTPException(status_code=400, detail="mese deve essere 1..12")
 
     db = Database.get_db()
+    celle: List[Dict[str, Any]] = []
+
+    # Cache CF -> employee_id per evitare lookup ripetuti
+    cf_to_emp_id: Dict[str, str] = {}
+
+    async def _resolve_emp_id_from_cf(cf: str) -> Optional[str]:
+        """Risolve un codice fiscale in employee_id (con cache)."""
+        if not cf:
+            return None
+        if cf in cf_to_emp_id:
+            return cf_to_emp_id[cf]
+        dip = await db["dipendenti"].find_one(
+            {"codice_fiscale": cf}, {"_id": 0, "id": 1}
+        )
+        emp_id = dip.get("id") if dip else None
+        cf_to_emp_id[cf] = emp_id
+        return emp_id
+
     cursor = db["presenze"].find(
         {"anno": anno, "mese": mese},
         {
             "_id": 0,
+            # flat
             "employee_id": 1,
             "dipendente_id": 1,
             "data": 1,
@@ -1077,23 +1110,76 @@ async def get_month_grid(anno: int, mese: int) -> Dict[str, Any]:
             "ore": 1,
             "protocollo": 1,
             "note": 1,
+            # nested (libro unico)
+            "codice_fiscale": 1,
+            "giorni": 1,
+            "source": 1,
         },
     )
-    celle = []
+
     async for doc in cursor:
-        emp_id = doc.get("employee_id") or doc.get("dipendente_id")
-        if not emp_id or not doc.get("data"):
+        # ── Schema flat: ha employee_id + data piatti ──
+        if doc.get("data") and (doc.get("employee_id") or doc.get("dipendente_id")):
+            emp_id = doc.get("employee_id") or doc.get("dipendente_id")
+            celle.append(
+                {
+                    "employee_id": emp_id,
+                    "data": doc["data"],
+                    "stato": doc.get("stato"),
+                    "ore": doc.get("ore"),
+                    "protocollo": doc.get("protocollo"),
+                    "note": doc.get("note"),
+                }
+            )
             continue
-        celle.append(
-            {
-                "employee_id": emp_id,
-                "data": doc["data"],
-                "stato": doc.get("stato"),
-                "ore": doc.get("ore"),
-                "protocollo": doc.get("protocollo"),
-                "note": doc.get("note"),
-            }
-        )
+
+        # ── Schema nested (libro unico PDF): ha giorni[] ──
+        giorni = doc.get("giorni") or []
+        cf = doc.get("codice_fiscale")
+        if not giorni:
+            continue
+
+        emp_id = await _resolve_emp_id_from_cf(cf)
+        if not emp_id:
+            # Dipendente non trovato in anagrafica: saltiamo (non possiamo
+            # collegarlo a una riga della griglia). Non blocchiamo gli altri.
+            continue
+
+        for g in giorni:
+            try:
+                giorno_num = int(g.get("giorno") or 0)
+            except (TypeError, ValueError):
+                continue
+            if giorno_num < 1 or giorno_num > 31:
+                continue
+
+            data_str = f"{anno:04d}-{mese:02d}-{giorno_num:02d}"
+
+            # Priorità al primo giustificativo, altrimenti "P" se c'erano ore
+            giustificativi = g.get("giustificativi") or []
+            if giustificativi:
+                first = giustificativi[0]
+                stato = first.get("codice")
+                ore = first.get("ore") or g.get("ore_ordinarie") or 0
+            else:
+                ore_ord = g.get("ore_ordinarie") or 0
+                if ore_ord and float(ore_ord) > 0:
+                    stato = "P"
+                    ore = ore_ord
+                else:
+                    # Nessun dato utile per questo giorno: saltiamo
+                    continue
+
+            celle.append(
+                {
+                    "employee_id": emp_id,
+                    "data": data_str,
+                    "stato": stato,
+                    "ore": ore,
+                    "protocollo": None,
+                    "note": None,
+                }
+            )
 
     return {"anno": anno, "mese": mese, "celle": celle}
 
