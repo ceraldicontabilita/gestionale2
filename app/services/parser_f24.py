@@ -19,7 +19,7 @@ def parse_importo(value: str) -> float:
     value = value.strip().replace(".", "").replace(",", ".")
     try:
         return float(value)
-    except:
+    except Exception:
         return 0.0
 
 
@@ -180,7 +180,7 @@ def parse_f24_commercialista(pdf_path: str = None, pdf_content: bytes = None) ->
             cent = debito_parts[1][1]
             try:
                 debito = float(euro) + float(cent) / 100
-            except:
+            except Exception:
                 pass
         
         if len(credito_parts) >= 2:
@@ -189,7 +189,7 @@ def parse_f24_commercialista(pdf_path: str = None, pdf_content: bytes = None) ->
             cent = credito_parts[1][1]
             try:
                 credito = float(euro) + float(cent) / 100
-            except:
+            except Exception:
                 pass
         
         return round(debito, 2), round(credito, 2)
@@ -333,7 +333,7 @@ def parse_f24_commercialista(pdf_path: str = None, pdf_content: bytes = None) ->
                             cent = numero_parts[1][1]
                             try:
                                 importo = float(euro) + float(cent) / 100
-                            except:
+                            except Exception:
                                 pass
                         
                         if causale and matricola and anno and importo > 0:
@@ -403,7 +403,7 @@ def parse_f24_commercialista(pdf_path: str = None, pdf_content: bytes = None) ->
                     cent = numero_parts[1][1]
                     try:
                         importo_inail = float(euro) + float(cent) / 100
-                    except:
+                    except Exception:
                         pass
                 
                 if cod_sede_inail and cod_ditta and importo_inail > 0:
