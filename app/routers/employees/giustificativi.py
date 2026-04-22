@@ -442,7 +442,7 @@ async def _calcola_ore_giustificativo(
 @handle_errors
 async def set_limiti_custom_dipendente(
     employee_id: str,
-    payload: Dict[str, Any]
+    payload: Dict[str, Any] = Body(...)
 ) -> Dict[str, Any]:
     """
     Imposta limiti personalizzati per un dipendente.
@@ -790,7 +790,7 @@ async def get_saldo_ferie_dipendente(
 @handle_errors
 async def set_riporto_ferie(
     employee_id: str,
-    payload: Dict[str, Any]
+    payload: Dict[str, Any] = Body(...)
 ) -> Dict[str, Any]:
     """
     Imposta il riporto ferie/ROL da anno precedente.
@@ -1845,7 +1845,7 @@ async def delete_saldi_finali(
 @handle_errors
 async def update_periodo_saldi(
     employee_id: str,
-    payload: Dict[str, Any]
+    payload: Dict[str, Any] = Body(...)
 ) -> Dict[str, Any]:
     """Modifica il periodo dei saldi ferie/permessi."""
     db = Database.get_db()
