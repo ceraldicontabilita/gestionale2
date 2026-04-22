@@ -211,7 +211,7 @@ def parse_amount(amount_str: str) -> float:
         clean = amount_str.strip().replace(" ", "")
         clean = clean.replace(".", "").replace(",", ".")
         return float(clean)
-    except:
+    except Exception:
         return 0.0
 
 
@@ -308,7 +308,7 @@ def extract_f24_data_for_import(pdf_bytes: bytes) -> List[Dict[str, Any]]:
         try:
             dt = datetime.strptime(parsed["scadenza"], "%d/%m/%Y")
             base_data["data_scadenza"] = dt.strftime("%Y-%m-%d")
-        except:
+        except Exception:
             base_data["data_scadenza"] = None
     
     # Add ERARIO tributes
