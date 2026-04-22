@@ -45,9 +45,9 @@ async def crea_scadenza_pagamento(
         if data_doc_str:
             data_doc = datetime.strptime(data_doc_str[:10], "%Y-%m-%d")
         else:
-            data_doc = datetime.now()
+            data_doc = datetime.now(timezone.utc)
     except ValueError:
-        data_doc = datetime.now()
+        data_doc = datetime.now(timezone.utc)
     
     # Determina metodo e giorni pagamento
     pagamento_xml = fattura.get("pagamento", {})
