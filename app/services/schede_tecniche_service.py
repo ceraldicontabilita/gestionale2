@@ -369,7 +369,7 @@ def decode_mime_header(header_value: str) -> str:
         if isinstance(part, bytes):
             try:
                 result.append(part.decode(encoding or 'utf-8', errors='replace'))
-            except:
+            except Exception:
                 result.append(part.decode('utf-8', errors='replace'))
         else:
             result.append(str(part))
