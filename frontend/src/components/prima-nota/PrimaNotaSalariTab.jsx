@@ -11,7 +11,7 @@ import {
   ActionButtons,
   VirtualizedSalariTable,
   AggiustamentoModal,
-  ImportResultAlert
+  ImportResultAlert,
 } from './PrimaNotaComponents';
 import api from '../../api';
 
@@ -38,12 +38,12 @@ const PrimaNotaSalariTab = memo(function PrimaNotaSalariTab() {
     importBonifici,
     clearImportResult,
     deleteRecord,
-    resetAllData
+    resetAllData,
   } = usePrimaNotaStore();
 
   // Local state for modal
   const [showAggiustamentoModal, setShowAggiustamentoModal] = useState(false);
-  
+
   // Stato per auto-riparazione
   const [autoRepairStatus, setAutoRepairStatus] = useState(null);
   const [autoRepairRunning, setAutoRepairRunning] = useState(false);
@@ -86,9 +86,10 @@ const PrimaNotaSalariTab = memo(function PrimaNotaSalariTab() {
 
   // Computed: righe vuote (busta e bonifico entrambi 0 o null)
   const righeVuote = React.useMemo(() => {
-    return salariMovimenti.filter(m => 
-      (!m.importo_busta || m.importo_busta === 0) && 
-      (!m.importo_bonifico || m.importo_bonifico === 0)
+    return salariMovimenti.filter(
+      m =>
+        (!m.importo_busta || m.importo_busta === 0) &&
+        (!m.importo_bonifico || m.importo_bonifico === 0)
     ).length;
   }, [salariMovimenti]);
 
@@ -99,34 +100,40 @@ const PrimaNotaSalariTab = memo(function PrimaNotaSalariTab() {
       totalRecords: salariMovimenti.length,
       totaleBuste: filteredData.reduce((sum, m) => sum + (m.importo_busta || 0), 0),
       totaleBonifici: filteredData.reduce((sum, m) => sum + (m.importo_bonifico || 0), 0),
-      differenza: filteredData.reduce((sum, m) => sum + (m.importo_bonifico || 0) - (m.importo_busta || 0), 0),
-      righeVuote
+      differenza: filteredData.reduce(
+        (sum, m) => sum + (m.importo_bonifico || 0) - (m.importo_busta || 0),
+        0
+      ),
+      righeVuote,
     };
   }, [filteredData, salariMovimenti.length, righeVuote]);
 
   // Handlers with useCallback for stable references
-  const handleToggleAnno = useCallback(async (anno) => {
-    toggleAnnoEscluso(anno);
-    // Ricalcola progressivi dopo toggle
-    try {
-      const nuoviAnni = anniEsclusi.includes(anno)
-        ? anniEsclusi.filter(a => a !== anno)
-        : [...anniEsclusi, anno];
-      
-      const params = new URLSearchParams();
-      params.append('force_reset', 'true');
-      if (nuoviAnni.length > 0) {
-        params.append('anni_esclusi', nuoviAnni.join(','));
+  const handleToggleAnno = useCallback(
+    async anno => {
+      toggleAnnoEscluso(anno);
+      // Ricalcola progressivi dopo toggle
+      try {
+        const nuoviAnni = anniEsclusi.includes(anno)
+          ? anniEsclusi.filter(a => a !== anno)
+          : [...anniEsclusi, anno];
+
+        const params = new URLSearchParams();
+        params.append('force_reset', 'true');
+        if (nuoviAnni.length > 0) {
+          params.append('anni_esclusi', nuoviAnni.join(','));
+        }
+        if (filtroDipendente) {
+          params.append('dipendente', filtroDipendente);
+        }
+        await api.post(`/api/prima-nota-salari/ricalcola-progressivi?${params.toString()}`);
+        await fetchSalari();
+      } catch (err) {
+        console.error('Errore ricalcolo:', err);
       }
-      if (filtroDipendente) {
-        params.append('dipendente', filtroDipendente);
-      }
-      await api.post(`/api/prima-nota-salari/ricalcola-progressivi?${params.toString()}`);
-      await fetchSalari();
-    } catch (err) {
-      console.error('Errore ricalcolo:', err);
-    }
-  }, [anniEsclusi, filtroDipendente, toggleAnnoEscluso, fetchSalari]);
+    },
+    [anniEsclusi, filtroDipendente, toggleAnnoEscluso, fetchSalari]
+  );
 
   const handleResetAnni = useCallback(async () => {
     resetAnniEsclusi();
@@ -143,13 +150,19 @@ const PrimaNotaSalariTab = memo(function PrimaNotaSalariTab() {
     }
   }, [filtroDipendente, resetAnniEsclusi, fetchSalari]);
 
-  const handleImportPaghe = useCallback(async (file) => {
-    await importPaghe(file);
-  }, [importPaghe]);
+  const handleImportPaghe = useCallback(
+    async file => {
+      await importPaghe(file);
+    },
+    [importPaghe]
+  );
 
-  const handleImportBonifici = useCallback(async (file) => {
-    await importBonifici(file);
-  }, [importBonifici]);
+  const handleImportBonifici = useCallback(
+    async file => {
+      await importBonifici(file);
+    },
+    [importBonifici]
+  );
 
   const handleExport = useCallback(async () => {
     try {
@@ -164,7 +177,9 @@ const PrimaNotaSalariTab = memo(function PrimaNotaSalariTab() {
       const downloadUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      const filename = selectedYear ? `prima_nota_salari_${selectedYear}.xlsx` : 'prima_nota_salari_tutti.xlsx';
+      const filename = selectedYear
+        ? `prima_nota_salari_${selectedYear}.xlsx`
+        : 'prima_nota_salari_tutti.xlsx';
       link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();
@@ -175,7 +190,6 @@ const PrimaNotaSalariTab = memo(function PrimaNotaSalariTab() {
   }, [selectedYear, selectedMonth]);
 
   const handleReset = useCallback(async () => {
-    
     const success = await resetAllData();
     if (success) alert('✅ Dati eliminati');
   }, [resetAllData]);
@@ -190,31 +204,36 @@ const PrimaNotaSalariTab = memo(function PrimaNotaSalariTab() {
     }
   }, [righeVuote, fetchSalari]);
 
-  const handleDelete = useCallback(async (recordId) => {
-    
-    await deleteRecord(recordId);
-  }, [deleteRecord]);
+  const handleDelete = useCallback(
+    async recordId => {
+      await deleteRecord(recordId);
+    },
+    [deleteRecord]
+  );
 
-  const handleAggiustamento = useCallback(async (formData) => {
-    try {
-      const importo = parseFloat(formData.importo);
-      const payload = {
-        dipendente: formData.dipendente,
-        anno: parseInt(formData.anno),
-        mese: parseInt(formData.mese),
-        importo_busta: importo < 0 ? Math.abs(importo) : 0,
-        importo_bonifico: importo > 0 ? importo : 0,
-        descrizione: formData.descrizione || 'Aggiustamento saldo'
-      };
-      await api.post('/api/prima-nota-salari/salari/aggiustamento', payload);
-      await fetchSalari();
-      alert('✅ Aggiustamento inserito');
-      return true;
-    } catch (error) {
-      alert('Errore: ' + (error.response?.data?.detail || error.message));
-      return false;
-    }
-  }, [fetchSalari]);
+  const handleAggiustamento = useCallback(
+    async formData => {
+      try {
+        const importo = parseFloat(formData.importo);
+        const payload = {
+          dipendente: formData.dipendente,
+          anno: parseInt(formData.anno),
+          mese: parseInt(formData.mese),
+          importo_busta: importo < 0 ? Math.abs(importo) : 0,
+          importo_bonifico: importo > 0 ? importo : 0,
+          descrizione: formData.descrizione || 'Aggiustamento saldo',
+        };
+        await api.post('/api/prima-nota-salari/salari/aggiustamento', payload);
+        await fetchSalari();
+        alert('✅ Aggiustamento inserito');
+        return true;
+      } catch (error) {
+        alert('Errore: ' + (error.response?.data?.detail || error.message));
+        return false;
+      }
+    },
+    [fetchSalari]
+  );
 
   return (
     <>
@@ -250,10 +269,7 @@ const PrimaNotaSalariTab = memo(function PrimaNotaSalariTab() {
       />
 
       {/* Alert risultato import */}
-      <ImportResultAlert
-        result={importResult}
-        onClose={clearImportResult}
-      />
+      <ImportResultAlert result={importResult} onClose={clearImportResult} />
 
       {/* Card riepilogo */}
       <SummaryCard
