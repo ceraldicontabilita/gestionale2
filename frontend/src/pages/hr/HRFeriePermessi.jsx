@@ -9,6 +9,7 @@
  * Design system Ceraldi: navy + oro, inline styles.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useAbortableEffect, isCanceledError } from '../../hooks';
 import { Plus, Calendar, Check, X, Edit2, Trash2, Clock, AlertCircle } from 'lucide-react';
 import api from '../../api';
 import { COLORS, SPACING, useIsMobile } from '../../lib/utils';
@@ -81,23 +82,25 @@ export default function HRFeriePermessi() {
   const [form, setForm] = useState(DEFAULT_FORM);
   const [saving, setSaving] = useState(false);
 
-  const loadAll = useCallback(async () => {
+  const loadAll = useCallback(async (signal) => {
     setLoading(true);
     try {
       const [dipRes, richRes] = await Promise.all([
-        api.get('/api/dipendenti'),
-        api.get('/api/ferie-richieste'),
+        api.get('/api/dipendenti', { signal }),
+        api.get('/api/ferie-richieste', { signal }),
       ]);
+      if (signal?.aborted) return;
       setDipendenti(Array.isArray(dipRes.data) ? dipRes.data : []);
       setRichieste(Array.isArray(richRes.data) ? richRes.data : []);
     } catch (e) {
+      if (isCanceledError(e)) return;
       console.error('[HRFeriePermessi] load error:', e);
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
   }, []);
 
-  useEffect(() => { loadAll(); }, [loadAll]);
+  useAbortableEffect((signal) => { loadAll(signal); }, [loadAll]);
 
   const openNew = () => {
     setEditingId(null);

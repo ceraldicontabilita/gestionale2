@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useAbortableEffect, isCanceledError } from '../../hooks';
 import {
   FileText,
   Download,
@@ -127,24 +128,29 @@ export default function HRCedolini() {
   const [expandedMonths, setExpandedMonths] = useState({});
   const [viewMode, setViewMode] = useState('mese'); // 'mese' | 'dipendente' | 'lista'
 
-  const loadData = useCallback(() => {
+  const loadData = useCallback(async (signal) => {
     setLoading(true);
-    Promise.all([
-      api.get('/api/cedolini', { params: { anno, limit: 500 } }),
-      api.get('/api/paghe/distinte-f24', { params: { anno } }).catch(() => ({ data: [] })),
-    ])
-      .then(([cedRes, f24Res]) => {
-        const c = cedRes.data?.cedolini || (Array.isArray(cedRes.data) ? cedRes.data : []);
-        setCedolini(c);
-        const f = f24Res.data?.distinte || (Array.isArray(f24Res.data) ? f24Res.data : []);
-        setF24(f);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    try {
+      const [cedRes, f24Res] = await Promise.all([
+        api.get('/api/cedolini', { params: { anno, limit: 500 }, signal }),
+        api.get('/api/paghe/distinte-f24', { params: { anno }, signal })
+          .catch((e) => { if (isCanceledError(e)) throw e; return { data: [] }; }),
+      ]);
+      if (signal?.aborted) return;
+      const c = cedRes.data?.cedolini || (Array.isArray(cedRes.data) ? cedRes.data : []);
+      setCedolini(c);
+      const f = f24Res.data?.distinte || (Array.isArray(f24Res.data) ? f24Res.data : []);
+      setF24(f);
+    } catch (e) {
+      if (isCanceledError(e)) return;
+      // altri errori: silently ignored come prima
+    } finally {
+      if (!signal?.aborted) setLoading(false);
+    }
   }, [anno]);
 
-  useEffect(() => {
-    loadData();
+  useAbortableEffect((signal) => {
+    loadData(signal);
   }, [loadData]);
 
   // Auto-expand first month
