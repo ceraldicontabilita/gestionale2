@@ -184,7 +184,11 @@ async def verifica_coerenza_pos_corrispettivi(
         messaggio = ""
         
         # Nuovo stato: IN_TRANSITO per ultimi 2 giorni
-        oggi = datetime.now(timezone.utc)
+        # FIX: datetime.now(timezone.utc) ritorna un datetime aware (con tz),
+        # ma dt = datetime.strptime(data, "%Y-%m-%d") è naive (senza tz).
+        # Il confronto dt >= oggi genera TypeError "can't compare offset-naive and offset-aware datetimes".
+        # Soluzione: uso datetime.now() senza timezone per restare coerenti con dt.
+        oggi = datetime.now()
         is_recente = dt and dt >= oggi - timedelta(days=2)
         
         if riferimento_pos > 0 and pos_accreditato == 0:
