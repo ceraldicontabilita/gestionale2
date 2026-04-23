@@ -16,13 +16,15 @@ Normativa 2026:
 - Verifica disallineamenti tra corrispettivi e transazioni POS
 - Controllo campi XML (tracciato 7.0+)
 """
-from fastapi import APIRouter, HTTPException, Query
-from typing import Dict, Any, List
+from fastapi import APIRouter, HTTPException, Query, Body, Depends
+from typing import Dict, Any, List, Optional
 from datetime import datetime, timedelta, timezone
 import logging
+import uuid
 
 from app.database import Database
 from app.utils.error_handler import handle_errors
+from app.utils.dependencies import get_current_user
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/pos-corrispettivi", tags=["POS Corrispettivi Check"])
@@ -477,4 +479,197 @@ async def get_anomalie_gravi(
         "count": len(anomalie_gravi),
         "totale_differenza": round(sum(a.get("differenza", 0) for a in anomalie_gravi), 2),
         "warning": "Queste anomalie potrebbero generare avvisi dall'Agenzia delle Entrate" if anomalie_gravi else None
+    }
+
+
+@router.put("/chiusura-giornaliera")
+@handle_errors
+async def upsert_chiusura_giornaliera(
+    payload: Dict[str, Any] = Body(...),
+    current_user: Dict[str, Any] = Depends(get_current_user)
+) -> Dict[str, Any]:
+    """
+    Crea o aggiorna la chiusura POS giornaliera in prima_nota_banca.
+    
+    Body:
+      - data: "YYYY-MM-DD" (obbligatorio)
+      - importo: float >= 0 (obbligatorio)
+      - note: str (opzionale) — annotazione libera
+    
+    Comportamento:
+      - Cerca in prima_nota_banca un movimento con la stessa data + source='corrispettivo_pos' 
+        o categoria='Corrispettivi POS'
+      - Se ESISTE: aggiorna importo/amount, aggiunge audit fields (importo_originale, modificato_*)
+      - Se NON ESISTE: crea nuovo movimento con source='chiusura_pos_mobile'
+    
+    Scrive un audit log in 'pos_chiusure_audit' con chi/quando/cosa ha modificato.
+    """
+    # Validazione input
+    data_str = payload.get("data")
+    importo_raw = payload.get("importo")
+    note = payload.get("note", "") or ""
+    
+    if not data_str:
+        raise HTTPException(status_code=400, detail="Campo 'data' obbligatorio (formato YYYY-MM-DD)")
+    try:
+        data_dt = datetime.strptime(data_str, "%Y-%m-%d")
+    except (ValueError, TypeError):
+        raise HTTPException(status_code=400, detail=f"Data non valida: {data_str!r}. Usa YYYY-MM-DD")
+    
+    if importo_raw is None:
+        raise HTTPException(status_code=400, detail="Campo 'importo' obbligatorio")
+    try:
+        importo = round(float(importo_raw), 2)
+    except (ValueError, TypeError):
+        raise HTTPException(status_code=400, detail=f"Importo non numerico: {importo_raw!r}")
+    if importo < 0:
+        raise HTTPException(status_code=400, detail="L'importo non può essere negativo")
+    
+    db = Database.get_db()
+    user_id = current_user.get("sub") or current_user.get("user_id") or "unknown"
+    user_email = current_user.get("email") or ""
+    user_name = current_user.get("name") or user_email or user_id
+    now_utc = datetime.now(timezone.utc)
+    now_iso = now_utc.isoformat()
+    
+    # Cerca movimento esistente per quel giorno
+    existing = await db["prima_nota_banca"].find_one({
+        "data": data_str,
+        "$or": [
+            {"source": "corrispettivo_pos"},
+            {"source": "chiusura_pos_mobile"},
+            {"categoria": "Corrispettivi POS"}
+        ]
+    })
+    
+    action = ""
+    movimento_id = None
+    importo_precedente = None
+    
+    if existing:
+        # AGGIORNA
+        movimento_id = existing.get("id")
+        importo_precedente = float(existing.get("importo") or existing.get("amount") or 0)
+        
+        # Se l'importo è identico non fare nulla (idempotenza)
+        if abs(importo_precedente - importo) < 0.01:
+            action = "noop"
+        else:
+            update_fields = {
+                "importo": importo,
+                "amount": importo,
+                "modificato_da_mobile": True,
+                "modificato_il": now_iso,
+                "modificato_da_user_id": user_id,
+                "modificato_da_email": user_email,
+                "modificato_da_name": user_name,
+                "updated_at": now_iso
+            }
+            # Traccia importo originale solo la prima volta che si modifica
+            if "importo_originale" not in existing:
+                update_fields["importo_originale"] = importo_precedente
+            if note:
+                update_fields["note_modifica"] = note
+            
+            await db["prima_nota_banca"].update_one(
+                {"id": movimento_id},
+                {"$set": update_fields}
+            )
+            action = "updated"
+    else:
+        # CREA nuovo movimento
+        movimento_id = str(uuid.uuid4())
+        nuovo_mov = {
+            "id": movimento_id,
+            "data": data_str,
+            "date": data_str,
+            "tipo": "entrata",
+            "type": "entrata",
+            "importo": importo,
+            "amount": importo,
+            "descrizione": f"POS corrispettivo {data_str} (chiusura da mobile)",
+            "description": f"POS corrispettivo {data_str} (chiusura da mobile)",
+            "categoria": "Corrispettivi POS",
+            "category": "Corrispettivi POS",
+            "source": "chiusura_pos_mobile",
+            "anno": data_dt.year,
+            "mese": data_dt.month,
+            "riconciliato": False,
+            "created_at": now_iso,
+            "updated_at": now_iso,
+            "creato_da_mobile": True,
+            "creato_da_user_id": user_id,
+            "creato_da_email": user_email,
+            "creato_da_name": user_name,
+        }
+        if note:
+            nuovo_mov["note_modifica"] = note
+        
+        await db["prima_nota_banca"].insert_one(nuovo_mov)
+        action = "created"
+        importo_precedente = 0.0
+    
+    # Audit log (solo se c'è stata una modifica reale)
+    if action != "noop":
+        audit_entry = {
+            "id": str(uuid.uuid4()),
+            "collection_target": "prima_nota_banca",
+            "movimento_id": movimento_id,
+            "data_riferimento": data_str,
+            "action": action,  # 'created' | 'updated'
+            "importo_precedente": round(importo_precedente or 0, 2),
+            "importo_nuovo": importo,
+            "delta": round(importo - (importo_precedente or 0), 2),
+            "user_id": user_id,
+            "user_email": user_email,
+            "user_name": user_name,
+            "note": note,
+            "origine": "mobile_app",
+            "timestamp": now_iso,
+            "timestamp_epoch": int(now_utc.timestamp())
+        }
+        try:
+            await db["pos_chiusure_audit"].insert_one(audit_entry)
+        except Exception as e:
+            logger.warning(f"Audit log pos_chiusure_audit fallito: {e}")
+    
+    return {
+        "success": True,
+        "action": action,
+        "data": data_str,
+        "importo": importo,
+        "importo_precedente": round(importo_precedente or 0, 2),
+        "movimento_id": movimento_id,
+        "message": {
+            "created": f"Chiusura POS creata per il {data_str}: €{importo:.2f}",
+            "updated": f"Chiusura POS del {data_str} aggiornata: €{importo_precedente:.2f} → €{importo:.2f}",
+            "noop": f"Chiusura POS del {data_str} già a €{importo:.2f}, nessuna modifica"
+        }.get(action, "OK")
+    }
+
+
+@router.get("/chiusura-giornaliera/audit")
+@handle_errors
+async def list_chiusure_audit(
+    anno: Optional[int] = Query(None, description="Filtro per anno"),
+    data: Optional[str] = Query(None, description="Filtro per data YYYY-MM-DD"),
+    limit: int = Query(100, description="Max risultati", le=500),
+    current_user: Dict[str, Any] = Depends(get_current_user)
+) -> Dict[str, Any]:
+    """
+    Restituisce l'audit log delle modifiche alle chiusure POS giornaliere.
+    """
+    db = Database.get_db()
+    query: Dict[str, Any] = {}
+    if data:
+        query["data_riferimento"] = data
+    elif anno:
+        query["data_riferimento"] = {"$gte": f"{anno}-01-01", "$lte": f"{anno}-12-31"}
+    
+    cursor = db["pos_chiusure_audit"].find(query, {"_id": 0}).sort("timestamp_epoch", -1).limit(limit)
+    items = await cursor.to_list(limit)
+    
+    return {
+        "count": len(items),
+        "items": items
     }
