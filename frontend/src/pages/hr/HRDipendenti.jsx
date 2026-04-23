@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useAbortableEffect, isCanceledError } from '../../hooks';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Search, Plus, User, Edit2, Save, X, ChevronRight } from 'lucide-react';
 import api from '../../api';
@@ -273,13 +274,13 @@ function TabContratti({ dip }) {
   const [contratti, setContratti] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  useAbortableEffect((signal) => {
     setLoading(true);
     api
-      .get(`/api/dipendenti/contratti?dipendente_id=${dip.id}`)
-      .then(r => setContratti(Array.isArray(r.data) ? r.data : []))
-      .catch(() => setContratti([]))
-      .finally(() => setLoading(false));
+      .get(`/api/dipendenti/contratti?dipendente_id=${dip.id}`, { signal })
+      .then(r => { if (!signal.aborted) setContratti(Array.isArray(r.data) ? r.data : []); })
+      .catch((e) => { if (!isCanceledError(e)) setContratti([]); })
+      .finally(() => { if (!signal.aborted) setLoading(false); });
   }, [dip.id]);
 
   if (loading)
@@ -357,21 +358,23 @@ function TabCedolini({ dip }) {
   const [trattenute, setTrattenute] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  useAbortableEffect((signal) => {
     setLoading(true);
     Promise.all([
-      api.get(`/api/cedolini/dipendente/${dip.id || dip.codice_fiscale}?anno=${anno}`),
-      api.get(`/api/cedolini/dipendente/${dip.id || dip.codice_fiscale}/trattenute?anno=${anno}`),
+      api.get(`/api/cedolini/dipendente/${dip.id || dip.codice_fiscale}?anno=${anno}`, { signal }),
+      api.get(`/api/cedolini/dipendente/${dip.id || dip.codice_fiscale}/trattenute?anno=${anno}`, { signal }),
     ])
       .then(([cedRes, trattRes]) => {
+        if (signal.aborted) return;
         setData(cedRes.data);
         setTrattenute(trattRes.data);
       })
-      .catch(() => {
+      .catch((e) => {
+        if (isCanceledError(e)) return;
         setData(null);
         setTrattenute(null);
       })
-      .finally(() => setLoading(false));
+      .finally(() => { if (!signal.aborted) setLoading(false); });
   }, [dip.id, anno]);
 
   const cedolini = data?.cedolini || [];
@@ -725,22 +728,23 @@ function TabMovimenti({ dip }) {
 
   const nomeDip = dip.nome_completo || `${dip.cognome || ''} ${dip.nome || ''}`.trim();
 
-  const load = useCallback(() => {
+  const load = useCallback((signal) => {
     setLoading(true);
     Promise.all([
-      api.get(`/api/archivio-bonifici/transfers?beneficiario=${encodeURIComponent(nomeDip)}`),
-      api.get(`/api/tfr/acconti/${dip.id}`),
+      api.get(`/api/archivio-bonifici/transfers?beneficiario=${encodeURIComponent(nomeDip)}`, { signal }),
+      api.get(`/api/tfr/acconti/${dip.id}`, { signal }),
     ])
       .then(([b, a]) => {
+        if (signal?.aborted) return;
         setBonifici(Array.isArray(b.data) ? b.data : []);
         setAcconti(Array.isArray(a.data) ? a.data : a.data?.acconti || []);
       })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      .catch((e) => { if (isCanceledError(e)) return; })
+      .finally(() => { if (!signal?.aborted) setLoading(false); });
   }, [dip.id, nomeDip]);
 
-  useEffect(() => {
-    load();
+  useAbortableEffect((signal) => {
+    load(signal);
   }, [load]);
 
   const salvaAcconto = async () => {
@@ -1054,18 +1058,19 @@ function TabGiustificativi({ dip }) {
   const [loading, setLoading] = useState(true);
   const anno = ANNO_CORRENTE;
 
-  useEffect(() => {
+  useAbortableEffect((signal) => {
     setLoading(true);
     Promise.all([
-      api.get(`/api/giustificativi/dipendente/${dip.id}/giustificativi?anno=${anno}`),
-      api.get(`/api/giustificativi/dipendente/${dip.id}/saldo-ferie?anno=${anno}`),
+      api.get(`/api/giustificativi/dipendente/${dip.id}/giustificativi?anno=${anno}`, { signal }),
+      api.get(`/api/giustificativi/dipendente/${dip.id}/saldo-ferie?anno=${anno}`, { signal }),
     ])
       .then(([g, s]) => {
+        if (signal.aborted) return;
         setGiustificativi(Array.isArray(g.data) ? g.data : g.data?.giustificativi || []);
         setSaldo(s.data);
       })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      .catch((e) => { if (isCanceledError(e)) return; })
+      .finally(() => { if (!signal.aborted) setLoading(false); });
   }, [dip.id]);
 
   if (loading)
@@ -1175,13 +1180,14 @@ function TabVerbali({ dip }) {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ totale: 0, pagati: 0, da_pagare: 0, importo_totale: 0 });
 
-  useEffect(() => {
+  useAbortableEffect((signal) => {
     setLoading(true);
     const cf = dip.codice_fiscale || '';
     const id = dip.id || dip.codice_fiscale || '';
     api
-      .get(`/api/noleggio/verbali-dipendente?dipendente_id=${id}&codice_fiscale=${cf}`)
+      .get(`/api/noleggio/verbali-dipendente?dipendente_id=${id}&codice_fiscale=${cf}`, { signal })
       .then(r => {
+        if (signal.aborted) return;
         const list = r.data?.verbali || [];
         setVerbali(list);
         const pagati = list.filter(v => v.stato === 'pagato').length;
@@ -1193,8 +1199,8 @@ function TabVerbali({ dip }) {
           importo_totale: importo,
         });
       })
-      .catch(() => setVerbali([]))
-      .finally(() => setLoading(false));
+      .catch((e) => { if (!isCanceledError(e)) setVerbali([]); })
+      .finally(() => { if (!signal.aborted) setLoading(false); });
   }, [dip.id, dip.codice_fiscale]);
 
   if (loading)
@@ -1391,21 +1397,25 @@ export default function HRDipendenti() {
   const [mostraNonInCarico, setMostraNonInCarico] = useState(false);
   const [dedupeOpen, setDedupeOpen] = useState(false);
 
-  const reloadDipendenti = useCallback(() => {
+  const reloadDipendenti = useCallback((signal) => {
     setLoading(true);
     const params = mostraNonInCarico ? {} : { in_carico: true };
     api
-      .get('/api/dipendenti', { params })
+      .get('/api/dipendenti', { params, signal })
       .then(r => {
+        if (signal?.aborted) return;
         const list = Array.isArray(r.data) ? r.data : r.data?.dipendenti || [];
         setDipendenti(list);
       })
-      .catch(() => setDipendenti([]))
-      .finally(() => setLoading(false));
+      .catch((e) => {
+        if (isCanceledError(e)) return;
+        setDipendenti([]);
+      })
+      .finally(() => { if (!signal?.aborted) setLoading(false); });
   }, [mostraNonInCarico]);
 
-  useEffect(() => {
-    reloadDipendenti();
+  useAbortableEffect((signal) => {
+    reloadDipendenti(signal);
   }, [reloadDipendenti]);
 
   useEffect(() => {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useAbortableEffect, isCanceledError } from '../../hooks';
 import {
   Calendar,
   Clock,
@@ -94,17 +95,21 @@ export default function HRPresenze() {
   const [uploadResult, setUploadResult] = useState(null);
   const [batchModalOpen, setBatchModalOpen] = useState(false);
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (signal) => {
     setLoading(true);
     try {
       const params = { anno };
       if (mese) params.mese = mese;
 
       const [presRes, reqRes, dipRes] = await Promise.all([
-        api.get('/api/attendance/libro-unico', { params }),
-        api.get('/api/attendance/richieste-pending').catch(() => ({ data: { richieste: [] } })),
-        api.get('/api/dipendenti?limit=200').catch(() => ({ data: [] })),
+        api.get('/api/attendance/libro-unico', { params, signal }),
+        api.get('/api/attendance/richieste-pending', { signal })
+          .catch((e) => { if (isCanceledError(e)) throw e; return { data: { richieste: [] } }; }),
+        api.get('/api/dipendenti?limit=200', { signal })
+          .catch((e) => { if (isCanceledError(e)) throw e; return { data: [] }; }),
       ]);
+
+      if (signal?.aborted) return;
 
       const pData = presRes.data;
       setPresenze(pData.presenze || []);
@@ -124,14 +129,15 @@ export default function HRPresenze() {
       });
       setLegenda(allLeg);
     } catch (err) {
+      if (isCanceledError(err)) return;
       console.error('Errore caricamento presenze:', err);
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
   }, [anno, mese]);
 
-  useEffect(() => {
-    loadData();
+  useAbortableEffect((signal) => {
+    loadData(signal);
   }, [loadData]);
 
   // Upload PDF handler

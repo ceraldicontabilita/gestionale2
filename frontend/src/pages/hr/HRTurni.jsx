@@ -11,6 +11,7 @@
  * Backend: /api/shifts/tipi, /api/shifts/assegnazioni.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useAbortableEffect, isCanceledError } from '../../hooks';
 import { Plus, Edit2, Trash2, X, Clock, Users } from 'lucide-react';
 import api from '../../api';
 import { COLORS, SPACING, useIsMobile } from '../../lib/utils';
@@ -70,14 +71,15 @@ export default function HRTurni() {
   const [saving, setSaving] = useState(false);
 
   // ────── Data loading ──────
-  const loadAll = useCallback(async () => {
+  const loadAll = useCallback(async (signal) => {
     setLoading(true);
     try {
       const [dipRes, turniRes, assRes] = await Promise.all([
-        api.get('/api/dipendenti'),
-        api.get('/api/shifts/tipi'),
-        api.get('/api/shifts/assegnazioni'),
+        api.get('/api/dipendenti', { signal }),
+        api.get('/api/shifts/tipi', { signal }),
+        api.get('/api/shifts/assegnazioni', { signal }),
       ]);
+      if (signal?.aborted) return;
       setDipendenti(Array.isArray(dipRes.data) ? dipRes.data : []);
       setTurni(Array.isArray(turniRes.data) ? turniRes.data : []);
 
@@ -87,14 +89,15 @@ export default function HRTurni() {
       });
       setAssegnazioni(assMap);
     } catch (e) {
+      if (isCanceledError(e)) return;
       console.error('[HRTurni] load error:', e);
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    loadAll();
+  useAbortableEffect((signal) => {
+    loadAll(signal);
   }, [loadAll]);
 
   // ────── Handlers ──────

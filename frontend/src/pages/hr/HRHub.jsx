@@ -16,6 +16,7 @@
  * Design: card con icona circolare colorata, KPI live, hover effect.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useAbortableEffect, isCanceledError } from '../../hooks';
 import { useNavigate } from 'react-router-dom';
 import {
   Users, Clock, CalendarDays, CalendarClock, FileText, MapPin, FolderOpen,
@@ -38,15 +39,20 @@ export default function HRHub() {
   });
   const [loading, setLoading] = useState(true);
 
-  const loadStats = useCallback(async () => {
+  const loadStats = useCallback(async (signal) => {
     setLoading(true);
     try {
       const [dipRes, richRes, misRes, docRes] = await Promise.all([
-        api.get('/api/dipendenti').catch(() => ({ data: [] })),
-        api.get('/api/ferie-richieste?stato=in_attesa').catch(() => ({ data: [] })),
-        api.get('/api/missioni?stato=in_attesa').catch(() => ({ data: [] })),
-        api.get('/api/hr-documenti/in-scadenza?days=30').catch(() => ({ data: [] })),
+        api.get('/api/dipendenti', { signal })
+          .catch((e) => { if (isCanceledError(e)) throw e; return { data: [] }; }),
+        api.get('/api/ferie-richieste?stato=in_attesa', { signal })
+          .catch((e) => { if (isCanceledError(e)) throw e; return { data: [] }; }),
+        api.get('/api/missioni?stato=in_attesa', { signal })
+          .catch((e) => { if (isCanceledError(e)) throw e; return { data: [] }; }),
+        api.get('/api/hr-documenti/in-scadenza?days=30', { signal })
+          .catch((e) => { if (isCanceledError(e)) throw e; return { data: [] }; }),
       ]);
+      if (signal?.aborted) return;
       setStats({
         dipendenti: (Array.isArray(dipRes.data) ? dipRes.data : []).filter((d) => (d.stato || 'attivo') === 'attivo').length,
         richieste_in_attesa: Array.isArray(richRes.data) ? richRes.data.length : 0,
@@ -54,13 +60,14 @@ export default function HRHub() {
         documenti_in_scadenza: Array.isArray(docRes.data) ? docRes.data.length : 0,
       });
     } catch (e) {
+      if (isCanceledError(e)) return;
       console.error('[HRHub] stats error:', e);
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
   }, []);
 
-  useEffect(() => { loadStats(); }, [loadStats]);
+  useAbortableEffect((signal) => { loadStats(signal); }, [loadStats]);
 
   const moduli = useMemo(() => [
     {

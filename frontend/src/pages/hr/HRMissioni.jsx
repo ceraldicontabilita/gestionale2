@@ -10,6 +10,7 @@
  * Design system Ceraldi: navy + oro, inline styles via COLORS/SPACING.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useAbortableEffect, isCanceledError } from '../../hooks';
 import { Plus, MapPin, Calendar, Euro, Check, X, Edit2, Trash2, Clock } from 'lucide-react';
 import api from '../../api';
 import { COLORS, SPACING, useIsMobile } from '../../lib/utils';
@@ -73,23 +74,25 @@ export default function HRMissioni() {
   const [saving, setSaving] = useState(false);
 
   // Load
-  const loadAll = useCallback(async () => {
+  const loadAll = useCallback(async (signal) => {
     setLoading(true);
     try {
       const [dipRes, misRes] = await Promise.all([
-        api.get('/api/dipendenti'),
-        api.get('/api/missioni'),
+        api.get('/api/dipendenti', { signal }),
+        api.get('/api/missioni', { signal }),
       ]);
+      if (signal?.aborted) return;
       setDipendenti(Array.isArray(dipRes.data) ? dipRes.data : []);
       setMissioni(Array.isArray(misRes.data) ? misRes.data : []);
     } catch (e) {
+      if (isCanceledError(e)) return;
       console.error('[HRMissioni] load error:', e);
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
   }, []);
 
-  useEffect(() => { loadAll(); }, [loadAll]);
+  useAbortableEffect((signal) => { loadAll(signal); }, [loadAll]);
 
   // Handlers
   const openNew = () => {
