@@ -2010,7 +2010,9 @@ function DocumentiTab({ documenti, stats, onRefresh, processing }) {
   }, []);
 
   const handleViewPdf = doc => {
-    const url = `${import.meta.env.VITE_BACKEND_URL || ''}/api/documenti-non-associati/pdf/${doc.id}`;
+    // Path relativo al dominio corrente, evita problemi se VITE_BACKEND_URL
+    // al build time puntasse a un dominio sbagliato.
+    const url = `/api/documenti-non-associati/pdf/${doc.id}`;
     window.open(url, '_blank');
   };
 
