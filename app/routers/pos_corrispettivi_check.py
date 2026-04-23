@@ -71,15 +71,28 @@ async def verifica_coerenza_pos_corrispettivi(
     # 2. Carica accrediti POS BANCARI REALI (SOLO da estratto conto, NON da import manuali!)
     # IMPORTANTE: Escludiamo "source": "import_manuale_pos" perché quelli sono chiusure manuali,
     # NON accrediti bancari reali
+    #
+    # FIX 2026-04-22: il regex precedente era troppo permissivo e intercettava falsi positivi come
+    # "VOSTRA DISPOSIZIONE RIF. MB0B39504178/90144269" (bonifici in uscita) classificati come 
+    # "Altre spese - Generico", "Risorse Umane - Salari e stipendi", ecc. semplicemente perché 
+    # contenevano "POS" in una sottostringa. Risultato: pos_accreditato gonfiato ~4x, coerenza sballata.
+    # Ora uso SOLO le due categorie esatte degli accrediti provider (NUMIA, Nexi, ecc.).
+    # NB: escludo anche la categoria "Corrispettivi POS" perché sono chiusure contabili giornaliere 
+    # che duplicano il dato pagato_elettronico già nei corrispettivi XML.
+    CATEGORIE_POS_ACCREDITATI = [
+        "Ricavi - Incasso tramite POS-Carte di credito",
+        "Ricavi - Incasso tramite POS",
+        "Incasso POS",
+        "Accredito POS",
+        "POS",
+        "pos",
+    ]
     accrediti_pos = await db["prima_nota_banca"].find(
         {
             "data": {"$gte": data_da, "$lte": data_a},
             "importo": {"$gt": 0},  # Solo entrate
             "source": {"$ne": "import_manuale_pos"},  # ESCLUDI import manuali pos.xlsx
-            "$or": [
-                {"categoria": {"$in": ["POS", "pos", "Incasso POS", "Accredito POS"]}},
-                {"descrizione": {"$regex": "POS|NEXI|SUMUP|SUM UP|STRIPE|SATISPAY|MYPOS|INCAS.*P\\.O\\.S|ACCREDITO.*POS|WORLDPAY|NUMIA|PGBNT", "$options": "i"}}
-            ]
+            "categoria": {"$in": CATEGORIE_POS_ACCREDITATI}
         },
         {"_id": 0, "data": 1, "importo": 1, "descrizione": 1, "categoria": 1, "source": 1}
     ).sort("data", 1).to_list(10000)
@@ -294,15 +307,24 @@ async def riepilogo_mensile_pos_corrispettivi(
         corr_result = await db["corrispettivi"].aggregate(pipeline_corr).to_list(1)
         
         # POS BANCARI REALI del mese (ESCLUDI import manuali pos.xlsx!)
+        # FIX 2026-04-22: uso whitelist categorie esatta invece di regex sulla descrizione.
+        # Il regex precedente intercettava bonifici in uscita, stipendi, fornitori, ecc. perché 
+        # contenevano "POS" o "NUMIA" nella descrizione tecnica (VS.DISP., codici transazione).
+        # Le categorie qui sotto sono le uniche che rappresentano accrediti POS veri da provider.
+        CATEGORIE_POS_ACCREDITATI = [
+            "Ricavi - Incasso tramite POS-Carte di credito",
+            "Ricavi - Incasso tramite POS",
+            "Incasso POS",
+            "Accredito POS",
+            "POS",
+            "pos",
+        ]
         pipeline_pos = [
             {"$match": {
                 "data": {"$gte": data_da, "$lte": data_a},
                 "importo": {"$gt": 0},  # Solo entrate
                 "source": {"$ne": "import_manuale_pos"},  # ESCLUDI chiusure manuali
-                "$or": [
-                    {"categoria": {"$in": ["POS", "pos", "Incasso POS", "Accredito POS"]}},
-                    {"descrizione": {"$regex": "POS|NEXI|SUMUP|INCAS.*P\\.O\\.S|ACCREDITO.*POS|NUMIA|PGBNT", "$options": "i"}}
-                ]
+                "categoria": {"$in": CATEGORIE_POS_ACCREDITATI}
             }},
             {"$group": {
                 "_id": None,
