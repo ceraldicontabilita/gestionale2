@@ -1137,3 +1137,47 @@ async def get_articoli_non_classificati(
         {"_id": 0}
     ).sort("occorrenze", -1).limit(limite).to_list(limite)
     return items
+
+
+@router.post("/riclassifica-completo")
+async def riclassifica_articoli_completo(
+    limite_ai: int = Query(500, description="Max articoli da passare all'AI dopo la generazione")
+) -> Dict[str, Any]:
+    """Endpoint unificato: rigenera il dizionario dalle fatture E categorizza
+    con AI tutti gli articoli con confidenza zero.
+
+    Utilizzato dal pulsante "Ricategorizza con AI" nella pagina Piano dei Conti.
+
+    Sequenza:
+      1. Scorre tutte le fatture e aggiorna/crea record nel dizionario_articoli
+         applicando la categorizzazione euristica (senza AI, basata su pattern matching)
+      2. Passa all'AI (Claude Haiku) gli articoli con confidenza=0 per
+         assegnargli il conto del piano corretto
+
+    Dopo questa operazione, i saldi del piano dei conti per le sottocategorie
+    di costo (bevande, caffè, utenze, ecc.) saranno valorizzati correttamente.
+    """
+    db = Database.get_db()
+
+    # STEP 1: genera/aggiorna il dizionario dalle fatture (non-AI)
+    # Nota: riuso la logica di genera_dizionario chiamando il service direttamente
+    from app.routers.warehouse.dizionario_articoli import genera_dizionario
+    step1 = await genera_dizionario()
+
+    # STEP 2: categorizza con AI quelli non classificati
+    step2 = {"success": False, "skipped": "servizio AI non disponibile"}
+    try:
+        from app.services.ai_categorizzazione import aggiorna_dizionario_con_ai
+        step2 = await aggiorna_dizionario_con_ai(db, limite=limite_ai)
+    except ImportError as e:
+        logger.warning(f"Servizio AI non disponibile, salto step 2: {e}")
+    except Exception as e:
+        logger.error(f"Errore categorizzazione AI: {e}")
+        step2 = {"success": False, "error": str(e)}
+
+    return {
+        "success": True,
+        "step1_genera_dizionario": step1,
+        "step2_categorizzazione_ai": step2,
+        "note": "Dopo questa operazione, ricarica la pagina Piano dei Conti per vedere i saldi aggiornati",
+    }

@@ -125,11 +125,15 @@ RISPONDI SEMPRE IN JSON VALIDO con questo formato:
 Rispondi SOLO con il JSON array, nessun altro testo."""
 
         try:
+            # Haiku: veloce ed economico per classificazione batch.
+            # Sonnet aveva qualità leggermente superiore ma costa ~5x, e per
+            # la classificazione dei conti un modello piccolo è sufficiente
+            # (l'utente può sempre correggere manualmente la mappatura).
             chat = LlmChat(
                 api_key=api_key,
                 session_id=f"categorizzazione_{i}",
                 system_message=system_message
-            ).with_model("anthropic", "claude-sonnet-4-5-20250929")
+            ).with_model("anthropic", "claude-haiku-4-5")
             
             response = await chat.send_message(UserMessage(text=user_prompt))
             
