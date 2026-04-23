@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PageLayout } from '../components/PageLayout';
+import PaypalTransactionDetailModal from '../components/PaypalTransactionDetailModal';
 
 const formatEuro = v =>
   new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(v || 0);
@@ -72,6 +73,7 @@ export default function RiconciliazionePaypal() {
   const [annoFiltro, setAnnoFiltro] = useState(anno);
   const [soloPagamenti, setSoloPagamenti] = useState(true);
   const [searchTx, setSearchTx] = useState('');
+  const [modalTxId, setModalTxId] = useState(null); // transaction_id aperto nel modale
   const [mappingData, setMappingData] = useState(null);
   const [mappingLoading, setMappingLoading] = useState(false);
   const [selectedForn, setSelectedForn] = useState({}); // {paypal_account_id: fornitore_id}
@@ -668,7 +670,15 @@ export default function RiconciliazionePaypal() {
                   {filteredTx.map(tx => (
                     <tr
                       key={tx.id || tx.transaction_id || tx.data + tx.importo}
-                      style={{ borderBottom: '1px solid #f3f4f6' }}
+                      onClick={() => (tx.transaction_id || tx.id) && setModalTxId(tx.transaction_id || tx.id)}
+                      style={{
+                        borderBottom: '1px solid #f3f4f6',
+                        cursor: (tx.transaction_id || tx.id) ? 'pointer' : 'default',
+                        transition: 'background 120ms',
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.background = '#f8fafc')}
+                      onMouseLeave={e => (e.currentTarget.style.background = '')}
+                      title="Clicca per vedere il dettaglio completo"
                     >
                       <td style={{ padding: '8px 12px', whiteSpace: 'nowrap' }}>
                         {formatDate(tx.data)}
@@ -832,23 +842,33 @@ export default function RiconciliazionePaypal() {
                       </div>
                     </summary>
                     <div style={{ padding: '0 16px 10px 32px' }}>
-                      {(f.transazioni || []).map((t, j) => (
-                        <div
-                          key={t.id || t.transaction_id || j}
-                          style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            padding: '4px 0',
-                            fontSize: 12,
-                            color: '#6b7280',
-                          }}
-                        >
-                          <span>
-                            {formatDate(t.data)} - {t.descrizione}
-                          </span>
-                          <span style={{ fontWeight: 500 }}>{formatEuro(Math.abs(t.importo))}</span>
-                        </div>
-                      ))}
+                      {(f.transazioni || []).map((t, j) => {
+                        const txId = t.transaction_id || t.id;
+                        return (
+                          <div
+                            key={t.id || t.transaction_id || j}
+                            onClick={() => txId && setModalTxId(txId)}
+                            onMouseEnter={e => { if (txId) e.currentTarget.style.background = '#f1f5f9'; }}
+                            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              padding: '6px 8px',
+                              fontSize: 12,
+                              color: '#6b7280',
+                              cursor: txId ? 'pointer' : 'default',
+                              borderRadius: 4,
+                              transition: 'background 120ms',
+                            }}
+                            title={txId ? 'Clicca per il dettaglio' : ''}
+                          >
+                            <span>
+                              {formatDate(t.data)} - {t.descrizione}
+                            </span>
+                            <span style={{ fontWeight: 500 }}>{formatEuro(Math.abs(t.importo))}</span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </details>
                 ))}
@@ -1233,6 +1253,13 @@ export default function RiconciliazionePaypal() {
           </div>
         )}
       </div>
+
+      {/* Modale dettaglio transazione PayPal */}
+      <PaypalTransactionDetailModal
+        open={!!modalTxId}
+        transactionId={modalTxId}
+        onClose={() => setModalTxId(null)}
+      />
     </PageLayout>
   );
 }

@@ -414,3 +414,121 @@ async def _save_parsed_statement(db, parsed: Dict) -> Dict:
         "transazioni_inserite": inserted,
         "transazioni_duplicate": duplicates
     }
+
+
+@router.get("/transazione/{transaction_id}/dettaglio")
+async def dettaglio_transazione_paypal(transaction_id: str) -> Dict[str, Any]:
+    """Restituisce dettagli completi di una transazione PayPal, includendo
+    tutti i collegamenti utili per la vista modale:
+      - Dati PayPal (email, metodo, tipo, stato, ID)
+      - Verbale collegato (se paypal_transaction_id = {transaction_id})
+      - Dipendente (se il verbale ha driver_id)
+      - Trattenuta in busta paga (se esiste per questo verbale)
+      - Fornitore mappato (se esiste mapping per paypal_account_id)
+      - Fatture del fornitore (match per nome/P.IVA nell'anno)
+      - Flag has_pdf sul verbale (senza trasferire il PDF, solo il flag)
+
+    La risposta è sempre un oggetto con le stesse chiavi, anche se nulle,
+    per semplificare il rendering frontend.
+    """
+    db = Database.get_db()
+
+    # 1. Transazione PayPal
+    tx = await db[COLL_PAYPAL_TRANSACTIONS].find_one(
+        {"transaction_id": transaction_id}, {"_id": 0}
+    )
+    if not tx:
+        # fallback: cerca anche per campo 'id' interno
+        tx = await db[COLL_PAYPAL_TRANSACTIONS].find_one(
+            {"id": transaction_id}, {"_id": 0}
+        )
+    if not tx:
+        raise HTTPException(status_code=404, detail="Transazione PayPal non trovata")
+
+    real_tx_id = tx.get("transaction_id") or tx.get("id")
+
+    # 2. Verbale collegato
+    verbale = await db["verbali_noleggio"].find_one(
+        {"paypal_transaction_id": real_tx_id},
+        {"_id": 0, "pdf_data": 0, "pdf_allegati": 0}  # escludo i pdf binari
+    )
+    has_pdf = False
+    if verbale:
+        # Controllo presenza PDF in modo leggero
+        v_pdf_check = await db["verbali_noleggio"].find_one(
+            {"id": verbale.get("id")},
+            {"_id": 0, "pdf_data": 1, "pdf_allegati": 1}
+        )
+        has_pdf = bool(
+            (v_pdf_check or {}).get("pdf_data")
+            or (v_pdf_check or {}).get("pdf_allegati")
+        )
+
+    # 3. Dipendente (se verbale ha driver_id)
+    dipendente = None
+    if verbale and verbale.get("driver_id"):
+        dipendente = await db["employees"].find_one(
+            {"id": verbale["driver_id"]},
+            {"_id": 0, "id": 1, "nome": 1, "cognome": 1, "codice_fiscale": 1, "ruolo": 1}
+        )
+
+    # 4. Trattenuta in busta paga
+    trattenuta = None
+    if verbale:
+        trattenuta = await db["trattenute_dipendenti"].find_one(
+            {"verbale_id": verbale.get("id")},
+            {"_id": 0}
+        )
+
+    # 5. Mapping fornitore PayPal
+    mapping_fornitore = None
+    paypal_account_id = tx.get("paypal_account_id") or tx.get("account_id")
+    if paypal_account_id:
+        mapping_fornitore = await db["paypal_mapping_fornitori"].find_one(
+            {"paypal_account_id": paypal_account_id},
+            {"_id": 0}
+        )
+
+    # 6. Fatture del fornitore associato (best-effort)
+    fatture_collegate = []
+    nome_controparte = tx.get("nome_controparte") or tx.get("payer_name") or ""
+    if mapping_fornitore and mapping_fornitore.get("fornitore_piva"):
+        piva = mapping_fornitore["fornitore_piva"]
+        fatture_collegate = await db[COLL_INVOICES].find(
+            {
+                "$or": [
+                    {"cedente_piva": piva},
+                    {"supplier_vat": piva},
+                ]
+            },
+            {"_id": 0, "id": 1, "invoice_number": 1, "numero_fattura": 1,
+             "invoice_date": 1, "data_fattura": 1,
+             "total_amount": 1, "importo_totale": 1,
+             "supplier_name": 1, "cedente_denominazione": 1,
+             "stato_pagamento": 1}
+        ).sort("invoice_date", -1).limit(10).to_list(10)
+    elif nome_controparte:
+        # fallback: match testuale su nome fornitore
+        fatture_collegate = await db[COLL_INVOICES].find(
+            {
+                "$or": [
+                    {"supplier_name": {"$regex": nome_controparte[:20], "$options": "i"}},
+                    {"cedente_denominazione": {"$regex": nome_controparte[:20], "$options": "i"}},
+                ]
+            },
+            {"_id": 0, "id": 1, "invoice_number": 1, "numero_fattura": 1,
+             "invoice_date": 1, "data_fattura": 1,
+             "total_amount": 1, "importo_totale": 1,
+             "supplier_name": 1, "cedente_denominazione": 1,
+             "stato_pagamento": 1}
+        ).sort("invoice_date", -1).limit(5).to_list(5)
+
+    return {
+        "transaction": tx,
+        "verbale": verbale,
+        "has_pdf_verbale": has_pdf,
+        "dipendente": dipendente,
+        "trattenuta_busta_paga": trattenuta,
+        "mapping_fornitore": mapping_fornitore,
+        "fatture_collegate": fatture_collegate,
+    }
