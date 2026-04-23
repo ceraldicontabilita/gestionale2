@@ -19,6 +19,46 @@ import {
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 
+// Traduzione codici PayPal in labels leggibili.
+// Fonte: https://developer.paypal.com/api/rest/reference/transactions-search/event-codes/
+const PAYPAL_TIPO_LABELS = {
+  T0000: 'Pagamento generico',
+  T0001: 'Commissione PayPal',
+  T0002: 'Pagamento ricorrente',
+  T0003: 'Pagamento a fornitore SaaS',
+  T0004: 'Rimborso ricevuto',
+  T0005: 'Payout di massa',
+  T0006: 'Giroconto dal conto bancario',
+  T0007: 'Prelievo al conto bancario',
+  T0008: 'Donazione',
+  T0009: 'Acquisto con carta',
+  T0010: 'Trasferimento verso PayPal',
+  T0011: 'Pagamento a dipendente',
+  T0012: 'Rimborso parziale',
+  T0013: 'Ricarica conto',
+  T0019: 'Chargeback (storno)',
+  T0020: 'Commissione di conversione valuta',
+  T1106: 'Regolamento chargeback',
+  T1107: 'Rimborso',
+  T1108: 'Rimborso completo',
+  T0200: 'Ricevuto via carta ospite',
+  T1201: 'Chargeback risolto',
+};
+const PAYPAL_STATO_LABELS = {
+  S: 'Successo',
+  P: 'In sospeso',
+  F: 'Fallita',
+  D: 'Negata',
+  V: 'Annullata',
+  R: 'Rimborsata',
+  COMPLETED: 'Completata',
+  PENDING: 'In sospeso',
+  FAILED: 'Fallita',
+  DENIED: 'Negata',
+};
+const translateTipo = (t) => (t && PAYPAL_TIPO_LABELS[t]) ? `${PAYPAL_TIPO_LABELS[t]} (${t})` : (t || '—');
+const translateStato = (s) => (s && PAYPAL_STATO_LABELS[s.toUpperCase?.() || s]) ? PAYPAL_STATO_LABELS[s.toUpperCase?.() || s] : (s || '—');
+
 /**
  * Modale dettaglio transazione PayPal.
  * Apre un overlay al centro dello schermo con 4 sezioni:
@@ -73,6 +113,7 @@ export default function PaypalTransactionDetailModal({ open, onClose, transactio
   const trattenuta = data?.trattenuta_busta_paga;
   const mapping = data?.mapping_fornitore;
   const fatture = data?.fatture_collegate || [];
+  const email_controparte = tx?.email_controparte || tx?.payer_email || '';
 
   const fmtEuro = (n) => {
     if (n === undefined || n === null || Number.isNaN(Number(n))) return '—';
@@ -208,8 +249,8 @@ export default function PaypalTransactionDetailModal({ open, onClose, transactio
                 } />
                 <Row icon={<User size={12} />} label="Controparte" value={tx.nome_controparte || tx.payer_name || '—'} />
                 <Row icon={<Mail size={12} />} label="Email" value={tx.email_controparte || tx.payer_email || '—'} />
-                <Row label="Tipo" value={tx.tipo || tx.type || '—'} />
-                <Row label="Stato" value={tx.status || tx.stato || '—'} />
+                <Row label="Tipo" value={translateTipo(tx.tipo || tx.type)} />
+                <Row label="Stato" value={translateStato(tx.status || tx.stato)} />
                 <Row label="Descrizione" value={tx.descrizione || tx.subject || '—'} />
                 <Row label="Riconciliato in banca" value={
                   tx.riconciliato_banca
@@ -341,7 +382,30 @@ export default function PaypalTransactionDetailModal({ open, onClose, transactio
                     </div>
                   </div>
                 ) : (
-                  <EmptyMsg text="Nessuna fattura trovata per questo fornitore." />
+                  <div>
+                    <EmptyMsg text="Nessuna fattura trovata automaticamente." />
+                    <div style={{ marginTop: 6, fontSize: 11, color: '#94a3b8' }}>
+                      Il sistema ha cercato per P.IVA del fornitore mappato, per parole nel nome controparte
+                      {email_controparte ? `, e per email ${email_controparte}` : ''}.
+                    </div>
+                    <div style={{ marginTop: 8 }}>
+                      <Button
+                        onClick={() => {
+                          // apre la pagina fatture filtrando per la data della transazione e l'importo
+                          // così l'utente può trovarla e associarla a mano
+                          const q = new URLSearchParams();
+                          if (tx.nome_controparte || tx.payer_name) q.set('fornitore', tx.nome_controparte || tx.payer_name);
+                          const amt = Math.abs(Number(tx.lordo ?? tx.amount ?? 0));
+                          if (amt) q.set('importo', amt.toFixed(2));
+                          navigate(`/fatture?${q.toString()}`);
+                          onClose?.();
+                        }}
+                        icon={<ExternalLink size={13} />}
+                        text="Cerca fattura manualmente"
+                        variant="secondary"
+                      />
+                    </div>
+                  </div>
                 )}
               </Section>
             </div>

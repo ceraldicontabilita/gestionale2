@@ -489,16 +489,27 @@ async def dettaglio_transazione_paypal(transaction_id: str) -> Dict[str, Any]:
             {"_id": 0}
         )
 
-    # 6. Fatture del fornitore associato (best-effort)
+    # 6. Fatture del fornitore associato (best-effort).
+    # STRATEGIA MULTI-LIVELLO:
+    #   a) Se il mapping ha una P.IVA → match esatto su P.IVA (miglior risultato)
+    #   b) Altrimenti, cerca per nome con fuzzy: estrae parole significative
+    #      (>=4 lettere, non "SRL", "SPA", "LTD") e cerca fatture che contengano
+    #      almeno una di quelle parole nel nome fornitore (case-insensitive)
+    #   c) Se c'è la stessa email PayPal nelle fatture (raro ma succede)
+    #   d) Se nessuna strategia trova qualcosa, ritorna [] con suggerimento "collega manualmente"
     fatture_collegate = []
-    nome_controparte = tx.get("nome_controparte") or tx.get("payer_name") or ""
+    nome_controparte = (tx.get("nome_controparte") or tx.get("payer_name") or "").strip()
+    email_controparte = (tx.get("email_controparte") or tx.get("payer_email") or "").strip().lower()
+
     if mapping_fornitore and mapping_fornitore.get("fornitore_piva"):
+        # STRATEGIA A: P.IVA (il match più affidabile)
         piva = mapping_fornitore["fornitore_piva"]
         fatture_collegate = await db[COLL_INVOICES].find(
             {
                 "$or": [
                     {"cedente_piva": piva},
                     {"supplier_vat": piva},
+                    {"piva_cedente": piva},
                 ]
             },
             {"_id": 0, "id": 1, "invoice_number": 1, "numero_fattura": 1,
@@ -507,13 +518,42 @@ async def dettaglio_transazione_paypal(transaction_id: str) -> Dict[str, Any]:
              "supplier_name": 1, "cedente_denominazione": 1,
              "stato_pagamento": 1}
         ).sort("invoice_date", -1).limit(10).to_list(10)
-    elif nome_controparte:
-        # fallback: match testuale su nome fornitore
+
+    if not fatture_collegate and nome_controparte:
+        # STRATEGIA B: match per parole significative del nome fornitore.
+        # Esempio: "Spotify AB" → cerco "spotify". Scarto suffissi societari comuni
+        # che darebbero falsi positivi in massa ("SRL", "SPA", "LTD", "SA", "AB").
+        import re as _re
+        STOP = {"srl", "spa", "sa", "ab", "ltd", "limited", "llc", "inc",
+                "gmbh", "ag", "bv", "nv", "s.p.a.", "s.r.l."}
+        parole = [
+            p for p in _re.split(r"[\s\.\,\-\&]+", nome_controparte.lower())
+            if len(p) >= 4 and p not in STOP
+        ]
+        if parole:
+            or_query = []
+            for p in parole[:3]:  # max 3 parole per non esplodere la query
+                escaped = _re.escape(p)
+                or_query.append({"supplier_name": {"$regex": escaped, "$options": "i"}})
+                or_query.append({"cedente_denominazione": {"$regex": escaped, "$options": "i"}})
+            fatture_collegate = await db[COLL_INVOICES].find(
+                {"$or": or_query},
+                {"_id": 0, "id": 1, "invoice_number": 1, "numero_fattura": 1,
+                 "invoice_date": 1, "data_fattura": 1,
+                 "total_amount": 1, "importo_totale": 1,
+                 "supplier_name": 1, "cedente_denominazione": 1,
+                 "stato_pagamento": 1}
+            ).sort("invoice_date", -1).limit(5).to_list(5)
+
+    if not fatture_collegate and email_controparte:
+        # STRATEGIA C: l'email della controparte è salvata in qualche fattura?
+        # Raro ma capita per fornitori SaaS/digitali (Spotify, MongoDB, ecc.)
         fatture_collegate = await db[COLL_INVOICES].find(
             {
                 "$or": [
-                    {"supplier_name": {"$regex": nome_controparte[:20], "$options": "i"}},
-                    {"cedente_denominazione": {"$regex": nome_controparte[:20], "$options": "i"}},
+                    {"supplier_email": email_controparte},
+                    {"cedente_email": email_controparte},
+                    {"email_cedente": email_controparte},
                 ]
             },
             {"_id": 0, "id": 1, "invoice_number": 1, "numero_fattura": 1,
@@ -522,6 +562,18 @@ async def dettaglio_transazione_paypal(transaction_id: str) -> Dict[str, Any]:
              "supplier_name": 1, "cedente_denominazione": 1,
              "stato_pagamento": 1}
         ).sort("invoice_date", -1).limit(5).to_list(5)
+
+    # --- Flag riconciliato in banca: il DB può avere diversi nomi di campo ---
+    # Storicamente: "riconciliato_banca" (boolean)
+    # Aggiunto dal service: "riconciliato_con_estratto_banca" (boolean)
+    # Aggiungo un campo unificato nel payload per semplificare il frontend.
+    riconciliato_unificato = bool(
+        tx.get("riconciliato_banca")
+        or tx.get("riconciliato_con_estratto_banca")
+        or tx.get("estratto_conto_movimento_id")
+    )
+    # Mantengo nella tx originale il valore booleano che il frontend si aspetta:
+    tx["riconciliato_banca"] = riconciliato_unificato
 
     return {
         "transaction": tx,
