@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import api from '../api';
 import {
   COLORS,
   STYLES,
@@ -15,7 +16,10 @@ import {
   RG,
 } from '../lib/utils';
 
-const API = import.meta.env.VITE_BACKEND_URL || '';
+// Il client `api` usa già baseURL='' (dominio corrente) + JWT interceptor.
+// Non usiamo VITE_BACKEND_URL qui perché al build time può puntare a un
+// dominio diverso (es. gestione-contabile.emergent.host) e causare errori
+// CORS in produzione.
 
 /* ================================================================
    DASHBOARD RELAZIONALE — Ceraldi ERP
@@ -34,9 +38,9 @@ export default function DashboardRelazionale() {
     setLoading(true);
     try {
       const [alertRes, partiteRes, matchRes] = await Promise.allSettled([
-        fetch(`${API}/api/alerts/lista?risolto=false&limit=200`).then(r => r.json()),
-        fetch(`${API}/api/partite-aperte/stats`).then(r => r.json()),
-        fetch(`${API}/api/riconciliazione/stats`).then(r => r.json()),
+        api.get('/api/alerts/lista?risolto=false&limit=200').then(r => r.data),
+        api.get('/api/partite-aperte/stats').then(r => r.data),
+        api.get('/api/riconciliazione/stats').then(r => r.data),
       ]);
 
       setData({
@@ -432,9 +436,9 @@ function TabPartite({ stats, isMobile }) {
     setLoading(true);
     try {
       const url = tipo
-        ? `${API}/api/partite-aperte/lista?tipo=${tipo}&stato=aperta&limit=50`
-        : `${API}/api/partite-aperte/lista?stato=aperta&limit=50`;
-      const res = await fetch(url).then(r => r.json());
+        ? `/api/partite-aperte/lista?tipo=${tipo}&stato=aperta&limit=50`
+        : `/api/partite-aperte/lista?stato=aperta&limit=50`;
+      const res = await api.get(url).then(r => r.data);
       setPartite(res.partite || res || []);
     } catch (e) {
       console.error(e);
