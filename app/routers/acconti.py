@@ -53,12 +53,25 @@ async def list_acconti(
             )
         query["tipo"] = tipo
 
-    # Filtro per anno/mese sul campo `data`
+    # Filtro per anno/mese:
+    # Schema reale dei docs (ispezione MongoDB):
+    #   - Hanno campi NUMERICI `anno` (int) e `mese` (int) — fonte di verità
+    #   - Il campo `data` è una STRINGA in formato DD/MM/YYYY (parser italiano),
+    #     non ISO — il vecchio regex "^YYYY" non matchava mai nulla.
+    # Soluzione: filtro primario su anno/mese numerici. Manteniamo un OR con
+    # il regex su `data` in formato ISO per retrocompatibilità con eventuali
+    # record legacy che hanno solo `data` in formato ISO.
     if anno and mese:
-        prefix = f"{anno}-{str(mese).zfill(2)}"
-        query["data"] = {"$regex": f"^{prefix}"}
+        prefix_iso = f"{anno}-{str(mese).zfill(2)}"
+        query["$or"] = [
+            {"anno": int(anno), "mese": int(mese)},
+            {"data": {"$regex": f"^{prefix_iso}"}},
+        ]
     elif anno:
-        query["data"] = {"$regex": f"^{anno}"}
+        query["$or"] = [
+            {"anno": int(anno)},
+            {"data": {"$regex": f"^{int(anno)}"}},
+        ]
 
     items = (
         await db["acconti_dipendenti"]
@@ -99,32 +112,72 @@ async def riepilogo_acconti(
     anno: Optional[int] = Query(default=None),
     current_user: Dict[str, Any] = Depends(get_current_user),
 ) -> Dict[str, Any]:
-    """Aggrega acconti per tipo e per dipendente nel periodo selezionato."""
+    """Aggrega acconti per tipo e per dipendente nel periodo selezionato.
+
+    Schema reale dei docs (da ispezione DB):
+      - Campi numerici `anno` e `mese` (fonte di verità)
+      - Campo `data` stringa in formato DD/MM/YYYY (NON ISO)
+      - Molti docs hanno `source` ("estratto_conto", "manuale") ma non `tipo`
+      - Altri docs hanno `tipo` ("tfr", "stipendio", ...) ma non `source`
+
+    Per il raggruppamento "per tipo" usiamo un fallback: se `tipo` è assente
+    o vuoto, usiamo `source`. Il filtro anno usa `anno` numerico (con
+    fallback regex su `data` per retrocompat).
+    """
     db = Database.get_db()
     match: Dict[str, Any] = {}
     if anno:
-        match["data"] = {"$regex": f"^{anno}"}
+        match["$or"] = [
+            {"anno": int(anno)},
+            {"data": {"$regex": f"^{int(anno)}"}},
+        ]
 
-    # Totali per tipo
+    # Pipeline comune: aggiunge un campo "categoria" = $ifNull($tipo, $source)
+    # per raggruppare in modo sensato anche i documenti che hanno solo `source`.
+    common_enrich = {
+        "$addFields": {
+            "categoria": {
+                "$ifNull": [
+                    {"$cond": [{"$eq": ["$tipo", ""]}, None, "$tipo"]},
+                    {"$ifNull": ["$source", "non_specificato"]},
+                ]
+            },
+            "_importo_num": {
+                "$convert": {
+                    "input": "$importo",
+                    "to": "double",
+                    "onError": 0,
+                    "onNull": 0,
+                }
+            },
+        }
+    }
+
+    # Totali per categoria (tipo o source)
     pipeline_tipo: List[Dict[str, Any]] = []
     if match:
         pipeline_tipo.append({"$match": match})
     pipeline_tipo.extend(
         [
+            common_enrich,
             {
                 "$group": {
-                    "_id": "$tipo",
-                    "totale": {"$sum": "$importo"},
+                    "_id": "$categoria",
+                    "totale": {"$sum": "$_importo_num"},
                     "count": {"$sum": 1},
                 }
             },
             {"$sort": {"totale": -1}},
         ]
     )
-    per_tipo = await db["acconti_dipendenti"].aggregate(pipeline_tipo).to_list(50)
+    per_tipo_raw = await db["acconti_dipendenti"].aggregate(pipeline_tipo).to_list(50)
     per_tipo = [
-        {"tipo": r["_id"] or "non_specificato", "totale": round(r["totale"], 2), "count": r["count"]}
-        for r in per_tipo
+        {
+            "tipo": r["_id"] or "non_specificato",
+            "totale": round(r["totale"] or 0, 2),
+            "count": r["count"],
+        }
+        for r in per_tipo_raw
     ]
 
     # Totali per dipendente
@@ -133,28 +186,34 @@ async def riepilogo_acconti(
         pipeline_dip.append({"$match": match})
     pipeline_dip.extend(
         [
+            common_enrich,
             {
                 "$group": {
-                    "_id": "$dipendente_id",
+                    "_id": {
+                        "$ifNull": [
+                            "$dipendente_id",
+                            {"$ifNull": ["$dipendente_nome", "sconosciuto"]},
+                        ]
+                    },
                     "dipendente_nome": {"$last": "$dipendente_nome"},
-                    "totale": {"$sum": "$importo"},
+                    "totale": {"$sum": "$_importo_num"},
                     "count": {"$sum": 1},
                 }
             },
             {"$sort": {"totale": -1}},
         ]
     )
-    per_dipendente = (
+    per_dipendente_raw = (
         await db["acconti_dipendenti"].aggregate(pipeline_dip).to_list(500)
     )
     per_dipendente = [
         {
             "dipendente_id": r["_id"],
             "dipendente_nome": r.get("dipendente_nome") or "",
-            "totale": round(r["totale"], 2),
+            "totale": round(r["totale"] or 0, 2),
             "count": r["count"],
         }
-        for r in per_dipendente
+        for r in per_dipendente_raw
     ]
 
     totale_generale = sum(r["totale"] for r in per_tipo)
