@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useAbortableEffect, isCanceledError } from '../../hooks';
 import {
   FileText,
@@ -116,7 +117,27 @@ function avatarColor(name) {
 
 export default function HRCedolini() {
   const isMobile = useIsMobile();
-  const [anno, setAnno] = useState(ANNO_CORRENTE);
+  const navigate = useNavigate();
+  const location = useLocation();
+  // Route registrate:
+  //   /cedolini
+  //   /cedolini/:anno
+  //   /cedolini/:anno/:mese
+  //   /prima-nota-salari/:anno/:mese
+  // Inizializziamo stato da URL per supportare deep-link/bookmark.
+  const { anno: annoFromUrl, mese: meseFromUrl } = useParams();
+
+  // Parse safe: anno plausibile (1900-2100), mese 1-12
+  const parsedAnno = (() => {
+    const n = parseInt(annoFromUrl, 10);
+    return Number.isInteger(n) && n >= 1900 && n <= 2100 ? n : null;
+  })();
+  const parsedMese = (() => {
+    const n = parseInt(meseFromUrl, 10);
+    return Number.isInteger(n) && n >= 1 && n <= 12 ? n : null;
+  })();
+
+  const [anno, setAnno] = useState(parsedAnno ?? ANNO_CORRENTE);
   const [tab, setTab] = useState('cedolini');
   const [cedolini, setCedolini] = useState([]);
   const [f24, setF24] = useState([]);
@@ -124,9 +145,50 @@ export default function HRCedolini() {
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedMese, setSelectedMese] = useState(null);
-  const [expandedMonths, setExpandedMonths] = useState({});
+  const [selectedMese, setSelectedMese] = useState(parsedMese);
+  const [expandedMonths, setExpandedMonths] = useState(() =>
+    parsedMese ? { [parsedMese]: true } : {}
+  );
   const [viewMode, setViewMode] = useState('mese'); // 'mese' | 'dipendente' | 'lista'
+
+  // Sync: se l'utente naviga indietro/avanti nel browser, aggiorno state
+  useEffect(() => {
+    if (parsedAnno != null && parsedAnno !== anno) setAnno(parsedAnno);
+    if (parsedMese != null && parsedMese !== selectedMese) {
+      setSelectedMese(parsedMese);
+      setExpandedMonths(prev => ({ ...prev, [parsedMese]: true }));
+    }
+    // Intenzionalmente omettiamo `anno` e `selectedMese`: questo effect risponde
+    // SOLO ai cambi dell'URL. Modifiche dirette allo state (via UI) propagano
+    // all'URL tramite setAnnoAndUrl / setMeseAndUrl.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parsedAnno, parsedMese]);
+
+  // Helper per aggiornare state + URL insieme (bookmark-friendly).
+  // Uso il prefisso path esistente (/cedolini vs /prima-nota-salari) così
+  // restiamo sulla stessa pagina virtuale quando l'utente cambia filtri.
+  const baseUrl = location.pathname.startsWith('/prima-nota-salari')
+    ? '/prima-nota-salari'
+    : '/cedolini';
+
+  const setAnnoAndUrl = useCallback((newAnno) => {
+    setAnno(newAnno);
+    if (selectedMese) navigate(`${baseUrl}/${newAnno}/${selectedMese}`, { replace: true });
+    else if (baseUrl === '/prima-nota-salari') navigate(`${baseUrl}`, { replace: true });
+    else navigate(`${baseUrl}/${newAnno}`, { replace: true });
+  }, [baseUrl, selectedMese, navigate]);
+
+  const setMeseAndUrl = useCallback((newMese) => {
+    setSelectedMese(newMese);
+    if (newMese) {
+      navigate(`${baseUrl}/${anno}/${newMese}`, { replace: true });
+      setExpandedMonths(prev => ({ ...prev, [newMese]: true }));
+    } else if (baseUrl === '/cedolini') {
+      navigate(`${baseUrl}/${anno}`, { replace: true });
+    } else {
+      navigate(`${baseUrl}`, { replace: true });
+    }
+  }, [baseUrl, anno, navigate]);
 
   const loadData = useCallback(async (signal) => {
     setLoading(true);
@@ -280,7 +342,7 @@ export default function HRCedolini() {
           <select
             data-testid="select-anno-cedolini"
             value={anno}
-            onChange={e => setAnno(Number(e.target.value))}
+            onChange={e => setAnnoAndUrl(Number(e.target.value))}
             style={{
               padding: '8px 14px',
               border: `1px solid ${COLORS.border}`,
@@ -567,7 +629,7 @@ export default function HRCedolini() {
             </div>
             {selectedMese && (
               <button
-                onClick={() => setSelectedMese(null)}
+                onClick={() => setMeseAndUrl(null)}
                 style={{
                   padding: '6px 12px',
                   border: `1px solid #0f2744`,
