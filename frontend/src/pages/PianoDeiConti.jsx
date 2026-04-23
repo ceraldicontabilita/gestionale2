@@ -21,6 +21,8 @@ export default function PianoDeiConti() {
   const [regole, setRegole] = useState([]);
   const [bilancio, setBilancio] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [riclassificando, setRiclassificando] = useState(false);
+  const [riclassificaResult, setRiclassificaResult] = useState(null);
 
   // Drawer dettaglio conto
   const [selectedConto, setSelectedConto] = useState(null);
@@ -135,6 +137,33 @@ export default function PianoDeiConti() {
       loadData();
     } catch (error) {
       alert('Errore: ' + (error.response?.data?.detail || error.message));
+    }
+  };
+
+  const handleRiclassificaAI = async () => {
+    const conferma = window.confirm(
+      'Ricategorizzazione con AI: analizzerà tutte le righe delle fatture XML e le assegnerà ai conti corretti del piano dei conti ' +
+      '(es. Coca-Cola → Bevande analcoliche, Caffè Lavazza → Caffè e affini).\n\n' +
+      'L\'operazione dura da 30 secondi a qualche minuto in base al numero di fatture. ' +
+      'Costa qualche centesimo in chiamate AI.\n\n' +
+      'Procedere?'
+    );
+    if (!conferma) return;
+
+    setRiclassificando(true);
+    setRiclassificaResult(null);
+    try {
+      const r = await api.post('/api/dizionario-articoli/riclassifica-completo?limite_ai=500');
+      setRiclassificaResult(r.data);
+      // ricarica i saldi
+      await loadData();
+    } catch (error) {
+      setRiclassificaResult({
+        success: false,
+        error: error.response?.data?.detail || error.message,
+      });
+    } finally {
+      setRiclassificando(false);
     }
   };
 
@@ -292,7 +321,7 @@ export default function PianoDeiConti() {
         {/* Piano dei Conti */}
         {activeTab === 'conti' && (
           <>
-            <div style={{ marginBottom: 15 }}>
+            <div style={{ marginBottom: 15, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
               <button
                 onClick={() => setShowNewConto(true)}
                 data-testid="new-conto-btn"
@@ -308,6 +337,41 @@ export default function PianoDeiConti() {
               >
                 ➕ Nuovo Conto
               </button>
+
+              <button
+                onClick={handleRiclassificaAI}
+                disabled={riclassificando}
+                title="Analizza le righe delle fatture XML con AI e le assegna ai conti del piano corretti (es. Coca-Cola → Bevande analcoliche)"
+                style={{
+                  padding: '10px 20px',
+                  background: riclassificando ? '#999' : '#b8860b',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 8,
+                  cursor: riclassificando ? 'not-allowed' : 'pointer',
+                  fontWeight: 'bold',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
+                {riclassificando ? '⏳ Classificazione in corso…' : '🤖 Ricategorizza con AI'}
+              </button>
+
+              {riclassificaResult && (
+                <div style={{
+                  padding: '8px 12px',
+                  fontSize: 13,
+                  borderRadius: 6,
+                  background: riclassificaResult.success ? '#dcfce7' : '#fef2f2',
+                  color: riclassificaResult.success ? '#166534' : '#991b1b',
+                  border: `1px solid ${riclassificaResult.success ? '#86efac' : '#fecaca'}`,
+                }}>
+                  {riclassificaResult.success
+                    ? `✅ Articoli elaborati: ${riclassificaResult.step1_genera_dizionario?.total || 0} · Riclassificati AI: ${riclassificaResult.step2_categorizzazione_ai?.categorizzati || 0}`
+                    : `❌ Errore: ${riclassificaResult.error || 'operazione fallita'}`}
+                </div>
+              )}
             </div>
 
             <div style={{ display: 'grid', gap: 15 }}>

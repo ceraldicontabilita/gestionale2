@@ -176,10 +176,75 @@ async def _calcola_saldi_piano_conti(db, anno: str = None) -> Dict[str, float]:
         }}
     ]
     res = await db["invoices"].aggregate(pipe_inv).to_list(1)
+    totale_imponibile_fatture = 0.0
     if res:
-        saldi["05.01.01"] = round(float(res[0].get("imponibile") or 0), 2)   # Costi merci
+        totale_imponibile_fatture = float(res[0].get("imponibile") or 0)
         saldi["01.04.01"] = round(float(res[0].get("iva") or 0), 2)          # IVA credito
         saldi["02.01.01"] = round(float(res[0].get("totale") or 0), 2)       # Debiti fornitori (lordi)
+
+    # ── COSTI PER SOTTO-CONTO (dal dizionario articoli) ──────────────────────
+    # Invece di sbattere tutto l'imponibile su 05.01.01, usiamo il dizionario
+    # articoli (popolato da /api/dizionario-articoli/genera-dizionario e
+    # categorizzato da ai_categorizzazione) per splittare i costi nelle
+    # sottocategorie reali (05.01.02 Materie prime, 05.01.03 Bevande alcoliche,
+    # 05.01.04 Bevande analcoliche, 05.01.09 Caffè, 05.02.01 Servizi, ...)
+    #
+    # Approccio: uniamo le righe fattura con il dizionario (per descrizione)
+    # e aggreghiamo per conto. Filtro per anno applicato al date della fattura.
+    pipe_righe = [
+        *( [{"$match": match_inv}] if match_inv else [] ),
+        {"$unwind": {"path": "$linee", "preserveNullAndEmptyArrays": False}},
+        # Join con dizionario_articoli per trovare il conto della riga
+        {"$lookup": {
+            "from": "dizionario_articoli",
+            "localField": "linee.descrizione",
+            "foreignField": "descrizione",
+            "as": "diz",
+        }},
+        # Se la riga è nel dizionario usiamo il conto del dizionario,
+        # altrimenti cade su 05.01.01 (Acquisto merci, default generico)
+        {"$addFields": {
+            "conto_assegnato": {
+                "$ifNull": [
+                    {"$arrayElemAt": ["$diz.conto", 0]},
+                    "05.01.01",
+                ]
+            },
+            # imponibile riga = prezzo_totale (senza IVA) — se manca proviamo altri campi
+            "imponibile_riga": {
+                "$ifNull": [
+                    "$linee.prezzo_totale",
+                    {"$ifNull": [
+                        "$linee.imponibile",
+                        {"$ifNull": ["$linee.importo", 0]}
+                    ]}
+                ]
+            }
+        }},
+        {"$group": {
+            "_id": "$conto_assegnato",
+            "totale": {"$sum": "$imponibile_riga"},
+            "righe": {"$sum": 1},
+        }},
+    ]
+    try:
+        costi_per_conto = await db["invoices"].aggregate(pipe_righe).to_list(100)
+    except Exception as e:
+        logger.warning(f"Impossibile splittare costi per conto: {e}")
+        costi_per_conto = []
+
+    imponibile_splittato = 0.0
+    for r in costi_per_conto:
+        codice = r.get("_id") or "05.01.01"
+        importo = round(float(r.get("totale") or 0), 2)
+        # Accumula (un conto può ricevere da più raggruppamenti)
+        saldi[codice] = round(saldi.get(codice, 0.0) + importo, 2)
+        imponibile_splittato += importo
+
+    # Safety net: se il dizionario non ha coperto nulla (dizionario vuoto
+    # o righe senza match), fallback al vecchio comportamento: tutto su 05.01.01
+    if imponibile_splittato <= 0.01 and totale_imponibile_fatture > 0:
+        saldi["05.01.01"] = round(saldi.get("05.01.01", 0) + totale_imponibile_fatture, 2)
 
     # Sottrai pagamenti effettivi ai Debiti v/fornitori (per saldo reale).
     # IMPORTANTE: dopo la PR #1, i movimenti di pagamento fornitori sono salvati
