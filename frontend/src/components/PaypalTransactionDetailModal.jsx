@@ -166,7 +166,9 @@ export default function PaypalTransactionDetailModal({ open, onClose, transactio
   };
 
   const handleGoToFattura = (fId) => {
-    navigate(`/fatture?id=${encodeURIComponent(fId)}`);
+    // Uso 'invoice_id' esplicito così la pagina Archivio può fare scroll
+    // + highlight. Il param 'id' è supportato come alias per retrocompat.
+    navigate(`/fatture?invoice_id=${encodeURIComponent(fId)}`);
     onClose?.();
   };
 

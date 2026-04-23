@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import api from '../api';
 import { useAnnoGlobale } from '../contexts/AnnoContext';
 import {
@@ -163,6 +163,60 @@ export default function ArchivioFatture() {
   const [statistiche, setStatistiche] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Deep-link a una specifica fattura (es. dal modale PayPal):
+  // /fatture?invoice_id=<id> → dopo il caricamento scrolla alla riga,
+  // la evidenzia per 4 secondi, poi torna normale.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const invoiceIdFromUrl = searchParams.get('invoice_id') || searchParams.get('id') || '';
+  const [highlightedId, setHighlightedId] = useState('');
+  const [invoiceNotFoundWarning, setInvoiceNotFoundWarning] = useState(null);
+  const highlightedRowRef = useRef(null);
+
+  useEffect(() => {
+    if (!invoiceIdFromUrl || loading) return; // aspetto che il fetch sia finito
+    if (fatture.length === 0) return;
+
+    const found = fatture.find(f => f.id === invoiceIdFromUrl);
+
+    if (!found) {
+      // La fattura non è nella lista — probabilmente è di un anno diverso
+      // da quello attualmente filtrato. Chiedo al backend di che anno è.
+      (async () => {
+        try {
+          const r = await api.get(`/api/fatture-ricevute/fattura/${invoiceIdFromUrl}`);
+          const f = r.data;
+          const annoFattura = (f.invoice_date || f.data_documento || '').slice(0, 4);
+          setInvoiceNotFoundWarning({
+            id: invoiceIdFromUrl,
+            anno: annoFattura,
+            numero: f.invoice_number || f.numero_documento,
+            fornitore: f.supplier_name || f.fornitore_ragione_sociale,
+          });
+        } catch {
+          // Anche il lookup diretto fallisce — fattura inesistente o cancellata
+          setInvoiceNotFoundWarning({ id: invoiceIdFromUrl, notExist: true });
+        }
+      })();
+      return;
+    }
+
+    // Caso normale: trovata, evidenzio
+    setInvoiceNotFoundWarning(null);
+    setHighlightedId(invoiceIdFromUrl);
+    setTimeout(() => {
+      highlightedRowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+    const t = setTimeout(() => {
+      setHighlightedId('');
+      const p = new URLSearchParams(searchParams);
+      p.delete('invoice_id');
+      p.delete('id');
+      setSearchParams(p, { replace: true });
+    }, 4000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invoiceIdFromUrl, fatture, loading]);
+
   // ==================== FETCH FUNCTIONS ====================
 
   const fetchFatture = useCallback(async () => {
@@ -317,6 +371,50 @@ export default function ArchivioFatture() {
       style={{ maxWidth: 1600, margin: '0 auto', position: 'relative', padding: '16px 0' }}
       data-testid="archivio-fatture-ricevute"
     >
+      {/* Warning deep-link: la fattura richiesta non è nella lista corrente */}
+      {invoiceNotFoundWarning && (
+        <div style={{
+          marginBottom: 16, padding: 14, borderRadius: 10,
+          background: '#fffbeb', border: '1px solid #fcd34d',
+          display: 'flex', alignItems: 'flex-start', gap: 12,
+        }}>
+          <div style={{ fontSize: 20 }}>⚠️</div>
+          <div style={{ flex: 1, fontSize: 13, color: '#78350f', lineHeight: 1.5 }}>
+            {invoiceNotFoundWarning.notExist ? (
+              <>
+                La fattura che cercavi non esiste più o è stata eliminata
+                (id: <code>{invoiceNotFoundWarning.id}</code>).
+              </>
+            ) : (
+              <>
+                La fattura <strong>{invoiceNotFoundWarning.numero}</strong> di{' '}
+                <strong>{invoiceNotFoundWarning.fornitore}</strong> è dell'anno{' '}
+                <strong>{invoiceNotFoundWarning.anno}</strong>, ma stai guardando l'anno{' '}
+                <strong>{anno}</strong>.
+                <br />
+                Cambia l'anno globale (in alto a destra) a <strong>{invoiceNotFoundWarning.anno}</strong>{' '}
+                per vederla.
+              </>
+            )}
+          </div>
+          <button
+            onClick={() => {
+              setInvoiceNotFoundWarning(null);
+              const p = new URLSearchParams(searchParams);
+              p.delete('invoice_id');
+              p.delete('id');
+              setSearchParams(p, { replace: true });
+            }}
+            style={{
+              background: 'transparent', border: 'none', cursor: 'pointer',
+              fontSize: 18, color: '#78350f', padding: 0,
+            }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Statistiche */}
       {statistiche && (
         <div
@@ -704,14 +802,18 @@ export default function ArchivioFatture() {
               return (
                 <div
                   key={f.id || `fattura-${idx}`}
+                  ref={f.id === highlightedId ? highlightedRowRef : null}
                   style={{
-                    background: 'white',
+                    background: f.id === highlightedId ? '#fef3c7' : 'white',
                     borderRadius: 10,
                     padding: '14px 16px',
-                    boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
-                    border: '1px solid #e5e7eb',
+                    boxShadow: f.id === highlightedId
+                      ? '0 0 0 3px #b8860b, 0 8px 25px rgba(184,134,11,0.25)'
+                      : '0 1px 4px rgba(0,0,0,0.08)',
+                    border: f.id === highlightedId ? '1px solid #b8860b' : '1px solid #e5e7eb',
                     overflow: 'hidden',
                     minWidth: 0,
+                    transition: 'all 300ms ease',
                   }}
                 >
                   <div
@@ -912,10 +1014,15 @@ export default function ArchivioFatture() {
                   return (
                     <tr
                       key={f.id || `fattura-${idx}`}
+                      ref={f.id === highlightedId ? highlightedRowRef : null}
                       style={{
-                        background: idx % 2 === 0 ? 'white' : '#f8fafc',
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                        transition: 'background 0.2s',
+                        background: f.id === highlightedId
+                          ? '#fef3c7'
+                          : idx % 2 === 0 ? 'white' : '#f8fafc',
+                        boxShadow: f.id === highlightedId
+                          ? '0 0 0 3px #b8860b inset, 0 4px 12px rgba(184,134,11,0.2)'
+                          : '0 1px 3px rgba(0,0,0,0.05)',
+                        transition: 'background 300ms, box-shadow 300ms',
                       }}
                     >
                       <td style={{ padding: '14px 16px', borderRadius: '8px 0 0 8px' }}>
