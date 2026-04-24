@@ -46,7 +46,6 @@ def serialize_doc(doc):
 # ENDPOINTS LISTA E DETTAGLIO
 # ============================================================================
 
-@router.get("", summary="Lista tutti i mutui (alias senza slash)", include_in_schema=False)
 @router.get("/", summary="Lista tutti i mutui")
 async def get_mutui(
     skip: int = Query(0, ge=0),
@@ -633,3 +632,4 @@ async def delete_mutuo(mutuo_id: str):
     except Exception as e:
         logger.error(f"Errore delete_mutuo: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
