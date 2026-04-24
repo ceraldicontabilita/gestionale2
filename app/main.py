@@ -104,8 +104,7 @@ app = FastAPI(
     version=settings.APP_VERSION,
     docs_url="/docs" if settings.is_development else None,
     redoc_url="/redoc" if settings.is_development else None,
-    lifespan=lifespan,
-    redirect_slashes=False
+    lifespan=lifespan
 )
 
 # CORS
@@ -132,18 +131,6 @@ except ImportError:
 # (esclude whitelist di path pubblici definita in authentication.py)
 from app.middleware.authentication import AuthenticationMiddleware
 app.add_middleware(AuthenticationMiddleware)
-
-# SEO: header X-Robots-Tag su TUTTE le risposte
-# Gestionale privato → non deve comparire in nessun motore di ricerca.
-from starlette.middleware.base import BaseHTTPMiddleware
-
-class NoIndexMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request, call_next):
-        response = await call_next(request)
-        response.headers["X-Robots-Tag"] = "noindex, nofollow, noarchive, nosnippet, noimageindex"
-        return response
-
-app.add_middleware(NoIndexMiddleware)
 
 # Exception Handlers
 add_exception_handlers(app)
@@ -220,4 +207,3 @@ if os.path.isdir(_FRONTEND_DIST):
         return FileResponse(os.path.join(_FRONTEND_DIST, "index.html"))
 
     logger.info("✅ Frontend React montato (SPA routing attivo)")
-
