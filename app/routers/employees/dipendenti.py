@@ -546,6 +546,11 @@ async def bulk_upsert_dipendenti(payload: Dict[str, Any] = Body(...)) -> Dict[st
                 "updated_at": now_iso,
             }
             await db[Collections.EMPLOYEES].insert_one(nuovo_doc.copy())
+            try:
+                from app.services.event_bus import propagate_event, EventTypes
+                await propagate_event(EventTypes.DIPENDENTE_CREATED, {"dipendente_id": nuovo_doc["id"], "codice_fiscale": cf, "stato": "attivo"}, db, source_module="bulk_upsert")
+            except Exception:
+                logger.exception("Errore evento bulk dipendente.created")
             risultati.append({
                 "riga": idx + 1,
                 "esito": "created",
@@ -1970,7 +1975,7 @@ async def get_contratti_in_scadenza(giorni: int = Query(60, description="Giorni 
     # Scaduti
     scaduti = await db["contratti_dipendenti"].find(
         {
-            "tipo_contratto": {"$in": ["tempo_determinato", "determinato", "Tempo Determinato"]},
+            "tipo_contratto": {"$in": ["tempo_determinato", "determinato", "Tempo Determinato", "Tempo determinato"]},
             "data_fine": {"$lt": oggi_str},
             "stato": "attivo"
         },
@@ -1980,7 +1985,7 @@ async def get_contratti_in_scadenza(giorni: int = Query(60, description="Giorni 
     # In scadenza
     in_scadenza = await db["contratti_dipendenti"].find(
         {
-            "tipo_contratto": {"$in": ["tempo_determinato", "determinato", "Tempo Determinato"]},
+            "tipo_contratto": {"$in": ["tempo_determinato", "determinato", "Tempo Determinato", "Tempo determinato"]},
             "data_fine": {"$gte": oggi_str, "$lte": limite},
             "stato": "attivo"
         },
