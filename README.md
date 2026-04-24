@@ -124,3 +124,6 @@ tail -n 100 /var/log/supervisor/frontend.err.log
 ## Licenza
 
 Uso interno Ceraldi Group S.R.L. Tutti i diritti riservati.
+
+
+<!-- deploy trigger 10:38:38 -->
