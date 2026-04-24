@@ -17,7 +17,7 @@ import uuid
 from app.utils.error_handler import handle_errors
 
 logger = logging.getLogger(__name__)
-router = APIRouter(redirect_slashes=False)
+router = APIRouter()
 
 # Scadenze fiscali fisse italiane
 SCADENZE_FISCALI = {
@@ -32,8 +32,6 @@ SCADENZE_FISCALI = {
 
 
 @router.get("/tutte")
-@router.get("/", include_in_schema=False)
-@router.get("", include_in_schema=False)
 @handle_errors
 async def get_tutte_scadenze(
     anno: int = Query(None),
@@ -578,7 +576,7 @@ async def get_dashboard_scadenze() -> Dict[str, Any]:
     Ritorna le scadenze più urgenti di ogni tipo.
     """
     db = Database.get_db()
-    oggi = datetime.now(timezone.utc)
+    oggi = datetime.now()
     oggi_str = oggi.strftime('%Y-%m-%d')
     limite_30 = (oggi + timedelta(days=30)).strftime('%Y-%m-%d')
     limite_60 = (oggi + timedelta(days=60)).strftime('%Y-%m-%d')
@@ -646,6 +644,3 @@ async def get_dashboard_scadenze() -> Dict[str, Any]:
             "dettaglio": scadenze_urgenti[:3]
         }
     }
-
-
-
