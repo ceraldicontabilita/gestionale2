@@ -43,13 +43,12 @@ def register_all_routers(app: FastAPI) -> None:
 
 # ─── Auth & Public ──────────────────────────────────────────────────────────
 def _register_auth(app: FastAPI):
-    from app.routers import auth, public_api, google_auth, openclaw, pin_login
+    from app.routers import auth, public_api, google_auth, openclaw
     from app.routers.erp_bridge import router as erp_bridge_router
     from app.routers.legal_pages import router as legal_router
 
     app.include_router(public_api.router, prefix="/api", tags=["Public API"])
     app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
-    app.include_router(pin_login.router, prefix="/api/auth", tags=["Auth PIN"])
     app.include_router(google_auth.router, prefix="/api", tags=["Google OAuth"])
     app.include_router(openclaw.router, prefix="/api", tags=["OpenClaw AI Assistant"])
     # ERP Bridge: ponte inbound da ceraldiapp.it (app Tracciabilità esterna)
@@ -173,7 +172,7 @@ def _register_warehouse(app: FastAPI):
 def _register_invoices(app: FastAPI):
     from app.routers.invoices import invoices_main, invoices_emesse, invoices_export, fatture_upload, corrispettivi
     from app.routers.fatture_module import router as fatture_ricevute_router
-    from app.routers import invoicetronic, fatture_foto_ocr
+    from app.routers import invoicetronic
 
     app.include_router(invoices_emesse.router, prefix="/api/invoices/emesse", tags=["Invoices Emesse"])
     app.include_router(invoices_main.router, prefix="/api/invoices", tags=["Invoices"])
@@ -182,16 +181,13 @@ def _register_invoices(app: FastAPI):
     app.include_router(fatture_ricevute_router, prefix="/api/fatture-ricevute", tags=["Fatture Ricevute"])
     app.include_router(corrispettivi.router, prefix="/api/corrispettivi", tags=["Corrispettivi"])
     app.include_router(invoicetronic.router, prefix="/api/invoicetronic", tags=["InvoiceTronic SDI"])
-    # Foto allegate a fatture + storage correzioni OCR (usato da Appgestionale mobile)
-    app.include_router(fatture_foto_ocr.router, prefix="/api", tags=["Fatture Foto & OCR Correzioni"])
 
 
 # ─── Employees Module ──────────────────────────────────────────────────────
 def _register_employees(app: FastAPI):
-    from app.routers.employees import dipendenti, employees_payroll, employee_contracts, buste_paga, shifts, staff, giustificativi, missioni, hr_documenti, ferie_richieste
+    from app.routers.employees import dipendenti, employees_payroll, employee_contracts, buste_paga, shifts, staff, giustificativi
     from app.routers import payroll, cedolini, cedolini_riconciliazione, tfr, attendance, dimissioni
     from app.routers import salari_unificati_v2, bonifici_stipendi, libro_unico_parser, f24_parser
-    from app.routers import acconti
     from app.routers.attendance_module import presenze as attendance_presenze
     
     app.include_router(dipendenti.router, prefix="/api/dipendenti", tags=["Dipendenti"])
@@ -199,16 +195,12 @@ def _register_employees(app: FastAPI):
     app.include_router(employee_contracts.router, prefix="/api/contracts", tags=["Contracts"])
     app.include_router(buste_paga.router, prefix="/api", tags=["Buste Paga"])
     app.include_router(shifts.router, prefix="/api/shifts", tags=["Shifts"])
-    app.include_router(missioni.router, prefix="/api/missioni", tags=["Missioni"])
-    app.include_router(hr_documenti.router, prefix="/api/hr-documenti", tags=["HR Documenti"])
-    app.include_router(ferie_richieste.router, prefix="/api/ferie-richieste", tags=["Ferie Richieste"])
     app.include_router(staff.router, prefix="/api/staff", tags=["Staff"])
     app.include_router(giustificativi.router, prefix="/api/giustificativi", tags=["Giustificativi"])
     app.include_router(payroll.router, prefix="/api/payroll", tags=["Payroll"])
     app.include_router(cedolini.router, prefix="/api/cedolini", tags=["Cedolini"])
     app.include_router(cedolini_riconciliazione.router, prefix="/api/cedolini", tags=["Cedolini Riconciliazione"])
     app.include_router(tfr.router, prefix="/api/tfr", tags=["TFR"])
-    app.include_router(acconti.router, prefix="/api/acconti", tags=["Acconti"])
     app.include_router(attendance.router, prefix="/api/attendance", tags=["Attendance"])
     app.include_router(attendance_presenze.router, prefix="/api/attendance", tags=["Presenze"])
     app.include_router(salari_unificati_v2.router, prefix="/api/salari-v2", tags=["Salari V2"])
@@ -378,5 +370,3 @@ def _register_tracciabilita(app: FastAPI):
     con eventuali hook futuri. Può essere rimossa in un giro successivo.
     """
     pass
-
-
