@@ -876,7 +876,8 @@ async def get_notifiche_scadenze_imminenti(
     prossime = []  # 4-7 giorni
     pianificabili = []  # oltre 7 giorni
     
-    oggi_dt = datetime.now(timezone.utc)
+    # Uso naive datetime per confronto con data_scad (anche lei naive)
+    oggi_dt = datetime.now()
     for s in scadenze:
         try:
             data_scad = datetime.strptime(s.get("data", ""), "%Y-%m-%d") if s.get("data") else None
@@ -891,7 +892,8 @@ async def get_notifiche_scadenze_imminenti(
                 else:
                     s["urgenza"] = "normale"
                     pianificabili.append(s)
-        except ValueError:
+        except (ValueError, TypeError) as e:
+            logger.warning(f"Errore parsing data scadenza {s.get('data')}: {e}")
             s["urgenza"] = "normale"
             pianificabili.append(s)
     

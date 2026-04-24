@@ -31,6 +31,8 @@ SCADENZE_FISCALI = {
 }
 
 
+@router.get("", include_in_schema=False)
+@router.get("/", include_in_schema=False)
 @router.get("/tutte")
 @handle_errors
 async def get_tutte_scadenze(
