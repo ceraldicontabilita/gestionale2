@@ -156,24 +156,6 @@ add_exception_handlers(app)
 from app.router_registry import register_all_routers
 register_all_routers(app)
 
-# Route alias senza trailing slash - workaround FastAPI 0.110.1 + proxy Emergent
-# Redirect server-side: /api/mutui → /api/mutui/ e /api/scadenze → /api/scadenze/tutte
-from fastapi.responses import RedirectResponse
-
-@app.get("/api/mutui", include_in_schema=False, tags=["Mutui"])
-async def mutui_root_alias(request: Request):
-    """Alias senza trailing slash per /api/mutui/"""
-    url = str(request.url).rstrip("/") + "/"
-    return RedirectResponse(url=url, status_code=307)
-
-@app.get("/api/scadenze", include_in_schema=False, tags=["Scadenze"])
-async def scadenze_root_alias(request: Request):
-    """Alias senza trailing slash per /api/scadenze/tutte"""
-    # Preserva query params
-    qs = request.url.query
-    target = "/api/scadenze/tutte" + (f"?{qs}" if qs else "")
-    return RedirectResponse(url=target, status_code=307)
-
 
 # =============================================================================
 # HEALTH CHECK ENDPOINTS
@@ -238,5 +220,4 @@ if os.path.isdir(_FRONTEND_DIST):
         return FileResponse(os.path.join(_FRONTEND_DIST, "index.html"))
 
     logger.info("✅ Frontend React montato (SPA routing attivo)")
-
 
