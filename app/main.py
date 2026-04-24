@@ -104,7 +104,8 @@ app = FastAPI(
     version=settings.APP_VERSION,
     docs_url="/docs" if settings.is_development else None,
     redoc_url="/redoc" if settings.is_development else None,
-    lifespan=lifespan
+    lifespan=lifespan,
+    redirect_slashes=False
 )
 
 # CORS
@@ -219,3 +220,4 @@ if os.path.isdir(_FRONTEND_DIST):
         return FileResponse(os.path.join(_FRONTEND_DIST, "index.html"))
 
     logger.info("✅ Frontend React montato (SPA routing attivo)")
+
