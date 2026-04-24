@@ -24,7 +24,7 @@ import logging
 
 from app.database import Database
 
-router = APIRouter(tags=["Mutui"], redirect_slashes=False)
+router = APIRouter(tags=["Mutui"])
 logger = logging.getLogger(__name__)
 
 
@@ -47,7 +47,6 @@ def serialize_doc(doc):
 # ============================================================================
 
 @router.get("/", summary="Lista tutti i mutui")
-@router.get("", summary="Lista tutti i mutui", include_in_schema=False)
 async def get_mutui(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000)
@@ -164,7 +163,7 @@ async def get_statistiche_mutui():
             stats["percentuale_riconciliazione"] = 0
         
         # Trova prossime scadenze (prossimi 30 giorni)
-        oggi = datetime.now(timezone.utc)
+        oggi = datetime.now()
         
         # Query per rate "Da pagare"
         mutui_con_scadenze = await db.mutui.find(
@@ -555,8 +554,8 @@ async def create_mutuo(mutuo_data: dict):
             )
         
         # Aggiungi timestamp
-        mutuo_data["created_at"] = datetime.now(timezone.utc)
-        mutuo_data["updated_at"] = datetime.now(timezone.utc)
+        mutuo_data["created_at"] = datetime.now()
+        mutuo_data["updated_at"] = datetime.now()
         
         result = await db.mutui.insert_one(mutuo_data)
         
@@ -588,7 +587,7 @@ async def update_mutuo(mutuo_id: str, update_data: dict):
         update_data.pop("created_at", None)
         
         # Aggiungi timestamp aggiornamento
-        update_data["updated_at"] = datetime.now(timezone.utc)
+        update_data["updated_at"] = datetime.now()
         
         result = await db.mutui.update_one(
             {"mutuo_id": mutuo_id},
@@ -633,6 +632,3 @@ async def delete_mutuo(mutuo_id: str):
     except Exception as e:
         logger.error(f"Errore delete_mutuo: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
-
-
