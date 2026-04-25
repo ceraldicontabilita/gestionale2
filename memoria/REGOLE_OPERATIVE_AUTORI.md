@@ -119,6 +119,19 @@ File applicativi includono:
 
 Eccezione: se ChatGPT fornisce un comando patch esatto, Emergent puo' eseguirlo e poi deve mostrare `git diff`.
 
+## Regola HR Presenze
+
+Le presenze NON si importano da PDF.
+
+Il flusso corretto e':
+
+- inserimento/modifica presenze e giustificativi nel gestionale;
+- controllo calendario e griglia mensile;
+- esportazione verso il consulente del lavoro;
+- eventuale import di ritorno solo per documenti paghe/cedolini, non per la sorgente presenze.
+
+Qualsiasi task su HR Presenze deve quindi privilegiare export, riepilogo, tracciato consulente e controlli di coerenza, non upload PDF presenze.
+
 ## Stato operativo corrente
 
 - Auth lockdown: accesso limitato a `ceraldigroupsrl@gmail.com` secondo stato riportato.
@@ -128,7 +141,7 @@ Eccezione: se ChatGPT fornisce un comando patch esatto, Emergent puo' eseguirlo 
 
 ## Backlog residuo noto
 
-1. P1 — HR Presenze: upload PDF certificati medici. Attualmente salva solo filename in `attendance.py` / `HRPresenze.jsx`.
+1. P1 — HR Presenze: export presenze/giustificativi verso consulente del lavoro, con tracciato chiaro e controlli mese/dipendente.
 2. P1 — Logica residua da `CEDOLINI.txt`; serve ricaricare il file se non presente nel repo.
 3. P2 — WhatsApp Meta Token scaduto; serve nuovo `WHATSAPP_API_TOKEN` in `.env`.
 4. P2 — Refactoring `corrispettivi.py` oltre 1450 righe: solo con autorizzazione esplicita.
