@@ -10,6 +10,7 @@ from fastapi import APIRouter
 from .timbrature import router as timbrature_router
 from .presenze import router as presenze_router
 from .pdf_consulente import router as pdf_router
+from .export_consulente import router as export_consulente_router
 
 # Main router che aggrega tutto
 router = APIRouter()
@@ -18,3 +19,4 @@ router = APIRouter()
 router.include_router(timbrature_router, tags=["Attendance - Timbrature"])
 router.include_router(presenze_router, tags=["Attendance - Presenze"])
 router.include_router(pdf_router, tags=["Attendance - PDF"])
+router.include_router(export_consulente_router, tags=["Attendance - Export Consulente"])
