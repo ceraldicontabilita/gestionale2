@@ -32,7 +32,7 @@ const STATO_COLORS = {
   vuoto:        { bg: '#f8fafc', text: COLORS.textMuted, label: '—' },
 };
 
-function fmt€(v) {
+function fmtEuro(v) {
   const n = parseFloat(v) || 0;
   return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(n);
 }
@@ -175,21 +175,21 @@ export default function HRPrimaNotaSalari() {
       }}>
         <KpiBox
           label="Totale Dare"
-          value={fmt€(kpi.dare)}
+          value={fmtEuro(kpi.dare)}
           color={COLORS.primary}
           icon={FileText}
           sub={mese ? `${MESI_NOMI[mese - 1]} ${anno}` : `Anno ${anno}`}
         />
         <KpiBox
           label="Totale Avere"
-          value={fmt€(kpi.avere)}
+          value={fmtEuro(kpi.avere)}
           color="#16a34a"
           icon={TrendingUp}
           sub="Acconti + bonifici"
         />
         <KpiBox
           label="Saldo Globale"
-          value={fmt€(kpi.saldo)}
+          value={fmtEuro(kpi.saldo)}
           color={Math.abs(kpi.saldo) < 0.01 ? '#16a34a' : '#dc2626'}
           icon={CreditCard}
           sub={Math.abs(kpi.saldo) < 0.01 ? 'Quadrato ✓' : (kpi.saldo > 0 ? 'Da pagare' : 'Anticipato')}
@@ -349,7 +349,7 @@ function MatriceAnnuale({ dipendenti, navigate, anno }) {
               background: '#f1f5f9',
               borderLeft: `2px solid ${COLORS.border}`,
             }}>
-              {d.saldo > 0 ? '+' : ''}{fmt€(d.saldo)}
+              {d.saldo > 0 ? '+' : ''}{fmtEuro(d.saldo)}
             </td>
           </tr>
         ))}
@@ -369,7 +369,7 @@ function CellaMese({ mese: m, stato }) {
   }
   return (
     <div
-      title={`Dare: ${fmt€(m.totale_dare)} • Avere: ${fmt€(m.totale_avere)} • Saldo: ${fmt€(m.saldo)}`}
+      title={`Dare: ${fmtEuro(m.totale_dare)} • Avere: ${fmtEuro(m.totale_avere)} • Saldo: ${fmtEuro(m.saldo)}`}
       style={{
         padding: '4px 6px',
         background: stato.bg,
@@ -380,7 +380,7 @@ function CellaMese({ mese: m, stato }) {
         fontVariantNumeric: 'tabular-nums',
       }}
     >
-      <div>{stato.label} {fmt€(m.saldo)}</div>
+      <div>{stato.label} {fmtEuro(m.saldo)}</div>
     </div>
   );
 }
@@ -437,13 +437,13 @@ function TabellaSingoloMese({ dipendenti, mese, navigate }) {
                 {m.n_voci_dare > 0 ? `${m.n_voci_dare} cedolino` : '—'}
               </td>
               <td style={{ padding: '11px 14px', fontWeight: 700, color: COLORS.primary, fontVariantNumeric: 'tabular-nums' }}>
-                {fmt€(m.totale_dare)}
+                {fmtEuro(m.totale_dare)}
               </td>
               <td style={{ padding: '11px 14px', color: COLORS.textMuted, fontSize: 11 }}>
                 {m.n_voci_avere > 0 ? `${m.n_voci_avere} voci` : '—'}
               </td>
               <td style={{ padding: '11px 14px', fontWeight: 700, color: '#15803d', fontVariantNumeric: 'tabular-nums' }}>
-                {fmt€(m.totale_avere)}
+                {fmtEuro(m.totale_avere)}
               </td>
               <td style={{
                 padding: '11px 14px',
@@ -451,7 +451,7 @@ function TabellaSingoloMese({ dipendenti, mese, navigate }) {
                 fontVariantNumeric: 'tabular-nums',
                 color: Math.abs(m.saldo) < 0.01 ? '#15803d' : (m.saldo > 0 ? '#dc2626' : '#1e3a8a'),
               }}>
-                {m.saldo > 0 ? '+' : ''}{fmt€(m.saldo)}
+                {m.saldo > 0 ? '+' : ''}{fmtEuro(m.saldo)}
               </td>
               <td style={{ padding: '11px 14px' }}>
                 <span style={{

@@ -42,7 +42,7 @@ function initials(name) {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-function fmt€(v) {
+function fmtEuro(v) {
   if (v == null || isNaN(Number(v))) return '—';
   return new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(v);
 }
@@ -289,7 +289,7 @@ function TabAnagrafica({ dip, onSaved }) {
             }}>
               <div style={{ fontSize:10, fontWeight:700, color:COLORS.textMuted, textTransform:'uppercase', letterSpacing:'0.05em' }}>{label}</div>
               <div style={{ fontSize:20, fontWeight:800, color: highlight ? COLORS.primary : COLORS.text, marginTop:4, fontVariantNumeric:'tabular-nums' }}>
-                {euro ? fmt€(prog[key]||0) : `${prog[key]||0} ${unit}`}
+                {euro ? fmtEuro(prog[key]||0) : `${prog[key]||0} ${unit}`}
               </div>
             </div>
           ))}
@@ -425,7 +425,7 @@ function TabContratti({ dip }) {
                   {c.ccnl && <div style={{ fontSize:12, color:COLORS.textMuted }}>📋 CCNL: {c.ccnl}</div>}
                 </div>
                 <div style={{ textAlign:'right' }}>
-                  <div style={{ fontWeight:800, fontSize:17, color:COLORS.primary }}>{fmt€(c.retribuzione_lorda)}</div>
+                  <div style={{ fontWeight:800, fontSize:17, color:COLORS.primary }}>{fmtEuro(c.retribuzione_lorda)}</div>
                   <div style={{ fontSize:11, color:COLORS.textMuted }}>lordo/mese</div>
                   <div style={{ fontSize:11, color:COLORS.textMuted }}>{c.ore_settimanali||40}h/sett.</div>
                   {c.stato === 'attivo' && (
@@ -1316,9 +1316,9 @@ function TabCedolini({ dip }) {
       {/* Riepilogo annuale */}
       {cedolini.length > 0 && (
         <div style={{ display:'grid', gridTemplateColumns: isMobile?'1fr':'repeat(3,1fr)', gap:12, marginBottom:20 }}>
-          <KpiCard label="Netto Annuale" value={fmt€(totNetto)} color="#16a34a" icon={TrendingUp} sub={`${cedolini.length} cedolini`} />
-          <KpiCard label="Lordo Annuale" value={fmt€(totLordo)} color={COLORS.primary} icon={FileText} />
-          <KpiCard label="TFR Maturato" value={fmt€(totTFR)} color="#b8860b" icon={Award} />
+          <KpiCard label="Netto Annuale" value={fmtEuro(totNetto)} color="#16a34a" icon={TrendingUp} sub={`${cedolini.length} cedolini`} />
+          <KpiCard label="Lordo Annuale" value={fmtEuro(totLordo)} color={COLORS.primary} icon={FileText} />
+          <KpiCard label="TFR Maturato" value={fmtEuro(totTFR)} color="#b8860b" icon={Award} />
         </div>
       )}
 
@@ -1336,7 +1336,7 @@ function TabCedolini({ dip }) {
               const maxV = Math.max(...cedolini.map(c=>parseFloat(c.netto||c.netto_mese||0)), 1);
               const h = netto>0 ? Math.max(4, (netto/maxV)*44) : 2;
               return (
-                <div key={m} title={`${m}: ${fmt€(netto)}`} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:3 }}>
+                <div key={m} title={`${m}: ${fmtEuro(netto)}`} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:3 }}>
                   <div style={{ width:'100%', height:h, background: netto>0 ? COLORS.primary : '#e2e8f0', borderRadius:'3px 3px 0 0', transition:'height 0.3s' }}/>
                   <div style={{ fontSize:8, color: ced ? COLORS.primary : COLORS.textMuted, fontWeight:600 }}>{m}</div>
                 </div>
@@ -1364,9 +1364,9 @@ function TabCedolini({ dip }) {
                     <td style={{ padding:'12px 16px', fontWeight:600, color:COLORS.text }}>
                       {MESI_C[(c.mese||1)-1]} {c.anno||anno}
                     </td>
-                    <td style={{ padding:'12px 16px', color:COLORS.textMuted }}>{fmt€(lordo)}</td>
-                    <td style={{ padding:'12px 16px', fontWeight:700, color:'#16a34a' }}>{fmt€(netto)}</td>
-                    <td style={{ padding:'12px 16px', color:'#b8860b' }}>{tfr>0?fmt€(tfr):'—'}</td>
+                    <td style={{ padding:'12px 16px', color:COLORS.textMuted }}>{fmtEuro(lordo)}</td>
+                    <td style={{ padding:'12px 16px', fontWeight:700, color:'#16a34a' }}>{fmtEuro(netto)}</td>
+                    <td style={{ padding:'12px 16px', color:'#b8860b' }}>{tfr>0?fmtEuro(tfr):'—'}</td>
                     <td style={{ padding:'12px 16px' }}>
                       <Badge label={pagato?'✓ Pagato':'Da pagare'} bg={pagato?'#dcfce7':'#fef9c3'} color={pagato?'#16a34a':'#a16207'} />
                     </td>
@@ -1547,14 +1547,14 @@ function ScalaAccontiCedolinoModal({ cedolino, dipNome, onClose, onScaled }) {
                 <KpiCard
                   label="Cedolino dichiara"
                   value={preview.acconto_mese_precedente != null
-                    ? fmt€(preview.acconto_mese_precedente)
+                    ? fmtEuro(preview.acconto_mese_precedente)
                     : '— non disponibile'
                   }
                   color={preview.acconto_mese_precedente != null ? COLORS.primary : COLORS.textMuted}
                 />
                 <KpiCard
                   label="Sistema registra"
-                  value={fmt€(preview.totale_acconti_registrati)}
+                  value={fmtEuro(preview.totale_acconti_registrati)}
                   color={COLORS.primary}
                   sub={`${preview.acconti_registrati.length} acconti`}
                 />
@@ -1565,7 +1565,7 @@ function ScalaAccontiCedolinoModal({ cedolino, dipNome, onClose, onScaled }) {
                   padding:8, background:'#fef3c7', borderRadius:6, marginBottom:14,
                   fontSize:12, color:'#92400e', textAlign:'center', fontWeight:600,
                 }}>
-                  Delta: {preview.delta > 0 ? '+' : ''}{fmt€(preview.delta)}
+                  Delta: {preview.delta > 0 ? '+' : ''}{fmtEuro(preview.delta)}
                   {preview.delta > 0 ? ' (cedolino > registrati)' : ' (cedolino < registrati)'}
                 </div>
               )}
@@ -1592,7 +1592,7 @@ function ScalaAccontiCedolinoModal({ cedolino, dipNome, onClose, onScaled }) {
                             </span>
                           </td>
                           <td style={{ padding:'8px 12px', textAlign:'right', fontWeight:700, color:COLORS.primary, fontVariantNumeric:'tabular-nums' }}>
-                            {fmt€(a.importo)}
+                            {fmtEuro(a.importo)}
                           </td>
                           <td style={{ padding:'8px 12px' }}>
                             <span style={{
@@ -1725,21 +1725,21 @@ function TabPrimaNotaSalari({ dip }) {
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4,1fr)', gap: 12, marginBottom: 20 }}>
         <KpiCard
           label="Totale Dare"
-          value={fmt€(ri.totale_dare || 0)}
+          value={fmtEuro(ri.totale_dare || 0)}
           color={COLORS.primary}
           icon={FileText}
           sub="Cedolini anno"
         />
         <KpiCard
           label="Totale Avere"
-          value={fmt€(ri.totale_avere || 0)}
+          value={fmtEuro(ri.totale_avere || 0)}
           color="#16a34a"
           icon={TrendingUp}
           sub="Acconti + bonifici"
         />
         <KpiCard
           label="Saldo Annuo"
-          value={fmt€(ri.saldo || 0)}
+          value={fmtEuro(ri.saldo || 0)}
           color={Math.abs(ri.saldo || 0) < 0.01 ? '#16a34a' : '#dc2626'}
           icon={CreditCard}
           sub={Math.abs(ri.saldo || 0) < 0.01 ? 'Quadrato ✓' : (ri.saldo > 0 ? 'Da pagare' : 'Anticipato')}
@@ -1816,10 +1816,10 @@ function TabPrimaNotaSalari({ dip }) {
                 <span style={{ flex: 1 }} />
                 <span style={{ display: 'flex', gap: 16, alignItems: 'center', fontSize: 12 }}>
                   <span style={{ color: COLORS.textMuted }}>
-                    Dare: <strong style={{ color: COLORS.primary, fontVariantNumeric: 'tabular-nums' }}>{fmt€(m.totale_dare)}</strong>
+                    Dare: <strong style={{ color: COLORS.primary, fontVariantNumeric: 'tabular-nums' }}>{fmtEuro(m.totale_dare)}</strong>
                   </span>
                   <span style={{ color: COLORS.textMuted }}>
-                    Avere: <strong style={{ color: '#16a34a', fontVariantNumeric: 'tabular-nums' }}>{fmt€(m.totale_avere)}</strong>
+                    Avere: <strong style={{ color: '#16a34a', fontVariantNumeric: 'tabular-nums' }}>{fmtEuro(m.totale_avere)}</strong>
                   </span>
                   <span style={{
                     fontWeight: 700,
@@ -1828,7 +1828,7 @@ function TabPrimaNotaSalari({ dip }) {
                     minWidth: 80,
                     textAlign: 'right',
                   }}>
-                    {m.saldo > 0 ? '+' : ''}{fmt€(m.saldo)}
+                    {m.saldo > 0 ? '+' : ''}{fmtEuro(m.saldo)}
                   </span>
                 </span>
               </button>
@@ -1863,14 +1863,14 @@ function TabPrimaNotaSalari({ dip }) {
                         }}>
                           <span style={{ color: COLORS.text }}>{r.label}</span>
                           <span style={{ fontWeight: 700, color: COLORS.primary, fontVariantNumeric: 'tabular-nums' }}>
-                            {fmt€(r.importo)}
+                            {fmtEuro(r.importo)}
                           </span>
                         </div>
                       ))
                     )}
                     <div style={{ marginTop: 6, paddingTop: 6, borderTop: `1px solid ${COLORS.border}`, display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700 }}>
                       <span style={{ color: COLORS.textMuted }}>Totale</span>
-                      <span style={{ color: COLORS.primary, fontVariantNumeric: 'tabular-nums' }}>{fmt€(m.totale_dare)}</span>
+                      <span style={{ color: COLORS.primary, fontVariantNumeric: 'tabular-nums' }}>{fmtEuro(m.totale_dare)}</span>
                     </div>
                   </div>
 
@@ -1903,14 +1903,14 @@ function TabPrimaNotaSalari({ dip }) {
                             }}>{r.label}</span>
                           </span>
                           <span style={{ fontWeight: 700, color: '#15803d', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
-                            {fmt€(r.importo)}
+                            {fmtEuro(r.importo)}
                           </span>
                         </div>
                       ))
                     )}
                     <div style={{ marginTop: 6, paddingTop: 6, borderTop: `1px solid ${COLORS.border}`, display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700 }}>
                       <span style={{ color: COLORS.textMuted }}>Totale</span>
-                      <span style={{ color: '#15803d', fontVariantNumeric: 'tabular-nums' }}>{fmt€(m.totale_avere)}</span>
+                      <span style={{ color: '#15803d', fontVariantNumeric: 'tabular-nums' }}>{fmtEuro(m.totale_avere)}</span>
                     </div>
                   </div>
                 </div>
@@ -1961,8 +1961,8 @@ function TabVerbali({ dip }) {
       <div style={{ display:'grid', gridTemplateColumns: isMobile?'1fr 1fr':'repeat(4,1fr)', gap:12, marginBottom:24 }}>
         <KpiCard label="Verbali Totali"      value={verbali.length}       color={COLORS.text}    icon={Shield} />
         <KpiCard label="Da Pagare"           value={verbaliDaPagare}      color='#dc2626'        icon={AlertTriangle} />
-        <KpiCard label="Importo Verbali"     value={fmt€(impTotVerbali)}  color='#d97706'        icon={CreditCard} />
-        <KpiCard label="Trattenute Pendenti" value={fmt€(impTratt)}       color='#7c3aed'        icon={FileText} sub={`${trattDaApplicare} da applicare`} />
+        <KpiCard label="Importo Verbali"     value={fmtEuro(impTotVerbali)}  color='#d97706'        icon={CreditCard} />
+        <KpiCard label="Trattenute Pendenti" value={fmtEuro(impTratt)}       color='#7c3aed'        icon={FileText} sub={`${trattDaApplicare} da applicare`} />
       </div>
 
       {/* Lista verbali */}
@@ -1987,7 +1987,7 @@ function TabVerbali({ dip }) {
                       <td style={{ padding:'11px 14px', fontWeight:600, fontFamily:'monospace', fontSize:12 }}>{v.numero_verbale||'—'}</td>
                       <td style={{ padding:'11px 14px' }}><Badge label={v.targa||'—'} bg='#eff6ff' color='#1d4ed8'/></td>
                       <td style={{ padding:'11px 14px', color:COLORS.textMuted }}>{fmtD(v.data_verbale)}</td>
-                      <td style={{ padding:'11px 14px', fontWeight:700 }}>{fmt€(v.importo)}</td>
+                      <td style={{ padding:'11px 14px', fontWeight:700 }}>{fmtEuro(v.importo)}</td>
                       <td style={{ padding:'11px 14px' }}>
                         <Badge label={pagato?'✓ Pagato':'Da pagare'} bg={pagato?'#dcfce7':'#fee2e2'} color={pagato?'#16a34a':'#dc2626'}/>
                       </td>
@@ -2021,7 +2021,7 @@ function TabVerbali({ dip }) {
                     <div style={{ fontSize:12, color:COLORS.textMuted, marginTop:2 }}>{t.mese}/{t.anno}</div>
                   </div>
                   <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                    <span style={{ fontWeight:800, color: app?'#16a34a':'#dc2626', fontSize:15 }}>{fmt€(t.importo)}</span>
+                    <span style={{ fontWeight:800, color: app?'#16a34a':'#dc2626', fontSize:15 }}>{fmtEuro(t.importo)}</span>
                     <Badge label={app?'✓ Applicata':'Da applicare'} bg={app?'#dcfce7':'#fee2e2'} color={app?'#16a34a':'#dc2626'}/>
                   </div>
                 </div>
@@ -2100,8 +2100,8 @@ function TabMovimenti({ dip }) {
       {/* KPI */}
       <div style={{ display:'grid', gridTemplateColumns: isMobile?'1fr 1fr':'repeat(3,1fr)', gap:12, marginBottom:24 }}>
         <KpiCard label="Bonifici Trovati"   value={bonifici.length}     color={COLORS.primary} icon={CreditCard} sub={ibanDip?`IBAN: …${ibanDip.slice(-6)}`:'Match su nome'} />
-        <KpiCard label="Totale Erogato"     value={fmt€(totBonifici)}   color='#16a34a'        icon={TrendingUp} />
-        <KpiCard label="Acconti TFR"        value={fmt€(totAcconti)}    color='#b8860b'        icon={Award} sub={`${acconti.length} acconti`} />
+        <KpiCard label="Totale Erogato"     value={fmtEuro(totBonifici)}   color='#16a34a'        icon={TrendingUp} />
+        <KpiCard label="Acconti TFR"        value={fmtEuro(totAcconti)}    color='#b8860b'        icon={Award} sub={`${acconti.length} acconti`} />
       </div>
 
       {/* Acconti TFR */}
@@ -2130,7 +2130,7 @@ function TabMovimenti({ dip }) {
         ) : acconti.map((a,i)=>(
           <div key={a.id||i} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'11px 14px', border:`1px solid ${COLORS.border}`, borderRadius:10, marginBottom:8 }}>
             <div>
-              <div style={{ fontWeight:700, fontSize:14, color:COLORS.primary }}>{fmt€(a.importo)}</div>
+              <div style={{ fontWeight:700, fontSize:14, color:COLORS.primary }}>{fmtEuro(a.importo)}</div>
               <div style={{ fontSize:12, color:COLORS.textMuted }}>{fmtD(a.data)}{a.note?` — ${a.note}`:''}</div>
             </div>
             <button onClick={()=>elimAcconto(a.id)} style={{ padding:'5px 10px', background:'#fee2e2', color:'#dc2626', border:'none', borderRadius:6, cursor:'pointer', fontSize:12 }}>
@@ -2159,7 +2159,7 @@ function TabMovimenti({ dip }) {
                   <tr key={b.id||i} style={{ borderBottom:`1px solid ${COLORS.border}30`, background: i%2===0?'white':'#fafafa' }}>
                     <td style={{ padding:'10px 14px', color:COLORS.textMuted, whiteSpace:'nowrap' }}>{fmtD(b.data_valuta||b.data)}</td>
                     <td style={{ padding:'10px 14px', maxWidth:280, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }} title={b.descrizione}>{b.descrizione||b.causale||'—'}</td>
-                    <td style={{ padding:'10px 14px', fontWeight:700, color:'#16a34a', whiteSpace:'nowrap' }}>{fmt€(b.importo)}</td>
+                    <td style={{ padding:'10px 14px', fontWeight:700, color:'#16a34a', whiteSpace:'nowrap' }}>{fmtEuro(b.importo)}</td>
                     <td style={{ padding:'10px 14px' }}>
                       <Badge label={b.match_tipo==='iban'?'🔑 IBAN':b.match_tipo==='bonifici_arch'?'📋 Archivio':'📝 Nome'} bg={b.match_tipo==='iban'?'#dcfce7':'#e0e7ff'} color={b.match_tipo==='iban'?'#16a34a':'#4338ca'} />
                     </td>
@@ -2304,10 +2304,10 @@ function DipKpiHeader({ dip, kpi }) {
   if (!kpi) return null;
   return (
     <div style={{ display:'grid', gridTemplateColumns: isMobile?'1fr 1fr':'repeat(4,1fr)', gap:10, marginBottom:20 }}>
-      <KpiCard label="Netto Ultimo Cedolino" value={kpi.ultimo_netto?fmt€(kpi.ultimo_netto):'—'} color='#16a34a' icon={FileText} sub={kpi.ultimo_cedolino_mese} />
+      <KpiCard label="Netto Ultimo Cedolino" value={kpi.ultimo_netto?fmtEuro(kpi.ultimo_netto):'—'} color='#16a34a' icon={FileText} sub={kpi.ultimo_cedolino_mese} />
       <KpiCard label="Ferie Residue"         value={`${kpi.ferie_residue??'—'} gg`}              color='#1d4ed8' icon={Calendar} />
       <KpiCard label="Permessi Residui"      value={`${kpi.permessi_residui??'—'} h`}            color='#7c3aed' icon={Clock} />
-      <KpiCard label="TFR Accantonato"       value={fmt€(kpi.tfr_accantonato||0)}                color='#b8860b' icon={Award}
+      <KpiCard label="TFR Accantonato"       value={fmtEuro(kpi.tfr_accantonato||0)}                color='#b8860b' icon={Award}
         sub={kpi.contratto_in_scadenza ? <span style={{color:'#d97706'}}>⚠ Contratto in scadenza {fmtD(kpi.contratto_scadenza_data)}</span> : null} />
     </div>
   );
