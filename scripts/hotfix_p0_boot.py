@@ -5,7 +5,7 @@ Hotfix P0 boot/build Ceraldi ERP.
 Patch minimale e conservativa: NON sovrascrive interi file e NON rimuove
 feature. Corregge pattern bloccanti introdotti da commit recenti:
 
-1. app/routers/tfr.py: import List mancante.
+1. app/routers/tfr.py: import FastAPI/typing mancanti o duplicati.
 2. Tutto frontend/src: identificatore JS non valido fmt€ -> fmtEuro.
 3. Tutto frontend/src: import errato ../lib/api -> ../api.
 
@@ -15,6 +15,7 @@ Uso:
 from __future__ import annotations
 
 from pathlib import Path
+import re
 
 ROOT = Path(__file__).resolve().parents[1]
 FRONTEND_SRC = ROOT / "frontend" / "src"
@@ -43,6 +44,40 @@ def patch_text_file(path: Path, replacements: list[tuple[str, str]]) -> bool:
     return True
 
 
+def patch_tfr_imports() -> bool:
+    path = ROOT / "app" / "routers" / "tfr.py"
+    if not path.exists():
+        print("[SKIP] app/routers/tfr.py: file non trovato")
+        return False
+
+    text = read(path)
+    original = text
+
+    # Normalizza FastAPI imports: Body serve per endpoint con payload Body(...).
+    text = re.sub(
+        r"^from fastapi import .*$",
+        "from fastapi import APIRouter, HTTPException, Query, Body",
+        text,
+        count=1,
+        flags=re.MULTILINE,
+    )
+
+    # Normalizza typing imports ed elimina duplicati come List, List, List.
+    text = re.sub(
+        r"^from typing import .*$",
+        "from typing import Dict, Any, Optional, List",
+        text,
+        count=1,
+        flags=re.MULTILINE,
+    )
+
+    if text == original:
+        return False
+    write(path, text)
+    print("[FIX] app/routers/tfr.py")
+    return True
+
+
 def iter_frontend_files():
     if not FRONTEND_SRC.exists():
         return
@@ -57,18 +92,9 @@ def main() -> int:
     changed = False
 
     # Backend P0: NameError all'avvio FastAPI.
-    changed |= patch_text_file(
-        ROOT / "app" / "routers" / "tfr.py",
-        [
-            (
-                "from typing import Dict, Any, Optional",
-                "from typing import Dict, Any, Optional, List",
-            ),
-        ],
-    )
+    changed |= patch_tfr_imports()
 
     # Frontend P0: esbuild/Vite non accetta identificatori con simbolo euro.
-    # Patch globale per evitare che emerga un terzo file dopo build.
     for path in iter_frontend_files() or []:
         changed |= patch_text_file(
             path,
@@ -82,7 +108,6 @@ def main() -> int:
         )
 
     # Frontend P0: api client reale sta in frontend/src/api.js, non lib/api.
-    # Patch globale per evitare lista hardcoded incompleta.
     for path in iter_frontend_files() or []:
         changed |= patch_text_file(
             path,
