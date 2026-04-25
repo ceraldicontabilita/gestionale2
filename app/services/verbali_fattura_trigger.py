@@ -6,7 +6,7 @@ verbali parziali (anche prima che arrivi la PEC ufficiale).
 import re
 import uuid
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
@@ -19,6 +19,10 @@ VERBALE_PATTERNS = [
 ]
 TARGA_PATTERN = re.compile(r'\b([A-Z]{2}\d{3}[A-Z]{2})\b', re.IGNORECASE)
 DATA_INFR_PATTERN = re.compile(r'(?:del|data)[:\s]*(\d{2}/\d{2}/\d{2,4})', re.IGNORECASE)
+
+
+def _utc_now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
 
 def _is_fornitore_noleggio(fattura: Dict[str, Any]) -> bool:
@@ -60,7 +64,7 @@ async def processa_fattura_per_verbali(db: AsyncIOMotorDatabase, fattura: Dict[s
                     "fattura_associata_data": fattura.get("data_documento") or fattura.get("invoice_date"),
                     "fattura_associata_fornitore": fornitore,
                     "fattura_associata_importo": fattura.get("importo_totale") or fattura.get("total_amount"),
-                    "updated_at": datetime.utcnow().isoformat(),
+                    "updated_at": _utc_now_iso(),
                 }
                 if not existing.get("targa") and tm:
                     fields["targa"] = tm.group(1).upper()
@@ -75,6 +79,7 @@ async def processa_fattura_per_verbali(db: AsyncIOMotorDatabase, fattura: Dict[s
                 result["verbali_aggiornati"] += 1
                 result["verbali_trovati"].append({"numero_verbale": nv, "azione": "aggiornato"})
             else:
+                now = _utc_now_iso()
                 new_doc = {
                     "id": str(uuid.uuid4()),
                     "numero_verbale": nv,
@@ -89,8 +94,8 @@ async def processa_fattura_per_verbali(db: AsyncIOMotorDatabase, fattura: Dict[s
                     "fattura_associata_importo": fattura.get("importo_totale") or fattura.get("total_amount"),
                     "stato": "notifica_attesa",
                     "source": "fattura_xml_trigger",
-                    "creato_il": datetime.utcnow().isoformat(),
-                    "updated_at": datetime.utcnow().isoformat(),
+                    "creato_il": now,
+                    "updated_at": now,
                 }
                 new_doc = {k: v for k, v in new_doc.items() if v is not None}
                 await db["verbali_noleggio"].insert_one(new_doc)
