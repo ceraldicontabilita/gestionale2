@@ -4,8 +4,8 @@ API per la gestione dei veicoli aziendali a noleggio
 """
 
 from fastapi import APIRouter, Depends, HTTPException
-from typing import Optional, List
-from datetime import datetime
+from typing import Optional
+from datetime import datetime, timezone
 from pydantic import BaseModel
 from ..database import get_database
 
@@ -30,13 +30,17 @@ class VeicoloUpdate(BaseModel):
 
 COLLECTION = "veicoli_noleggio"
 
+
+def utc_now_iso() -> str:
+    """Timestamp ISO timezone-aware coerente con il resto dell'app."""
+    return datetime.now(timezone.utc).isoformat()
+
+
 @router.get("/veicoli")
 async def get_veicoli(db=Depends(get_database)):
     """Lista tutti i veicoli a noleggio"""
-    # Prima prova la collection principale
     veicoli = await db[COLLECTION].find({}, {"_id": 0}).sort("targa", 1).to_list(100)
     
-    # Se vuota, prova la collection alternativa usata dal sistema
     if not veicoli:
         veicoli = await db["veicoli"].find({}, {"_id": 0}).sort("targa", 1).to_list(100)
     
@@ -55,11 +59,11 @@ async def create_veicolo(veicolo: VeicoloCreate, db=Depends(get_database)):
     """Crea un nuovo veicolo"""
     targa = veicolo.targa.upper().strip()
     
-    # Verifica se esiste già
     existing = await db[COLLECTION].find_one({"targa": targa})
     if existing:
         raise HTTPException(status_code=400, detail="Veicolo con questa targa già esistente")
     
+    now = utc_now_iso()
     doc = {
         "targa": targa,
         "marca": veicolo.marca,
@@ -68,8 +72,8 @@ async def create_veicolo(veicolo: VeicoloCreate, db=Depends(get_database)):
         "data_scadenza_noleggio": veicolo.data_scadenza_noleggio,
         "note": veicolo.note,
         "stato": veicolo.stato or "attivo",
-        "created_at": datetime.utcnow().isoformat(),
-        "updated_at": datetime.utcnow().isoformat()
+        "created_at": now,
+        "updated_at": now,
     }
     
     await db[COLLECTION].insert_one(doc)
@@ -85,7 +89,7 @@ async def update_veicolo(targa: str, veicolo: VeicoloUpdate, db=Depends(get_data
         raise HTTPException(status_code=404, detail="Veicolo non trovato")
     
     update_data = {k: v for k, v in veicolo.dict().items() if v is not None}
-    update_data["updated_at"] = datetime.utcnow().isoformat()
+    update_data["updated_at"] = utc_now_iso()
     
     await db[COLLECTION].update_one({"targa": targa}, {"$set": update_data})
     return {"success": True, "message": "Veicolo aggiornato"}
