@@ -2,9 +2,9 @@
 Router TFR - Gestione Trattamento Fine Rapporto
 Accantonamento, rivalutazione ISTAT, liquidazione TFR e gestione acconti
 """
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Body
 from pydantic import BaseModel
-from typing import Dict, Any, Optional, List, List, List
+from typing import Dict, Any, Optional, List
 from datetime import datetime, timezone
 from uuid import uuid4
 import logging
