@@ -5,7 +5,7 @@ Hotfix P0 boot/build Ceraldi ERP.
 Corregge solo bug bloccanti noti:
 1. app/routers/tfr.py: import List mancante.
 2. HRDipendenti/HRPrimaNotaSalari: identificatore JS non valido fmt€ -> fmtEuro.
-3. BatchGiustificativoModal: import errato ../lib/api -> ../api.
+3. Modali dipendenti/giustificativi: import errato ../lib/api -> ../api.
 
 Uso:
     python scripts/hotfix_p0_boot.py
@@ -58,13 +58,17 @@ def main() -> int:
             ],
         )
 
-    changed |= patch_file(
+    for path in [
         "frontend/src/components/BatchGiustificativoModal.jsx",
-        [
-            ("from '../lib/api'", "from '../api'"),
-            ('from "../lib/api"', 'from "../api"'),
-        ],
-    )
+        "frontend/src/components/ImportDipendentiModal.jsx",
+    ]:
+        changed |= patch_file(
+            path,
+            [
+                ("from '../lib/api'", "from '../api'"),
+                ('from "../lib/api"', 'from "../api"'),
+            ],
+        )
 
     if changed:
         print("[DONE] Hotfix P0 applicati. Eseguire build/test e poi commit.")
