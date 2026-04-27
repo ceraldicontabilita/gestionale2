@@ -207,3 +207,5 @@ if os.path.isdir(_FRONTEND_DIST):
         return FileResponse(os.path.join(_FRONTEND_DIST, "index.html"))
 
     logger.info("✅ Frontend React montato (SPA routing attivo)")
+
+# reload-trigger
