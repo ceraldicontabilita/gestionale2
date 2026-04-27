@@ -47,3 +47,13 @@ async def version_debug():
 
 # Export app for uvicorn
 __all__ = ['app']
+
+@app.post("/api/admin/reload-module/{module_name}", include_in_schema=False)
+async def reload_module(module_name: str):
+    import importlib, sys
+    # Solo moduli del nostro codice
+    full_module = f"app.routers.{module_name}"
+    if full_module in sys.modules:
+        importlib.reload(sys.modules[full_module])
+        return {"reloaded": full_module}
+    return {"error": f"Module {full_module} not loaded"}
