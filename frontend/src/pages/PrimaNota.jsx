@@ -654,7 +654,7 @@ function PrimaNotaDesktop() {
                       fattura_id: p.fattura_id,
                       metodo: p.suggerimento,
                     });
-                  } catch {}
+                  } catch { /* suggerimento non applicabile — ignorato */ }
                 }
                 loadAllData();
               }}
