@@ -41,7 +41,7 @@ def register_all_routers(app: FastAPI) -> None:
     logger.info("✅ Tutti i router registrati")
 
 
-# ─── Auth & Public ──────────────────────────────────────────────────────────
+# ─── Auth & Public ───────────────────────────────────────────────────────────
 def _register_auth(app: FastAPI):
     from app.routers import auth, public_api, google_auth, openclaw
     from app.routers.erp_bridge import router as erp_bridge_router
@@ -61,7 +61,7 @@ def _register_auth(app: FastAPI):
     app.include_router(whatsapp_router, prefix="/api/whatsapp", tags=["WhatsApp"])
 
 
-# ─── F24 Module ─────────────────────────────────────────────────────────────
+# ─── F24 Module ──────────────────────────────────────────────────────────────
 def _register_f24(app: FastAPI):
     from app.routers.f24 import f24_main, f24_riconciliazione, f24_public, quietanze, f24_gestione_avanzata, f24_notifiche
     from app.routers import f24_email_settings, codici_tributari
@@ -85,7 +85,7 @@ def _register_f24(app: FastAPI):
         logger.warning(f"Router email_f24 non registrato: {e}")
 
 
-# ─── Accounting Module ──────────────────────────────────────────────────────
+# ─── Accounting Module ───────────────────────────────────────────────────────
 def _register_accounting(app: FastAPI):
     from app.routers.accounting import (
         accounting_main, accounting_extended, accounting_engine_api,
@@ -121,7 +121,7 @@ def _register_accounting(app: FastAPI):
     app.include_router(fiscalita_italiana.router, prefix="/api/fiscalita", tags=["Fiscalità Italiana"])
 
 
-# ─── Bank Module ────────────────────────────────────────────────────────────
+# ─── Bank Module ─────────────────────────────────────────────────────────────
 def _register_bank(app: FastAPI):
     from app.routers.bank import (
         bank_main, bank_reconciliation, bank_statement_import,
@@ -154,7 +154,7 @@ def _register_bank(app: FastAPI):
     app.include_router(bonifici_import_unif_router, prefix="/api", tags=["Bonifici Import Unificato"])
 
 
-# ─── Warehouse Module ──────────────────────────────────────────────────────
+# ─── Warehouse Module ────────────────────────────────────────────────────────
 def _register_warehouse(app: FastAPI):
     from app.routers.warehouse import warehouse_main, magazzino, magazzino_products, products, products_catalog, dizionario_articoli
     from app.routers import dizionario_prodotti, inventario
@@ -169,15 +169,25 @@ def _register_warehouse(app: FastAPI):
     app.include_router(inventario.router, prefix="/api/inventario", tags=["Inventario"])
 
 
-# ─── Invoices Module ───────────────────────────────────────────────────────
+# ─── Invoices Module ─────────────────────────────────────────────────────────
 def _register_invoices(app: FastAPI):
-    from app.routers.invoices import invoices_main, invoices_emesse, invoices_export, fatture_upload, corrispettivi
+    from app.routers.invoices import (
+        invoices_main,
+        invoices_main_overlay,
+        invoices_emesse,
+        invoices_export,
+        fatture_overlay,
+        fatture_upload,
+        corrispettivi,
+    )
     from app.routers.fatture_module import router as fatture_ricevute_router
     from app.routers import invoicetronic
 
     app.include_router(invoices_emesse.router, prefix="/api/invoices/emesse", tags=["Invoices Emesse"])
+    app.include_router(invoices_main_overlay.router, prefix="/api/invoices", tags=["Invoices Overlay"])
     app.include_router(invoices_main.router, prefix="/api/invoices", tags=["Invoices"])
     app.include_router(invoices_export.router, prefix="/api/invoices", tags=["Invoices Export"])
+    app.include_router(fatture_overlay.router, prefix="/api/fatture", tags=["Fatture Overlay"])
     app.include_router(fatture_upload.router, prefix="/api/fatture", tags=["Fatture Upload"])
     app.include_router(fatture_ricevute_router, prefix="/api/fatture-ricevute", tags=["Fatture Ricevute"])
     app.include_router(corrispettivi.router, prefix="/api/corrispettivi", tags=["Corrispettivi"])
@@ -191,7 +201,7 @@ def _register_invoices(app: FastAPI):
         import logging; logging.getLogger(__name__).warning(f"Router fatture_foto_ocr non registrato: {e}")
 
 
-# ─── Employees Module ──────────────────────────────────────────────────────
+# ─── Employees Module ────────────────────────────────────────────────────────
 def _register_employees(app: FastAPI):
     from app.routers.employees import dipendenti, employees_payroll, employee_contracts, buste_paga, shifts, staff, giustificativi
     from app.routers import payroll, cedolini, cedolini_riconciliazione, tfr, attendance, dimissioni
@@ -225,7 +235,7 @@ def _register_employees(app: FastAPI):
         logger.warning(f"Router timbrature non registrato: {e}")
 
 
-# ─── Reports Module ────────────────────────────────────────────────────────
+# ─── Reports Module ──────────────────────────────────────────────────────────
 def _register_reports(app: FastAPI):
     from app.routers.reports import report_pdf, exports, simple_exports, analytics, dashboard
     
@@ -236,7 +246,7 @@ def _register_reports(app: FastAPI):
     app.include_router(dashboard.router, prefix="/api/dashboard", tags=["Dashboard"])
 
 
-# ─── Core Routers ──────────────────────────────────────────────────────────
+# ─── Core Routers ────────────────────────────────────────────────────────────
 def _register_core(app: FastAPI):
     from app.routers import (
         cash, chart_of_accounts, notifications, cash_register,
@@ -326,7 +336,7 @@ def _register_core(app: FastAPI):
     app.include_router(multi_pagamento.router, prefix="/api/pagamenti", tags=["Multi-Pagamento"])
 
 
-# ─── Email Module ──────────────────────────────────────────────────────────
+# ─── Email Module ────────────────────────────────────────────────────────────
 def _register_email(app: FastAPI):
     from app.routers import (
         email_scanner, email_download, email_reconciliation, email_mongodb,
@@ -348,7 +358,7 @@ def _register_email(app: FastAPI):
     app.include_router(upload_ai.router, prefix="/api/upload-ai", tags=["Upload AI"])
 
 
-# ─── Noleggio & Verbali Module ─────────────────────────────────────────────
+# ─── Noleggio & Verbali Module ───────────────────────────────────────────────
 def _register_noleggio(app: FastAPI):
     from app.routers import noleggio, verbali_noleggio, verbali_noleggio_api, verbali_riconciliazione, veicoli
     from app.routers import alert_verbali
@@ -363,13 +373,13 @@ def _register_noleggio(app: FastAPI):
     app.include_router(admin_export.router, prefix="/api", tags=["Admin Export"])
 
 
-# ─── AI Module ─────────────────────────────────────────────────────────────
+# ─── AI Module ───────────────────────────────────────────────────────────────
 def _register_ai(app: FastAPI):
     """Registra router AI/ML (opzionale - non blocca se fallisce)."""
     pass  # AI routers already registered in _register_email
 
 
-# ─── Tracciabilità Module ──────────────────────────────────────────────────
+# ─── Tracciabilità Module ────────────────────────────────────────────────────
 def _register_tracciabilita(app: FastAPI):
     """
     NOTA: questa funzione è stata svuotata nel giro 11 (rimozione tracciabilità)
