@@ -315,14 +315,12 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   </ErrorBoundary>
 );
 
-// Registra il Service Worker per PWA (solo in produzione, skip dev mode Vite)
-if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker
-      .register('/service-worker.js')
-      .then(() => console.info('[PWA] service-worker registered'))
-      .catch((err) => console.warn('[PWA] sw registration failed:', err));
-  });
+// Service Worker DISABILITATO: kill switch attivo per pulire cache stale.
+// Se un dispositivo ha ancora un SW registrato, lo disinstalliamo proattivamente.
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations()
+    .then((regs) => regs.forEach((r) => { try { r.unregister(); } catch {} }))
+    .catch(() => {});
 }
 
 
