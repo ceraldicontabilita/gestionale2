@@ -332,3 +332,42 @@ P3:
 - **P2** File `CEDOLINI.txt` non più presente: chiedere all'utente di riallegarlo per la logica relazionale cedolini.
 - **Backlog** Refactoring `corrispettivi.py` (1450 righe). Token WhatsApp Meta scaduto (serve nuovo token).
 Per dettagli operativi vedi `/app/memoria/LOGICA_OPERATIVA.md`.
+
+---
+
+## Audit backend — Aprile 2026 (sessione fork)
+
+### Errori 500 corretti (commit pushati su main)
+| Endpoint | Bug | Commit |
+|---|---|---|
+| `/api/fatture-ricevute/archivio` | `NameError: _safe_year` non definito | `0bbf420a` |
+| `/app/main.py` boot | Union return type FileResponse\|JSONResponse non valido come response_model | `0bbf420a` |
+| `/api/orders` | `Collections.ORDERS` attr inesistente | `88b52ee8` |
+| `/api/accounting/dashboard`, `/payments` | `NameError: timezone` non importato in accounting_service.py | `88b52ee8` |
+| `/api/accounting-engine/bilancio-periodo` | `if not db` su pymongo Database raise NotImplementedError | `88b52ee8` |
+| `/api/warehouse/inventory/value` | response_model=Dict[str,float] incompatibile con currency string | `88b52ee8` |
+
+### 404 corretti (route catch-all che intercettavano route specifiche)
+| Endpoint | Causa | Commit |
+|---|---|---|
+| `/api/cedolini/problematici` | spostato prima di `/{cedolino_id}` | `67513f6d` |
+| `/api/cedolini/lista-completa`, `/riepilogo-pagamenti` | `cedolini_riconciliazione` registrato prima di `cedolini` | `67513f6d` |
+| `/api/assegni/proposte-associazione` | spostato prima di `/{assegno_id}` | `67513f6d` |
+| `/api/invoices/anni-disponibili`, `/unpaid`, `/overdue`, `/search`, `/stats`, `/archived-months`, `/export-excel` | catch-all `/{invoice_id}` di overlay le intercettava | `630f6faa` |
+
+### Audit dati (NON automaticamente puliti — richiede conferma utente)
+- **63 duplicati fatture** in `invoices` (stessa P.IVA + numero + anno). Endpoint disponibile: `POST /api/fatture/cleanup-duplicates`.
+- **129/249 fornitori (52%) senza metodo pagamento**. Compromette inserimento corretto in provvisoria/definitiva.
+- **17 fatture orphan**: P.IVA presente in `invoices` ma non in `fornitori`. Anagrafica fornitori da completare.
+
+### Restano 4 errori 500 NON corretti (dipendenze esterne mancanti, NON bug codice)
+- `/api/invoicetronic/*` → modulo `invoicetronic_sdk` non installato
+- `/api/openapi/sdi/ricevi-fatture` → header SDI vuoto (manca token)
+- `/api/inps/cartelle-delibere` → credenziali email non configurate
+- `/api/auth/google` → `GOOGLE_CLIENT_ID` non in `.env` (Emergent Auth attivo via altro endpoint)
+
+### Endpoint timeout (>9s, non bug ma query lente — backlog ottimizzazione)
+- `/api/warehouse/fornitori-esclusi-magazzino` (22s)
+- `/api/fatture-ricevute/verifica-incoerenze-estratto-conto` (22s)
+- `/api/paypal-api/account-ids-non-mappati` (12s)
+- `/api/dizionario-articoli/estrai-articoli` (9s)
