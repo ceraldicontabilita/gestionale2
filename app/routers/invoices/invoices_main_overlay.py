@@ -239,6 +239,33 @@ async def get_invoices_by_month_overlay(year: int, month: int) -> Dict[str, Any]
     }
 
 
+# =============================================================================
+# DELEGA verso invoices_main per route specifiche.
+# IMPORTANTE: queste devono essere registrate PRIMA della catch-all
+# `@router.get("/{invoice_id}")` qui sotto, altrimenti vengono catturate
+# come fossero ID e tornano 404. invoices_main_overlay è registrato
+# in router_registry PRIMA di invoices_main, quindi le sue route hanno
+# priorità sul prefix /api/invoices.
+# =============================================================================
+from .invoices_main import (
+    get_anni_disponibili as _legacy_get_anni_disponibili,
+    get_unpaid_invoices as _legacy_get_unpaid_invoices,
+    get_overdue_invoices as _legacy_get_overdue_invoices,
+    search_invoices as _legacy_search_invoices,
+    get_invoice_stats as _legacy_get_invoice_stats,
+    get_archived_months as _legacy_get_archived_months,
+    export_invoices_to_excel as _legacy_export_invoices_to_excel,
+)
+
+router.add_api_route("/anni-disponibili", _legacy_get_anni_disponibili, methods=["GET"])
+router.add_api_route("/unpaid", _legacy_get_unpaid_invoices, methods=["GET"])
+router.add_api_route("/overdue", _legacy_get_overdue_invoices, methods=["GET"])
+router.add_api_route("/search", _legacy_search_invoices, methods=["GET"])
+router.add_api_route("/stats", _legacy_get_invoice_stats, methods=["GET"])
+router.add_api_route("/archived-months", _legacy_get_archived_months, methods=["GET"])
+router.add_api_route("/export-excel", _legacy_export_invoices_to_excel, methods=["GET"])
+
+
 @router.get("/{invoice_id}")
 async def get_invoice_overlay(invoice_id: str) -> Dict[str, Any]:
     db = Database.get_db()
