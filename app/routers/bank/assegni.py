@@ -651,6 +651,23 @@ async def risolvi_ambiguo(
     return {"success": True, **res}
 
 
+@router.get("/proposte-associazione")
+async def get_proposte_associazione() -> Dict[str, Any]:
+    """Restituisce le proposte di associazione da confermare manualmente."""
+    db = Database.get_db()
+    
+    proposte = await db["proposte_associazione_assegni"].find(
+        {"stato": "da_confermare"},
+        {"_id": 0}
+    ).sort("confidenza", -1).to_list(100)
+    
+    return {
+        "success": True,
+        "totale": len(proposte),
+        "proposte": proposte
+    }
+
+
 # === ROUTE DINAMICHE (con parametri) - DEVONO STARE DOPO LE STATICHE ===
 
 @router.get("/{assegno_id}")
@@ -1279,23 +1296,6 @@ async def auto_associa_assegni() -> Dict[str, Any]:
         "soglia_auto": f"{MIN_CONFIDENCE_AUTO:.0%}",
         "dettagli_auto": sorted(associazioni_auto, key=lambda x: -x.get("confidenza", 0))[:30],
         "dettagli_manuali": sorted(proposte_manuali, key=lambda x: -x.get("confidenza", 0))[:20]
-    }
-
-
-@router.get("/proposte-associazione")
-async def get_proposte_associazione() -> Dict[str, Any]:
-    """Restituisce le proposte di associazione da confermare manualmente."""
-    db = Database.get_db()
-    
-    proposte = await db["proposte_associazione_assegni"].find(
-        {"stato": "da_confermare"},
-        {"_id": 0}
-    ).sort("confidenza", -1).to_list(100)
-    
-    return {
-        "success": True,
-        "totale": len(proposte),
-        "proposte": proposte
     }
 
 

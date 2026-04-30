@@ -216,8 +216,11 @@ def _register_employees(app: FastAPI):
     app.include_router(staff.router, prefix="/api/staff", tags=["Staff"])
     app.include_router(giustificativi.router, prefix="/api/giustificativi", tags=["Giustificativi"])
     app.include_router(payroll.router, prefix="/api/payroll", tags=["Payroll"])
-    app.include_router(cedolini.router, prefix="/api/cedolini", tags=["Cedolini"])
+    # IMPORTANTE: cedolini_riconciliazione PRIMA di cedolini perché quest'ultimo
+    # ha una catch-all GET "/{cedolino_id}" che intercetterebbe le route specifiche
+    # (lista-completa, riepilogo-pagamenti, ...).
     app.include_router(cedolini_riconciliazione.router, prefix="/api/cedolini", tags=["Cedolini Riconciliazione"])
+    app.include_router(cedolini.router, prefix="/api/cedolini", tags=["Cedolini"])
     app.include_router(tfr.router, prefix="/api/tfr", tags=["TFR"])
     app.include_router(attendance.router, prefix="/api/attendance", tags=["Attendance"])
     app.include_router(attendance_presenze.router, prefix="/api/attendance", tags=["Presenze"])

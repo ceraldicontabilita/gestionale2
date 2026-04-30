@@ -1129,6 +1129,64 @@ async def riepilogo_mensile(anno: int, mese: int) -> Dict[str, Any]:
     }
 
 
+@router.get("/problematici")
+@handle_errors
+async def get_cedolini_problematici() -> Dict[str, Any]:
+    """
+    Elenca cedolini con dati mancanti o problematici.
+    """
+    db = Database.get_db()
+    
+    problematici = await db["cedolini"].find({
+        "$or": [
+            {"netto": 0, "lordo": {"$gt": 0}},
+            {"netto": None, "lordo": {"$gt": 0}},
+            {"netto": {"$exists": False}, "lordo": {"$gt": 0}},
+            {"dipendente": None},
+            {"dipendente": "N/A"}
+        ]
+    }, {"_id": 0}).to_list(100)
+    
+    # Raggruppa per tipo di problema
+    problemi = {
+        "netto_mancante": [],
+        "dipendente_mancante": [],
+        "altri": []
+    }
+    
+    for ced in problematici:
+        netto = ced.get("netto")
+        lordo = ced.get("lordo", 0)
+        dip = ced.get("dipendente")
+        
+        if (netto == 0 or netto is None) and lordo > 0:
+            problemi["netto_mancante"].append({
+                "id": ced.get("id"),
+                "mese": ced.get("mese"),
+                "anno": ced.get("anno"),
+                "lordo": lordo,
+                "netto": netto,
+                "dipendente": dip
+            })
+        elif not dip or dip == "N/A":
+            problemi["dipendente_mancante"].append({
+                "id": ced.get("id"),
+                "mese": ced.get("mese"),
+                "anno": ced.get("anno"),
+                "lordo": lordo
+            })
+        else:
+            problemi["altri"].append(ced)
+    
+    return {
+        "totale_problematici": len(problematici),
+        "netto_mancante": len(problemi["netto_mancante"]),
+        "dipendente_mancante": len(problemi["dipendente_mancante"]),
+        "altri": len(problemi["altri"]),
+        "dettagli": problemi
+    }
+
+
 # ==============================================
 # ENDPOINT GENERICI (devono stare alla fine per evitare conflitti di routing)
 # ==============================================
@@ -1302,69 +1360,6 @@ async def correggi_cedolini_problematici() -> Dict[str, Any]:
         "message": f"Corretti {corretti} cedolini su {len(problematici)} trovati"
     }
 
-
-@router.get("/problematici")
-@handle_errors
-async def get_cedolini_problematici() -> Dict[str, Any]:
-    """
-    Elenca cedolini con dati mancanti o problematici.
-    """
-    db = Database.get_db()
-    
-    problematici = await db["cedolini"].find({
-        "$or": [
-            {"netto": 0, "lordo": {"$gt": 0}},
-            {"netto": None, "lordo": {"$gt": 0}},
-            {"netto": {"$exists": False}, "lordo": {"$gt": 0}},
-            {"dipendente": None},
-            {"dipendente": "N/A"}
-        ]
-    }, {"_id": 0}).to_list(100)
-    
-    # Raggruppa per tipo di problema
-    problemi = {
-        "netto_mancante": [],
-        "dipendente_mancante": [],
-        "altri": []
-    }
-    
-    for ced in problematici:
-        netto = ced.get("netto")
-        lordo = ced.get("lordo", 0)
-        dip = ced.get("dipendente")
-        
-        if (netto == 0 or netto is None) and lordo > 0:
-            problemi["netto_mancante"].append({
-                "id": ced.get("id"),
-                "mese": ced.get("mese"),
-                "anno": ced.get("anno"),
-                "lordo": lordo,
-                "netto": netto,
-                "dipendente": dip
-            })
-        elif not dip or dip == "N/A":
-            problemi["dipendente_mancante"].append({
-                "id": ced.get("id"),
-                "mese": ced.get("mese"),
-                "anno": ced.get("anno"),
-                "lordo": lordo
-            })
-        else:
-            problemi["altri"].append(ced)
-    
-    return {
-        "totale_problematici": len(problematici),
-        "netto_mancante": len(problemi["netto_mancante"]),
-        "dipendente_mancante": len(problemi["dipendente_mancante"]),
-        "altri": len(problemi["altri"]),
-        "dettagli": problemi
-    }
-
-
-
-# ============================================================
-# IMPORT GMAIL — Endpoint asincrono sicuro
-# ============================================================
 
 @router.post("/import-gmail")
 @handle_errors
