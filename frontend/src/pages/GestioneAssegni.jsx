@@ -210,27 +210,7 @@ export default function GestioneAssegni() {
       alert('Errore: ' + (error.response?.data?.detail || error.message));
     }
   };
-
-  const handleDeleteCarnet = async (carnetId, carnetAssegni) => {
-    const count = carnetAssegni.length;
-
-    try {
-      // Elimina tutti gli assegni del carnet
-      let deleted = 0;
-      for (const assegno of carnetAssegni) {
-        try {
-          await api.delete(`/api/assegni/${assegno.id}`);
-          deleted++;
-        } catch (e) {
-          console.warn(`Errore eliminazione assegno ${assegno.numero}:`, e);
-        }
-      }
-      alert(`Carnet eliminato: ${deleted}/${count} assegni rimossi`);
-      loadData();
-    } catch (error) {
-      alert('Errore: ' + (error.response?.data?.detail || error.message));
-    }
-  };
+;
 
   const startEdit = assegno => {
     setEditingId(assegno.id);
@@ -401,25 +381,7 @@ export default function GestioneAssegni() {
     }
   };
 
-  // Associa manualmente un assegno a una fattura
-  const handleAssociaManuale = async (numeroAssegno, fatturaId) => {
-    try {
-      // Trova l'assegno completo
-      const assegnoData = assegni.find(a => a.numero === numeroAssegno);
-      if (!assegnoData) {
-        alert('Assegno non trovato');
-        return;
-      }
-
-      // Apri il modal fatture per questo assegno
-      setEditingAssegnoForFatture(assegnoData);
-      setSelectedFatture(assegnoData.fatture_collegate || []);
-      loadFatture();
-      setShowFattureModal(true);
-    } catch (error) {
-      alert('Errore: ' + error.message);
-    }
-  };
+  // Associa manualmente un assegno a una fattura;
 
   const handleAutoAssocia = async () => {
     setAutoAssociating(true);
@@ -786,11 +748,7 @@ export default function GestioneAssegni() {
     return doc;
   };
 
-  // Stampa singolo carnet
-  const handleStampaCarnet = (carnetId, carnetAssegni) => {
-    const doc = generateCarnetPDF(carnetId, carnetAssegni);
-    doc.save(`Carnet_${carnetId}.pdf`);
-  };
+  // Stampa singolo carnet;
 
   // Toggle selezione assegno
   const toggleSelectAssegno = assegnoId => {
