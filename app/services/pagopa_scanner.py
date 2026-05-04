@@ -45,8 +45,8 @@ VERBALE_PATTERNS = [
 
 IMAP_HOST = os.environ.get("IMAP_HOST", "imap.gmail.com")
 IMAP_PORT = int(os.environ.get("IMAP_PORT", "993"))
-IMAP_USER = os.environ.get("IMAP_USER", os.environ.get("EMAIL_ADDRESS", "ceraldigroupsrl@gmail.com"))
-IMAP_PASSWORD = os.environ.get("IMAP_PASSWORD", os.environ.get("EMAIL_PASSWORD", ""))
+IMAP_USER = os.environ.get("IMAP_USER") or os.environ.get("EMAIL_USER", "ceraldigroupsrl@gmail.com")
+IMAP_PASSWORD = os.environ.get("IMAP_PASSWORD") or os.environ.get("EMAIL_PASSWORD", "")
 
 
 def decode_header_str(value: str) -> str:

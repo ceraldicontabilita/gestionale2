@@ -32,8 +32,8 @@ router = APIRouter(tags=["Schede Tecniche"])
 
 EMERGENT_KEY  = os.environ.get("EMERGENT_LLM_KEY", "")
 IMAP_HOST     = os.environ.get("IMAP_HOST", "imap.gmail.com")
-IMAP_USER     = os.environ.get("IMAP_USER", "")
-IMAP_PASSWORD = os.environ.get("IMAP_PASSWORD", "")
+IMAP_USER     = os.environ.get("IMAP_USER") or os.environ.get("EMAIL_USER", "")
+IMAP_PASSWORD = os.environ.get("IMAP_PASSWORD") or os.environ.get("EMAIL_PASSWORD", "")
 XML_DIR       = Path("/app/app/uploads/pec_xml")
 
 # ── Namespace FatturaPA ──────────────────────────────────────────────────────
