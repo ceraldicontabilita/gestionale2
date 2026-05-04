@@ -5,9 +5,14 @@ Smoke test runtime Ceraldi ERP.
 Esegue controlli HTTP minimi su backend e frontend gia' avviati.
 Non modifica dati.
 
+Auth-aware:
+- senza SMOKE_AUTH_TOKEN accetta 401 sugli endpoint API protetti;
+- con SMOKE_AUTH_TOKEN verifica i codici applicativi reali, inclusi 200 e 410.
+
 Uso:
     python scripts/smoke_app.py
     BACKEND_URL=http://localhost:8001 FRONTEND_URL=http://localhost:3000 python scripts/smoke_app.py
+    SMOKE_AUTH_TOKEN=<jwt> python scripts/smoke_app.py
 """
 from __future__ import annotations
 
@@ -23,6 +28,8 @@ FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000").rstrip("/
 TIMEOUT = float(os.environ.get("SMOKE_TIMEOUT", "12"))
 SMOKE_ANNO = int(os.environ.get("SMOKE_ANNO", "2026"))
 SMOKE_MESE = int(os.environ.get("SMOKE_MESE", "4"))
+SMOKE_AUTH_TOKEN = (os.environ.get("SMOKE_AUTH_TOKEN") or "").strip()
+HAS_AUTH = bool(SMOKE_AUTH_TOKEN)
 
 
 @dataclass
@@ -32,28 +39,37 @@ class Check:
     url: str
     method: str = "GET"
     expected: tuple[int, ...] = (200,)
+    protected: bool = False
+    expected_without_auth: tuple[int, ...] | None = None
+
+    def effective_expected(self) -> tuple[int, ...]:
+        if self.protected and not HAS_AUTH:
+            return self.expected_without_auth or (401,)
+        return self.expected
 
 
 BACKEND_CHECKS = [
     Check("backend", "health", f"{BACKEND_URL}/api/health"),
-    Check("fornitori", "suppliers compat", f"{BACKEND_URL}/api/suppliers?limit=5"),
-    Check("fornitori", "fornitori alias", f"{BACKEND_URL}/api/fornitori?limit=5"),
-    Check("dashboard", "bilancio istantaneo", f"{BACKEND_URL}/api/dashboard/bilancio-istantaneo?anno=2026"),
-    Check("fatture", "invoices", f"{BACKEND_URL}/api/invoices?limit=5"),
-    Check("prima-nota", "cassa", f"{BACKEND_URL}/api/prima-nota/cassa?limit=5"),
-    Check("magazzino", "warehouse", f"{BACKEND_URL}/api/warehouse/products?limit=5", expected=(200, 404)),
-    Check("dipendenti", "dipendenti", f"{BACKEND_URL}/api/dipendenti?limit=5"),
-    Check("cedolini", "cedolini", f"{BACKEND_URL}/api/cedolini?limit=5"),
-    Check("scadenze", "prossime", f"{BACKEND_URL}/api/scadenze/prossime?giorni=30&limit=5"),
+    Check("fornitori", "suppliers compat", f"{BACKEND_URL}/api/suppliers?limit=5", protected=True),
+    Check("fornitori", "fornitori alias", f"{BACKEND_URL}/api/fornitori?limit=5", protected=True),
+    Check("dashboard", "bilancio istantaneo", f"{BACKEND_URL}/api/dashboard/bilancio-istantaneo?anno=2026", protected=True),
+    Check("fatture", "invoices", f"{BACKEND_URL}/api/invoices?limit=5", protected=True),
+    Check("prima-nota", "cassa", f"{BACKEND_URL}/api/prima-nota/cassa?limit=5", protected=True),
+    Check("magazzino", "warehouse", f"{BACKEND_URL}/api/warehouse/products?limit=5", expected=(200, 404), protected=True),
+    Check("dipendenti", "dipendenti", f"{BACKEND_URL}/api/dipendenti?limit=5", protected=True),
+    Check("cedolini", "cedolini", f"{BACKEND_URL}/api/cedolini?limit=5", protected=True),
+    Check("scadenze", "prossime", f"{BACKEND_URL}/api/scadenze/prossime?giorni=30&limit=5", protected=True),
     Check(
         "attendance",
         "export consulente preview",
         f"{BACKEND_URL}/api/attendance/export-consulente/preview?anno={SMOKE_ANNO}&mese={SMOKE_MESE}",
+        protected=True,
     ),
     Check(
         "attendance",
         "export consulente csv",
         f"{BACKEND_URL}/api/attendance/export-consulente/csv?anno={SMOKE_ANNO}&mese={SMOKE_MESE}",
+        protected=True,
     ),
     Check(
         "attendance",
@@ -61,6 +77,8 @@ BACKEND_CHECKS = [
         f"{BACKEND_URL}/api/attendance/libro-unico/import-pdf",
         method="POST",
         expected=(410,),
+        protected=True,
+        expected_without_auth=(401,),
     ),
 ]
 
@@ -84,6 +102,8 @@ def http_request(url: str, method: str = "GET") -> tuple[int, str]:
     headers = {"User-Agent": "ceraldi-smoke-test/1.0"}
     if data is not None:
         headers["Content-Type"] = "application/json"
+    if SMOKE_AUTH_TOKEN:
+        headers["Authorization"] = f"Bearer {SMOKE_AUTH_TOKEN}"
     req = Request(url, data=data, headers=headers, method=method.upper())
     try:
         with urlopen(req, timeout=TIMEOUT) as resp:
@@ -100,7 +120,8 @@ def run_check(check: Check) -> dict:
     started = time.time()
     status, body = http_request(check.url, check.method)
     elapsed_ms = int((time.time() - started) * 1000)
-    ok = status in check.expected
+    expected = check.effective_expected()
+    ok = status in expected
     return {
         "ok": ok,
         "area": check.area,
@@ -108,7 +129,9 @@ def run_check(check: Check) -> dict:
         "method": check.method,
         "url": check.url,
         "status": status,
-        "expected": check.expected,
+        "expected": expected,
+        "protected": check.protected,
+        "auth_used": HAS_AUTH,
         "elapsed_ms": elapsed_ms,
         "sample": body[:180].replace("\n", " "),
     }
@@ -128,6 +151,8 @@ def main() -> int:
     print(json.dumps({
         "backend_url": BACKEND_URL,
         "frontend_url": FRONTEND_URL,
+        "auth_used": HAS_AUTH,
+        "auth_note": "Endpoint protetti accettano 401 se SMOKE_AUTH_TOKEN non e' impostato.",
         "checks": len(results),
         "failures": len(failures),
         "results": results,
