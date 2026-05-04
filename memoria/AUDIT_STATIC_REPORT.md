@@ -5,9 +5,9 @@ Generato da `scripts/audit_static.py`.
 
 ## Sintesi
 
-- P1: 452
+- P1: 456
 - P2: 10
-- P3: 76
+- P3: 79
 - INFO: 14
 
 ## Findings
@@ -470,6 +470,12 @@ Generato da `scripts/audit_static.py`.
 
 ### P1 - body
 
+- File: `app/routers/attendance_module/no_import_pdf.py:20`
+
+- Dettaglio: POST/PUT con Dict[str, Any] senza Body(...).
+
+### P1 - body
+
 - File: `app/routers/attendance_module/pdf_consulente.py:29`
 
 - Dettaglio: POST/PUT con Dict[str, Any] senza Body(...).
@@ -494,25 +500,25 @@ Generato da `scripts/audit_static.py`.
 
 ### P1 - body
 
-- File: `app/routers/auth.py:308`
+- File: `app/routers/auth.py:252`
 
 - Dettaglio: POST/PUT con Dict[str, Any] senza Body(...).
 
 ### P1 - body
 
-- File: `app/routers/auth.py:338`
+- File: `app/routers/auth.py:274`
 
 - Dettaglio: POST/PUT con Dict[str, Any] senza Body(...).
 
 ### P1 - body
 
-- File: `app/routers/auth.py:361`
+- File: `app/routers/auth.py:290`
 
 - Dettaglio: POST/PUT con Dict[str, Any] senza Body(...).
 
 ### P1 - body
 
-- File: `app/routers/auth.py:404`
+- File: `app/routers/auth.py:316`
 
 - Dettaglio: POST/PUT con Dict[str, Any] senza Body(...).
 
@@ -530,7 +536,7 @@ Generato da `scripts/audit_static.py`.
 
 ### P1 - body
 
-- File: `app/routers/bank/assegni.py:973`
+- File: `app/routers/bank/assegni.py:990`
 
 - Dettaglio: POST/PUT con Dict[str, Any] senza Body(...).
 
@@ -800,13 +806,13 @@ Generato da `scripts/audit_static.py`.
 
 ### P1 - body
 
-- File: `app/routers/cedolini.py:1219`
+- File: `app/routers/cedolini.py:1277`
 
 - Dettaglio: POST/PUT con Dict[str, Any] senza Body(...).
 
 ### P1 - body
 
-- File: `app/routers/cedolini.py:1369`
+- File: `app/routers/cedolini.py:1364`
 
 - Dettaglio: POST/PUT con Dict[str, Any] senza Body(...).
 
@@ -1688,31 +1694,31 @@ Generato da `scripts/audit_static.py`.
 
 ### P1 - body
 
-- File: `app/routers/fiscalita_italiana.py:828`
+- File: `app/routers/fiscalita_italiana.py:812`
 
 - Dettaglio: POST/PUT con Dict[str, Any] senza Body(...).
 
 ### P1 - body
 
-- File: `app/routers/fiscalita_italiana.py:923`
+- File: `app/routers/fiscalita_italiana.py:927`
 
 - Dettaglio: POST/PUT con Dict[str, Any] senza Body(...).
 
 ### P1 - body
 
-- File: `app/routers/fiscalita_italiana.py:998`
+- File: `app/routers/fiscalita_italiana.py:1002`
 
 - Dettaglio: POST/PUT con Dict[str, Any] senza Body(...).
 
 ### P1 - body
 
-- File: `app/routers/fiscalita_italiana.py:1140`
+- File: `app/routers/fiscalita_italiana.py:1144`
 
 - Dettaglio: POST/PUT con Dict[str, Any] senza Body(...).
 
 ### P1 - body
 
-- File: `app/routers/fiscalita_italiana.py:1293`
+- File: `app/routers/fiscalita_italiana.py:1297`
 
 - Dettaglio: POST/PUT con Dict[str, Any] senza Body(...).
 
@@ -1881,6 +1887,24 @@ Generato da `scripts/audit_static.py`.
 ### P1 - body
 
 - File: `app/routers/invoices/corrispettivi.py:1691`
+
+- Dettaglio: POST/PUT con Dict[str, Any] senza Body(...).
+
+### P1 - body
+
+- File: `app/routers/invoices/fatture_overlay.py:299`
+
+- Dettaglio: POST/PUT con Dict[str, Any] senza Body(...).
+
+### P1 - body
+
+- File: `app/routers/invoices/fatture_overlay.py:307`
+
+- Dettaglio: POST/PUT con Dict[str, Any] senza Body(...).
+
+### P1 - body
+
+- File: `app/routers/invoices/fatture_overlay.py:355`
 
 - Dettaglio: POST/PUT con Dict[str, Any] senza Body(...).
 
@@ -2276,7 +2300,7 @@ Generato da `scripts/audit_static.py`.
 
 ### P1 - body
 
-- File: `app/routers/settings.py:81`
+- File: `app/routers/settings.py:108`
 
 - Dettaglio: POST/PUT con Dict[str, Any] senza Body(...).
 
@@ -2867,6 +2891,24 @@ Generato da `scripts/audit_static.py`.
 - File: `app/services/verbali_pagamento_finder.py:367`
 
 - Dettaglio: Sostituire con datetime.now(timezone.utc).
+
+### P3 - legacy-presenze-import-pdf
+
+- File: `app/routers/attendance.py:1110`
+
+- Dettaglio: Riferimento legacy a import PDF presenze. Deve restare bloccato dal router 410 e non usato come flusso primario.
+
+### P3 - legacy-presenze-import-pdf
+
+- File: `app/routers/attendance_module/__init__.py:21`
+
+- Dettaglio: Riferimento legacy a import PDF presenze. Deve restare bloccato dal router 410 e non usato come flusso primario.
+
+### P3 - legacy-presenze-import-pdf
+
+- File: `app/routers/attendance_module/presenze.py:742`
+
+- Dettaglio: Riferimento legacy a import PDF presenze. Deve restare bloccato dal router 410 e non usato come flusso primario.
 
 ### P3 - fetch-race
 
