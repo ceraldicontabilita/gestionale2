@@ -1553,9 +1553,36 @@ export default function Commercialista() {
                     <div style={{ display: 'flex', gap: 10 }}>
                       <button
                         onClick={() => {
-                          const selectedCarnetData = carnets.filter(c =>
-                            selectedCarnets.includes(c.id)
-                          );
+                          // Se c'è una ricerca attiva, filtra solo gli assegni che matchano
+                          const searchLower = (carnetSearch || '').toLowerCase();
+                          const selectedCarnetData = carnets
+                            .filter(c => selectedCarnets.includes(c.id))
+                            .map(c => {
+                              if (!searchLower) return c;
+                              const matchAssegni = c.assegni.filter(
+                                a =>
+                                  (a.numero || '').toString().toLowerCase().includes(searchLower) ||
+                                  (a.numero_fattura || a.fattura_numero || '')
+                                    .toString()
+                                    .toLowerCase()
+                                    .includes(searchLower) ||
+                                  (a.beneficiario || '').toLowerCase().includes(searchLower) ||
+                                  (a.fornitore_ragione_sociale || a.fornitore_fattura || '')
+                                    .toString()
+                                    .toLowerCase()
+                                    .includes(searchLower) ||
+                                  (a.importo || '').toString().includes(searchLower)
+                              );
+                              if (matchAssegni.length === 0) return c;
+                              return {
+                                ...c,
+                                assegni: matchAssegni,
+                                totale: matchAssegni.reduce(
+                                  (s, a) => s + parseFloat(a.importo || 0),
+                                  0
+                                ),
+                              };
+                            });
                           if (selectedCarnetData.length > 0) {
                             downloadPDF('carnet_multi', selectedCarnetData);
                           }
@@ -1574,12 +1601,39 @@ export default function Commercialista() {
                         }}
                       >
                         📥 Scarica PDF ({selectedCarnets.length})
+                        {carnetSearch && ' · filtro attivo'}
                       </button>
                       <button
                         onClick={() => {
-                          const selectedCarnetData = carnets.filter(c =>
-                            selectedCarnets.includes(c.id)
-                          );
+                          const searchLower = (carnetSearch || '').toLowerCase();
+                          const selectedCarnetData = carnets
+                            .filter(c => selectedCarnets.includes(c.id))
+                            .map(c => {
+                              if (!searchLower) return c;
+                              const matchAssegni = c.assegni.filter(
+                                a =>
+                                  (a.numero || '').toString().toLowerCase().includes(searchLower) ||
+                                  (a.numero_fattura || a.fattura_numero || '')
+                                    .toString()
+                                    .toLowerCase()
+                                    .includes(searchLower) ||
+                                  (a.beneficiario || '').toLowerCase().includes(searchLower) ||
+                                  (a.fornitore_ragione_sociale || a.fornitore_fattura || '')
+                                    .toString()
+                                    .toLowerCase()
+                                    .includes(searchLower) ||
+                                  (a.importo || '').toString().includes(searchLower)
+                              );
+                              if (matchAssegni.length === 0) return c;
+                              return {
+                                ...c,
+                                assegni: matchAssegni,
+                                totale: matchAssegni.reduce(
+                                  (s, a) => s + parseFloat(a.importo || 0),
+                                  0
+                                ),
+                              };
+                            });
                           if (selectedCarnetData.length > 0) {
                             sendEmail('carnet_multi', selectedCarnetData);
                           }
