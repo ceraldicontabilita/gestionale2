@@ -404,26 +404,39 @@ export default function Commercialista() {
     doc.text(fmt(saldo), 190, 129, { align: 'right' });
 
     // ==========================================
-    // TABELLA MOVIMENTI
+    // TABELLA MOVIMENTI CON SALDO PROGRESSIVO
     // ==========================================
     if (movimenti.length > 0) {
-      const tableData = movimenti.map(m => {
+      // Ordino cronologicamente ASC per calcolo saldo progressivo corretto
+      const movimentiAsc = [...movimenti].sort((a, b) =>
+        ((a.date || a.data) || '').localeCompare((b.date || b.data) || '')
+      );
+      let saldoProgressivo = 0;
+      const tableData = movimentiAsc.map(m => {
         const data = m.date || m.data || '';
         const tipo = (m.type || m.tipo || '').toLowerCase();
         const importo = parseFloat(m.amount || m.importo || 0);
+        if (tipo === 'entrata' || tipo === 'income' || tipo === 'in') {
+          saldoProgressivo += Math.abs(importo);
+        } else {
+          saldoProgressivo -= Math.abs(importo);
+        }
 
         return [
           formatDateIT(data),
           tipo === 'entrata' ? '↑ ENTRATA' : '↓ USCITA',
           formatEuro(importo),
-          (m.description || m.descrizione || '-').substring(0, 50),
+          (m.description || m.descrizione || '-').substring(0, 45),
           m.category || m.categoria || '-',
+          formatEuro(saldoProgressivo),
         ];
       });
 
       autoTable(doc, {
         startY: 140,
-        head: [['Data', 'Tipo', 'Importo', 'Descrizione', 'Categoria']],
+        head: [
+          ['Data', 'Tipo', 'Importo', 'Descrizione', 'Categoria', 'Saldo Progr.'],
+        ],
         body: tableData,
         theme: 'striped',
         headStyles: {
@@ -436,11 +449,12 @@ export default function Commercialista() {
           cellPadding: 3,
         },
         columnStyles: {
-          0: { cellWidth: 22 },
-          1: { cellWidth: 22 },
-          2: { cellWidth: 25, halign: 'right' },
-          3: { cellWidth: 80 },
-          4: { cellWidth: 35 },
+          0: { cellWidth: 20 },
+          1: { cellWidth: 20 },
+          2: { cellWidth: 22, halign: 'right' },
+          3: { cellWidth: 58 },
+          4: { cellWidth: 30 },
+          5: { cellWidth: 25, halign: 'right', fontStyle: 'bold' },
         },
         alternateRowStyles: { fillColor: [248, 250, 252] },
       });
@@ -1339,12 +1353,20 @@ export default function Commercialista() {
                           const search = carnetSearch.toLowerCase();
                           // Cerca in ID carnet
                           if (c.id.toLowerCase().includes(search)) return true;
-                          // Cerca nei beneficiari e importi degli assegni
+                          // Cerca in numero assegno, numero fattura, beneficiario, fornitore, importo
                           return c.assegni.some(
                             a =>
+                              (a.numero || '').toString().toLowerCase().includes(search) ||
+                              (a.numero_fattura || a.fattura_numero || '')
+                                .toString()
+                                .toLowerCase()
+                                .includes(search) ||
                               (a.beneficiario || '').toLowerCase().includes(search) ||
-                              (a.importo || '').toString().includes(search) ||
-                              (a.numero || '').toLowerCase().includes(search)
+                              (a.fornitore_ragione_sociale || a.fornitore_fattura || '')
+                                .toString()
+                                .toLowerCase()
+                                .includes(search) ||
+                              (a.importo || '').toString().includes(search)
                           );
                         })
                         .map(c => (

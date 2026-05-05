@@ -34,9 +34,21 @@ def get_smtp_config():
     return {
         "host": os.environ.get('SMTP_HOST', 'smtp.gmail.com'),
         "port": int(os.environ.get('SMTP_PORT', 587)),
-        "user": os.environ.get('SMTP_USER') or os.environ.get('SMTP_USERNAME'),
-        "password": os.environ.get('SMTP_PASSWORD'),
-        "from_email": os.environ.get('FROM_EMAIL') or os.environ.get('SMTP_FROM_EMAIL')
+        "user": (
+            os.environ.get('SMTP_USER')
+            or os.environ.get('SMTP_USERNAME')
+            or os.environ.get('EMAIL_USER')
+        ),
+        "password": (
+            os.environ.get('SMTP_PASSWORD')
+            or os.environ.get('EMAIL_PASSWORD')
+        ),
+        "from_email": (
+            os.environ.get('FROM_EMAIL')
+            or os.environ.get('SMTP_FROM_EMAIL')
+            or os.environ.get('SMTP_USER')
+            or os.environ.get('EMAIL_USER')
+        ),
     }
 
 
