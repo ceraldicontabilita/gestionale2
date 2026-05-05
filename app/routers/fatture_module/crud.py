@@ -238,10 +238,16 @@ async def get_archivio_fatture(
         f.pop("_xml_filename", None)
 
     # ── Arricchisci con metodo_pagamento DEL FORNITORE ────────────────────────
-    # Legge l'anagrafica fornitori per P.IVA e popola `fornitore_metodo_pagamento`
+    # Legge l'anagrafica fornitori per P.IVA e popola `fornitore_metodo_pagamento`.
     # Così il frontend può decidere di mostrare un solo bottone (Cassa o Banca)
     # quando il fornitore ha un metodo predefinito.
-    pive = list({(f.get("fornitore_partita_iva") or "").strip() for f in all_fatture if f.get("fornitore_partita_iva")})
+    # NOTE: nel doc fattura il campo P.IVA è `supplier_vat` (campi standard
+    # FatturaPA importati). `fornitore_partita_iva` non esiste, era un bug.
+    pive = list({
+        (f.get("supplier_vat") or f.get("fornitore_partita_iva") or "").strip()
+        for f in all_fatture
+        if (f.get("supplier_vat") or f.get("fornitore_partita_iva"))
+    })
     if pive:
         fornitori_docs = await db["fornitori"].find(
             {"partita_iva": {"$in": pive}},
@@ -254,7 +260,7 @@ async def get_archivio_fatture(
             if piva:
                 map_metodo[piva] = metodo
         for f in all_fatture:
-            piva = (f.get("fornitore_partita_iva") or "").strip()
+            piva = (f.get("supplier_vat") or f.get("fornitore_partita_iva") or "").strip()
             f["fornitore_metodo_pagamento"] = map_metodo.get(piva, "")
 
     total = len(all_fatture)

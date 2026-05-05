@@ -601,10 +601,11 @@ export default function ArchivioFatture() {
                       : null;
 
               // Metodo configurato nel fornitore (per default quando non pagato)
+              // NOTA: fallback NON deve usare metodo_pagamento della fattura XML,
+              // perché in XML il cedente dichiara il SUO modo di incasso, non
+              // come noi paghiamo. Usiamo SOLO il campo dell'anagrafica fornitore.
               const metodoFornitore = (
-                f.fornitore_metodo_pagamento ||
-                f.metodo_pagamento ||
-                ''
+                f.fornitore_metodo_pagamento || ''
               ).toLowerCase();
               const isFornitoreCassa =
                 metodoFornitore.includes('contant') ||
@@ -615,7 +616,9 @@ export default function ArchivioFatture() {
                 metodoFornitore === 'banca' ||
                 metodoFornitore.includes('bank') ||
                 metodoFornitore.includes('sepa') ||
-                metodoFornitore.includes('rid');
+                metodoFornitore.includes('rid') ||
+                metodoFornitore.includes('sdd') ||
+                metodoFornitore.includes('addebito');
               const fornitoreHaMetodo = isFornitoreCassa || isFornitoreBanca;
 
               // BLOCCO: Se riconciliata, non permettere modifica
@@ -1010,6 +1013,29 @@ export default function ArchivioFatture() {
                         : isBancaByMetodo
                           ? 'banca'
                           : null;
+                  // Metodo dichiarato in ANAGRAFICA FORNITORE (non in XML).
+                  // Se presente, mostriamo solo il bottone corrispondente per evitare
+                  // di registrare un pagamento col metodo sbagliato.
+                  const metodoFornitoreDesk = (
+                    f.fornitore_metodo_pagamento || ''
+                  ).toLowerCase();
+                  const fornCassa =
+                    metodoFornitoreDesk.includes('contant') ||
+                    metodoFornitoreDesk === 'cassa' ||
+                    metodoFornitoreDesk.includes('cash');
+                  const fornBanca =
+                    metodoFornitoreDesk.includes('bonifico') ||
+                    metodoFornitoreDesk === 'banca' ||
+                    metodoFornitoreDesk.includes('bank') ||
+                    metodoFornitoreDesk.includes('sepa') ||
+                    metodoFornitoreDesk.includes('rid') ||
+                    metodoFornitoreDesk.includes('sdd') ||
+                    metodoFornitoreDesk.includes('addebito');
+                  const fornHasMetodo = fornCassa || fornBanca;
+                  // Se il fornitore ha metodo, mostriamo solo quel bottone.
+                  // Altrimenti mostriamo entrambi (fallback storico).
+                  const showCassaBtn = fornHasMetodo ? fornCassa : true;
+                  const showBancaBtn = fornHasMetodo ? fornBanca : true;
                   const isRiconciliata = f.riconciliato === true;
                   return (
                     <tr
@@ -1117,7 +1143,7 @@ export default function ArchivioFatture() {
                           >
                             📄 Vedi
                           </a>
-                          {!(isPaid && metodoPagEffettivo === 'banca') && (
+                          {showCassaBtn && !(isPaid && metodoPagEffettivo === 'banca') && (
                             <button
                               disabled={isRiconciliata}
                               onClick={async () => {
@@ -1170,7 +1196,7 @@ export default function ArchivioFatture() {
                               💵 {isPaid && metodoPagEffettivo === 'cassa' ? '✓ Cassa' : 'Cassa'}
                             </button>
                           )}
-                          {!(isPaid && metodoPagEffettivo === 'cassa') && (
+                          {showBancaBtn && !(isPaid && metodoPagEffettivo === 'cassa') && (
                             <button
                               disabled={isRiconciliata}
                               onClick={async () => {
