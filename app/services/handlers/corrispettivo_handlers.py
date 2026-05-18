@@ -1,9 +1,12 @@
 """
 Handler Eventi Corrispettivi — Gestionale Ceraldi Group
 ========================================================
-Quando un corrispettivo viene registrato:
-- Quota contanti → entrata in cassa
-- Quota POS → partita aperta POS attesa in banca
+NOTA: La creazione dei movimenti prima nota è gestita direttamente
+da corrispettivi.py (_crea_movimenti_prima_nota) con logica dare/avere:
+  - DARE  = totale corrispettivo (entrata cassa)
+  - AVERE = quota elettronica/POS (uscita cassa → banca)
+  - Saldo cassa netto = contanti (differenza)
+Questo handler NON deve creare movimenti prima nota per evitare duplicati.
 """
 import logging
 import uuid
@@ -29,50 +32,8 @@ async def on_corrispettivo_split(event: Dict[str, Any], db) -> Optional[Dict]:
         return None
 
     risultati = []
-
-    # Quota contanti → entrata in cassa (idempotente)
-    if contanti and contanti > 0:
-        existing = await db["prima_nota_cassa"].find_one({
-            "corrispettivo_id": corr_id,
-            "tipo": "entrata",
-            "causale": "corrispettivi_contanti"
-        })
-        if not existing:
-            movimento_id = str(uuid.uuid4())
-            await db["prima_nota_cassa"].insert_one({
-                "id": movimento_id,
-                "data": data,
-                "descrizione": f"Corrispettivi contanti {data}",
-                "causale": "corrispettivi_contanti",
-                "importo": round(contanti, 2),
-                "tipo": "entrata",
-                "categoria": "corrispettivi",
-                "stato": "confermato",
-                "provvisorio": False,
-                "corrispettivo_id": corr_id,
-                "source": "auto_corrispettivo",
-                "created_at": datetime.now(timezone.utc).isoformat()
-            })
-            risultati.append("cassa_contanti_creata")
-        else:
-            risultati.append("cassa_contanti_esistente")
-
-    # Quota POS → partita aperta per riconciliazione banca
-    if elettronico and elettronico > 0:
-        partita = await crea_partita(
-            tipo=TipoPartita.POS_ATTESO,
-            documento_id=corr_id,
-            documento_collection="corrispettivi",
-            controparte_id="pos_gateway",
-            controparte_nome=f"POS corrispettivi {data}",
-            importo=round(elettronico, 2),
-            db=db,
-            data_scadenza=data,  # accredito atteso stesso giorno o giorno dopo
-            data_documento=data,
-            extra={"tipo": "accredito_pos", "totale_corrispettivo": totale}
-        )
-        if partita:
-            risultati.append("partita_pos_creata")
+    # I movimenti prima nota (dare/avere) sono creati direttamente da corrispettivi.py
+    # Questo handler si limita al solo audit log per evitare duplicati.
 
     # Audit
     from app.services.audit_logger import log_evento
