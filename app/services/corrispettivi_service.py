@@ -368,60 +368,55 @@ class CorrispettiviService:
         }
     
     async def _create_prima_nota_entry(self, corr: Dict[str, Any]) -> Optional[str]:
-        """Crea movimento Prima Nota Cassa per il corrispettivo."""
+        """
+        Crea movimenti Prima Nota Cassa per il corrispettivo.
+        Logica dare/avere:
+          1. ENTRATA (dare)  = totale corrispettivo
+          2. USCITA  (avere) = quota elettronica/POS → va in banca
+          Saldo cassa netto  = contanti (differenza)
+        """
         try:
-            movement_id = self._generate_id()
-            
-            movement_doc = {
-                "id": movement_id,
-                "date": corr["data"],
-                "data": corr["data"],
-                "type": "entrata",
-                "tipo": "entrata",
-                "amount": corr["totale"],
-                "importo": corr["totale"],
-                "description": f"Corrispettivo giornaliero {corr['data']}",
-                "descrizione": f"Corrispettivo giornaliero {corr['data']}",
-                "category": "Corrispettivi",
-                "categoria": "Corrispettivi",
-                "corrispettivo_id": corr["id"],
-                "tipo_conto": "cassa",
-                "source": "corrispettivo_import",
-                "created_at": datetime.now(timezone.utc).isoformat()
-            }
-            
-            await self.cash_movements.insert_one(movement_doc.copy())
-            
-            # Anche in prima_nota per compatibilità
-            prima_nota_doc = {
-                **movement_doc,
-                "id": self._generate_id()  # ID diverso per prima_nota
-            }
-            await self.db["prima_nota_cassa"].insert_one(prima_nota_doc.copy())
-            
-            return movement_id
+            data        = corr["data"]
+            totale      = corr.get("totale", 0)
+            elettronico = corr.get("pagato_pos", 0)
+            desc_base   = f"Corrispettivi {data}"
+            corr_id     = corr.get("id", "")
+            now         = datetime.now(timezone.utc).isoformat()
+
+            entrata_id = None
+
+            # 1. DARE — entrata totale corrispettivo in cassa
+            if totale > 0:
+                entrata_id = self._generate_id()
+                await self.db["prima_nota_cassa"].insert_one({
+                    "id":             entrata_id,
+                    "data":           data,
+                    "tipo":           "entrata",
+                    "importo":        round(totale, 2),
+                    "descrizione":    f"{desc_base} — Incasso totale",
+                    "categoria":      "Corrispettivi",
+                    "source":         "corrispettivo_xml",
+                    "corrispettivo_id": corr_id,
+                    "status":         "active",
+                    "created_at":     now,
+                })
+
+            # 2. AVERE — uscita quota POS (transita in banca)
+            if elettronico and elettronico > 0:
+                await self.db["prima_nota_cassa"].insert_one({
+                    "id":             self._generate_id(),
+                    "data":           data,
+                    "tipo":           "uscita",
+                    "importo":        round(elettronico, 2),
+                    "descrizione":    f"{desc_base} — Quota POS → Banca",
+                    "categoria":      "Girofondi POS",
+                    "source":         "corrispettivo_xml",
+                    "corrispettivo_id": corr_id,
+                    "status":         "active",
+                    "created_at":     now,
+                })
+
+            return entrata_id
         except Exception as e:
             logger.error(f"Error creating prima nota entry: {e}")
             return None
-    
-    async def _update_prima_nota_entry(self, movement_id: str, update_data: Dict[str, Any]):
-        """Aggiorna movimento Prima Nota collegato."""
-        update_fields = {}
-        if "totale" in update_data:
-            update_fields["amount"] = update_data["totale"]
-            update_fields["importo"] = update_data["totale"]
-        
-        if update_fields:
-            await self.cash_movements.update_one(
-                {"id": movement_id},
-                {"$set": update_fields}
-            )
-    
-    def _generate_id(self) -> str:
-        import uuid
-        return str(uuid.uuid4())
-
-
-# Factory
-def get_corrispettivi_service():
-    return CorrispettiviService()
