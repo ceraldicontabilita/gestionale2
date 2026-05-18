@@ -2954,4 +2954,152 @@ async function modalDettaglioVeicolo(targa){
    PAGE: VERBALI
 ═══════════════════════════════════════════════════════ */
 PAGES['verbali']=async function(){
-  $('tb-actions').i
+  $('tb-actions').innerHTML=`<button id="btn-upload-verbale" class="btn btn-primary btn-sm" onclick="modalUploadVerbale()">📥 Carica PDF verbale</button>`;
+  $('content').innerHTML=`<div id="vrb-body">${loading()}</div>`;
+  loadVerbali();
+};
+async function loadVerbali(){
+  const el=$('vrb-body'); if(!el)return;
+  try{
+    const data=await GET('/api/verbali?limit=200');
+    const list=data?.verbali||data||[];
+    const dp=list.filter(v=>v.stato==='da_pagare').length;
+    const totDaPagare=list.filter(v=>v.stato==='da_pagare').reduce((s,v)=>s+(v.importo_da_pagare||v.importo_ridotto||v.importo_originale||0),0);
+    el.innerHTML=`
+      ${dp>0?`<div class="alert alert-warn mb-4" style="justify-content:space-between">
+        <span>⚠️ ${dp} verbali da pagare</span>
+        <strong>${euro(totDaPagare)}</strong>
+      </div>`:''}
+      <div class="tbl-wrap">
+        <table><thead><tr><th>N° Verbale</th><th>Data</th><th>Targa</th><th>Ente / Luogo</th><th>Imp. originale</th><th>Da pagare</th><th>Scadenza</th><th>Stato</th><th></th></tr></thead>
+        <tbody>${list.length===0?`<tr><td colspan="9">${emptyState('📋','Nessun verbale')}</td></tr>`:list.map(v=>`<tr>
+          <td class="font-mono" style="font-size:11px">${v.numero_verbale||'–'}</td>
+          <td>${fmtDate(v.data_verbale)}</td>
+          <td style="font-weight:700">${v.targa||'–'}</td>
+          <td style="max-width:180px;font-size:12px"><div style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${v.ente_emittente||v.luogo_infrazione||'–'}</div></td>
+          <td>${euro(v.importo_originale)}</td>
+          <td style="font-weight:700;color:var(--red)">${euro(v.importo_da_pagare||v.importo_ridotto||v.importo_originale)}</td>
+          <td>${fmtDate(v.scadenza_pagamento)}</td>
+          <td>${badge(v.stato||'da_pagare')}</td>
+          <td style="text-align:right;white-space:nowrap">
+            ${v.stato==='da_pagare'?`<button class="btn btn-success btn-xs" onclick="modalPagaVerbale('${v._id}',${v.importo_da_pagare||v.importo_originale||0})">Paga</button> <button class="btn btn-ghost btn-xs" onclick="ricorsoVerbale('${v._id}')">Ricorso</button>`:''}
+          </td>
+        </tr>`).join('')}</tbody></table></div>`;
+  }catch(e){el.innerHTML=`<div class="alert alert-danger">${e.message}</div>`;}
+}
+function modalUploadVerbale(){
+  openModal(`<div class="modal">
+    <div class="modal-head"><div class="modal-title">Carica Verbale PDF</div><button class="modal-close" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="drop" onclick="$('vrb-f').click()">
+        <span class="drop-icon">📋</span><div class="drop-label">PDF verbale</div><div class="drop-sub">Parsing AI automatico</div>
+        <input id="vrb-f" type="file" accept=".pdf" style="display:none" onchange="uploadVerbale(this)">
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Chiudi</button></div>
+  </div>`);
+}
+async function uploadVerbale(input){
+  const file=input.files[0]; if(!file)return;
+  warn('Parsing...');
+  try{const fd=new FormData();fd.append('file',file);await POST('/api/verbali/upload',fd,true);ok('Verbale caricato');closeModal();loadVerbali();}
+  catch(e){err(e.message);}
+}
+function modalPagaVerbale(id,importo){
+  openModal(`<div class="modal">
+    <div class="modal-head"><div class="modal-title">Paga Verbale</div><button class="modal-close" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="field-row">
+        <div class="field"><label>Data pagamento</label><input id="pv-data" type="date" class="inp" value="${today()}"></div>
+        <div class="field"><label>Importo €</label><input id="pv-imp" type="number" step="0.01" class="inp" value="${importo}"></div>
+        <div class="field"><label>Metodo</label><select id="pv-met" class="inp"><option value="cassa">Cassa</option><option value="banca">Bonifico</option><option value="assegno">Assegno</option></select></div>
+        <div class="field"><label>Note</label><input id="pv-note" class="inp"></div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Annulla</button><button class="btn btn-success" onclick="pagaVerbale('${id}')">✓ Paga</button></div>
+  </div>`);
+}
+async function pagaVerbale(id){
+  try{await POST(`/api/verbali/${id}/paga`,{data_pagamento:$('pv-data').value,importo:+$('pv-imp').value,metodo:$('pv-met').value,note:$('pv-note').value});ok('Verbale pagato');closeModal();loadVerbali();}
+  catch(e){err(e.message);}
+}
+async function ricorsoVerbale(id){
+  try{await PUT(`/api/verbali/${id}/ricorso`,{});ok('Stato aggiornato → ricorso');loadVerbali();}catch(e){err(e.message);}
+}
+
+/* ═══════════════════════════════════════════════════════
+   PAGE: PEC / GMAIL
+═══════════════════════════════════════════════════════ */
+PAGES['pec']=async function(){
+  $('content').innerHTML=`
+    <div class="tabs" id="pec-tabs">
+      <div class="tab active" data-t="pec" onclick="switchPec('pec',this)">📨 PEC Aruba</div>
+      <div class="tab" data-t="gmail" onclick="switchPec('gmail',this)">📧 Gmail</div>
+      <div class="tab" data-t="inbox" onclick="switchPec('inbox',this)">📥 Documenti Inbox</div>
+    </div>
+    <div id="pec-body">${loading()}</div>`;
+  switchPec('pec');
+};
+async function switchPec(tipo,btn){
+  if(btn){qsa('#pec-tabs .tab').forEach(t=>t.classList.toggle('active',t.dataset.t===tipo));}
+  const el=$('pec-body'); if(!el)return;
+  if(tipo==='inbox'){
+    el.innerHTML=loading();
+    try{
+      // Prova sia PEC inbox che Gmail documents_inbox
+      const [pecData, gmailData] = await Promise.allSettled([
+        GET('/api/pec/inbox?limit=100'),
+        GET('/api/cedolini/documenti?limit=100')
+      ]);
+      const pecList  = (pecData.status==='fulfilled'  ? (pecData.value?.inbox||pecData.value||[])   : []);
+      const gmailList= (gmailData.status==='fulfilled' ? (gmailData.value?.documenti||gmailData.value||[]) : []);
+      const list = [...pecList, ...gmailList].sort((a,b)=>(b.data_ricezione||'')>(a.data_ricezione||'')?1:-1);
+      el.innerHTML=`
+        <div style="font-size:12px;color:var(--text3);margin-bottom:12px">PEC: ${pecList.length} · Gmail: ${gmailList.length} documenti</div>
+        <div class="tbl-wrap">
+          <table><thead><tr><th>Data</th><th>Fonte</th><th>Oggetto / Subject</th><th>Mittente</th><th>Categoria</th><th>Stato</th></tr></thead>
+          <tbody>${list.length===0?`<tr><td colspan="6">${emptyState('📥','Inbox vuota','Sincronizza PEC o Gmail per importare documenti')}</td></tr>`:list.map(d=>`<tr>
+            <td>${fmtDate(d.data_ricezione)}</td>
+            <td>${d.da?'<span class="badge badge-blue">PEC</span>':'<span class="badge badge-gray">Gmail</span>'}</td>
+            <td style="font-weight:600;max-width:240px"><div style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${d.oggetto||d.subject||'–'}</div></td>
+            <td style="font-size:11px;max-width:160px"><div style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${d.da||d.mittente||'–'}</div></td>
+            <td>${badge(d.categoria||d.tipo||'altro')}</td>
+            <td>${badge(d.stato||'importato')}</td>
+          </tr>`).join('')}</tbody></table>
+        </div>`;
+    }catch(e){el.innerHTML=`<div class="alert alert-danger">${e.message}</div>`;}
+    return;
+  }
+  el.innerHTML=`<div class="card card-body" style="max-width:560px">
+    <div style="font-size:15px;font-weight:700;margin-bottom:6px">${tipo==='pec'?'📨 PEC Aruba':'📧 Gmail'}</div>
+    <div style="font-size:13px;color:var(--text3);margin-bottom:20px">Sincronizza ${tipo==='pec'?'fatturazioneceraldi@pec.it':'ceraldigroupsrl@gmail.com'} per importare documenti.</div>
+    <div class="flex gap-3 flex-wrap">
+      <button class="btn btn-primary btn-sm" onclick="runSync('${tipo}',7)">🔍 Sync 7 giorni</button>
+      <button class="btn btn-ghost btn-sm" onclick="runSync('${tipo}',30)">📅 Sync 30 giorni</button>
+    </div>
+    <div id="sync-res" class="hidden mt-4"></div>
+  </div>`;
+}
+async function runSync(tipo,g){
+  const ep=tipo==='pec'?'/api/pec/sync':'/api/cedolini/gmail-scan';
+  const el=$('sync-res'); if(!el)return;
+  el.classList.remove('hidden');
+  el.innerHTML=`<div class="flex items-center gap-3"><div class="spinner"></div><span style="font-size:13px">Sincronizzazione...</span></div>`;
+  try{
+    const r=await POST(ep,{giorni_indietro:g});
+    const n=r?.nuove||r?.trovati||r?.elaborate||r?.elaborati||r?.processati||0;
+    el.innerHTML=`<div class="alert alert-success">✓ Completato · ${n} documenti importati</div>`;
+    ok('Sync completata');
+    // Aggiorna badge inbox
+    loadScadBadge();
+  }catch(e){el.innerHTML=`<div class="alert alert-danger">${e.message}</div>`;err(e.message);}
+}
+
+/* ═══════════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════════ */
+checkAuth();
+</script>
+
+</body>
+</html>
